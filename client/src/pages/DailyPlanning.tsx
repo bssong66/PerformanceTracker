@@ -23,6 +23,13 @@ export default function DailyPlanning() {
   const today = format(new Date(), 'yyyy-MM-dd');
   const [newTask, setNewTask] = useState("");
   const [selectedPriority, setSelectedPriority] = useState<'A' | 'B' | 'C'>('B');
+  const [selectedProject, setSelectedProject] = useState<number | null>(null);
+  const [showProjectForm, setShowProjectForm] = useState(false);
+  const [newProject, setNewProject] = useState({
+    name: '',
+    description: '',
+    priority: 'medium' as 'high' | 'medium' | 'low'
+  });
   const [reflection, setReflection] = useState("");
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -73,12 +80,31 @@ export default function DailyPlanning() {
     mutationFn: createTask,
     onSuccess: () => {
       setNewTask("");
+      setSelectedProject(null);
       queryClient.invalidateQueries({ queryKey: ['tasks', MOCK_USER_ID, today] });
+      queryClient.invalidateQueries({ queryKey: ['tasks', MOCK_USER_ID] });
       toast({
         title: "할일 추가",
         description: "새로운 할일이 추가되었습니다.",
       });
     },
+  });
+
+  const createProjectMutation = useMutation({
+    mutationFn: async (project: any) => {
+      const response = await fetch('/api/projects', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...project, userId: MOCK_USER_ID })
+      });
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['projects', MOCK_USER_ID] });
+      setNewProject({ name: '', description: '', priority: 'medium' });
+      setShowProjectForm(false);
+      toast({ title: "프로젝트 생성", description: "새 프로젝트가 생성되었습니다." });
+    }
   });
 
   const updateTaskMutation = useMutation({
