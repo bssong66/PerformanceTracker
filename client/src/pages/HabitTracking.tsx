@@ -34,9 +34,10 @@ export default function HabitTracking() {
 
   const addHabitMutation = useMutation({
     mutationFn: createHabit,
-    onSuccess: () => {
+    onSuccess: async () => {
       setNewHabit({ name: "", description: "" });
-      queryClient.invalidateQueries({ queryKey: ['habits', MOCK_USER_ID] });
+      await queryClient.invalidateQueries({ queryKey: ['habits', MOCK_USER_ID] });
+      await queryClient.refetchQueries({ queryKey: ['habits', MOCK_USER_ID] });
       toast({
         title: "습관 추가",
         description: "새로운 습관이 추가되었습니다.",

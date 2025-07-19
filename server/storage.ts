@@ -223,7 +223,7 @@ export class MemStorage implements IStorage {
   // Habit methods
   async getHabits(userId: number): Promise<Habit[]> {
     return Array.from(this.habits.values())
-      .filter(habit => habit.userId === userId && habit.isActive);
+      .filter(habit => habit.userId === userId && habit.isActive !== false);
   }
 
   async createHabit(habit: InsertHabit): Promise<Habit> {
@@ -232,7 +232,7 @@ export class MemStorage implements IStorage {
       ...habit, 
       id,
       description: habit.description ?? null,
-      isActive: habit.isActive ?? null,
+      isActive: habit.isActive ?? true,
       currentStreak: 0,
       longestStreak: 0,
       createdAt: new Date()
