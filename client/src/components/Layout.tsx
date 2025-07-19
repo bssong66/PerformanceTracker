@@ -21,7 +21,7 @@ const navigation = [
   { name: '가치 중심 계획', href: '/foundation', icon: Sprout },
   { name: '일일 관리', href: '/daily', icon: Calendar },
   { name: '주간 리뷰', href: '/weekly', icon: CalendarDays },
-  { name: '습관 관리', href: '/habits', icon: Repeat },
+  { name: '습관 관리', href: '/habit-tracking', icon: Repeat },
   { name: '포커스 모드', href: '/focus', icon: Target },
 ];
 

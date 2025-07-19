@@ -37,31 +37,36 @@ export default function DailyPlanning() {
   });
 
   const { data: tasks = [], isLoading: tasksLoading } = useQuery({
-    queryKey: [api.tasks.list(MOCK_USER_ID, today)],
+    queryKey: ['tasks', MOCK_USER_ID, today],
+    queryFn: () => fetch(api.tasks.list(MOCK_USER_ID, today)).then(res => res.json()),
   });
 
   const { data: timeBlocks = [] } = useQuery({
-    queryKey: [api.timeBlocks.list(MOCK_USER_ID, today)],
+    queryKey: ['timeBlocks', MOCK_USER_ID, today],
+    queryFn: () => fetch(api.timeBlocks.list(MOCK_USER_ID, today)).then(res => res.json()),
   });
 
   const { data: dailyReflection } = useQuery({
-    queryKey: [api.dailyReflection.get(MOCK_USER_ID, today)],
+    queryKey: ['dailyReflection', MOCK_USER_ID, today],
+    queryFn: () => fetch(api.dailyReflection.get(MOCK_USER_ID, today)).then(res => res.json()),
     meta: { errorMessage: "Daily reflection not found" },
   });
 
   const { data: habits = [] } = useQuery({
-    queryKey: [api.habits.list(MOCK_USER_ID)],
+    queryKey: ['habits', MOCK_USER_ID],
+    queryFn: () => fetch(api.habits.list(MOCK_USER_ID)).then(res => res.json()),
   });
 
   const { data: habitLogs = [] } = useQuery({
-    queryKey: [api.habitLogs.list(MOCK_USER_ID, today)],
+    queryKey: ['habitLogs', MOCK_USER_ID, today],
+    queryFn: () => fetch(api.habitLogs.list(MOCK_USER_ID, today)).then(res => res.json()),
   });
 
   const addTaskMutation = useMutation({
     mutationFn: createTask,
     onSuccess: () => {
       setNewTask("");
-      queryClient.invalidateQueries({ queryKey: [api.tasks.list(MOCK_USER_ID, today)] });
+      queryClient.invalidateQueries({ queryKey: ['tasks', MOCK_USER_ID, today] });
       toast({
         title: "할일 추가",
         description: "새로운 할일이 추가되었습니다.",
@@ -72,14 +77,14 @@ export default function DailyPlanning() {
   const updateTaskMutation = useMutation({
     mutationFn: ({ id, updates }: { id: number; updates: any }) => updateTask(id, updates),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [api.tasks.list(MOCK_USER_ID, today)] });
+      queryClient.invalidateQueries({ queryKey: ['tasks', MOCK_USER_ID, today] });
     },
   });
 
   const saveReflectionMutation = useMutation({
     mutationFn: saveDailyReflection,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [api.dailyReflection.get(MOCK_USER_ID, today)] });
+      queryClient.invalidateQueries({ queryKey: ['dailyReflection', MOCK_USER_ID, today] });
       toast({
         title: "성찰 저장",
         description: "하루 성찰이 저장되었습니다.",
@@ -91,7 +96,7 @@ export default function DailyPlanning() {
     mutationFn: createTimeBlock,
     onSuccess: () => {
       setNewTimeBlock({ startTime: "", endTime: "", title: "", type: "focus" });
-      queryClient.invalidateQueries({ queryKey: [api.timeBlocks.list(MOCK_USER_ID, today)] });
+      queryClient.invalidateQueries({ queryKey: ['timeBlocks', MOCK_USER_ID, today] });
       toast({
         title: "시간 블록 추가",
         description: "새로운 시간 블록이 추가되었습니다.",

@@ -23,18 +23,20 @@ export default function HabitTracking() {
   const [newHabit, setNewHabit] = useState({ name: "", description: "" });
 
   const { data: habits = [], isLoading: habitsLoading } = useQuery({
-    queryKey: [api.habits.list(MOCK_USER_ID)],
+    queryKey: ['habits', MOCK_USER_ID],
+    queryFn: () => fetch(api.habits.list(MOCK_USER_ID)).then(res => res.json()),
   });
 
   const { data: todayLogs = [] } = useQuery({
-    queryKey: [api.habitLogs.list(MOCK_USER_ID, today)],
+    queryKey: ['habitLogs', MOCK_USER_ID, today],
+    queryFn: () => fetch(api.habitLogs.list(MOCK_USER_ID, today)).then(res => res.json()),
   });
 
   const addHabitMutation = useMutation({
     mutationFn: createHabit,
     onSuccess: () => {
       setNewHabit({ name: "", description: "" });
-      queryClient.invalidateQueries({ queryKey: [api.habits.list(MOCK_USER_ID)] });
+      queryClient.invalidateQueries({ queryKey: ['habits', MOCK_USER_ID] });
       toast({
         title: "습관 추가",
         description: "새로운 습관이 추가되었습니다.",
@@ -52,7 +54,7 @@ export default function HabitTracking() {
   const deleteHabitMutation = useMutation({
     mutationFn: deleteHabit,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [api.habits.list(MOCK_USER_ID)] });
+      queryClient.invalidateQueries({ queryKey: ['habits', MOCK_USER_ID] });
       toast({
         title: "습관 삭제",
         description: "습관이 삭제되었습니다.",
@@ -69,7 +71,7 @@ export default function HabitTracking() {
 
   const toggleHabitMutation = useMutation({
     mutationFn: ({ habitId, completed }: { habitId: number; completed: boolean }) => {
-      const existingLog = todayLogs.find((log: any) => log.habitId === habitId);
+      const existingLog = (todayLogs as any[]).find((log: any) => log.habitId === habitId);
       if (existingLog) {
         return updateHabitLog(existingLog.id, { completed });
       } else {
@@ -77,9 +79,9 @@ export default function HabitTracking() {
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [api.habitLogs.list(MOCK_USER_ID, today)] });
+      queryClient.invalidateQueries({ queryKey: ['habitLogs', MOCK_USER_ID, today] });
       // Update habit streak
-      queryClient.invalidateQueries({ queryKey: [api.habits.list(MOCK_USER_ID)] });
+      queryClient.invalidateQueries({ queryKey: ['habits', MOCK_USER_ID] });
     },
   });
 
@@ -102,13 +104,13 @@ export default function HabitTracking() {
   };
 
   const getHabitLog = (habitId: number) => {
-    return todayLogs.find((log: any) => log.habitId === habitId);
+    return (todayLogs as any[]).find((log: any) => log.habitId === habitId);
   };
 
   const calculateWeeklyCompletion = (habitId: number) => {
     // This would normally fetch logs for the past week
     // For now, we'll simulate with current streak data
-    const habit = habits.find((h: any) => h.id === habitId);
+    const habit = (habits as any[]).find((h: any) => h.id === habitId);
     return Math.min(habit?.currentStreak || 0, 7);
   };
 
@@ -192,7 +194,7 @@ export default function HabitTracking() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                {habits.length === 0 ? (
+                {(habits as any[]).length === 0 ? (
                   <div className="text-center text-gray-500 py-8">
                     <Repeat className="h-12 w-12 mx-auto mb-2 text-gray-300" />
                     <p>등록된 습관이 없습니다.</p>
@@ -200,7 +202,7 @@ export default function HabitTracking() {
                   </div>
                 ) : (
                   <div className="space-y-4">
-                    {habits.map((habit: any) => {
+                    {(habits as any[]).map((habit: any) => {
                       const log = getHabitLog(habit.id);
                       const isCompleted = log?.completed || false;
                       
@@ -272,7 +274,7 @@ export default function HabitTracking() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                {habits.length === 0 ? (
+                {(habits as any[]).length === 0 ? (
                   <div className="text-center text-gray-500 py-4">
                     <p className="text-sm">습관을 추가하면</p>
                     <p className="text-sm">진행률을 확인할 수 있습니다</p>
@@ -281,7 +283,7 @@ export default function HabitTracking() {
                   <div className="space-y-4">
                     <div className="text-center">
                       <div className="text-2xl font-bold text-gray-900">
-                        {Math.round((todayLogs.filter((log: any) => log.completed).length / habits.length) * 100)}%
+                        {Math.round(((todayLogs as any[]).filter((log: any) => log.completed).length / (habits as any[]).length) * 100)}%
                       </div>
                       <div className="text-sm text-gray-600">오늘 완료율</div>
                     </div>
@@ -290,20 +292,20 @@ export default function HabitTracking() {
                       <div className="flex justify-between text-sm">
                         <span className="text-gray-600">완료한 습관</span>
                         <span className="font-medium">
-                          {todayLogs.filter((log: any) => log.completed).length}/{habits.length}
+                          {(todayLogs as any[]).filter((log: any) => log.completed).length}/{(habits as any[]).length}
                         </span>
                       </div>
                       
                       <div className="flex justify-between text-sm">
                         <span className="text-gray-600">활성 습관</span>
-                        <span className="font-medium">{habits.length}</span>
+                        <span className="font-medium">{(habits as any[]).length}</span>
                       </div>
                       
                       <div className="flex justify-between text-sm">
                         <span className="text-gray-600">평균 연속 기록</span>
                         <span className="font-medium">
-                          {habits.length > 0 
-                            ? Math.round(habits.reduce((sum: number, h: any) => sum + h.currentStreak, 0) / habits.length)
+                          {(habits as any[]).length > 0 
+                            ? Math.round((habits as any[]).reduce((sum: number, h: any) => sum + h.currentStreak, 0) / (habits as any[]).length)
                             : 0}일
                         </span>
                       </div>
@@ -319,13 +321,13 @@ export default function HabitTracking() {
                 <CardTitle className="text-base">이번 주 요약</CardTitle>
               </CardHeader>
               <CardContent>
-                {habits.length === 0 ? (
+                {(habits as any[]).length === 0 ? (
                   <div className="text-center text-gray-500 py-4">
                     <p className="text-sm">습관 데이터가 없습니다</p>
                   </div>
                 ) : (
                   <div className="space-y-3">
-                    {habits.slice(0, 3).map((habit: any) => (
+                    {(habits as any[]).slice(0, 3).map((habit: any) => (
                       <div key={habit.id}>
                         <div className="flex justify-between text-sm mb-1">
                           <span className="text-gray-600 truncate">{habit.name}</span>
@@ -352,17 +354,17 @@ export default function HabitTracking() {
               </CardHeader>
               <CardContent>
                 <div className="text-center space-y-2">
-                  {habits.length > 0 && todayLogs.filter((log: any) => log.completed).length === habits.length ? (
+                  {(habits as any[]).length > 0 && (todayLogs as any[]).filter((log: any) => log.completed).length === (habits as any[]).length ? (
                     <div className="text-green-600">
                       <div className="text-lg font-bold">🎉 완벽!</div>
                       <div className="text-sm">오늘 모든 습관을 완료했습니다!</div>
                     </div>
-                  ) : habits.length > 0 && todayLogs.filter((log: any) => log.completed).length > 0 ? (
+                  ) : (habits as any[]).length > 0 && (todayLogs as any[]).filter((log: any) => log.completed).length > 0 ? (
                     <div className="text-blue-600">
                       <div className="text-lg font-bold">💪 훌륭해요!</div>
                       <div className="text-sm">좋은 진전을 보이고 있습니다!</div>
                     </div>
-                  ) : habits.length > 0 ? (
+                  ) : (habits as any[]).length > 0 ? (
                     <div className="text-yellow-600">
                       <div className="text-lg font-bold">🚀 시작해보세요!</div>
                       <div className="text-sm">오늘의 첫 습관을 완료해보세요!</div>

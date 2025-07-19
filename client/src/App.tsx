@@ -20,7 +20,7 @@ function Router() {
         <Route path="/foundation" component={Foundation} />
         <Route path="/daily" component={DailyPlanning} />
         <Route path="/weekly" component={WeeklyReview} />
-        <Route path="/habits" component={HabitTracking} />
+        <Route path="/habit-tracking" component={HabitTracking} />
         <Route path="/focus" component={FocusMode} />
         <Route component={NotFound} />
       </Switch>

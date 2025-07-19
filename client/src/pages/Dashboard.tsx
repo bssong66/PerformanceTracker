@@ -14,15 +14,18 @@ export default function Dashboard() {
   const today = format(new Date(), 'yyyy-MM-dd');
   
   const { data: tasks = [], isLoading: tasksLoading } = useQuery({
-    queryKey: [api.tasks.list(MOCK_USER_ID, today)],
+    queryKey: ['tasks', MOCK_USER_ID, today],
+    queryFn: () => fetch(api.tasks.list(MOCK_USER_ID, today)).then(res => res.json()),
   });
 
   const { data: habits = [], isLoading: habitsLoading } = useQuery({
-    queryKey: [api.habits.list(MOCK_USER_ID)],
+    queryKey: ['habits', MOCK_USER_ID],
+    queryFn: () => fetch(api.habits.list(MOCK_USER_ID)).then(res => res.json()),
   });
 
   const { data: timeBlocks = [] } = useQuery({
-    queryKey: [api.timeBlocks.list(MOCK_USER_ID, today)],
+    queryKey: ['timeBlocks', MOCK_USER_ID, today],
+    queryFn: () => fetch(api.timeBlocks.list(MOCK_USER_ID, today)).then(res => res.json()),
   });
 
   // Calculate task statistics
