@@ -356,6 +356,8 @@ export class MemStorage implements IStorage {
         ...reflection, 
         id,
         reflection: reflection.reflection ?? null,
+        imageUrl: reflection.imageUrl ?? null,
+        imageName: reflection.imageName ?? null,
         createdAt: new Date()
       };
       this.dailyReflections.set(id, newReflection);

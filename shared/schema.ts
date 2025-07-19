@@ -82,6 +82,8 @@ export const dailyReflections = pgTable("daily_reflections", {
   userId: integer("user_id").notNull(),
   date: date("date").notNull(),
   reflection: text("reflection"),
+  imageUrl: text("image_url"),
+  imageName: text("image_name"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 

@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { TaskItem } from "@/components/TaskItem";
 import { PriorityBadge } from "@/components/PriorityBadge";
-import { Plus, Mic, CalendarDays } from "lucide-react";
+import { Plus, Mic, CalendarDays, Camera, Upload, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { api, createTask, updateTask, saveDailyReflection, createTimeBlock } from "@/lib/api";
 import { queryClient } from "@/lib/queryClient";
@@ -24,6 +24,8 @@ export default function DailyPlanning() {
   const [newTask, setNewTask] = useState("");
   const [selectedPriority, setSelectedPriority] = useState<'A' | 'B' | 'C'>('B');
   const [reflection, setReflection] = useState("");
+  const [selectedImage, setSelectedImage] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [newTimeBlock, setNewTimeBlock] = useState<{
     startTime: string;
     endTime: string;
@@ -119,12 +121,60 @@ export default function DailyPlanning() {
     updateTaskMutation.mutate({ id, updates: { completed } });
   };
 
+  const handleImageSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      setSelectedImage(file);
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setImagePreview(e.target?.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleCameraCapture = () => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    input.capture = 'environment';
+    input.onchange = (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (file) {
+        setSelectedImage(file);
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          setImagePreview(e.target?.result as string);
+        };
+        reader.readAsDataURL(file);
+      }
+    };
+    input.click();
+  };
+
+  const handleRemoveImage = () => {
+    setSelectedImage(null);
+    setImagePreview(null);
+  };
+
   const handleSaveReflection = () => {
-    saveReflectionMutation.mutate({
-      userId: MOCK_USER_ID,
-      date: today,
-      reflection,
-    });
+    if (reflection.trim() || selectedImage) {
+      let imageUrl = null;
+      let imageName = null;
+      
+      if (selectedImage) {
+        imageUrl = imagePreview;
+        imageName = selectedImage.name;
+      }
+      
+      saveReflectionMutation.mutate({
+        userId: MOCK_USER_ID,
+        date: today,
+        reflection: reflection.trim(),
+        imageUrl,
+        imageName,
+      });
+    }
   };
 
   const handleAddTimeBlock = () => {
@@ -406,18 +456,83 @@ export default function DailyPlanning() {
               {/* Daily Reflection */}
               <div>
                 <h4 className="text-sm font-semibold text-gray-900 mb-3">하루 성찰</h4>
+                
+                {/* Text reflection */}
                 <Textarea
                   placeholder="오늘 하루를 돌아보며 한 줄로 기록해보세요..."
                   value={reflection || (dailyReflection as any)?.reflection || ""}
                   onChange={(e) => setReflection(e.target.value)}
                   rows={3}
-                  className="resize-none"
+                  className="resize-none mb-3"
                 />
+                
+                {/* Image upload section */}
+                <div className="space-y-3">
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageSelect}
+                      className="hidden"
+                      id="image-upload"
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => document.getElementById('image-upload')?.click()}
+                    >
+                      <Upload className="h-4 w-4 mr-2" />
+                      사진 선택
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={handleCameraCapture}
+                    >
+                      <Camera className="h-4 w-4 mr-2" />
+                      사진 촬영
+                    </Button>
+                  </div>
+                  
+                  {/* Image preview */}
+                  {imagePreview && (
+                    <div className="relative">
+                      <img
+                        src={imagePreview}
+                        alt="선택된 이미지"
+                        className="w-full max-w-xs rounded-lg border border-gray-200"
+                      />
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        size="sm"
+                        className="absolute top-2 right-2"
+                        onClick={handleRemoveImage}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  )}
+                  
+                  {/* Existing image display */}
+                  {!imagePreview && (dailyReflection as any)?.imageUrl && (
+                    <div className="relative">
+                      <img
+                        src={(dailyReflection as any).imageUrl}
+                        alt="저장된 이미지"
+                        className="w-full max-w-xs rounded-lg border border-gray-200"
+                      />
+                    </div>
+                  )}
+                </div>
+                
                 <Button 
                   onClick={handleSaveReflection} 
                   size="sm" 
-                  className="mt-2"
-                  disabled={saveReflectionMutation.isPending}
+                  className="mt-3"
+                  disabled={saveReflectionMutation.isPending || (!reflection.trim() && !selectedImage)}
                 >
                   {saveReflectionMutation.isPending ? '저장 중...' : '저장'}
                 </Button>
