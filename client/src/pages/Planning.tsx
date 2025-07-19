@@ -529,182 +529,240 @@ export default function Planning() {
         {/* Tasks Tab */}
         {activeTab === 'tasks' && (
           <div className="space-y-6">
-            {/* Project Filter */}
+            {/* Header with Create Project Button */}
             <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-4">
-                <Label>프로젝트 선택:</Label>
-                <Select value={selectedProject?.toString() || ''} onValueChange={(value) => 
-                  setSelectedProject(value ? Number(value) : null)}>
-                  <SelectTrigger className="w-64">
-                    <SelectValue placeholder="프로젝트를 선택하세요" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {(projects as any[]).map(project => (
-                      <SelectItem key={project.id} value={project.id.toString()}>
-                        <div className="flex items-center space-x-2">
-                          <div 
-                            className="w-3 h-3 rounded-full" 
-                            style={{ backgroundColor: project.color }}
-                          />
-                          <span>{project.name}</span>
-                        </div>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              
-              {selectedProject && (
-                <div className="text-sm text-gray-600">
-                  선택된 프로젝트: {(projects as any[]).find(p => p.id === selectedProject)?.name}
-                </div>
-              )}
+              <h2 className="text-lg font-semibold text-gray-900">프로젝트별 할일 관리</h2>
+              <Button onClick={() => setActiveTab('projects')} variant="outline">
+                <FolderPlus className="h-4 w-4 mr-2" />
+                새 프로젝트 생성
+              </Button>
             </div>
 
-            {/* Create Task */}
-            {selectedProject && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center space-x-2">
-                    <Plus className="h-5 w-5" />
-                    <span>새 할일 생성</span>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="task-title">할일 제목</Label>
-                      <Input
-                        id="task-title"
-                        placeholder="할일을 입력하세요"
-                        value={newTask.title}
-                        onChange={(e) => setNewTask(prev => ({ ...prev, title: e.target.value }))}
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="task-priority">우선순위</Label>
-                      <Select value={newTask.priority} onValueChange={(value: 'A' | 'B' | 'C') => 
-                        setNewTask(prev => ({ ...prev, priority: value }))}>
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="A">A (매우 중요)</SelectItem>
-                          <SelectItem value="B">B (중요)</SelectItem>
-                          <SelectItem value="C">C (보통)</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="task-date">예정일</Label>
-                      <Input
-                        id="task-date"
-                        type="date"
-                        value={newTask.scheduledDate}
-                        onChange={(e) => setNewTask(prev => ({ ...prev, scheduledDate: e.target.value }))}
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="task-time">예상 소요시간 (분)</Label>
-                      <Input
-                        id="task-time"
-                        type="number"
-                        placeholder="60"
-                        value={newTask.timeEstimate}
-                        onChange={(e) => setNewTask(prev => ({ ...prev, timeEstimate: e.target.value }))}
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <Label htmlFor="task-notes">메모</Label>
-                    <Textarea
-                      id="task-notes"
-                      placeholder="할일에 대한 추가 정보"
-                      value={newTask.notes}
-                      onChange={(e) => setNewTask(prev => ({ ...prev, notes: e.target.value }))}
-                      rows={2}
-                    />
-                  </div>
-
-                  <Button 
-                    onClick={handleCreateTask}
-                    disabled={!newTask.title.trim() || createTaskMutation.isPending}
-                    className="w-full"
-                  >
-                    <Plus className="h-4 w-4 mr-2" />
-                    {createTaskMutation.isPending ? '생성 중...' : '할일 생성'}
-                  </Button>
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Tasks List */}
-            <div className="space-y-4">
-              {selectedProject ? (
-                filteredTasks.length > 0 ? (
-                  filteredTasks.map((task: any) => (
-                    <Card key={task.id} className="p-4">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-3">
-                          <button
-                            onClick={() => handleToggleTask(task.id, !task.completed)}
-                            className="text-gray-400 hover:text-gray-600"
-                          >
-                            {task.completed ? (
-                              <CheckCircle className="h-5 w-5 text-green-500" />
-                            ) : (
-                              <Circle className="h-5 w-5" />
-                            )}
-                          </button>
-                          <div>
-                            <h3 className={`font-medium ${task.completed ? 'line-through text-gray-500' : 'text-gray-900'}`}>
-                              {task.title}
-                            </h3>
-                            {task.notes && (
-                              <p className="text-sm text-gray-600">{task.notes}</p>
-                            )}
-                            <div className="flex items-center space-x-4 text-xs text-gray-500 mt-1">
-                              <Badge className={`
-                                ${task.priority === 'A' ? 'bg-red-100 text-red-800' : 
-                                  task.priority === 'B' ? 'bg-yellow-100 text-yellow-800' : 
-                                  'bg-green-100 text-green-800'}
-                              `}>
-                                {task.priority}급
-                              </Badge>
-                              {task.scheduledDate && (
-                                <span className="flex items-center">
-                                  <Calendar className="h-3 w-3 mr-1" />
-                                  {format(new Date(task.scheduledDate), 'M/d', { locale: ko })}
-                                </span>
-                              )}
-                              {task.timeEstimate && (
-                                <span className="flex items-center">
-                                  <Clock className="h-3 w-3 mr-1" />
-                                  {task.timeEstimate}분
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                        </div>
+            {/* Project Selection */}
+            <Card>
+              <CardHeader>
+                <CardTitle>프로젝트 선택</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {(projects as any[]).map(project => (
+                    <div
+                      key={project.id}
+                      onClick={() => setSelectedProject(selectedProject === project.id ? null : project.id)}
+                      className={`p-4 border rounded-lg cursor-pointer transition-colors ${
+                        selectedProject === project.id 
+                          ? 'border-blue-500 bg-blue-50' 
+                          : 'border-gray-200 hover:border-gray-300'
+                      }`}
+                    >
+                      <div className="flex items-center space-x-2 mb-2">
+                        <div 
+                          className="w-4 h-4 rounded-full" 
+                          style={{ backgroundColor: project.color }}
+                        />
+                        <h3 className="font-medium text-gray-900">{project.name}</h3>
                       </div>
-                    </Card>
-                  ))
-                ) : (
-                  <Card className="p-8 text-center">
-                    <p className="text-gray-500">선택된 프로젝트에 할일이 없습니다.</p>
-                    <p className="text-sm text-gray-400 mt-1">위에서 새 할일을 생성해보세요.</p>
-                  </Card>
-                )
-              ) : (
-                <Card className="p-8 text-center">
-                  <p className="text-gray-500">프로젝트를 선택하여 할일을 관리하세요.</p>
+                      {project.description && (
+                        <p className="text-sm text-gray-600 mb-2">{project.description}</p>
+                      )}
+                      <div className="flex items-center justify-between">
+                        <Badge className={`text-xs ${
+                          project.priority === 'high' ? 'bg-red-100 text-red-700' : 
+                          project.priority === 'medium' ? 'bg-yellow-100 text-yellow-700' : 
+                          'bg-green-100 text-green-700'
+                        }`}>
+                          {project.priority === 'high' ? '높음' : project.priority === 'medium' ? '보통' : '낮음'}
+                        </Badge>
+                        <span className="text-xs text-gray-500">
+                          {filteredTasks.length}개 할일
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                  
+                  {(projects as any[]).length === 0 && (
+                    <div className="col-span-full text-center py-8">
+                      <p className="text-gray-500">프로젝트가 없습니다.</p>
+                      <Button 
+                        onClick={() => setActiveTab('projects')} 
+                        variant="outline" 
+                        className="mt-2"
+                      >
+                        첫 번째 프로젝트 만들기
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Selected Project Tasks Management */}
+            {selectedProject && (
+              <>
+                {/* Create Task */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center space-x-2">
+                      <div 
+                        className="w-4 h-4 rounded-full" 
+                        style={{ backgroundColor: (projects as any[]).find(p => p.id === selectedProject)?.color }}
+                      />
+                      <span>{(projects as any[]).find(p => p.id === selectedProject)?.name}</span>
+                      <span className="text-sm font-normal text-gray-500">새 할일 추가</span>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="task-title">할일 제목</Label>
+                        <Input
+                          id="task-title"
+                          placeholder="할일을 입력하세요"
+                          value={newTask.title}
+                          onChange={(e) => setNewTask(prev => ({ ...prev, title: e.target.value }))}
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="task-priority">우선순위</Label>
+                        <Select value={newTask.priority} onValueChange={(value: 'A' | 'B' | 'C') => 
+                          setNewTask(prev => ({ ...prev, priority: value }))}>
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="A">A (매우 중요)</SelectItem>
+                            <SelectItem value="B">B (중요)</SelectItem>
+                            <SelectItem value="C">C (보통)</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="task-date">예정일</Label>
+                        <Input
+                          id="task-date"
+                          type="date"
+                          value={newTask.scheduledDate}
+                          onChange={(e) => setNewTask(prev => ({ ...prev, scheduledDate: e.target.value }))}
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="task-time">예상 소요시간 (분)</Label>
+                        <Input
+                          id="task-time"
+                          type="number"
+                          placeholder="60"
+                          value={newTask.timeEstimate}
+                          onChange={(e) => setNewTask(prev => ({ ...prev, timeEstimate: e.target.value }))}
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <Label htmlFor="task-notes">메모</Label>
+                      <Textarea
+                        id="task-notes"
+                        placeholder="할일에 대한 추가 정보"
+                        value={newTask.notes}
+                        onChange={(e) => setNewTask(prev => ({ ...prev, notes: e.target.value }))}
+                        rows={2}
+                      />
+                    </div>
+
+                    <Button 
+                      onClick={handleCreateTask}
+                      disabled={!newTask.title.trim() || createTaskMutation.isPending}
+                      className="w-full"
+                    >
+                      <Plus className="h-4 w-4 mr-2" />
+                      {createTaskMutation.isPending ? '생성 중...' : '할일 생성'}
+                    </Button>
+                  </CardContent>
                 </Card>
-              )}
-            </div>
+
+                {/* Tasks List */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center justify-between">
+                      <span>할일 목록</span>
+                      <span className="text-sm font-normal text-gray-500">
+                        총 {filteredTasks.length}개 / 완료 {filteredTasks.filter((t: any) => t.completed).length}개
+                      </span>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {filteredTasks.length > 0 ? (
+                      <div className="space-y-3">
+                        {['A', 'B', 'C'].map(priority => {
+                          const priorityTasks = filteredTasks.filter((task: any) => task.priority === priority);
+                          if (priorityTasks.length === 0) return null;
+                          
+                          return (
+                            <div key={priority}>
+                              <div className="flex items-center space-x-2 mb-2">
+                                <Badge className={`text-xs ${
+                                  priority === 'A' ? 'bg-red-100 text-red-700' : 
+                                  priority === 'B' ? 'bg-yellow-100 text-yellow-700' : 
+                                  'bg-green-100 text-green-700'
+                                }`}>
+                                  {priority}급 우선순위
+                                </Badge>
+                                <span className="text-xs text-gray-500">{priorityTasks.length}개</span>
+                              </div>
+                              <div className="space-y-2 ml-4 border-l-2 border-gray-100 pl-4">
+                                {priorityTasks.map((task: any) => (
+                                  <div key={task.id} className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
+                                    <button
+                                      onClick={() => handleToggleTask(task.id, !task.completed)}
+                                      className="text-gray-400 hover:text-gray-600"
+                                    >
+                                      {task.completed ? (
+                                        <CheckCircle className="h-5 w-5 text-green-500" />
+                                      ) : (
+                                        <Circle className="h-5 w-5" />
+                                      )}
+                                    </button>
+                                    <div className="flex-1">
+                                      <h4 className={`font-medium ${task.completed ? 'line-through text-gray-500' : 'text-gray-900'}`}>
+                                        {task.title}
+                                      </h4>
+                                      {task.notes && (
+                                        <p className="text-sm text-gray-600 mt-1">{task.notes}</p>
+                                      )}
+                                      <div className="flex items-center space-x-4 text-xs text-gray-500 mt-2">
+                                        {task.scheduledDate && (
+                                          <span className="flex items-center">
+                                            <Calendar className="h-3 w-3 mr-1" />
+                                            {format(new Date(task.scheduledDate), 'M/d', { locale: ko })}
+                                          </span>
+                                        )}
+                                        {task.timeEstimate && (
+                                          <span className="flex items-center">
+                                            <Clock className="h-3 w-3 mr-1" />
+                                            {task.timeEstimate}분
+                                          </span>
+                                        )}
+                                      </div>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <div className="text-center py-8">
+                        <p className="text-gray-500">이 프로젝트에 할일이 없습니다.</p>
+                        <p className="text-sm text-gray-400 mt-1">위에서 새 할일을 생성해보세요.</p>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </>
+            )}
           </div>
         )}
 
