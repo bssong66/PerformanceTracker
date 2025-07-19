@@ -1,8 +1,9 @@
 import { 
-  users, foundations, annualGoals, tasks, habits, habitLogs, 
+  users, foundations, annualGoals, projects, tasks, events, habits, habitLogs, 
   weeklyReviews, dailyReflections, timeBlocks,
   type User, type InsertUser, type Foundation, type InsertFoundation,
-  type AnnualGoal, type InsertAnnualGoal, type Task, type InsertTask,
+  type AnnualGoal, type InsertAnnualGoal, type Project, type InsertProject,
+  type Task, type InsertTask, type Event, type InsertEvent,
   type Habit, type InsertHabit, type HabitLog, type InsertHabitLog,
   type WeeklyReview, type InsertWeeklyReview, type DailyReflection, 
   type InsertDailyReflection, type TimeBlock, type InsertTimeBlock
@@ -24,12 +25,24 @@ export interface IStorage {
   updateAnnualGoal(id: number, updates: Partial<AnnualGoal>): Promise<AnnualGoal | undefined>;
   deleteAnnualGoal(id: number): Promise<boolean>;
   
+  // Project methods
+  getProjects(userId: number): Promise<Project[]>;
+  createProject(project: InsertProject): Promise<Project>;
+  updateProject(id: number, updates: Partial<Project>): Promise<Project | undefined>;
+  deleteProject(id: number): Promise<boolean>;
+  
   // Task methods
-  getTasks(userId: number, date?: string): Promise<Task[]>;
+  getTasks(userId: number, date?: string, projectId?: number): Promise<Task[]>;
   getTasksByPriority(userId: number, priority: string, date?: string): Promise<Task[]>;
   createTask(task: InsertTask): Promise<Task>;
   updateTask(id: number, updates: Partial<Task>): Promise<Task | undefined>;
   deleteTask(id: number): Promise<boolean>;
+  
+  // Event methods
+  getEvents(userId: number, startDate?: string, endDate?: string): Promise<Event[]>;
+  createEvent(event: InsertEvent): Promise<Event>;
+  updateEvent(id: number, updates: Partial<Event>): Promise<Event | undefined>;
+  deleteEvent(id: number): Promise<boolean>;
   
   // Habit methods
   getHabits(userId: number): Promise<Habit[]>;
@@ -63,7 +76,9 @@ export class MemStorage implements IStorage {
   private users: Map<number, User>;
   private foundations: Map<number, Foundation>;
   private annualGoals: Map<number, AnnualGoal>;
+  private projects: Map<number, Project>;
   private tasks: Map<number, Task>;
+  private events: Map<number, Event>;
   private habits: Map<number, Habit>;
   private habitLogs: Map<number, HabitLog>;
   private weeklyReviews: Map<number, WeeklyReview>;
@@ -75,7 +90,9 @@ export class MemStorage implements IStorage {
     this.users = new Map();
     this.foundations = new Map();
     this.annualGoals = new Map();
+    this.projects = new Map();
     this.tasks = new Map();
+    this.events = new Map();
     this.habits = new Map();
     this.habitLogs = new Map();
     this.weeklyReviews = new Map();
@@ -168,12 +185,48 @@ export class MemStorage implements IStorage {
     return this.annualGoals.delete(id);
   }
 
+  // Project methods
+  async getProjects(userId: number): Promise<Project[]> {
+    return Array.from(this.projects.values())
+      .filter(project => project.userId === userId);
+  }
+
+  async createProject(project: InsertProject): Promise<Project> {
+    const id = this.currentId++;
+    const newProject: Project = { 
+      ...project, 
+      id,
+      description: project.description ?? null,
+      color: project.color ?? "#3B82F6",
+      status: project.status ?? "active",
+      startDate: project.startDate ?? null,
+      endDate: project.endDate ?? null,
+      createdAt: new Date()
+    };
+    this.projects.set(id, newProject);
+    return newProject;
+  }
+
+  async updateProject(id: number, updates: Partial<Project>): Promise<Project | undefined> {
+    const project = this.projects.get(id);
+    if (!project) return undefined;
+    
+    const updated = { ...project, ...updates };
+    this.projects.set(id, updated);
+    return updated;
+  }
+
+  async deleteProject(id: number): Promise<boolean> {
+    return this.projects.delete(id);
+  }
+
   // Task methods
-  async getTasks(userId: number, date?: string): Promise<Task[]> {
+  async getTasks(userId: number, date?: string, projectId?: number): Promise<Task[]> {
     return Array.from(this.tasks.values())
       .filter(task => {
         if (task.userId !== userId) return false;
         if (date && task.scheduledDate !== date) return false;
+        if (projectId && task.projectId !== projectId) return false;
         return true;
       });
   }
@@ -192,6 +245,7 @@ export class MemStorage implements IStorage {
     const newTask: Task = { 
       ...task, 
       id,
+      projectId: task.projectId ?? null,
       completed: task.completed ?? null,
       scheduledDate: task.scheduledDate ?? null,
       timeEstimate: task.timeEstimate ?? null,
@@ -218,6 +272,48 @@ export class MemStorage implements IStorage {
 
   async deleteTask(id: number): Promise<boolean> {
     return this.tasks.delete(id);
+  }
+
+  // Event methods
+  async getEvents(userId: number, startDate?: string, endDate?: string): Promise<Event[]> {
+    return Array.from(this.events.values())
+      .filter(event => {
+        if (event.userId !== userId) return false;
+        if (startDate && event.startDate < startDate) return false;
+        if (endDate && event.startDate > endDate) return false;
+        return true;
+      });
+  }
+
+  async createEvent(event: InsertEvent): Promise<Event> {
+    const id = this.currentId++;
+    const newEvent: Event = { 
+      ...event, 
+      id,
+      description: event.description ?? null,
+      projectId: event.projectId ?? null,
+      endDate: event.endDate ?? null,
+      startTime: event.startTime ?? null,
+      endTime: event.endTime ?? null,
+      color: event.color ?? "#3B82F6",
+      isAllDay: event.isAllDay ?? false,
+      createdAt: new Date()
+    };
+    this.events.set(id, newEvent);
+    return newEvent;
+  }
+
+  async updateEvent(id: number, updates: Partial<Event>): Promise<Event | undefined> {
+    const event = this.events.get(id);
+    if (!event) return undefined;
+    
+    const updated = { ...event, ...updates };
+    this.events.set(id, updated);
+    return updated;
+  }
+
+  async deleteEvent(id: number): Promise<boolean> {
+    return this.events.delete(id);
   }
 
   // Habit methods

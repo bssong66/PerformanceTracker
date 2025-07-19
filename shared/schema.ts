@@ -28,9 +28,23 @@ export const annualGoals = pgTable("annual_goals", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+export const projects = pgTable("projects", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull(),
+  name: text("name").notNull(),
+  description: text("description"),
+  color: text("color").default("#3B82F6"), // hex color for calendar display
+  priority: text("priority").notNull(), // 'high', 'medium', 'low'
+  status: text("status").default("active"), // 'active', 'completed', 'paused'
+  startDate: date("start_date"),
+  endDate: date("end_date"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 export const tasks = pgTable("tasks", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").notNull(),
+  projectId: integer("project_id"), // nullable - tasks can exist without projects
   title: text("title").notNull(),
   priority: text("priority").notNull(), // 'A', 'B', 'C'
   completed: boolean("completed").default(false),
@@ -38,6 +52,22 @@ export const tasks = pgTable("tasks", {
   completedAt: timestamp("completed_at"),
   timeEstimate: integer("time_estimate"), // in minutes
   notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const events = pgTable("events", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull(),
+  projectId: integer("project_id"), // nullable
+  title: text("title").notNull(),
+  description: text("description"),
+  startDate: date("start_date").notNull(),
+  endDate: date("end_date"),
+  startTime: text("start_time"), // e.g., "14:30"
+  endTime: text("end_time"),
+  priority: text("priority").notNull(), // 'high', 'medium', 'low'
+  color: text("color").default("#3B82F6"),
+  isAllDay: boolean("is_all_day").default(false),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -115,10 +145,20 @@ export const insertAnnualGoalSchema = createInsertSchema(annualGoals).omit({
   createdAt: true,
 });
 
+export const insertProjectSchema = createInsertSchema(projects).omit({
+  id: true,
+  createdAt: true,
+});
+
 export const insertTaskSchema = createInsertSchema(tasks).omit({
   id: true,
   createdAt: true,
   completedAt: true,
+});
+
+export const insertEventSchema = createInsertSchema(events).omit({
+  id: true,
+  createdAt: true,
 });
 
 export const insertHabitSchema = createInsertSchema(habits).omit({
@@ -158,8 +198,14 @@ export type InsertFoundation = z.infer<typeof insertFoundationSchema>;
 export type AnnualGoal = typeof annualGoals.$inferSelect;
 export type InsertAnnualGoal = z.infer<typeof insertAnnualGoalSchema>;
 
+export type Project = typeof projects.$inferSelect;
+export type InsertProject = z.infer<typeof insertProjectSchema>;
+
 export type Task = typeof tasks.$inferSelect;
 export type InsertTask = z.infer<typeof insertTaskSchema>;
+
+export type Event = typeof events.$inferSelect;
+export type InsertEvent = z.infer<typeof insertEventSchema>;
 
 export type Habit = typeof habits.$inferSelect;
 export type InsertHabit = z.infer<typeof insertHabitSchema>;

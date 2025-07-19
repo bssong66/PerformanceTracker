@@ -2,9 +2,9 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { 
-  insertFoundationSchema, insertAnnualGoalSchema, insertTaskSchema,
-  insertHabitSchema, insertHabitLogSchema, insertWeeklyReviewSchema,
-  insertDailyReflectionSchema, insertTimeBlockSchema
+  insertFoundationSchema, insertAnnualGoalSchema, insertProjectSchema,
+  insertTaskSchema, insertEventSchema, insertHabitSchema, insertHabitLogSchema, 
+  insertWeeklyReviewSchema, insertDailyReflectionSchema, insertTimeBlockSchema
 } from "@shared/schema";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -79,6 +79,115 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       if (!deleted) {
         return res.status(404).json({ message: "Goal not found" });
+      }
+      
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Project routes
+  app.get("/api/projects/:userId", async (req, res) => {
+    try {
+      const userId = parseInt(req.params.userId);
+      const projects = await storage.getProjects(userId);
+      res.json(projects);
+    } catch (error) {
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.post("/api/projects", async (req, res) => {
+    try {
+      const projectData = insertProjectSchema.parse(req.body);
+      const project = await storage.createProject(projectData);
+      res.json(project);
+    } catch (error) {
+      res.status(400).json({ message: "Invalid project data" });
+    }
+  });
+
+  app.patch("/api/projects/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const updates = req.body;
+      const project = await storage.updateProject(id, updates);
+      
+      if (!project) {
+        return res.status(404).json({ message: "Project not found" });
+      }
+      
+      res.json(project);
+    } catch (error) {
+      res.status(400).json({ message: "Invalid project data" });
+    }
+  });
+
+  app.delete("/api/projects/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const success = await storage.deleteProject(id);
+      
+      if (!success) {
+        return res.status(404).json({ message: "Project not found" });
+      }
+      
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Event routes
+  app.get("/api/events/:userId", async (req, res) => {
+    try {
+      const userId = parseInt(req.params.userId);
+      const { startDate, endDate } = req.query;
+      const events = await storage.getEvents(
+        userId, 
+        startDate as string, 
+        endDate as string
+      );
+      res.json(events);
+    } catch (error) {
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.post("/api/events", async (req, res) => {
+    try {
+      const eventData = insertEventSchema.parse(req.body);
+      const event = await storage.createEvent(eventData);
+      res.json(event);
+    } catch (error) {
+      res.status(400).json({ message: "Invalid event data" });
+    }
+  });
+
+  app.patch("/api/events/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const updates = req.body;
+      const event = await storage.updateEvent(id, updates);
+      
+      if (!event) {
+        return res.status(404).json({ message: "Event not found" });
+      }
+      
+      res.json(event);
+    } catch (error) {
+      res.status(400).json({ message: "Invalid event data" });
+    }
+  });
+
+  app.delete("/api/events/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const success = await storage.deleteEvent(id);
+      
+      if (!success) {
+        return res.status(404).json({ message: "Event not found" });
       }
       
       res.json({ success: true });
