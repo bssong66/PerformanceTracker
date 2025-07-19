@@ -39,21 +39,24 @@ Preferred communication style: Simple, everyday language.
 - Annual goal setting connected to mission and values
 - Database tables: `foundations`, `annualGoals`
 
-### 2. Task Management with ABC Priority System
+### 2. Project Management System
+- Project creation and lifecycle management
+- Project prioritization (high/medium/low)
+- Status tracking (planning/in-progress/completed)
+- Visual project identification with color coding
+- Database table: `projects`
+
+### 3. Task Management with ABC Priority System
 - A-level: Critical and urgent tasks
 - B-level: Important but not urgent tasks
 - C-level: Nice-to-have tasks that can be postponed
+- Project-based task organization
 - Database table: `tasks` with priority field
-
-### 3. Multi-level Planning System
-- Monthly planning: Core objectives and important events
-- Weekly planning: Big 3 goals + key appointments
-- Daily planning: ABC tasks + time blocks
-- Time blocking: 2-hour segments for focused work
 
 ### 4. Two-page Daily Management
 - Left page: Today's schedule and prioritized tasks
 - Right page: Completion tracking, notes, and daily reflection
+- Integration with project-based tasks
 - Database tables: `tasks`, `timeBlocks`, `dailyReflections`
 
 ### 5. Weekly Review System
@@ -142,5 +145,12 @@ Preferred communication style: Simple, everyday language.
 ├── migrations/      # Database migration files
 └── attached_assets/ # Project documentation and requirements
 ```
+
+### Recent Changes (July 19, 2025)
+- Removed task management, event scheduling, and calendar features from Planning page
+- Simplified Planning page to focus solely on project management
+- Maintained project-task relationships for Daily Planning page integration
+- Kept project color coding for visual task identification
+- Planning page now serves as dedicated project lifecycle management tool
 
 The application follows a monorepo structure with clear separation between frontend, backend, and shared code, enabling efficient development and deployment workflows.
