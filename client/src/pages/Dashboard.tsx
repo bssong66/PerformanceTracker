@@ -27,14 +27,14 @@ export default function Dashboard() {
 
   // Calculate task statistics
   const taskStats = {
-    total: tasks.length,
-    completed: tasks.filter((t: any) => t.completed).length,
-    aPriority: tasks.filter((t: any) => t.priority === 'A').length,
-    bPriority: tasks.filter((t: any) => t.priority === 'B').length,
-    cPriority: tasks.filter((t: any) => t.priority === 'C').length,
-    aCompleted: tasks.filter((t: any) => t.priority === 'A' && t.completed).length,
-    bCompleted: tasks.filter((t: any) => t.priority === 'B' && t.completed).length,
-    cCompleted: tasks.filter((t: any) => t.priority === 'C' && t.completed).length,
+    total: (tasks as any[]).length,
+    completed: (tasks as any[]).filter((t: any) => t.completed).length,
+    aPriority: (tasks as any[]).filter((t: any) => t.priority === 'A').length,
+    bPriority: (tasks as any[]).filter((t: any) => t.priority === 'B').length,
+    cPriority: (tasks as any[]).filter((t: any) => t.priority === 'C').length,
+    aCompleted: (tasks as any[]).filter((t: any) => t.priority === 'A' && t.completed).length,
+    bCompleted: (tasks as any[]).filter((t: any) => t.priority === 'B' && t.completed).length,
+    cCompleted: (tasks as any[]).filter((t: any) => t.priority === 'C' && t.completed).length,
   };
 
   const weeklyProgress = taskStats.total > 0 
@@ -239,14 +239,14 @@ export default function Dashboard() {
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                {timeBlocks.length === 0 ? (
+                {(timeBlocks as any[]).length === 0 ? (
                   <div className="text-center text-gray-500 py-8">
                     <BarChart3 className="h-12 w-12 mx-auto mb-2 text-gray-300" />
                     <p>등록된 시간 블록이 없습니다.</p>
                     <p className="text-sm">일일 관리에서 시간을 계획해보세요.</p>
                   </div>
                 ) : (
-                  timeBlocks.map((block: any) => (
+                  (timeBlocks as any[]).map((block: any) => (
                     <div 
                       key={block.id}
                       className="flex items-center justify-between py-2 px-3 rounded-md border border-gray-200"
@@ -274,17 +274,17 @@ export default function Dashboard() {
         </div>
 
         {/* Daily Habits Quick View */}
-        {habits.length > 0 && (
+        {(habits as any[]).length > 0 && (
           <Card className="mt-8">
             <CardHeader>
               <CardTitle className="flex items-center space-x-2">
-                <Repeat className="h-5 w-5" />
+                <TrendingUp className="h-5 w-5" />
                 <span>오늘의 습관</span>
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                {habits.slice(0, 3).map((habit: any) => (
+                {(habits as any[]).slice(0, 3).map((habit: any) => (
                   <div key={habit.id} className="text-center p-4 border rounded-lg">
                     <h4 className="font-medium text-gray-900">{habit.name}</h4>
                     <div className="mt-2">

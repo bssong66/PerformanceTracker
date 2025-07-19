@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -31,16 +31,16 @@ export default function Foundation() {
   });
 
   // Set initial values when foundation data loads
-  useState(() => {
+  useEffect(() => {
     if (foundation) {
-      setMission(foundation.personalMission || "");
+      setMission((foundation as any).personalMission || "");
       setValues([
-        foundation.coreValue1 || "",
-        foundation.coreValue2 || "",
-        foundation.coreValue3 || "",
+        (foundation as any).coreValue1 || "",
+        (foundation as any).coreValue2 || "",
+        (foundation as any).coreValue3 || "",
       ]);
     }
-  });
+  }, [foundation]);
 
   const saveFoundationMutation = useMutation({
     mutationFn: saveFoundation,
@@ -220,7 +220,7 @@ export default function Foundation() {
                 
                 {/* Existing Goals */}
                 <div className="space-y-3">
-                  {goals.map((goal: any) => (
+                  {(goals as any[]).map((goal: any) => (
                     <div key={goal.id} className="flex items-center space-x-3">
                       <Input
                         value={goal.title}
@@ -257,7 +257,7 @@ export default function Foundation() {
                   </div>
                 </div>
 
-                {goals.length === 0 && (
+                {(goals as any[]).length === 0 && (
                   <div className="text-center text-gray-500 py-8">
                     <div className="text-sm">아직 설정된 연간 목표가 없습니다.</div>
                     <div className="text-sm">위에서 첫 번째 목표를 추가해보세요.</div>

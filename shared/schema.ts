@@ -98,6 +98,10 @@ export const timeBlocks = pgTable("time_blocks", {
 });
 
 // Insert schemas
+export const insertUserSchema = createInsertSchema(users).omit({
+  id: true,
+});
+
 export const insertFoundationSchema = createInsertSchema(foundations).omit({
   id: true,
   createdAt: true,
@@ -144,7 +148,7 @@ export const insertTimeBlockSchema = createInsertSchema(timeBlocks).omit({
 
 // Types
 export type User = typeof users.$inferSelect;
-export type InsertUser = z.infer<typeof insertFoundationSchema>;
+export type InsertUser = z.infer<typeof insertUserSchema>;
 
 export type Foundation = typeof foundations.$inferSelect;
 export type InsertFoundation = z.infer<typeof insertFoundationSchema>;

@@ -24,11 +24,16 @@ export default function DailyPlanning() {
   const [newTask, setNewTask] = useState("");
   const [selectedPriority, setSelectedPriority] = useState<'A' | 'B' | 'C'>('B');
   const [reflection, setReflection] = useState("");
-  const [newTimeBlock, setNewTimeBlock] = useState({
+  const [newTimeBlock, setNewTimeBlock] = useState<{
+    startTime: string;
+    endTime: string;
+    title: string;
+    type: "focus" | "meeting" | "break";
+  }>({
     startTime: "",
     endTime: "",
     title: "",
-    type: "focus" as const,
+    type: "focus",
   });
 
   const { data: tasks = [], isLoading: tasksLoading } = useQuery({
@@ -129,9 +134,9 @@ export default function DailyPlanning() {
 
   // Group tasks by priority
   const tasksByPriority = {
-    A: tasks.filter((t: any) => t.priority === 'A'),
-    B: tasks.filter((t: any) => t.priority === 'B'),
-    C: tasks.filter((t: any) => t.priority === 'C'),
+    A: (tasks as any[]).filter((t: any) => t.priority === 'A'),
+    B: (tasks as any[]).filter((t: any) => t.priority === 'B'),
+    C: (tasks as any[]).filter((t: any) => t.priority === 'C'),
   };
 
   if (tasksLoading) {
@@ -333,10 +338,10 @@ export default function DailyPlanning() {
 
                 {/* Time Block List */}
                 <div className="space-y-2">
-                  {timeBlocks.length === 0 ? (
+                  {(timeBlocks as any[]).length === 0 ? (
                     <p className="text-sm text-gray-500 italic">등록된 시간 블록이 없습니다.</p>
                   ) : (
-                    timeBlocks.map((block: any) => (
+                    (timeBlocks as any[]).map((block: any) => (
                       <div 
                         key={block.id}
                         className="flex items-center justify-between py-2 px-3 rounded-md border border-gray-200"
@@ -365,13 +370,13 @@ export default function DailyPlanning() {
               <div>
                 <h4 className="text-sm font-semibold text-gray-900 mb-3">오늘의 습관</h4>
                 <div className="space-y-2">
-                  {habits.length === 0 ? (
+                  {(habits as any[]).length === 0 ? (
                     <p className="text-sm text-gray-500 italic">
                       등록된 습관이 없습니다. 습관 관리에서 추가해보세요.
                     </p>
                   ) : (
-                    habits.slice(0, 3).map((habit: any) => {
-                      const log = habitLogs.find((l: any) => l.habitId === habit.id);
+                    (habits as any[]).slice(0, 3).map((habit: any) => {
+                      const log = (habitLogs as any[]).find((l: any) => l.habitId === habit.id);
                       return (
                         <div key={habit.id} className="flex items-center justify-between">
                           <span className="text-sm text-gray-900">{habit.name}</span>
@@ -398,7 +403,7 @@ export default function DailyPlanning() {
                 <h4 className="text-sm font-semibold text-gray-900 mb-3">하루 성찰</h4>
                 <Textarea
                   placeholder="오늘 하루를 돌아보며 한 줄로 기록해보세요..."
-                  value={reflection || dailyReflection?.reflection || ""}
+                  value={reflection || (dailyReflection as any)?.reflection || ""}
                   onChange={(e) => setReflection(e.target.value)}
                   rows={3}
                   className="resize-none"
@@ -417,13 +422,13 @@ export default function DailyPlanning() {
               <div>
                 <h4 className="text-sm font-semibold text-gray-900 mb-3">내일로 이월</h4>
                 <div className="space-y-2">
-                  {tasks.filter((t: any) => !t.completed).length === 0 ? (
+                  {(tasks as any[]).filter((t: any) => !t.completed).length === 0 ? (
                     <p className="text-sm text-green-600 italic">
                       훌륭합니다! 모든 할일을 완료했습니다.
                     </p>
                   ) : (
                     <div className="text-sm text-gray-600">
-                      미완료 할일 {tasks.filter((t: any) => !t.completed).length}개가 내일로 이월됩니다.
+                      미완료 할일 {(tasks as any[]).filter((t: any) => !t.completed).length}개가 내일로 이월됩니다.
                     </div>
                   )}
                 </div>

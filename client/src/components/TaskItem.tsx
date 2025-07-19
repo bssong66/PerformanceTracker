@@ -37,7 +37,7 @@ export function TaskItem({
   return (
     <div className="flex items-center space-x-3 group py-2">
       <Checkbox
-        checked={isCompleted}
+        checked={!!isCompleted}
         onCheckedChange={handleToggle}
         className="h-4 w-4"
       />
