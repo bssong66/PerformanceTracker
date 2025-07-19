@@ -1,0 +1,196 @@
+# 개인성과 관리앱
+
+플랭크린 플래너와 동일한 기능을 가진 개인 플래닝 도구
+
+## 🚀 Features
+
+- 1. 가치 중심 계획 (Foundation)
+- -개인 미션 작성: 한 문장으로 표현하는 인생의 목적
+- -핵심 가치 3가지: 의사결정 기준이 되는 개인 가치
+- -연간 목표: 미션과 연결된 올해의 핵심 목표 설정
+- 2. A-B-C 우선순위 시스템
+- -A급: 반드시 해야 하는 중요하고 긴급한 일
+- -B급: 중요하지만 긴급하지 않은 일 (계획적 실행)
+- -C급: 하면 좋지만 미뤄도 되는 일
+- -우선순위 자동 제안: 설정된 가치와 목표 기반 추천
+- 3. 4단계 계획 시스템
+- -월간 계획: 이달의 핵심 목표와 중요 일정
+- -주간 계획: 이번 주 Big 3 + 주요 약속
+- -일간 계획: 오늘의 A-B-C 할일 + 시간대별 약속
+- -시간 블록: 2시간 단위 시간표 (약속 vs 집중업무 구분)
+- 4. 투 페이지 일일 관리
+- 좌측 페이지 (계획)
+- -오늘의 약속 (시간대별)
+- -A급 할일 (최대 3개)
+- -B급 할일 (최대 5개)
+- -C급 할일 (나머지)
+- 우측 페이지 (기록)
+- -완료 체크
+- -간단 메모
+- -내일로 이월할 일
+- -하루 한 줄 성찰
+- 5. 주간 리뷰
+- -이번 주 성과: 완료한 A급, B급 업무 확인
+- -다음 주 준비: 새로운 우선순위 설정
+- 균형 체크: 일과 개인 시간 비율 점검
+- -가치 점검: 이번 주 활동이 개인 가치와 일치했는지 확인
+- 6. 심플 대시보드
+- -오늘 할일 개수: A()/B()/C() 형태로 표시
+- -이번 주 진행률: 계획 대비 완료율 퍼센트
+- -월간 목표 상태: 목표별 진행 상황 간단 표시
+- -다음 중요 일정: 앞으로 3일 내 주요 약속
+- 7. 미니멀 입력
+- -2분 규칙: 2분 이내 처리 가능한 일은 바로 실행
+- -빠른 할일 추가: 한 줄로 간단히 입력 후 자동 분류 제안
+- -음성 입력: 이동 중 음성으로 할일 추가
+- -템플릿: 반복되는 업무는 템플릿으로 저장
+- 8. 포커스 모드
+- -A급 업무 집중: A급 할일만 화면에 표시
+- -방해금지: 설정 시간 동안 알림 차단
+- -25분 타이머: 집중 업무용 포모도로 타이머
+- -완료 체크: 간단한 체크로 성취감 제공
+- 9. 기본 동기화
+- -클라우드 백업: 계획과 기록 자동 저장
+- -멀티 기기: 폰, 태블릿, 컴퓨터에서 동일한 정보
+- -오프라인: 인터넷 없어도 사용 가능
+- -간단 내보내기: 주간/월간 요약을 PDF로 추출
+- 10. 습관 관리
+- -핵심 습관 3개: 목표와 연결된 일일 습관 설정
+- -간단 체크: 했음/안했음 이분법 기록
+- -습관 연속 기록: 연속으로 실행한 날짜 카운트
+- -주간 습관 리뷰: 이번 주 습관 실행률 확인
+
+## 🛠 Tech Stack
+
+- **HTML5**
+- **CSS3**
+- **JavaScript**
+- **React**
+- **Vue.js**
+- **Node.js**
+- **Python**
+- **Bootstrap**
+
+## 📦 Installation
+
+1. Clone the repository
+   ```bash
+   git clone https://github.com/yourusername/개인성과-관리앱.git
+   ```
+
+2. Navigate to the project directory
+   ```bash
+   cd 개인성과-관리앱
+   ```
+
+3. Install dependencies
+   ```bash
+   npm install
+   ```
+
+4. Start the development server
+   ```bash
+   npm start
+   ```
+
+## 🎯 Usage
+
+Open your web browser and navigate to `http://localhost:3000` (or the port specified in your console).
+
+The application will be running and you can start using all the features immediately.
+
+## 📁 Project Structure
+
+```
+개인성과-관리앱/
+├── public/
+│   ├── index.html
+│   └── favicon.ico
+├── src/
+│   ├── components/     # Reusable React components
+│   ├── pages/         # Page components
+│   ├── services/      # API calls and business logic
+│   ├── utils/         # Utility functions
+│   ├── styles/        # CSS/SCSS files
+│   ├── assets/        # Images, fonts, etc.
+│   ├── App.js         # Main App component
+│   └── index.js       # Entry point
+├── package.json
+└── README.md
+```
+
+## 🎨 Design
+
+This project follows a **minimalist** design approach with minimalist aesthetics.
+
+### Key Design Principles
+- User-centered design
+- Accessibility-first approach
+- Responsive and mobile-friendly
+- Clean and intuitive interface
+
+## 🧪 Testing
+
+To run tests:
+
+```bash
+npm test
+```
+
+For coverage report:
+
+```bash
+npm run test:coverage
+```
+
+## 🚀 Deployment
+
+### Development
+```bash
+npm run dev
+```
+
+### Production Build
+```bash
+npm run build
+```
+
+### Deploy
+```bash
+npm run deploy
+```
+
+## 📈 Performance
+
+- Fast loading times
+- Optimized for mobile devices
+- SEO-friendly
+- Accessible (WCAG 2.1 AA compliant)
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
+
+## 📝 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 📞 Contact
+
+- **Project Maintainer**: Your Name
+- **Email**: your.email@example.com
+- **Project Link**: [https://github.com/yourusername/개인성과-관리앱](https://github.com/yourusername/개인성과-관리앱)
+
+## 🙏 Acknowledgments
+
+- Thanks to all contributors who helped build this project
+- Inspired by modern 웹 애플리케이션 best practices
+- Built with ❤️ for 자기개발에 관심있는 모든 개인
+
+---
+
+⭐ If you found this project helpful, please give it a star!
