@@ -12,6 +12,7 @@ interface TaskItemProps {
   onDelete?: (id: number) => void;
   showTime?: boolean;
   showPriority?: boolean;
+  project?: any;
 }
 
 export function TaskItem({ 
@@ -19,7 +20,8 @@ export function TaskItem({
   onToggleComplete, 
   onDelete, 
   showTime = false,
-  showPriority = true 
+  showPriority = true,
+  project
 }: TaskItemProps) {
   const [isCompleted, setIsCompleted] = useState(task.completed);
 
@@ -46,15 +48,32 @@ export function TaskItem({
         <PriorityBadge priority={task.priority as Priority} size="sm" />
       )}
       
-      <span 
-        className={`flex-1 text-sm ${
-          isCompleted 
-            ? 'line-through text-gray-500' 
-            : 'text-gray-900'
-        }`}
-      >
-        {task.title}
-      </span>
+      <div className="flex-1">
+        <div className="flex items-center space-x-2">
+          {project && (
+            <div 
+              className="w-3 h-3 rounded-full" 
+              style={{ backgroundColor: project.color }}
+              title={project.name}
+            />
+          )}
+          <span 
+            className={`text-sm ${
+              isCompleted 
+                ? 'line-through text-gray-500' 
+                : 'text-gray-900'
+            }`}
+          >
+            {task.title}
+          </span>
+        </div>
+        {project && (
+          <p className="text-xs text-gray-400 mt-1">{project.name}</p>
+        )}
+        {task.notes && (
+          <p className="text-xs text-gray-500 mt-1">{task.notes}</p>
+        )}
+      </div>
       
       {showTime && task.timeEstimate && (
         <div className="flex items-center text-xs text-gray-500 space-x-1">

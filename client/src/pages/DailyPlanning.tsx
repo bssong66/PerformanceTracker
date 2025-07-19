@@ -43,6 +43,11 @@ export default function DailyPlanning() {
     queryFn: () => fetch(api.tasks.list(MOCK_USER_ID, today)).then(res => res.json()),
   });
 
+  const { data: projects = [] } = useQuery({
+    queryKey: ['projects', MOCK_USER_ID],
+    queryFn: () => fetch(`/api/projects/${MOCK_USER_ID}`).then(res => res.json()),
+  });
+
   const { data: timeBlocks = [] } = useQuery({
     queryKey: ['timeBlocks', MOCK_USER_ID, today],
     queryFn: () => fetch(api.timeBlocks.list(MOCK_USER_ID, today)).then(res => res.json()),
@@ -275,15 +280,19 @@ export default function DailyPlanning() {
                   {tasksByPriority.A.length === 0 ? (
                     <p className="text-sm text-gray-500 italic">A급 할일이 없습니다.</p>
                   ) : (
-                    tasksByPriority.A.map((task: any) => (
-                      <TaskItem
-                        key={task.id}
-                        task={task}
-                        onToggleComplete={handleToggleTask}
-                        showPriority={false}
-                        showTime
-                      />
-                    ))
+                    tasksByPriority.A.map((task: any) => {
+                      const project = (projects as any[]).find(p => p.id === task.projectId);
+                      return (
+                        <TaskItem
+                          key={task.id}
+                          task={task}
+                          onToggleComplete={handleToggleTask}
+                          showPriority={false}
+                          showTime
+                          project={project}
+                        />
+                      );
+                    })
                   )}
                 </div>
               </div>
@@ -300,15 +309,19 @@ export default function DailyPlanning() {
                   {tasksByPriority.B.length === 0 ? (
                     <p className="text-sm text-gray-500 italic">B급 할일이 없습니다.</p>
                   ) : (
-                    tasksByPriority.B.map((task: any) => (
-                      <TaskItem
-                        key={task.id}
-                        task={task}
-                        onToggleComplete={handleToggleTask}
-                        showPriority={false}
-                        showTime
-                      />
-                    ))
+                    tasksByPriority.B.map((task: any) => {
+                      const project = (projects as any[]).find(p => p.id === task.projectId);
+                      return (
+                        <TaskItem
+                          key={task.id}
+                          task={task}
+                          onToggleComplete={handleToggleTask}
+                          showPriority={false}
+                          showTime
+                          project={project}
+                        />
+                      );
+                    })
                   )}
                 </div>
               </div>
@@ -323,15 +336,19 @@ export default function DailyPlanning() {
                   {tasksByPriority.C.length === 0 ? (
                     <p className="text-sm text-gray-500 italic">C급 할일이 없습니다.</p>
                   ) : (
-                    tasksByPriority.C.map((task: any) => (
-                      <TaskItem
-                        key={task.id}
-                        task={task}
-                        onToggleComplete={handleToggleTask}
-                        showPriority={false}
-                        showTime
-                      />
-                    ))
+                    tasksByPriority.C.map((task: any) => {
+                      const project = (projects as any[]).find(p => p.id === task.projectId);
+                      return (
+                        <TaskItem
+                          key={task.id}
+                          task={task}
+                          onToggleComplete={handleToggleTask}
+                          showPriority={false}
+                          showTime
+                          project={project}
+                        />
+                      );
+                    })
                   )}
                 </div>
               </div>
