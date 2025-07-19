@@ -258,42 +258,14 @@ export default function Planning() {
         <div className="mb-8">
           <h1 className="text-2xl font-bold text-gray-900">계획 수립</h1>
           <p className="text-sm text-gray-600">
-            프로젝트, 할일, 일정을 체계적으로 관리하세요
+            프로젝트를 체계적으로 관리하세요
           </p>
         </div>
 
-        {/* Tab Navigation */}
-        <div className="mb-6">
-          <div className="border-b border-gray-200">
-            <nav className="-mb-px flex space-x-8">
-              {[
-                { key: 'projects', label: '프로젝트', icon: FolderPlus },
-                { key: 'tasks', label: '할일', icon: CheckCircle },
-                { key: 'events', label: '일정', icon: Calendar },
-                { key: 'calendar', label: '캘린더', icon: Calendar }
-              ].map(tab => {
-                const Icon = tab.icon;
-                return (
-                  <button
-                    key={tab.key}
-                    onClick={() => setActiveTab(tab.key as any)}
-                    className={`py-2 px-1 border-b-2 font-medium text-sm flex items-center space-x-2 ${
-                      activeTab === tab.key
-                        ? 'border-blue-500 text-blue-600'
-                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                    }`}
-                  >
-                    <Icon className="w-4 h-4" />
-                    <span>{tab.label}</span>
-                  </button>
-                );
-              })}
-            </nav>
-          </div>
-        </div>
 
-        {/* Projects Tab */}
-        {activeTab === 'projects' && (
+
+        {/* Projects Management */}
+        {(
           <div className="space-y-6">
             {/* Create Project */}
             <Card>
@@ -525,8 +497,6 @@ export default function Planning() {
             </div>
           </div>
         )}
-
-        {/* Tasks Tab */}
         {activeTab === 'tasks' && (
           <div className="space-y-6">
             {/* Header */}
