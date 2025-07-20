@@ -279,6 +279,36 @@ export default function Planning() {
     }
   });
 
+  // 프로젝트 삭제 mutation
+  const deleteProjectMutation = useMutation({
+    mutationFn: async (projectId: number) => {
+      const response = await fetch(`/api/projects/${projectId}`, {
+        method: 'DELETE'
+      });
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['projects', MOCK_USER_ID] });
+      queryClient.invalidateQueries({ queryKey: ['tasks-all', MOCK_USER_ID] });
+      setSelectedProject(null);
+      toast({ title: "프로젝트 삭제", description: "프로젝트가 삭제되었습니다." });
+    }
+  });
+
+  // 프로젝트 할일 삭제 mutation
+  const deleteProjectTaskMutation = useMutation({
+    mutationFn: async (taskId: number) => {
+      const response = await fetch(`/api/tasks/${taskId}`, {
+        method: 'DELETE'
+      });
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['tasks-all', MOCK_USER_ID] });
+      toast({ title: "할일 삭제", description: "프로젝트 할일이 삭제되었습니다." });
+    }
+  });
+
   const handleCreateProject = () => {
     if (newProject.name.trim()) {
       createProjectMutation.mutate(newProject, {
@@ -566,6 +596,39 @@ export default function Planning() {
       deleteIndependentTaskMutation.mutate(taskId);
       // 해당 할일의 이미지도 삭제
       setIndependentTaskImages(prev => {
+        const newImages = { ...prev };
+        delete newImages[taskId];
+        return newImages;
+      });
+    }
+  };
+
+  const handleDeleteProject = (projectId: number) => {
+    if (confirm('이 프로젝트와 관련된 모든 할일이 함께 삭제됩니다. 계속하시겠습니까?')) {
+      deleteProjectMutation.mutate(projectId);
+      // 해당 프로젝트의 이미지도 삭제
+      setProjectImages(prev => {
+        const newImages = { ...prev };
+        delete newImages[projectId];
+        return newImages;
+      });
+      // 해당 프로젝트의 모든 할일 이미지도 삭제
+      const projectTasksToDelete = (allTasks as any[]).filter((task: any) => task.projectId === projectId);
+      projectTasksToDelete.forEach(task => {
+        setTaskImages(prev => {
+          const newImages = { ...prev };
+          delete newImages[task.id];
+          return newImages;
+        });
+      });
+    }
+  };
+
+  const handleDeleteProjectTask = (taskId: number) => {
+    if (confirm('이 할일을 삭제하시겠습니까?')) {
+      deleteProjectTaskMutation.mutate(taskId);
+      // 해당 할일의 이미지도 삭제
+      setTaskImages(prev => {
         const newImages = { ...prev };
         delete newImages[taskId];
         return newImages;
@@ -1101,6 +1164,16 @@ export default function Planning() {
                       >
                         취소
                       </Button>
+                      <Button
+                        variant="outline"
+                        onClick={() => {
+                          handleDeleteProjectTask(selectedTaskDetail.id);
+                          setIsTaskDetailOpen(false);
+                        }}
+                        className="text-red-500 hover:text-red-700"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
                     </div>
                   </div>
                 ) : (
@@ -1191,6 +1264,21 @@ export default function Planning() {
                           </div>
                         )}
                       </div>
+                    </div>
+
+                    {/* 삭제 버튼 (보기 모드에서만 표시) */}
+                    <div className="pt-4 border-t border-gray-200">
+                      <Button
+                        variant="outline"
+                        onClick={() => {
+                          handleDeleteProjectTask(selectedTaskDetail.id);
+                          setIsTaskDetailOpen(false);
+                        }}
+                        className="w-full text-red-500 hover:text-red-700 hover:bg-red-50"
+                      >
+                        <Trash2 className="h-4 w-4 mr-2" />
+                        할일 삭제
+                      </Button>
                     </div>
                   </div>
                 )}
@@ -1404,6 +1492,17 @@ export default function Planning() {
                                 >
                                   <Edit3 className="h-4 w-4" />
                                 </Button>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleDeleteProject(project.id);
+                                  }}
+                                  className="p-1 h-8 w-8 text-red-500 hover:text-red-700"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
                               </div>
                             </div>
                             {project.description && (
@@ -1543,6 +1642,17 @@ export default function Planning() {
                                                   {task.notes && (
                                                     <FileText className="h-3 w-3 text-gray-400" />
                                                   )}
+                                                  <Button
+                                                    size="sm"
+                                                    variant="ghost"
+                                                    onClick={(e) => {
+                                                      e.stopPropagation();
+                                                      handleDeleteProjectTask(task.id);
+                                                    }}
+                                                    className="h-6 w-6 p-0 text-red-500 hover:text-red-700"
+                                                  >
+                                                    <Trash2 className="h-3 w-3" />
+                                                  </Button>
                                                 </div>
                                               </div>
 
