@@ -887,6 +887,31 @@ export default function Planning() {
                       </div>
                     )}
 
+                    {/* 업로드된 이미지 표시 */}
+                    {(taskImages[selectedTaskDetail.id] || []).length > 0 && (
+                      <div>
+                        <Label className="text-sm font-medium text-gray-700">첨부 이미지</Label>
+                        <div className="mt-2 grid grid-cols-3 gap-2">
+                          {(taskImages[selectedTaskDetail.id] || []).map((image, index) => (
+                            <div key={index} className="relative">
+                              <img
+                                src={URL.createObjectURL(image)}
+                                alt={`할일 이미지 ${index + 1}`}
+                                className="w-full h-20 object-cover rounded border cursor-pointer hover:opacity-75 transition-opacity"
+                                onClick={() => {
+                                  // 클릭 시 이미지를 새 창에서 열기
+                                  const newWindow = window.open();
+                                  if (newWindow) {
+                                    newWindow.document.write(`<img src="${URL.createObjectURL(image)}" style="max-width: 100%; height: auto;" />`);
+                                  }
+                                }}
+                              />
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
                     <div>
                       <Label className="text-sm font-medium text-gray-700">상태</Label>
                       <div className="mt-1 flex items-center">
