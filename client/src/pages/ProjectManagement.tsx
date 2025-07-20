@@ -8,7 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { Plus, Folder, Camera, Eye, Trash2 } from 'lucide-react';
+import { Plus, Folder, Camera, Eye, Trash2, Edit } from 'lucide-react';
 
 const MOCK_USER_ID = 1;
 
@@ -345,82 +345,83 @@ export default function ProjectManagement() {
         </Dialog>
       </div>
 
-      {/* Projects Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      {/* Projects List */}
+      <div className="space-y-3">
         {projects.map((project: Project) => (
           <div
             key={project.id}
             className="bg-white rounded-lg border shadow-sm hover:shadow-md transition-shadow"
           >
             <div
-              className="h-3 rounded-t-lg"
+              className="h-1 rounded-t-lg"
               style={{ backgroundColor: project.color }}
             />
             
             <div className="p-4">
-              <div className="flex items-start justify-between mb-2">
-                <div className="flex items-center space-x-2">
-                  <Folder className="h-5 w-5 text-gray-500" />
-                  <h3 className="font-medium text-gray-900 truncate">{project.title}</h3>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-3 flex-1 min-w-0">
+                  <Folder className="h-5 w-5 text-gray-500 flex-shrink-0" />
+                  
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-medium text-gray-900 truncate">{project.title}</h3>
+                    {project.description && (
+                      <p className="text-sm text-gray-600 truncate mt-1">
+                        {project.description}
+                      </p>
+                    )}
+                  </div>
                 </div>
                 
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => deleteProjectMutation.mutate(project.id)}
-                  className="text-red-500 hover:text-red-700 h-8 w-8 p-0"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              </div>
+                <div className="flex items-center space-x-3 flex-shrink-0">
+                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                    project.priority === 'high' ? 'bg-red-100 text-red-800' :
+                    project.priority === 'medium' ? 'bg-yellow-100 text-yellow-800' :
+                    'bg-green-100 text-green-800'
+                  }`}>
+                    {project.priority === 'high' ? '높음' :
+                     project.priority === 'medium' ? '보통' : '낮음'}
+                  </span>
+                  
+                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                    project.status === 'completed' ? 'bg-green-100 text-green-800' :
+                    project.status === 'in-progress' ? 'bg-blue-100 text-blue-800' :
+                    'bg-gray-100 text-gray-800'
+                  }`}>
+                    {project.status === 'planning' ? '계획중' :
+                     project.status === 'in-progress' ? '진행중' : '완료'}
+                  </span>
 
-              {project.description && (
-                <p className="text-sm text-gray-600 mb-3 line-clamp-2">
-                  {project.description}
-                </p>
-              )}
-
-              <div className="flex items-center justify-between text-xs">
-                <span className={`px-2 py-1 rounded-full font-medium ${
-                  project.priority === 'high' ? 'bg-red-100 text-red-800' :
-                  project.priority === 'medium' ? 'bg-yellow-100 text-yellow-800' :
-                  'bg-green-100 text-green-800'
-                }`}>
-                  {project.priority === 'high' ? '높음' :
-                   project.priority === 'medium' ? '보통' : '낮음'}
-                </span>
-                
-                <span className={`px-2 py-1 rounded-full font-medium ${
-                  project.status === 'completed' ? 'bg-green-100 text-green-800' :
-                  project.status === 'in-progress' ? 'bg-blue-100 text-blue-800' :
-                  'bg-gray-100 text-gray-800'
-                }`}>
-                  {project.status === 'planning' ? '계획중' :
-                   project.status === 'in-progress' ? '진행중' : '완료'}
-                </span>
-              </div>
-
-              <div className="flex items-center justify-between mt-3">
-                {project.imageUrl && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setViewingImage(project.imageUrl!)}
-                    className="flex items-center space-x-1"
-                  >
-                    <Eye className="h-3 w-3" />
-                    <span>이미지</span>
-                  </Button>
-                )}
-                
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => openEditDialog(project)}
-                  className="ml-auto"
-                >
-                  수정
-                </Button>
+                  <div className="flex items-center space-x-1">
+                    {project.imageUrl && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setViewingImage(project.imageUrl!)}
+                        className="h-8 w-8 p-0"
+                      >
+                        <Eye className="h-4 w-4" />
+                      </Button>
+                    )}
+                    
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => openEditDialog(project)}
+                      className="h-8 w-8 p-0"
+                    >
+                      <Edit className="h-4 w-4" />
+                    </Button>
+                    
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => deleteProjectMutation.mutate(project.id)}
+                      className="text-red-500 hover:text-red-700 h-8 w-8 p-0"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
