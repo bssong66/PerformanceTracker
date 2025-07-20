@@ -45,7 +45,7 @@ export default function Planning() {
   const [isEditingTask, setIsEditingTask] = useState(false);
   const [editingTaskData, setEditingTaskData] = useState<any>(null);
   const [taskImages, setTaskImages] = useState<{ [taskId: number]: File[] }>({});
-  const [projectImages, setProjectImages] = useState<File[]>([]);
+  const [projectImages, setProjectImages] = useState<{ [projectId: number]: File[] }>({});
   const [newProject, setNewProject] = useState({
     name: '',
     description: '',
@@ -177,7 +177,7 @@ export default function Planning() {
   const handleCreateProject = () => {
     if (newProject.name.trim()) {
       createProjectMutation.mutate(newProject);
-      setProjectImages([]);
+      setProjectImages({});
     }
   };
 
@@ -248,10 +248,13 @@ export default function Planning() {
     }
   };
 
-  const handleProjectImageUpload = (files: FileList | null) => {
+  const handleProjectImageUpload = (files: FileList | null, projectId: number) => {
     if (files) {
       const newImages = Array.from(files).filter(file => file.type.startsWith('image/'));
-      setProjectImages(prev => [...prev, ...newImages]);
+      setProjectImages(prev => ({
+        ...prev,
+        [projectId]: [...(prev[projectId] || []), ...newImages]
+      }));
     }
   };
 
@@ -262,8 +265,11 @@ export default function Planning() {
     }));
   };
 
-  const removeProjectImage = (index: number) => {
-    setProjectImages(prev => prev.filter((_, i) => i !== index));
+  const removeProjectImage = (projectId: number, index: number) => {
+    setProjectImages(prev => ({
+      ...prev,
+      [projectId]: (prev[projectId] || []).filter((_, i) => i !== index)
+    }));
   };
 
   // 선택된 프로젝트의 날짜 범위 가져오기
@@ -456,7 +462,7 @@ export default function Planning() {
                         type="file"
                         accept="image/*"
                         multiple
-                        onChange={(e) => handleProjectImageUpload(e.target.files)}
+                        onChange={(e) => handleProjectImageUpload(e.target.files, 0)}
                         className="hidden"
                       />
                       <Button
@@ -469,9 +475,9 @@ export default function Planning() {
                         이미지 추가
                       </Button>
                     </div>
-                    {projectImages.length > 0 && (
+                    {(projectImages[0] || []).length > 0 && (
                       <div className="grid grid-cols-3 gap-2">
-                        {projectImages.map((image, index) => (
+                        {(projectImages[0] || []).map((image, index) => (
                           <div key={index} className="relative">
                             <img
                               src={URL.createObjectURL(image)}
@@ -480,7 +486,7 @@ export default function Planning() {
                             />
                             <button
                               type="button"
-                              onClick={() => removeProjectImage(index)}
+                              onClick={() => removeProjectImage(0, index)}
                               className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs"
                             >
                               <X className="h-3 w-3" />
@@ -1010,7 +1016,7 @@ export default function Planning() {
                       type="file"
                       accept="image/*"
                       multiple
-                      onChange={(e) => handleProjectImageUpload(e.target.files)}
+                      onChange={(e) => handleProjectImageUpload(e.target.files, editingProject?.id || 0)}
                       className="hidden"
                     />
                     <Button
@@ -1023,9 +1029,9 @@ export default function Planning() {
                       이미지 추가
                     </Button>
                   </div>
-                  {projectImages.length > 0 && (
+                  {(projectImages[editingProject?.id || 0] || []).length > 0 && (
                     <div className="grid grid-cols-3 gap-2">
-                      {projectImages.map((image, index) => (
+                      {(projectImages[editingProject?.id || 0] || []).map((image, index) => (
                         <div key={index} className="relative">
                           <img
                             src={URL.createObjectURL(image)}
@@ -1034,7 +1040,7 @@ export default function Planning() {
                           />
                           <button
                             type="button"
-                            onClick={() => removeProjectImage(index)}
+                            onClick={() => removeProjectImage(editingProject?.id || 0, index)}
                             className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs"
                           >
                             <X className="h-3 w-3" />
@@ -1132,10 +1138,10 @@ export default function Planning() {
                               >
                                 {project.priority === 'high' ? '높음' : project.priority === 'medium' ? '보통' : '낮음'}
                               </Badge>
-                              {projectImages.length > 0 && (
+                              {(projectImages[project.id] || []).length > 0 && (
                                 <div className="flex items-center text-xs text-gray-500">
                                   <ImageIcon className="h-3 w-3 mr-1" />
-                                  {projectImages.length}
+                                  {(projectImages[project.id] || []).length}
                                 </div>
                               )}
                               <div className="text-sm text-gray-500">
