@@ -45,21 +45,25 @@ export default function HabitManagement() {
   // Fetch habits
   const { data: habits = [] } = useQuery({
     queryKey: ['habits', MOCK_USER_ID],
-    queryFn: () => apiRequest(`/api/habits/${MOCK_USER_ID}`)
+    queryFn: () => fetch(`/api/habits/${MOCK_USER_ID}`).then(res => res.json())
   });
 
   // Fetch today's habit logs
   const { data: habitLogs = [] } = useQuery({
     queryKey: ['habit-logs', MOCK_USER_ID, today],
-    queryFn: () => apiRequest(`/api/habit-logs/${MOCK_USER_ID}/${today}`)
+    queryFn: () => fetch(`/api/habit-logs/${MOCK_USER_ID}/${today}`).then(res => res.json())
   });
 
   // Create habit mutation
   const createHabitMutation = useMutation({
-    mutationFn: (newHabit: any) => apiRequest('/api/habits', {
-      method: 'POST',
-      body: JSON.stringify(newHabit)
-    }),
+    mutationFn: async (newHabit: any) => {
+      const response = await fetch('/api/habits', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newHabit)
+      });
+      return response.json();
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['habits', MOCK_USER_ID] });
       setShowHabitDialog(false);
@@ -70,10 +74,14 @@ export default function HabitManagement() {
 
   // Update habit mutation
   const updateHabitMutation = useMutation({
-    mutationFn: (updatedHabit: Habit) => apiRequest(`/api/habits/${updatedHabit.id}`, {
-      method: 'PATCH',
-      body: JSON.stringify(updatedHabit)
-    }),
+    mutationFn: async (updatedHabit: Habit) => {
+      const response = await fetch(`/api/habits/${updatedHabit.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updatedHabit)
+      });
+      return response.json();
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['habits', MOCK_USER_ID] });
       setShowHabitDialog(false);
@@ -84,9 +92,12 @@ export default function HabitManagement() {
 
   // Delete habit mutation
   const deleteHabitMutation = useMutation({
-    mutationFn: (habitId: number) => apiRequest(`/api/habits/${habitId}`, {
-      method: 'DELETE'
-    }),
+    mutationFn: async (habitId: number) => {
+      const response = await fetch(`/api/habits/${habitId}`, {
+        method: 'DELETE'
+      });
+      return response.json();
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['habits', MOCK_USER_ID] });
       queryClient.invalidateQueries({ queryKey: ['habit-logs', MOCK_USER_ID, today] });
@@ -96,16 +107,19 @@ export default function HabitManagement() {
 
   // Toggle habit log mutation
   const toggleHabitLogMutation = useMutation({
-    mutationFn: ({ habitId, completed }: { habitId: number; completed: boolean }) => 
-      apiRequest('/api/habit-logs', {
+    mutationFn: async ({ habitId, completed }: { habitId: number; completed: boolean }) => {
+      const response = await fetch('/api/habit-logs', {
         method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           habitId,
           date: today,
           completed,
           userId: MOCK_USER_ID
         })
-      }),
+      });
+      return response.json();
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['habit-logs', MOCK_USER_ID, today] });
     }

@@ -48,15 +48,19 @@ export default function ProjectManagement() {
   // Fetch projects
   const { data: projects = [] } = useQuery({
     queryKey: ['projects', MOCK_USER_ID],
-    queryFn: () => apiRequest(`/api/projects/${MOCK_USER_ID}`)
+    queryFn: () => fetch(`/api/projects/${MOCK_USER_ID}`).then(res => res.json())
   });
 
   // Create project mutation
   const createProjectMutation = useMutation({
-    mutationFn: (newProject: any) => apiRequest('/api/projects', {
-      method: 'POST',
-      body: JSON.stringify(newProject)
-    }),
+    mutationFn: async (newProject: any) => {
+      const response = await fetch('/api/projects', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newProject)
+      });
+      return response.json();
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['projects', MOCK_USER_ID] });
       setShowProjectDialog(false);
@@ -67,10 +71,14 @@ export default function ProjectManagement() {
 
   // Update project mutation
   const updateProjectMutation = useMutation({
-    mutationFn: (updatedProject: Project) => apiRequest(`/api/projects/${updatedProject.id}`, {
-      method: 'PATCH',
-      body: JSON.stringify(updatedProject)
-    }),
+    mutationFn: async (updatedProject: Project) => {
+      const response = await fetch(`/api/projects/${updatedProject.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updatedProject)
+      });
+      return response.json();
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['projects', MOCK_USER_ID] });
       setShowProjectDialog(false);
@@ -81,9 +89,12 @@ export default function ProjectManagement() {
 
   // Delete project mutation
   const deleteProjectMutation = useMutation({
-    mutationFn: (projectId: number) => apiRequest(`/api/projects/${projectId}`, {
-      method: 'DELETE'
-    }),
+    mutationFn: async (projectId: number) => {
+      const response = await fetch(`/api/projects/${projectId}`, {
+        method: 'DELETE'
+      });
+      return response.json();
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['projects', MOCK_USER_ID] });
       toast({ title: "프로젝트 삭제", description: "프로젝트가 삭제되었습니다." });
