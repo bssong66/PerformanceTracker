@@ -1,9 +1,13 @@
 import { useState, useCallback, useMemo } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Calendar as BigCalendar, momentLocalizer, View, Views } from "react-big-calendar";
+import withDragAndDrop from "react-big-calendar/lib/addons/dragAndDrop";
+import { DndProvider } from "react-dnd";
+import { HTML5Backend } from "react-dnd-html5-backend";
 import moment from "moment";
 import "moment/locale/ko";
 import "react-big-calendar/lib/css/react-big-calendar.css";
+import "react-big-calendar/lib/addons/dragAndDrop/styles.css";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -19,9 +23,10 @@ import { queryClient } from "@/lib/queryClient";
 import { format } from "date-fns";
 import { ko } from "date-fns/locale";
 
-// Setup moment localizer
+// Setup moment localizer and DragAndDrop Calendar
 moment.locale("ko");
 const localizer = momentLocalizer(moment);
+const DnDCalendar = withDragAndDrop(BigCalendar);
 
 // Mock user ID for demo
 const MOCK_USER_ID = 1;
@@ -329,76 +334,77 @@ export default function Calendar() {
   };
 
   return (
-    <div className="py-6">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Header */}
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">일정관리</h1>
-          <p className="text-gray-600">
-            드래그로 일정을 생성하고, 모든 할일과 일정을 한눈에 확인하세요
-          </p>
-        </div>
+    <DndProvider backend={HTML5Backend}>
+      <div className="py-6">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          {/* Header */}
+          <div className="mb-6">
+            <h1 className="text-2xl font-bold text-gray-900 mb-2">일정관리</h1>
+            <p className="text-gray-600">
+              드래그로 일정을 생성하고, 크기 조정 및 이동이 가능합니다
+            </p>
+          </div>
 
-        {/* Calendar */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center justify-between">
-              <div className="flex items-center space-x-2">
-                <CalendarIcon className="h-5 w-5" />
-                <span>달력</span>
+          {/* Calendar */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <CalendarIcon className="h-5 w-5" />
+                  <span>달력</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Badge variant="outline" className="bg-blue-50">
+                    <div className="w-3 h-3 bg-blue-500 rounded mr-2" />
+                    일정 (드래그 가능)
+                  </Badge>
+                  <Badge variant="outline" className="bg-orange-50">
+                    <div className="w-3 h-3 bg-orange-500 rounded mr-2 border-2 border-dashed border-white" />
+                    할일 (읽기 전용)
+                  </Badge>
+                </div>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div style={{ height: '600px' }}>
+                <DnDCalendar
+                  localizer={localizer}
+                  events={calendarEvents}
+                  startAccessor="start"
+                  endAccessor="end"
+                  views={[Views.MONTH, Views.WEEK, Views.DAY]}
+                  view={view}
+                  onView={setView}
+                  date={date}
+                  onNavigate={setDate}
+                  onSelectSlot={handleSelectSlot}
+                  onSelectEvent={handleSelectEvent}
+                  onEventResize={handleEventResize}
+                  onEventDrop={handleEventDrop}
+                  selectable
+                  resizable
+                  resizableAccessor="resizable"
+                  draggableAccessor="draggable"
+                  eventPropGetter={eventStyleGetter}
+                  culture="ko"
+                  messages={{
+                    next: "다음",
+                    previous: "이전",
+                    today: "오늘",
+                    month: "월",
+                    week: "주",
+                    day: "일",
+                    agenda: "일정",
+                    date: "날짜",
+                    time: "시간",
+                    event: "이벤트",
+                    noEventsInRange: "이 범위에는 일정이 없습니다.",
+                    allDay: "종일"
+                  }}
+                />
               </div>
-              <div className="flex items-center space-x-2">
-                <Badge variant="outline" className="bg-blue-50">
-                  <div className="w-3 h-3 bg-blue-500 rounded mr-2" />
-                  일정
-                </Badge>
-                <Badge variant="outline" className="bg-orange-50">
-                  <div className="w-3 h-3 bg-orange-500 rounded mr-2 border-2 border-dashed border-white" />
-                  할일
-                </Badge>
-              </div>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div style={{ height: '600px' }}>
-              <BigCalendar
-                localizer={localizer}
-                events={calendarEvents}
-                startAccessor="start"
-                endAccessor="end"
-                views={[Views.MONTH, Views.WEEK, Views.DAY]}
-                view={view}
-                onView={setView}
-                date={date}
-                onNavigate={setDate}
-                onSelectSlot={handleSelectSlot}
-                onSelectEvent={handleSelectEvent}
-                onEventResize={handleEventResize}
-                onEventDrop={handleEventDrop}
-                selectable
-                resizable
-                resizableAccessor="resizable"
-                draggableAccessor="draggable"
-                eventPropGetter={eventStyleGetter}
-                culture="ko"
-                messages={{
-                  next: "다음",
-                  previous: "이전",
-                  today: "오늘",
-                  month: "월",
-                  week: "주",
-                  day: "일",
-                  agenda: "일정",
-                  date: "날짜",
-                  time: "시간",
-                  event: "이벤트",
-                  noEventsInRange: "이 범위에는 일정이 없습니다.",
-                  allDay: "종일"
-                }}
-              />
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
 
         {/* Event Dialog */}
         <Dialog open={showEventDialog} onOpenChange={(open) => {
@@ -634,7 +640,8 @@ export default function Calendar() {
             </div>
           </DialogContent>
         </Dialog>
+        </div>
       </div>
-    </div>
+    </DndProvider>
   );
 }
