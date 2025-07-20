@@ -176,8 +176,20 @@ export default function Planning() {
 
   const handleCreateProject = () => {
     if (newProject.name.trim()) {
-      createProjectMutation.mutate(newProject);
-      setProjectImages({});
+      createProjectMutation.mutate(newProject, {
+        onSuccess: (data) => {
+          // 임시 ID(0)로 저장된 이미지를 실제 프로젝트 ID로 이전
+          const tempImages = projectImages[0] || [];
+          if (tempImages.length > 0) {
+            setProjectImages(prev => {
+              const newImages = { ...prev };
+              delete newImages[0]; // 임시 이미지 삭제
+              newImages[data.id] = tempImages; // 실제 ID로 이전
+              return newImages;
+            });
+          }
+        }
+      });
     }
   };
 
@@ -251,10 +263,15 @@ export default function Planning() {
   const handleProjectImageUpload = (files: FileList | null, projectId: number) => {
     if (files) {
       const newImages = Array.from(files).filter(file => file.type.startsWith('image/'));
-      setProjectImages(prev => ({
-        ...prev,
-        [projectId]: [...(prev[projectId] || []), ...newImages]
-      }));
+      console.log(`프로젝트 ${projectId}에 이미지 업로드:`, newImages.length, '개');
+      setProjectImages(prev => {
+        const updated = {
+          ...prev,
+          [projectId]: [...(prev[projectId] || []), ...newImages]
+        };
+        console.log('업데이트된 projectImages:', updated);
+        return updated;
+      });
     }
   };
 
@@ -327,6 +344,13 @@ export default function Planning() {
       endDate: project.endDate || ''
     });
     setIsEditProjectOpen(true);
+    // 편집 시 해당 프로젝트의 이미지가 없으면 빈 배열로 초기화
+    if (!projectImages[project.id]) {
+      setProjectImages(prev => ({
+        ...prev,
+        [project.id]: []
+      }));
+    }
   };
 
   const getProjectDateRange = (project: any) => {
@@ -1143,7 +1167,11 @@ export default function Planning() {
                             <div className="flex items-center justify-end space-x-3">
                               <div className="flex items-center text-sm text-gray-600">
                                 <ImageIcon className="h-4 w-4 mr-1" />
-                                {(projectImages[project.id] || []).length}
+                                {(() => {
+                                  const count = (projectImages[project.id] || []).length;
+                                  console.log(`프로젝트 ${project.id} 이미지:`, count, projectImages[project.id]);
+                                  return count;
+                                })()}
                               </div>
                               <div className="text-sm text-gray-600">
                                 {(allTasks as any[]).filter((task: any) => task.projectId === project.id).length}개 할일
