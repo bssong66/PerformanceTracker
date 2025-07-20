@@ -14,7 +14,6 @@ import { queryClient } from "@/lib/queryClient";
 import { Plus, FolderPlus, CheckCircle, Circle, Calendar, Clock, CalendarDays, Edit3, Upload, Image, X, FileText, ImageIcon, ChevronLeft, ChevronRight, FolderOpen, List, CalendarIcon, Trash2 } from "lucide-react";
 import { format } from "date-fns";
 import { ko } from "date-fns/locale";
-import CalendarPage from "./Calendar";
 
 const MOCK_USER_ID = 1;
 
@@ -36,7 +35,7 @@ const priorityColors = {
 
 export default function Planning() {
   const { toast } = useToast();
-  const [activeTab, setActiveTab] = useState('calendar');
+  const [activeTab, setActiveTab] = useState('projects');
   const [selectedProject, setSelectedProject] = useState<number | null>(null);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isTaskDialogOpen, setIsTaskDialogOpen] = useState(false);
@@ -687,10 +686,6 @@ export default function Planning() {
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="calendar" className="flex items-center space-x-2">
-              <CalendarIcon className="h-4 w-4" />
-              <span>일정관리</span>
-            </TabsTrigger>
             <TabsTrigger value="projects" className="flex items-center space-x-2">
               <FolderOpen className="h-4 w-4" />
               <span>프로젝트관리</span>
@@ -698,6 +693,10 @@ export default function Planning() {
             <TabsTrigger value="tasks" className="flex items-center space-x-2">
               <List className="h-4 w-4" />
               <span>할일관리</span>
+            </TabsTrigger>
+            <TabsTrigger value="schedule" className="flex items-center space-x-2">
+              <CalendarIcon className="h-4 w-4" />
+              <span>일정관리</span>
             </TabsTrigger>
           </TabsList>
 
@@ -1989,9 +1988,15 @@ export default function Planning() {
           </TabsContent>
 
           {/* 일정관리 탭 */}
-          <TabsContent value="calendar" className="mt-6">
+          <TabsContent value="schedule" className="mt-6">
             <div className="space-y-6">
-              <CalendarPage />
+              <Card>
+                <CardContent className="py-8 text-center">
+                  <CalendarIcon className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+                  <p className="text-gray-500">일정관리 기능 준비 중입니다.</p>
+                  <p className="text-sm text-gray-400">캘린더 기반의 일정 관리 기능이 추가될 예정입니다.</p>
+                </CardContent>
+              </Card>
             </div>
           </TabsContent>
         </Tabs>

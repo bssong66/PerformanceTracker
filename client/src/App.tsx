@@ -7,6 +7,7 @@ import { Layout } from "@/components/Layout";
 import Dashboard from "@/pages/Dashboard";
 import Foundation from "@/pages/Foundation";
 import DailyPlanning from "@/pages/DailyPlanning";
+import Calendar from "@/pages/Calendar";
 import Planning from "@/pages/Planning";
 import WeeklyReview from "@/pages/WeeklyReview";
 import HabitTracking from "@/pages/HabitTracking";
@@ -20,6 +21,7 @@ function Router() {
         <Route path="/" component={Dashboard} />
         <Route path="/foundation" component={Foundation} />
         <Route path="/daily-planning" component={DailyPlanning} />
+        <Route path="/calendar" component={Calendar} />
         <Route path="/planning" component={Planning} />
         <Route path="/weekly" component={WeeklyReview} />
         <Route path="/habit-tracking" component={HabitTracking} />

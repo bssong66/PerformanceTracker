@@ -173,9 +173,5 @@ Preferred communication style: Simple, everyday language.
 - Recurring instances automatically generated and displayed with 🔄 prefix
 - Original events remain editable while recurring instances are read-only
 - Visual distinction with italic styling and borders for recurring instances
-- **Moved calendar functionality to Planning submenu**
-- Calendar is now integrated as first tab under "계획수립" (Planning) menu
-- Removed standalone calendar menu item for cleaner navigation
-- Calendar functionality accessible via Planning > 일정관리 tab
 
 The application follows a monorepo structure with clear separation between frontend, backend, and shared code, enabling efficient development and deployment workflows.
