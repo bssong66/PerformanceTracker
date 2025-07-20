@@ -31,13 +31,14 @@ export const annualGoals = pgTable("annual_goals", {
 export const projects = pgTable("projects", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").notNull(),
-  name: text("name").notNull(),
+  title: text("title").notNull(),
   description: text("description"),
   color: text("color").default("#3B82F6"), // hex color for calendar display
   priority: text("priority").notNull(), // 'high', 'medium', 'low'
-  status: text("status").default("active"), // 'active', 'completed', 'paused'
+  status: text("status").default("planning"), // 'planning', 'in-progress', 'completed'
   startDate: date("start_date"),
   endDate: date("end_date"),
+  imageUrl: text("image_url"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
