@@ -264,9 +264,8 @@ export default function Planning() {
             <div className="space-y-3">
               {taskList.map((task, index) => (
                 <div key={task.id} className="p-3 border rounded-lg space-y-2">
-                  <div className="flex items-center justify-between mb-1">
-                    <h4 className="text-sm font-medium">할일 {index + 1}</h4>
-                    {taskList.length > 1 && (
+                  {taskList.length > 1 && (
+                    <div className="flex justify-end mb-1">
                       <Button
                         size="sm"
                         variant="ghost"
@@ -275,8 +274,8 @@ export default function Planning() {
                       >
                         제거
                       </Button>
-                    )}
-                  </div>
+                    </div>
+                  )}
                   
                   {/* 첫 번째 줄: 제목과 우선순위 */}
                   <div className="grid grid-cols-3 gap-3">
