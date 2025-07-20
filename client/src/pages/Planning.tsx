@@ -48,6 +48,19 @@ export default function Planning() {
   const [editingTaskData, setEditingTaskData] = useState<any>(null);
   const [taskImages, setTaskImages] = useState<{ [taskId: number]: File[] }>({});
   
+  // 독립 할일 관리 상태
+  const [isIndependentTaskDialogOpen, setIsIndependentTaskDialogOpen] = useState(false);
+  const [isEditingIndependentTask, setIsEditingIndependentTask] = useState(false);
+  const [editingIndependentTask, setEditingIndependentTask] = useState<any>(null);
+  const [independentTaskImages, setIndependentTaskImages] = useState<{ [taskId: number]: File[] }>({});
+  const [newIndependentTask, setNewIndependentTask] = useState({
+    title: '',
+    priority: 'B' as 'A' | 'B' | 'C',
+    notes: '',
+    startDate: '',
+    endDate: ''
+  });
+  
 
   const [projectImages, setProjectImages] = useState<{ [projectId: number]: File[] }>({});
   const [isImageViewerOpen, setIsImageViewerOpen] = useState(false);
@@ -80,6 +93,14 @@ export default function Planning() {
   const { data: allTasks = [] } = useQuery({
     queryKey: ['tasks-all', MOCK_USER_ID],
     queryFn: () => fetch(`/api/tasks/${MOCK_USER_ID}`).then(res => res.json()),
+  });
+
+  // 독립 할일 조회 (projectId가 null인 할일들)
+  const { data: independentTasks = [] } = useQuery({
+    queryKey: ['independent-tasks', MOCK_USER_ID],
+    queryFn: () => fetch(`/api/tasks/${MOCK_USER_ID}`).then(res => res.json()).then(tasks => 
+      tasks.filter((task: any) => !task.projectId)
+    ),
   });
 
   // Filter tasks by selected project
@@ -174,10 +195,60 @@ export default function Planning() {
     },
     onSuccess: (updatedTask) => {
       queryClient.invalidateQueries({ queryKey: ['tasks-all', MOCK_USER_ID] });
+      queryClient.invalidateQueries({ queryKey: ['independent-tasks', MOCK_USER_ID] });
       setSelectedTaskDetail(updatedTask);
       setIsEditingTask(false);
       setEditingTaskData(null);
       toast({ title: "할일 수정", description: "할일이 수정되었습니다." });
+    }
+  });
+
+  // 독립 할일 생성 mutation
+  const createIndependentTaskMutation = useMutation({
+    mutationFn: async (taskData: any) => {
+      const response = await fetch('/api/tasks', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          ...taskData, 
+          userId: MOCK_USER_ID,
+          projectId: null // 프로젝트와 독립
+        })
+      });
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['independent-tasks', MOCK_USER_ID] });
+      queryClient.invalidateQueries({ queryKey: ['tasks-all', MOCK_USER_ID] });
+      setIsIndependentTaskDialogOpen(false);
+      setNewIndependentTask({
+        title: '',
+        priority: 'B',
+        notes: '',
+        startDate: '',
+        endDate: ''
+      });
+      toast({ title: "할일 생성", description: "독립 할일이 생성되었습니다." });
+    }
+  });
+
+  // 독립 할일 수정 mutation
+  const updateIndependentTaskMutation = useMutation({
+    mutationFn: async (taskData: any) => {
+      const response = await fetch(`/api/tasks/${taskData.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(taskData)
+      });
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['independent-tasks', MOCK_USER_ID] });
+      queryClient.invalidateQueries({ queryKey: ['tasks-all', MOCK_USER_ID] });
+      setIsEditingIndependentTask(false);
+      setEditingIndependentTask(null);
+      setIsIndependentTaskDialogOpen(false);
+      toast({ title: "할일 수정", description: "독립 할일이 수정되었습니다." });
     }
   });
 
@@ -429,6 +500,55 @@ export default function Planning() {
 
   const handleToggleTask = (id: number, completed: boolean) => {
     updateTaskMutation.mutate({ id, updates: { completed } });
+  };
+
+  // 독립 할일 관리 핸들러
+  const handleCreateIndependentTask = () => {
+    if (newIndependentTask.title.trim()) {
+      createIndependentTaskMutation.mutate(newIndependentTask);
+    }
+  };
+
+  const handleUpdateIndependentTask = () => {
+    if (editingIndependentTask && editingIndependentTask.title.trim()) {
+      updateIndependentTaskMutation.mutate(editingIndependentTask);
+    }
+  };
+
+  const openIndependentTaskDialog = () => {
+    setIsEditingIndependentTask(false);
+    setEditingIndependentTask(null);
+    setNewIndependentTask({
+      title: '',
+      priority: 'B',
+      notes: '',
+      startDate: '',
+      endDate: ''
+    });
+    setIsIndependentTaskDialogOpen(true);
+  };
+
+  const openEditIndependentTask = (task: any) => {
+    setIsEditingIndependentTask(true);
+    setEditingIndependentTask({ ...task });
+    setIsIndependentTaskDialogOpen(true);
+  };
+
+  const handleIndependentTaskImageUpload = (files: FileList | null, taskId: number) => {
+    if (files) {
+      const fileArray = Array.from(files);
+      setIndependentTaskImages(prev => ({
+        ...prev,
+        [taskId]: [...(prev[taskId] || []), ...fileArray]
+      }));
+    }
+  };
+
+  const removeIndependentTaskImage = (taskId: number, imageIndex: number) => {
+    setIndependentTaskImages(prev => ({
+      ...prev,
+      [taskId]: (prev[taskId] || []).filter((_, index) => index !== imageIndex)
+    }));
   };
 
   const selectedProjectData = (projects as any[]).find(p => p.id === selectedProject);
@@ -1497,13 +1617,299 @@ export default function Planning() {
           {/* 할일관리 탭 */}
           <TabsContent value="tasks" className="mt-6">
             <div className="space-y-6">
-              <Card>
-                <CardContent className="py-8 text-center">
-                  <List className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-                  <p className="text-gray-500">할일관리 기능 준비 중입니다.</p>
-                  <p className="text-sm text-gray-400">프로젝트 기반의 통합 할일 관리 기능이 추가될 예정입니다.</p>
-                </CardContent>
-              </Card>
+              {/* 할일 추가 버튼 */}
+              <div className="flex justify-end">
+                <Button onClick={openIndependentTaskDialog}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  새 할일 추가
+                </Button>
+              </div>
+
+              {/* 독립 할일 목록 */}
+              <div className="space-y-4">
+                {(independentTasks as any[]).length === 0 ? (
+                  <Card>
+                    <CardContent className="py-8 text-center">
+                      <List className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+                      <p className="text-gray-500">등록된 할일이 없습니다.</p>
+                      <p className="text-sm text-gray-400">위 버튼을 클릭해서 새 할일을 추가해보세요.</p>
+                    </CardContent>
+                  </Card>
+                ) : (
+                  ['A', 'B', 'C'].map(priority => {
+                    const priorityTasks = (independentTasks as any[]).filter((task: any) => task.priority === priority);
+                    if (priorityTasks.length === 0) return null;
+
+                    return (
+                      <Card key={priority}>
+                        <CardHeader>
+                          <CardTitle className="flex items-center space-x-3">
+                            <Badge className={`text-sm ${
+                              priority === 'A' ? 'bg-red-100 text-red-700' : 
+                              priority === 'B' ? 'bg-yellow-100 text-yellow-700' : 
+                              'bg-green-100 text-green-700'
+                            }`}>
+                              {priority}급 우선순위
+                            </Badge>
+                            <span className="text-sm text-gray-500">{priorityTasks.length}개</span>
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-3">
+                          {priorityTasks.map((task: any) => (
+                            <div key={task.id} className="flex items-center space-x-3 p-4 bg-white rounded-lg border border-gray-200 hover:shadow-sm transition-shadow">
+                              <button
+                                onClick={() => handleToggleTask(task.id, !task.completed)}
+                                className="text-gray-400 hover:text-gray-600"
+                              >
+                                {task.completed ? (
+                                  <CheckCircle className="h-5 w-5 text-green-500" />
+                                ) : (
+                                  <Circle className="h-5 w-5" />
+                                )}
+                              </button>
+                              
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center justify-between mb-2">
+                                  <h4 className={`font-medium ${task.completed ? 'line-through text-gray-500' : 'text-gray-900'}`}>
+                                    {task.title}
+                                  </h4>
+                                  <div className="flex items-center space-x-2">
+                                    {(independentTaskImages[task.id] || []).length > 0 && (
+                                      <div 
+                                        className="flex items-center text-xs text-gray-400 cursor-pointer hover:text-gray-600 transition-colors"
+                                        onClick={() => {
+                                          const images = independentTaskImages[task.id] || [];
+                                          if (images.length > 0) {
+                                            openImageViewer(images);
+                                          }
+                                        }}
+                                      >
+                                        <ImageIcon className="h-3 w-3" />
+                                        <span className="ml-0.5">{(independentTaskImages[task.id] || []).length}</span>
+                                      </div>
+                                    )}
+                                    {task.notes && (
+                                      <FileText className="h-3 w-3 text-gray-400" />
+                                    )}
+                                    <Button
+                                      size="sm"
+                                      variant="ghost"
+                                      onClick={() => openEditIndependentTask(task)}
+                                      className="h-7 w-7 p-0"
+                                    >
+                                      <Edit3 className="h-3 w-3" />
+                                    </Button>
+                                  </div>
+                                </div>
+
+                                {/* 일정 정보 */}
+                                {(task.startDate || task.endDate) && (
+                                  <div className="flex items-center space-x-2 text-xs mb-2">
+                                    {task.startDate && task.endDate ? (
+                                      <span className="flex items-center bg-blue-50 px-2 py-1 rounded text-blue-700">
+                                        <Calendar className="h-3 w-3 mr-1" />
+                                        {format(new Date(task.startDate), 'M/d', { locale: ko })} ~ {format(new Date(task.endDate), 'M/d', { locale: ko })}
+                                      </span>
+                                    ) : task.startDate ? (
+                                      <span className="flex items-center bg-green-50 px-2 py-1 rounded text-green-700">
+                                        <Calendar className="h-3 w-3 mr-1" />
+                                        시작: {format(new Date(task.startDate), 'M/d', { locale: ko })}
+                                      </span>
+                                    ) : task.endDate ? (
+                                      <span className="flex items-center bg-red-50 px-2 py-1 rounded text-red-700">
+                                        <CalendarDays className="h-3 w-3 mr-1" />
+                                        마감: {format(new Date(task.endDate), 'M/d', { locale: ko })}
+                                      </span>
+                                    ) : null}
+                                  </div>
+                                )}
+
+                                {/* 메모 내용 */}
+                                {task.notes && (
+                                  <p className="text-sm text-gray-600 bg-gray-50 p-2 rounded line-clamp-2">
+                                    {task.notes}
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+                          ))}
+                        </CardContent>
+                      </Card>
+                    );
+                  })
+                )}
+              </div>
+
+              {/* 독립 할일 생성/수정 다이얼로그 */}
+              <Dialog open={isIndependentTaskDialogOpen} onOpenChange={setIsIndependentTaskDialogOpen}>
+                <DialogContent className="max-w-md">
+                  <DialogHeader>
+                    <DialogTitle>
+                      {isEditingIndependentTask ? '할일 수정' : '새 할일 추가'}
+                    </DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-4">
+                    <div>
+                      <Label htmlFor="task-title">할일 제목</Label>
+                      <Input
+                        id="task-title"
+                        placeholder="할일 제목을 입력하세요"
+                        value={isEditingIndependentTask ? editingIndependentTask?.title || '' : newIndependentTask.title}
+                        onChange={(e) => {
+                          if (isEditingIndependentTask) {
+                            setEditingIndependentTask(prev => ({ ...prev, title: e.target.value }));
+                          } else {
+                            setNewIndependentTask(prev => ({ ...prev, title: e.target.value }));
+                          }
+                        }}
+                      />
+                    </div>
+
+                    <div>
+                      <Label htmlFor="task-priority">우선순위</Label>
+                      <Select 
+                        value={isEditingIndependentTask ? editingIndependentTask?.priority || 'B' : newIndependentTask.priority} 
+                        onValueChange={(value: 'A' | 'B' | 'C') => {
+                          if (isEditingIndependentTask) {
+                            setEditingIndependentTask(prev => ({ ...prev, priority: value }));
+                          } else {
+                            setNewIndependentTask(prev => ({ ...prev, priority: value }));
+                          }
+                        }}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="A">A급 (중요하고 긴급)</SelectItem>
+                          <SelectItem value="B">B급 (중요하지만 긴급하지 않음)</SelectItem>
+                          <SelectItem value="C">C급 (하면 좋음)</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <Label htmlFor="task-start-date">시작일</Label>
+                        <Input
+                          id="task-start-date"
+                          type="date"
+                          value={isEditingIndependentTask ? editingIndependentTask?.startDate || '' : newIndependentTask.startDate}
+                          onChange={(e) => {
+                            if (isEditingIndependentTask) {
+                              setEditingIndependentTask(prev => ({ ...prev, startDate: e.target.value }));
+                            } else {
+                              setNewIndependentTask(prev => ({ ...prev, startDate: e.target.value }));
+                            }
+                          }}
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="task-end-date">마감일</Label>
+                        <Input
+                          id="task-end-date"
+                          type="date"
+                          value={isEditingIndependentTask ? editingIndependentTask?.endDate || '' : newIndependentTask.endDate}
+                          onChange={(e) => {
+                            if (isEditingIndependentTask) {
+                              setEditingIndependentTask(prev => ({ ...prev, endDate: e.target.value }));
+                            } else {
+                              setNewIndependentTask(prev => ({ ...prev, endDate: e.target.value }));
+                            }
+                          }}
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <Label htmlFor="task-notes">메모</Label>
+                      <Textarea
+                        id="task-notes"
+                        placeholder="할일에 대한 메모를 입력하세요"
+                        value={isEditingIndependentTask ? editingIndependentTask?.notes || '' : newIndependentTask.notes}
+                        onChange={(e) => {
+                          if (isEditingIndependentTask) {
+                            setEditingIndependentTask(prev => ({ ...prev, notes: e.target.value }));
+                          } else {
+                            setNewIndependentTask(prev => ({ ...prev, notes: e.target.value }));
+                          }
+                        }}
+                        rows={3}
+                      />
+                    </div>
+
+                    {/* 이미지 업로드 */}
+                    <div>
+                      <Label>이미지</Label>
+                      <div className="space-y-2">
+                        <div className="flex items-center space-x-2">
+                          <Input
+                            type="file"
+                            accept="image/*"
+                            multiple
+                            onChange={(e) => {
+                              const taskId = isEditingIndependentTask ? editingIndependentTask?.id : 0;
+                              handleIndependentTaskImageUpload(e.target.files, taskId);
+                            }}
+                            className="hidden"
+                            id="independent-task-images"
+                          />
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => document.getElementById('independent-task-images')?.click()}
+                          >
+                            <Upload className="h-4 w-4 mr-2" />
+                            이미지 추가
+                          </Button>
+                        </div>
+                        
+                        {(() => {
+                          const taskId = isEditingIndependentTask ? editingIndependentTask?.id : 0;
+                          const images = independentTaskImages[taskId] || [];
+                          return images.length > 0 && (
+                            <div className="grid grid-cols-3 gap-2">
+                              {images.map((image, index) => (
+                                <div key={index} className="relative">
+                                  <img
+                                    src={URL.createObjectURL(image)}
+                                    alt={`이미지 ${index + 1}`}
+                                    className="w-full h-20 object-cover rounded border cursor-pointer"
+                                    onClick={() => openImageViewer(images, index)}
+                                  />
+                                  <button
+                                    type="button"
+                                    onClick={() => removeIndependentTaskImage(taskId, index)}
+                                    className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs"
+                                  >
+                                    <X className="h-3 w-3" />
+                                  </button>
+                                </div>
+                              ))}
+                            </div>
+                          );
+                        })()}
+                      </div>
+                    </div>
+
+                    <Button 
+                      onClick={isEditingIndependentTask ? handleUpdateIndependentTask : handleCreateIndependentTask}
+                      disabled={
+                        isEditingIndependentTask ? 
+                        (!editingIndependentTask?.title?.trim() || updateIndependentTaskMutation.isPending) :
+                        (!newIndependentTask.title.trim() || createIndependentTaskMutation.isPending)
+                      }
+                      className="w-full"
+                    >
+                      {isEditingIndependentTask ? 
+                        (updateIndependentTaskMutation.isPending ? '수정 중...' : '할일 수정') :
+                        (createIndependentTaskMutation.isPending ? '생성 중...' : '할일 생성')
+                      }
+                    </Button>
+                  </div>
+                </DialogContent>
+              </Dialog>
             </div>
           </TabsContent>
 
