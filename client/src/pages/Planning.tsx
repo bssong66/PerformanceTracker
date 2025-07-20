@@ -42,6 +42,8 @@ export default function Planning() {
   const [selectedTaskDetail, setSelectedTaskDetail] = useState<any>(null);
   const [isEditProjectOpen, setIsEditProjectOpen] = useState(false);
   const [editingProject, setEditingProject] = useState<any>(null);
+  const [isEditingTask, setIsEditingTask] = useState(false);
+  const [editingTaskData, setEditingTaskData] = useState<any>(null);
   const [newProject, setNewProject] = useState({
     name: '',
     description: '',
@@ -152,6 +154,24 @@ export default function Planning() {
     }
   });
 
+  const updateTaskDetailMutation = useMutation({
+    mutationFn: async (taskData: any) => {
+      const response = await fetch(`/api/tasks/${taskData.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(taskData)
+      });
+      return response.json();
+    },
+    onSuccess: (updatedTask) => {
+      queryClient.invalidateQueries({ queryKey: ['tasks-all', MOCK_USER_ID] });
+      setSelectedTaskDetail(updatedTask);
+      setIsEditingTask(false);
+      setEditingTaskData(null);
+      toast({ title: "할일 수정", description: "할일이 수정되었습니다." });
+    }
+  });
+
   const handleCreateProject = () => {
     if (newProject.name.trim()) {
       createProjectMutation.mutate(newProject);
@@ -161,6 +181,12 @@ export default function Planning() {
   const handleUpdateProject = () => {
     if (editingProject && editingProject.name.trim()) {
       updateProjectMutation.mutate(editingProject);
+    }
+  };
+
+  const handleSaveTask = () => {
+    if (editingTaskData && editingTaskData.title.trim()) {
+      updateTaskDetailMutation.mutate(editingTaskData);
     }
   };
 
@@ -210,6 +236,24 @@ export default function Planning() {
   const openTaskDetail = (task: any) => {
     setSelectedTaskDetail(task);
     setIsTaskDetailOpen(true);
+    setIsEditingTask(false);
+  };
+
+  const startEditingTask = () => {
+    setEditingTaskData({
+      id: selectedTaskDetail.id,
+      title: selectedTaskDetail.title,
+      priority: selectedTaskDetail.priority,
+      notes: selectedTaskDetail.notes || '',
+      startDate: selectedTaskDetail.startDate || '',
+      endDate: selectedTaskDetail.endDate || ''
+    });
+    setIsEditingTask(true);
+  };
+
+  const cancelEditingTask = () => {
+    setIsEditingTask(false);
+    setEditingTaskData(null);
   };
 
   const openEditProject = (project: any) => {
@@ -459,71 +503,167 @@ export default function Planning() {
         <Dialog open={isTaskDetailOpen} onOpenChange={setIsTaskDetailOpen}>
           <DialogContent className="max-w-md">
             <DialogHeader>
-              <DialogTitle>할일 상세 정보</DialogTitle>
+              <DialogTitle className="flex items-center justify-between">
+                할일 상세 정보
+                {!isEditingTask && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={startEditingTask}
+                  >
+                    <Edit3 className="h-3 w-3 mr-1" />
+                    수정
+                  </Button>
+                )}
+              </DialogTitle>
             </DialogHeader>
             {selectedTaskDetail && (
               <div className="space-y-4">
-                <div>
-                  <Label className="text-sm font-medium text-gray-700">제목</Label>
-                  <p className="mt-1 text-gray-900">{selectedTaskDetail.title}</p>
-                </div>
+                {/* 수정 모드 */}
+                {isEditingTask && editingTaskData ? (
+                  <div className="space-y-4">
+                    <div>
+                      <Label htmlFor="edit-task-title">제목</Label>
+                      <Input
+                        id="edit-task-title"
+                        value={editingTaskData.title}
+                        onChange={(e) => setEditingTaskData(prev => ({ ...prev, title: e.target.value }))}
+                        placeholder="할일 제목을 입력하세요"
+                      />
+                    </div>
 
-                <div>
-                  <Label className="text-sm font-medium text-gray-700">우선순위</Label>
-                  <div className="mt-1">
-                    <Badge className={`text-xs ${
-                      selectedTaskDetail.priority === 'A' ? 'bg-red-100 text-red-700' : 
-                      selectedTaskDetail.priority === 'B' ? 'bg-yellow-100 text-yellow-700' : 
-                      'bg-green-100 text-green-700'
-                    }`}>
-                      {selectedTaskDetail.priority}급 우선순위
-                    </Badge>
+                    <div>
+                      <Label htmlFor="edit-task-priority">우선순위</Label>
+                      <Select
+                        value={editingTaskData.priority}
+                        onValueChange={(value) => setEditingTaskData(prev => ({ ...prev, priority: value }))}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="A">A급</SelectItem>
+                          <SelectItem value="B">B급</SelectItem>
+                          <SelectItem value="C">C급</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <Label htmlFor="edit-task-start-date">시작일</Label>
+                        <Input
+                          id="edit-task-start-date"
+                          type="date"
+                          value={editingTaskData.startDate}
+                          onChange={(e) => setEditingTaskData(prev => ({ ...prev, startDate: e.target.value }))}
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="edit-task-end-date">종료일</Label>
+                        <Input
+                          id="edit-task-end-date"
+                          type="date"
+                          value={editingTaskData.endDate}
+                          onChange={(e) => setEditingTaskData(prev => ({ ...prev, endDate: e.target.value }))}
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <Label htmlFor="edit-task-notes">메모</Label>
+                      <Textarea
+                        id="edit-task-notes"
+                        value={editingTaskData.notes}
+                        onChange={(e) => setEditingTaskData(prev => ({ ...prev, notes: e.target.value }))}
+                        placeholder="할일에 대한 추가 정보"
+                        rows={3}
+                      />
+                    </div>
+
+                    <div className="flex space-x-2">
+                      <Button
+                        onClick={handleSaveTask}
+                        disabled={!editingTaskData.title.trim() || updateTaskDetailMutation.isPending}
+                        className="flex-1"
+                      >
+                        {updateTaskDetailMutation.isPending ? '저장 중...' : '저장'}
+                      </Button>
+                      <Button
+                        variant="outline"
+                        onClick={cancelEditingTask}
+                        className="flex-1"
+                      >
+                        취소
+                      </Button>
+                    </div>
                   </div>
-                </div>
+                ) : (
+                  /* 보기 모드 */
+                  <div className="space-y-4">
+                    <div>
+                      <Label className="text-sm font-medium text-gray-700">제목</Label>
+                      <p className="mt-1 text-gray-900">{selectedTaskDetail.title}</p>
+                    </div>
 
-                {(selectedTaskDetail.startDate || selectedTaskDetail.endDate) && (
-                  <div>
-                    <Label className="text-sm font-medium text-gray-700">일정</Label>
-                    <div className="mt-1 space-y-1">
-                      {selectedTaskDetail.startDate && (
-                        <div className="flex items-center text-sm text-gray-600">
-                          <Calendar className="h-4 w-4 mr-2" />
-                          시작일: {format(new Date(selectedTaskDetail.startDate), 'yyyy년 M월 d일', { locale: ko })}
+                    <div>
+                      <Label className="text-sm font-medium text-gray-700">우선순위</Label>
+                      <div className="mt-1">
+                        <Badge className={`text-xs ${
+                          selectedTaskDetail.priority === 'A' ? 'bg-red-100 text-red-700' : 
+                          selectedTaskDetail.priority === 'B' ? 'bg-yellow-100 text-yellow-700' : 
+                          'bg-green-100 text-green-700'
+                        }`}>
+                          {selectedTaskDetail.priority}급 우선순위
+                        </Badge>
+                      </div>
+                    </div>
+
+                    {(selectedTaskDetail.startDate || selectedTaskDetail.endDate) && (
+                      <div>
+                        <Label className="text-sm font-medium text-gray-700">일정</Label>
+                        <div className="mt-1 space-y-1">
+                          {selectedTaskDetail.startDate && (
+                            <div className="flex items-center text-sm text-gray-600">
+                              <Calendar className="h-4 w-4 mr-2" />
+                              시작일: {format(new Date(selectedTaskDetail.startDate), 'yyyy년 M월 d일', { locale: ko })}
+                            </div>
+                          )}
+                          {selectedTaskDetail.endDate && (
+                            <div className="flex items-center text-sm text-gray-600">
+                              <CalendarDays className="h-4 w-4 mr-2" />
+                              종료일: {format(new Date(selectedTaskDetail.endDate), 'yyyy년 M월 d일', { locale: ko })}
+                            </div>
+                          )}
                         </div>
-                      )}
-                      {selectedTaskDetail.endDate && (
-                        <div className="flex items-center text-sm text-gray-600">
-                          <CalendarDays className="h-4 w-4 mr-2" />
-                          종료일: {format(new Date(selectedTaskDetail.endDate), 'yyyy년 M월 d일', { locale: ko })}
-                        </div>
-                      )}
+                      </div>
+                    )}
+
+                    {selectedTaskDetail.notes && (
+                      <div>
+                        <Label className="text-sm font-medium text-gray-700">메모</Label>
+                        <p className="mt-1 text-gray-600 whitespace-pre-wrap">{selectedTaskDetail.notes}</p>
+                      </div>
+                    )}
+
+                    <div>
+                      <Label className="text-sm font-medium text-gray-700">상태</Label>
+                      <div className="mt-1 flex items-center">
+                        {selectedTaskDetail.completed ? (
+                          <div className="flex items-center text-green-600">
+                            <CheckCircle className="h-4 w-4 mr-2" />
+                            완료됨
+                          </div>
+                        ) : (
+                          <div className="flex items-center text-gray-500">
+                            <Circle className="h-4 w-4 mr-2" />
+                            진행 중
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
                 )}
-
-                {selectedTaskDetail.notes && (
-                  <div>
-                    <Label className="text-sm font-medium text-gray-700">메모</Label>
-                    <p className="mt-1 text-gray-600 whitespace-pre-wrap">{selectedTaskDetail.notes}</p>
-                  </div>
-                )}
-
-                <div>
-                  <Label className="text-sm font-medium text-gray-700">상태</Label>
-                  <div className="mt-1 flex items-center">
-                    {selectedTaskDetail.completed ? (
-                      <div className="flex items-center text-green-600">
-                        <CheckCircle className="h-4 w-4 mr-2" />
-                        완료됨
-                      </div>
-                    ) : (
-                      <div className="flex items-center text-gray-500">
-                        <Circle className="h-4 w-4 mr-2" />
-                        진행 중
-                      </div>
-                    )}
-                  </div>
-                </div>
               </div>
             )}
           </DialogContent>
