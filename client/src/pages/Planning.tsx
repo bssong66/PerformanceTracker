@@ -753,7 +753,7 @@ export default function Planning() {
         </Dialog>
 
         {/* Projects List */}
-        <div className="space-y-3 mb-8">
+        <div className="space-y-6 mb-8">
           {(projects as any[]).length === 0 ? (
             <Card>
               <CardContent className="py-8 text-center">
@@ -763,224 +763,242 @@ export default function Planning() {
               </CardContent>
             </Card>
           ) : (
-            (projects as any[]).map(project => (
-              <Card 
-                key={project.id} 
-                className={`transition-all hover:shadow-md ${
-                  selectedProject === project.id ? 'ring-2 ring-blue-500 shadow-md' : ''
-                }`}
-              >
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between">
-                    <div 
-                      className="flex items-center space-x-3 flex-1"
-                      onClick={() => setSelectedProject(selectedProject === project.id ? null : project.id)}
-                    >
-                      <div 
-                        className="w-4 h-4 rounded-full" 
-                        style={{ backgroundColor: project.color }}
-                      />
-                      <div>
-                        <h3 className="font-semibold text-gray-900">{project.name}</h3>
-                        {project.description && (
-                          <p className="text-sm text-gray-600">{project.description}</p>
-                        )}
-                        {(() => {
-                          const dateRange = getProjectDateRange(project);
-                          return dateRange && (
-                            <div className="flex items-center text-xs text-gray-500 mt-1">
-                              <Calendar className="h-3 w-3 mr-1" />
-                              {format(dateRange.startDate, 'M/d', { locale: ko })} ~ {format(dateRange.endDate, 'M/d', { locale: ko })}
-                            </div>
-                          );
-                        })()}
-                        {(() => {
-                          const progress = getProjectProgress(project.id);
-                          const taskCount = (allTasks as any[]).filter((task: any) => task.projectId === project.id).length;
-                          return taskCount > 0 && (
-                            <div className="mt-2">
-                              <div className="flex items-center justify-between text-xs text-gray-500 mb-1">
-                                <span>진행률</span>
-                                <span>{progress}%</span>
-                              </div>
-                              <div className="w-full bg-gray-200 rounded-full h-2">
-                                <div 
-                                  className="bg-blue-500 h-2 rounded-full transition-all duration-300 ease-in-out"
-                                  style={{ width: `${progress}%` }}
-                                />
-                              </div>
-                            </div>
-                          );
-                        })()}
-                      </div>
-                    </div>
-                    <div className="flex items-center space-x-3">
-                      <div className="flex flex-col items-end space-y-2">
-                        <div className="flex items-center space-x-2">
-                          <Badge 
-                            className={`text-xs ${priorityColors[project.priority as keyof typeof priorityColors].bg} ${priorityColors[project.priority as keyof typeof priorityColors].text}`}
-                          >
-                            {project.priority === 'high' ? '높음' : project.priority === 'medium' ? '보통' : '낮음'}
-                          </Badge>
-                          <div className="text-sm text-gray-500">
-                            {(allTasks as any[]).filter((task: any) => task.projectId === project.id).length}개 할일
+            (projects as any[]).map(project => {
+              const projectTasksForProject = (allTasks as any[]).filter((task: any) => task.projectId === project.id);
+              const isSelected = selectedProject === project.id;
+              
+              return (
+                <div key={project.id} className="space-y-3">
+                  {/* Project Card */}
+                  <Card 
+                    className={`transition-all hover:shadow-md cursor-pointer ${
+                      isSelected ? 'ring-2 ring-blue-500 shadow-md' : ''
+                    }`}
+                  >
+                    <CardContent className="p-4">
+                      <div className="flex items-center justify-between">
+                        <div 
+                          className="flex items-center space-x-3 flex-1"
+                          onClick={() => setSelectedProject(isSelected ? null : project.id)}
+                        >
+                          <div 
+                            className="w-4 h-4 rounded-full" 
+                            style={{ backgroundColor: project.color }}
+                          />
+                          <div>
+                            <h3 className="font-semibold text-gray-900">{project.name}</h3>
+                            {project.description && (
+                              <p className="text-sm text-gray-600">{project.description}</p>
+                            )}
+                            {(() => {
+                              const dateRange = getProjectDateRange(project);
+                              return dateRange && (
+                                <div className="flex items-center text-xs text-gray-500 mt-1">
+                                  <Calendar className="h-3 w-3 mr-1" />
+                                  {format(dateRange.startDate, 'M/d', { locale: ko })} ~ {format(dateRange.endDate, 'M/d', { locale: ko })}
+                                </div>
+                              );
+                            })()}
+                            {(() => {
+                              const progress = getProjectProgress(project.id);
+                              const taskCount = (allTasks as any[]).filter((task: any) => task.projectId === project.id).length;
+                              return taskCount > 0 && (
+                                <div className="mt-2">
+                                  <div className="flex items-center justify-between text-xs text-gray-500 mb-1">
+                                    <span>진행률</span>
+                                    <span>{progress}%</span>
+                                  </div>
+                                  <div className="w-full bg-gray-200 rounded-full h-2">
+                                    <div 
+                                      className="bg-blue-500 h-2 rounded-full transition-all duration-300 ease-in-out"
+                                      style={{ width: `${progress}%` }}
+                                    />
+                                  </div>
+                                </div>
+                              );
+                            })()}
                           </div>
                         </div>
-                        {(() => {
-                          const progress = getProjectProgress(project.id);
-                          const taskCount = (allTasks as any[]).filter((task: any) => task.projectId === project.id).length;
-                          return taskCount > 0 && (
+                        <div className="flex items-center space-x-3">
+                          <div className="flex flex-col items-end space-y-2">
                             <div className="flex items-center space-x-2">
-                              <div className="w-16 bg-gray-200 rounded-full h-1.5">
-                                <div 
-                                  className="bg-blue-500 h-1.5 rounded-full transition-all duration-300 ease-in-out"
-                                  style={{ width: `${progress}%` }}
-                                />
+                              <Badge 
+                                className={`text-xs ${priorityColors[project.priority as keyof typeof priorityColors].bg} ${priorityColors[project.priority as keyof typeof priorityColors].text}`}
+                              >
+                                {project.priority === 'high' ? '높음' : project.priority === 'medium' ? '보통' : '낮음'}
+                              </Badge>
+                              <div className="text-sm text-gray-500">
+                                {(allTasks as any[]).filter((task: any) => task.projectId === project.id).length}개 할일
                               </div>
-                              <span className="text-xs text-gray-500 min-w-[25px]">
-                                {progress}%
-                              </span>
                             </div>
-                          );
-                        })()}
+                            {(() => {
+                              const progress = getProjectProgress(project.id);
+                              const taskCount = (allTasks as any[]).filter((task: any) => task.projectId === project.id).length;
+                              return taskCount > 0 && (
+                                <div className="flex items-center space-x-2">
+                                  <div className="w-16 bg-gray-200 rounded-full h-1.5">
+                                    <div 
+                                      className="bg-blue-500 h-1.5 rounded-full transition-all duration-300 ease-in-out"
+                                      style={{ width: `${progress}%` }}
+                                    />
+                                  </div>
+                                  <span className="text-xs text-gray-500 min-w-[25px]">
+                                    {progress}%
+                                  </span>
+                                </div>
+                              );
+                            })()}
+                          </div>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              openEditProject(project);
+                            }}
+                          >
+                            <Edit3 className="h-3 w-3" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              openTaskDialog(project.id);
+                            }}
+                          >
+                            <Plus className="h-3 w-3 mr-1" />
+                            할일 추가
+                          </Button>
+                        </div>
                       </div>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          openEditProject(project);
-                        }}
-                      >
-                        <Edit3 className="h-3 w-3" />
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          openTaskDialog(project.id);
-                        }}
-                      >
-                        <Plus className="h-3 w-3 mr-1" />
-                        할일 추가
-                      </Button>
+                    </CardContent>
+                  </Card>
+
+                  {/* Project Tasks - Shows below the project card when selected */}
+                  {isSelected && (
+                    <div className="ml-6 mr-2">
+                      <Card className="bg-gray-50/50 border-gray-200">
+                        <CardHeader className="pb-3">
+                          <CardTitle className="flex items-center justify-between text-base">
+                            <div className="flex items-center space-x-2">
+                              <div 
+                                className="w-3 h-3 rounded-full" 
+                                style={{ backgroundColor: project.color }}
+                              />
+                              <span className="text-gray-700">{project.name} 할일 목록</span>
+                            </div>
+                            <div className="flex items-center space-x-4">
+                              <div className="flex items-center space-x-4">
+                                <span className="text-sm font-normal text-gray-500">
+                                  총 {projectTasksForProject.length}개 / 완료 {projectTasksForProject.filter((t: any) => t.completed).length}개
+                                </span>
+                                <div className="flex items-center space-x-2">
+                                  <div className="w-20 bg-gray-200 rounded-full h-2">
+                                    <div 
+                                      className="bg-blue-500 h-2 rounded-full transition-all duration-300 ease-in-out"
+                                      style={{ width: `${getProjectProgress(project.id)}%` }}
+                                    />
+                                  </div>
+                                  <span className="text-xs text-gray-500 min-w-[30px]">
+                                    {getProjectProgress(project.id)}%
+                                  </span>
+                                </div>
+                              </div>
+                              <Button
+                                size="sm"
+                                onClick={() => openTaskDialog(project.id)}
+                              >
+                                <Plus className="h-4 w-4 mr-2" />
+                                할일 추가
+                              </Button>
+                            </div>
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent className="pt-0">
+                          {projectTasksForProject.length > 0 ? (
+                            <div className="space-y-3">
+                              {['A', 'B', 'C'].map(priority => {
+                                const priorityTasks = projectTasksForProject.filter((task: any) => task.priority === priority);
+                                if (priorityTasks.length === 0) return null;
+                                
+                                return (
+                                  <div key={priority}>
+                                    <div className="flex items-center space-x-2 mb-2">
+                                      <Badge className={`text-xs ${
+                                        priority === 'A' ? 'bg-red-100 text-red-700' : 
+                                        priority === 'B' ? 'bg-yellow-100 text-yellow-700' : 
+                                        'bg-green-100 text-green-700'
+                                      }`}>
+                                        {priority}급 우선순위
+                                      </Badge>
+                                      <span className="text-xs text-gray-500">{priorityTasks.length}개</span>
+                                    </div>
+                                    <div className="space-y-2 ml-4 border-l-2 border-gray-100 pl-4">
+                                      {priorityTasks.map((task: any) => (
+                                        <div key={task.id} className="flex items-center space-x-3 p-3 bg-white rounded-lg border border-gray-100">
+                                          <button
+                                            onClick={() => handleToggleTask(task.id, !task.completed)}
+                                            className="text-gray-400 hover:text-gray-600"
+                                          >
+                                            {task.completed ? (
+                                              <CheckCircle className="h-5 w-5 text-green-500" />
+                                            ) : (
+                                              <Circle className="h-5 w-5" />
+                                            )}
+                                          </button>
+                                          <div 
+                                            className="flex-1 cursor-pointer hover:bg-gray-50 rounded p-1 -m-1 transition-colors"
+                                            onClick={() => openTaskDetail(task)}
+                                          >
+                                            <h4 className={`font-medium ${task.completed ? 'line-through text-gray-500' : 'text-gray-900'}`}>
+                                              {task.title}
+                                            </h4>
+                                            {task.notes && (
+                                              <p className="text-sm text-gray-600 mt-1">{task.notes}</p>
+                                            )}
+                                            {(task.startDate || task.endDate) && (
+                                              <div className="flex items-center space-x-4 text-xs text-gray-500 mt-2">
+                                                {task.startDate && (
+                                                  <span className="flex items-center">
+                                                    <Calendar className="h-3 w-3 mr-1" />
+                                                    시작: {format(new Date(task.startDate), 'M/d', { locale: ko })}
+                                                  </span>
+                                                )}
+                                                {task.endDate && (
+                                                  <span className="flex items-center">
+                                                    <CalendarDays className="h-3 w-3 mr-1" />
+                                                    종료: {format(new Date(task.endDate), 'M/d', { locale: ko })}
+                                                  </span>
+                                                )}
+                                              </div>
+                                            )}
+                                          </div>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          ) : (
+                            <div className="text-center py-6">
+                              <CheckCircle className="h-10 w-10 mx-auto mb-3 text-gray-300" />
+                              <p className="text-gray-500 text-sm">아직 할일이 없습니다.</p>
+                              <p className="text-xs text-gray-400">위에서 새 할일을 추가해보세요.</p>
+                            </div>
+                          )}
+                        </CardContent>
+                      </Card>
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))
+                  )}
+                </div>
+              );
+            })
           )}
         </div>
 
-        {/* Selected Project Tasks */}
-        {selectedProject && selectedProjectData && (
-          <div className="space-y-6">
-            {/* Tasks List */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center justify-between">
-                  <div className="flex items-center space-x-2">
-                    <div 
-                      className="w-4 h-4 rounded-full" 
-                      style={{ backgroundColor: selectedProjectData.color }}
-                    />
-                    <span>{selectedProjectData.name} 할일 목록</span>
-                  </div>
-                  <div className="flex items-center space-x-4">
-                    <div className="flex items-center space-x-4">
-                      <span className="text-sm font-normal text-gray-500">
-                        총 {projectTasks.length}개 / 완료 {projectTasks.filter((t: any) => t.completed).length}개
-                      </span>
-                      <Button
-                        size="sm"
-                        onClick={() => openTaskDialog(selectedProject)}
-                        className="bg-[#e5e5e5] hover:bg-[#d5d5d5] text-gray-700"
-                      >
-                        <Plus className="h-4 w-4 mr-2" />
-                        할일 추가
-                      </Button>
-                    </div>
-                  </div>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {projectTasks.length > 0 ? (
-                  <div className="space-y-3">
-                    {['A', 'B', 'C'].map(priority => {
-                      const priorityTasks = projectTasks.filter((task: any) => task.priority === priority);
-                      if (priorityTasks.length === 0) return null;
-                      
-                      return (
-                        <div key={priority}>
-                          <div className="flex items-center space-x-2 mb-2">
-                            <Badge className={`text-xs ${
-                              priority === 'A' ? 'bg-red-100 text-red-700' : 
-                              priority === 'B' ? 'bg-yellow-100 text-yellow-700' : 
-                              'bg-green-100 text-green-700'
-                            }`}>
-                              {priority}급 우선순위
-                            </Badge>
-                            <span className="text-xs text-gray-500">{priorityTasks.length}개</span>
-                          </div>
-                          <div className="space-y-2 ml-4 border-l-2 border-gray-100 pl-4">
-                            {priorityTasks.map((task: any) => (
-                              <div key={task.id} className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
-                                <button
-                                  onClick={() => handleToggleTask(task.id, !task.completed)}
-                                  className="text-gray-400 hover:text-gray-600"
-                                >
-                                  {task.completed ? (
-                                    <CheckCircle className="h-5 w-5 text-green-500" />
-                                  ) : (
-                                    <Circle className="h-5 w-5" />
-                                  )}
-                                </button>
-                                <div 
-                                  className="flex-1 cursor-pointer hover:bg-gray-100 rounded p-1 -m-1 transition-colors"
-                                  onClick={() => openTaskDetail(task)}
-                                >
-                                  <h4 className={`font-medium ${task.completed ? 'line-through text-gray-500' : 'text-gray-900'}`}>
-                                    {task.title}
-                                  </h4>
-                                  {task.notes && (
-                                    <p className="text-sm text-gray-600 mt-1">{task.notes}</p>
-                                  )}
-                                  {(task.startDate || task.endDate) && (
-                                    <div className="flex items-center space-x-4 text-xs text-gray-500 mt-2">
-                                      {task.startDate && (
-                                        <span className="flex items-center">
-                                          <Calendar className="h-3 w-3 mr-1" />
-                                          시작: {format(new Date(task.startDate), 'M/d', { locale: ko })}
-                                        </span>
-                                      )}
-                                      {task.endDate && (
-                                        <span className="flex items-center">
-                                          <CalendarDays className="h-3 w-3 mr-1" />
-                                          종료: {format(new Date(task.endDate), 'M/d', { locale: ko })}
-                                        </span>
-                                      )}
-                                    </div>
-                                  )}
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                ) : (
-                  <div className="text-center py-8">
-                    <CheckCircle className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-                    <p className="text-gray-500">아직 할일이 없습니다.</p>
-                    <p className="text-sm text-gray-400">위에서 새 할일을 추가해보세요.</p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </div>
-        )}
+
       </div>
     </div>
   );
