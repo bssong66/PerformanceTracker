@@ -168,8 +168,8 @@ export default function Calendar() {
       repeatInterval: 1,
       repeatEndDate: '',
       repeatWeekdays: [],
-      coreValue: '',
-      annualGoal: ''
+      coreValue: 'none',
+      annualGoal: 'none'
     });
     setIsEditing(false);
     setSelectedEvent(null);
@@ -378,8 +378,8 @@ export default function Calendar() {
         repeatInterval: eventData.repeatInterval || 1,
         repeatEndDate: eventData.repeatEndDate || '',
         repeatWeekdays: eventData.repeatWeekdays ? JSON.parse(eventData.repeatWeekdays) : [],
-        coreValue: eventData.coreValue || '',
-        annualGoal: eventData.annualGoal || ''
+        coreValue: eventData.coreValue || 'none',
+        annualGoal: eventData.annualGoal || 'none'
       });
       setIsEditing(true);
       setShowEventDialog(true);
@@ -421,8 +421,8 @@ export default function Calendar() {
       ...eventForm,
       color: priorityColors[eventForm.priority],
       repeatWeekdays: eventForm.repeatWeekdays.length > 0 ? JSON.stringify(eventForm.repeatWeekdays) : null,
-      coreValue: eventForm.coreValue || null,
-      annualGoal: eventForm.annualGoal || null
+      coreValue: eventForm.coreValue === 'none' ? null : eventForm.coreValue || null,
+      annualGoal: eventForm.annualGoal === 'none' ? null : eventForm.annualGoal || null
     };
 
     if (isEditing && eventForm.id) {
@@ -647,7 +647,7 @@ export default function Calendar() {
                       <SelectValue placeholder="핵심가치 선택" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">선택안함</SelectItem>
+                      <SelectItem value="none">선택안함</SelectItem>
                       {foundation?.coreValue1 && (
                         <SelectItem value={foundation.coreValue1}>{foundation.coreValue1}</SelectItem>
                       )}
@@ -671,7 +671,7 @@ export default function Calendar() {
                       <SelectValue placeholder="연간목표 선택" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">선택안함</SelectItem>
+                      <SelectItem value="none">선택안함</SelectItem>
                       {annualGoals.map((goal: any) => (
                         <SelectItem key={goal.id} value={goal.title}>
                           {goal.title}
