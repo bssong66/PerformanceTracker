@@ -1,11 +1,12 @@
 import { 
   users, foundations, annualGoals, projects, tasks, events, habits, habitLogs, 
-  weeklyReviews, dailyReflections, timeBlocks,
+  weeklyReviews, monthlyReviews, dailyReflections, timeBlocks,
   type User, type InsertUser, type Foundation, type InsertFoundation,
   type AnnualGoal, type InsertAnnualGoal, type Project, type InsertProject,
   type Task, type InsertTask, type Event, type InsertEvent,
   type Habit, type InsertHabit, type HabitLog, type InsertHabitLog,
-  type WeeklyReview, type InsertWeeklyReview, type DailyReflection, 
+  type WeeklyReview, type InsertWeeklyReview, type MonthlyReview, 
+  type InsertMonthlyReview, type DailyReflection, 
   type InsertDailyReflection, type TimeBlock, type InsertTimeBlock
 } from "@shared/schema";
 
@@ -61,6 +62,10 @@ export interface IStorage {
   getWeeklyReview(userId: number, weekStartDate: string): Promise<WeeklyReview | undefined>;
   upsertWeeklyReview(review: InsertWeeklyReview): Promise<WeeklyReview>;
   
+  // Monthly review methods
+  getMonthlyReview(userId: number, monthStartDate: string): Promise<MonthlyReview | undefined>;
+  upsertMonthlyReview(review: InsertMonthlyReview): Promise<MonthlyReview>;
+  
   // Daily reflection methods
   getDailyReflection(userId: number, date: string): Promise<DailyReflection | undefined>;
   upsertDailyReflection(reflection: InsertDailyReflection): Promise<DailyReflection>;
@@ -82,6 +87,7 @@ export class MemStorage implements IStorage {
   private habits: Map<number, Habit>;
   private habitLogs: Map<number, HabitLog>;
   private weeklyReviews: Map<number, WeeklyReview>;
+  private monthlyReviews: Map<number, MonthlyReview>;
   private dailyReflections: Map<number, DailyReflection>;
   private timeBlocks: Map<number, TimeBlock>;
   private currentId: number;
@@ -96,6 +102,7 @@ export class MemStorage implements IStorage {
     this.habits = new Map();
     this.habitLogs = new Map();
     this.weeklyReviews = new Map();
+    this.monthlyReviews = new Map();
     this.dailyReflections = new Map();
     this.timeBlocks = new Map();
     this.currentId = 1;
@@ -436,6 +443,41 @@ export class MemStorage implements IStorage {
         createdAt: new Date()
       };
       this.weeklyReviews.set(id, newReview);
+      return newReview;
+    }
+  }
+
+  // Monthly review methods
+  async getMonthlyReview(userId: number, monthStartDate: string): Promise<MonthlyReview | undefined> {
+    return Array.from(this.monthlyReviews.values())
+      .find(review => review.userId === userId && review.monthStartDate === monthStartDate);
+  }
+
+  async upsertMonthlyReview(review: InsertMonthlyReview): Promise<MonthlyReview> {
+    const existing = await this.getMonthlyReview(review.userId, review.monthStartDate);
+    if (existing) {
+      const updated = { ...existing, ...review };
+      this.monthlyReviews.set(existing.id, updated);
+      return updated;
+    } else {
+      const id = this.currentId++;
+      const newReview: MonthlyReview = { 
+        ...review, 
+        id,
+        monthlyGoal1: review.monthlyGoal1 ?? null,
+        monthlyGoal2: review.monthlyGoal2 ?? null,
+        monthlyGoal3: review.monthlyGoal3 ?? null,
+        monthlyGoal4: review.monthlyGoal4 ?? null,
+        workHours: review.workHours ?? null,
+        personalHours: review.personalHours ?? null,
+        valueAlignment1: review.valueAlignment1 ?? null,
+        valueAlignment2: review.valueAlignment2 ?? null,
+        valueAlignment3: review.valueAlignment3 ?? null,
+        reflection: review.reflection ?? null,
+        nextMonthFocus: review.nextMonthFocus ?? null,
+        createdAt: new Date()
+      };
+      this.monthlyReviews.set(id, newReview);
       return newReview;
     }
   }

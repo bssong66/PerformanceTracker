@@ -10,33 +10,72 @@ import {
   Repeat, 
   Target,
   Menu,
-  FolderOpen
+  FolderOpen,
+  ChevronDown,
+  ChevronRight,
+  Focus,
+  BookOpen,
+  ListTodo,
+  FolderPlus
 } from "lucide-react";
 
 interface LayoutProps {
   children: React.ReactNode;
 }
 
-const navigation = [
+interface NavItem {
+  name: string;
+  href?: string;
+  icon: any;
+  subItems?: NavItem[];
+}
+
+const navigation: NavItem[] = [
   { name: '대시보드', href: '/', icon: Home },
-  { name: '가치 중심 계획', href: '/foundation', icon: Sprout },
-  { name: '일일 관리', href: '/daily-planning', icon: Calendar },
+  { name: '가치 중심계획', href: '/foundation', icon: Sprout },
   { name: '일정관리', href: '/calendar', icon: CalendarDays },
-  { name: '계획 수립', href: '/planning', icon: FolderOpen },
-  { name: '주간 리뷰', href: '/weekly', icon: Repeat },
-  { name: '습관 관리', href: '/habit-tracking', icon: Target },
-  { name: '포커스 모드', href: '/focus', icon: Target },
+  { 
+    name: '계획수립', 
+    icon: FolderOpen,
+    subItems: [
+      { name: '프로젝트관리', href: '/project-management', icon: FolderPlus },
+      { name: '할일관리', href: '/task-management', icon: ListTodo },
+      { name: '습관관리', href: '/habit-management', icon: Target },
+    ]
+  },
+  { name: '일일관리', href: '/daily-planning', icon: Calendar },
+  { name: '포커스 모드', href: '/focus', icon: Focus },
+  { name: '주간리뷰', href: '/weekly', icon: Repeat },
+  { name: '월간리뷰', href: '/monthly', icon: BookOpen },
 ];
 
 export function Layout({ children }: LayoutProps) {
   const [location] = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [expandedItems, setExpandedItems] = useState<string[]>(['계획수립']);
 
-  const isActive = (href: string) => {
+  const isActive = (href?: string) => {
+    if (!href) return false;
     if (href === '/') {
       return location === '/';
     }
     return location.startsWith(href);
+  };
+
+  const isItemActive = (item: NavItem): boolean => {
+    if (item.href && isActive(item.href)) return true;
+    if (item.subItems) {
+      return item.subItems.some(subItem => isActive(subItem.href));
+    }
+    return false;
+  };
+
+  const toggleExpanded = (itemName: string) => {
+    setExpandedItems(prev => 
+      prev.includes(itemName) 
+        ? prev.filter(name => name !== itemName)
+        : [...prev, itemName]
+    );
   };
 
   const Sidebar = ({ mobile = false }) => (
@@ -48,27 +87,88 @@ export function Layout({ children }: LayoutProps) {
       <nav className="mt-5 flex-1 px-2 space-y-1">
         {navigation.map((item) => {
           const Icon = item.icon;
+          const hasSubItems = item.subItems && item.subItems.length > 0;
+          const isExpanded = expandedItems.includes(item.name);
+          const active = isItemActive(item);
+          
           return (
-            <Link
-              key={item.name}
-              href={item.href}
-              onClick={() => mobile && setIsMobileMenuOpen(false)}
-            >
-              <div
-                className={`group flex items-center px-2 py-2 text-sm font-medium rounded-md transition-colors ${
-                  isActive(item.href)
-                    ? 'bg-gray-100 text-gray-900'
-                    : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-                }`}
-              >
-                <Icon
-                  className={`mr-3 h-4 w-4 ${
-                    isActive(item.href) ? 'text-gray-500' : 'text-gray-400'
-                  }`}
-                />
-                {item.name}
-              </div>
-            </Link>
+            <div key={item.name}>
+              {hasSubItems ? (
+                <div>
+                  <button
+                    onClick={() => toggleExpanded(item.name)}
+                    className={`w-full group flex items-center justify-between px-2 py-2 text-sm font-medium rounded-md transition-colors ${
+                      active
+                        ? 'bg-gray-100 text-gray-900'
+                        : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                    }`}
+                  >
+                    <div className="flex items-center">
+                      <Icon
+                        className={`mr-3 h-4 w-4 ${
+                          active ? 'text-gray-500' : 'text-gray-400'
+                        }`}
+                      />
+                      {item.name}
+                    </div>
+                    {isExpanded ? (
+                      <ChevronDown className="h-3 w-3" />
+                    ) : (
+                      <ChevronRight className="h-3 w-3" />
+                    )}
+                  </button>
+                  {isExpanded && (
+                    <div className="mt-1 ml-6 space-y-1">
+                      {item.subItems?.map((subItem) => {
+                        const SubIcon = subItem.icon;
+                        return (
+                          <Link
+                            key={subItem.name}
+                            href={subItem.href!}
+                            onClick={() => mobile && setIsMobileMenuOpen(false)}
+                          >
+                            <div
+                              className={`group flex items-center px-2 py-2 text-sm rounded-md transition-colors ${
+                                isActive(subItem.href)
+                                  ? 'bg-blue-50 text-blue-700'
+                                  : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                              }`}
+                            >
+                              <SubIcon
+                                className={`mr-3 h-4 w-4 ${
+                                  isActive(subItem.href) ? 'text-blue-500' : 'text-gray-400'
+                                }`}
+                              />
+                              {subItem.name}
+                            </div>
+                          </Link>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <Link
+                  href={item.href!}
+                  onClick={() => mobile && setIsMobileMenuOpen(false)}
+                >
+                  <div
+                    className={`group flex items-center px-2 py-2 text-sm font-medium rounded-md transition-colors ${
+                      isActive(item.href)
+                        ? 'bg-gray-100 text-gray-900'
+                        : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                    }`}
+                  >
+                    <Icon
+                      className={`mr-3 h-4 w-4 ${
+                        isActive(item.href) ? 'text-gray-500' : 'text-gray-400'
+                      }`}
+                    />
+                    {item.name}
+                  </div>
+                </Link>
+              )}
+            </div>
           );
         })}
       </nav>

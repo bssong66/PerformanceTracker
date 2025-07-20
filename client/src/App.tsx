@@ -8,9 +8,11 @@ import Dashboard from "@/pages/Dashboard";
 import Foundation from "@/pages/Foundation";
 import DailyPlanning from "@/pages/DailyPlanning";
 import Calendar from "@/pages/Calendar";
-import Planning from "@/pages/Planning";
+import ProjectManagement from "@/pages/ProjectManagement";
+import TaskManagement from "@/pages/TaskManagement";
+import HabitManagement from "@/pages/HabitManagement";
 import WeeklyReview from "@/pages/WeeklyReview";
-import HabitTracking from "@/pages/HabitTracking";
+import MonthlyReview from "@/pages/MonthlyReview";
 import FocusMode from "@/pages/FocusMode";
 import NotFound from "@/pages/not-found";
 
@@ -20,12 +22,14 @@ function Router() {
       <Switch>
         <Route path="/" component={Dashboard} />
         <Route path="/foundation" component={Foundation} />
-        <Route path="/daily-planning" component={DailyPlanning} />
         <Route path="/calendar" component={Calendar} />
-        <Route path="/planning" component={Planning} />
-        <Route path="/weekly" component={WeeklyReview} />
-        <Route path="/habit-tracking" component={HabitTracking} />
+        <Route path="/project-management" component={ProjectManagement} />
+        <Route path="/task-management" component={TaskManagement} />
+        <Route path="/habit-management" component={HabitManagement} />
+        <Route path="/daily-planning" component={DailyPlanning} />
         <Route path="/focus" component={FocusMode} />
+        <Route path="/weekly" component={WeeklyReview} />
+        <Route path="/monthly" component={MonthlyReview} />
         <Route component={NotFound} />
       </Switch>
     </Layout>

@@ -4,7 +4,7 @@ import { storage } from "./storage";
 import { 
   insertFoundationSchema, insertAnnualGoalSchema, insertProjectSchema,
   insertTaskSchema, insertEventSchema, insertHabitSchema, insertHabitLogSchema, 
-  insertWeeklyReviewSchema, insertDailyReflectionSchema, insertTimeBlockSchema
+  insertWeeklyReviewSchema, insertMonthlyReviewSchema, insertDailyReflectionSchema, insertTimeBlockSchema
 } from "@shared/schema";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -371,6 +371,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(review);
     } catch (error) {
       res.status(400).json({ message: "Invalid weekly review data" });
+    }
+  });
+
+  // Monthly review routes
+  app.get("/api/monthly-review/:userId/:monthStartDate", async (req, res) => {
+    try {
+      const userId = parseInt(req.params.userId);
+      const monthStartDate = req.params.monthStartDate;
+      const review = await storage.getMonthlyReview(userId, monthStartDate);
+      
+      if (!review) {
+        return res.status(404).json({ message: "Monthly review not found" });
+      }
+      
+      res.json(review);
+    } catch (error) {
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.post("/api/monthly-review", async (req, res) => {
+    try {
+      const reviewData = insertMonthlyReviewSchema.parse(req.body);
+      const review = await storage.upsertMonthlyReview(reviewData);
+      res.json(review);
+    } catch (error) {
+      res.status(400).json({ message: "Invalid monthly review data" });
     }
   });
 
