@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient } from "@/lib/queryClient";
-import { Plus, FolderPlus, CheckCircle, Circle, Calendar, Clock, CalendarDays } from "lucide-react";
+import { Plus, FolderPlus, CheckCircle, Circle, Calendar, Clock, CalendarDays, Edit3 } from "lucide-react";
 import { format } from "date-fns";
 import { ko } from "date-fns/locale";
 
@@ -40,6 +40,8 @@ export default function Planning() {
   const [taskDialogProjectId, setTaskDialogProjectId] = useState<number | null>(null);
   const [isTaskDetailOpen, setIsTaskDetailOpen] = useState(false);
   const [selectedTaskDetail, setSelectedTaskDetail] = useState<any>(null);
+  const [isEditProjectOpen, setIsEditProjectOpen] = useState(false);
+  const [editingProject, setEditingProject] = useState<any>(null);
   const [newProject, setNewProject] = useState({
     name: '',
     description: '',
@@ -96,6 +98,23 @@ export default function Planning() {
     }
   });
 
+  const updateProjectMutation = useMutation({
+    mutationFn: async (project: any) => {
+      const response = await fetch(`/api/projects/${project.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(project)
+      });
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['projects', MOCK_USER_ID] });
+      setIsEditProjectOpen(false);
+      setEditingProject(null);
+      toast({ title: "프로젝트 수정", description: "프로젝트가 수정되었습니다." });
+    }
+  });
+
   const createTaskMutation = useMutation({
     mutationFn: async (tasks: any[]) => {
       const responses = await Promise.all(
@@ -134,6 +153,12 @@ export default function Planning() {
   const handleCreateProject = () => {
     if (newProject.name.trim()) {
       createProjectMutation.mutate(newProject);
+    }
+  };
+
+  const handleUpdateProject = () => {
+    if (editingProject && editingProject.name.trim()) {
+      updateProjectMutation.mutate(editingProject);
     }
   };
 
@@ -183,6 +208,34 @@ export default function Planning() {
   const openTaskDetail = (task: any) => {
     setSelectedTaskDetail(task);
     setIsTaskDetailOpen(true);
+  };
+
+  const openEditProject = (project: any) => {
+    setEditingProject({
+      id: project.id,
+      name: project.name,
+      description: project.description,
+      priority: project.priority
+    });
+    setIsEditProjectOpen(true);
+  };
+
+  const getProjectDateRange = (projectId: number) => {
+    const tasks = (allTasks as any[]).filter((task: any) => task.projectId === projectId);
+    if (tasks.length === 0) return null;
+    
+    const dates = tasks.reduce((acc: Date[], task: any) => {
+      if (task.startDate) acc.push(new Date(task.startDate));
+      if (task.endDate) acc.push(new Date(task.endDate));
+      return acc;
+    }, []);
+    
+    if (dates.length === 0) return null;
+    
+    const startDate = new Date(Math.min(...dates.map(d => d.getTime())));
+    const endDate = new Date(Math.max(...dates.map(d => d.getTime())));
+    
+    return { startDate, endDate };
   };
 
   const handleToggleTask = (id: number, completed: boolean) => {
@@ -443,6 +496,61 @@ export default function Planning() {
           </DialogContent>
         </Dialog>
 
+        {/* Project Edit Dialog */}
+        <Dialog open={isEditProjectOpen} onOpenChange={setIsEditProjectOpen}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>프로젝트 수정</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="edit-project-name">프로젝트 이름</Label>
+                <Input
+                  id="edit-project-name"
+                  placeholder="프로젝트 이름을 입력하세요"
+                  value={editingProject?.name || ''}
+                  onChange={(e) => setEditingProject(prev => ({ ...prev, name: e.target.value }))}
+                />
+              </div>
+              <div>
+                <Label htmlFor="edit-project-description">설명</Label>
+                <Textarea
+                  id="edit-project-description"
+                  placeholder="프로젝트 설명 (선택사항)"
+                  value={editingProject?.description || ''}
+                  onChange={(e) => setEditingProject(prev => ({ ...prev, description: e.target.value }))}
+                  rows={3}
+                />
+              </div>
+              <div>
+                <Label htmlFor="edit-project-priority">우선순위</Label>
+                <Select 
+                  value={editingProject?.priority || 'medium'} 
+                  onValueChange={(value: 'high' | 'medium' | 'low') => 
+                    setEditingProject(prev => ({ ...prev, priority: value }))
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="high">높음</SelectItem>
+                    <SelectItem value="medium">보통</SelectItem>
+                    <SelectItem value="low">낮음</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <Button 
+                onClick={handleUpdateProject}
+                disabled={!editingProject?.name.trim() || updateProjectMutation.isPending}
+                className="w-full"
+              >
+                {updateProjectMutation.isPending ? '수정 중...' : '프로젝트 수정'}
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+
         {/* Projects List */}
         <div className="space-y-3 mb-8">
           {(projects as any[]).length === 0 ? (
@@ -476,6 +584,15 @@ export default function Planning() {
                         {project.description && (
                           <p className="text-sm text-gray-600">{project.description}</p>
                         )}
+                        {(() => {
+                          const dateRange = getProjectDateRange(project.id);
+                          return dateRange && (
+                            <div className="flex items-center text-xs text-gray-500 mt-1">
+                              <Calendar className="h-3 w-3 mr-1" />
+                              {format(dateRange.startDate, 'M/d', { locale: ko })} ~ {format(dateRange.endDate, 'M/d', { locale: ko })}
+                            </div>
+                          );
+                        })()}
                       </div>
                     </div>
                     <div className="flex items-center space-x-3">
@@ -489,6 +606,16 @@ export default function Planning() {
                           {(allTasks as any[]).filter((task: any) => task.projectId === project.id).length}개 할일
                         </div>
                       </div>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          openEditProject(project);
+                        }}
+                      >
+                        <Edit3 className="h-3 w-3" />
+                      </Button>
                       <Button
                         size="sm"
                         variant="outline"
