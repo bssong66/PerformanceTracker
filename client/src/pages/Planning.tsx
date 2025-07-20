@@ -1130,25 +1130,24 @@ export default function Planning() {
                             })()}
                           </div>
                         </div>
-                        <div className="flex items-center space-x-3">
-                          <div className="flex flex-col items-end space-y-2">
-                            <div className="flex items-center space-x-2">
+                        <div className="grid grid-cols-2 gap-4 items-center">
+                          {/* 첫 번째 열: 중요도, 이미지, 할일 개수 */}
+                          <div className="flex flex-col space-y-2">
+                            <div className="flex items-center justify-end space-x-2">
                               <Badge 
                                 className={`text-xs ${priorityColors[project.priority as keyof typeof priorityColors].bg} ${priorityColors[project.priority as keyof typeof priorityColors].text}`}
                               >
                                 {project.priority === 'high' ? '높음' : project.priority === 'medium' ? '보통' : '낮음'}
                               </Badge>
-                              {(() => {
-                                const imageCount = (projectImages[project.id] || []).length;
-                                console.log(`프로젝트 ${project.id} 이미지 개수:`, imageCount, projectImages);
-                                return (
-                                  <div className="flex items-center text-xs text-gray-500">
-                                    <ImageIcon className="h-3 w-3 mr-1" />
-                                    {imageCount}
-                                  </div>
-                                );
-                              })()}
-                              <div className="text-sm text-gray-500">
+                            </div>
+                            <div className="flex items-center justify-end space-x-3">
+                              {(projectImages[project.id] || []).length > 0 && (
+                                <div className="flex items-center text-sm text-gray-600">
+                                  <ImageIcon className="h-4 w-4 mr-1" />
+                                  {(projectImages[project.id] || []).length}
+                                </div>
+                              )}
+                              <div className="text-sm text-gray-600">
                                 {(allTasks as any[]).filter((task: any) => task.projectId === project.id).length}개 할일
                               </div>
                             </div>
@@ -1156,7 +1155,7 @@ export default function Planning() {
                               const progress = getProjectProgress(project.id);
                               const taskCount = (allTasks as any[]).filter((task: any) => task.projectId === project.id).length;
                               return taskCount > 0 && (
-                                <div className="flex items-center space-x-2">
+                                <div className="flex items-center justify-end space-x-2">
                                   <div className="w-16 bg-gray-200 rounded-full h-1.5">
                                     <div 
                                       className="bg-blue-500 h-1.5 rounded-full transition-all duration-300 ease-in-out"
@@ -1170,27 +1169,33 @@ export default function Planning() {
                               );
                             })()}
                           </div>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              openEditProject(project);
-                            }}
-                          >
-                            <Edit3 className="h-3 w-3" />
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              openTaskDialog(project.id);
-                            }}
-                          >
-                            <Plus className="h-3 w-3 mr-1" />
-                            할일 추가
-                          </Button>
+                          
+                          {/* 두 번째 열: 수정 아이콘, 할일 추가 버튼 */}
+                          <div className="flex flex-col space-y-2">
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                openEditProject(project);
+                              }}
+                              className="w-full justify-center"
+                            >
+                              <Edit3 className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                openTaskDialog(project.id);
+                              }}
+                              className="w-full justify-center"
+                            >
+                              <Plus className="h-4 w-4 mr-1" />
+                              할일 추가
+                            </Button>
+                          </div>
                         </div>
                       </div>
                     </CardContent>
