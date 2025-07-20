@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient } from "@/lib/queryClient";
-import { Plus, FolderPlus, Calendar, Edit3, Trash2, CheckCircle, Circle } from "lucide-react";
+import { Plus, FolderPlus, Calendar, Edit3, Trash2, CheckCircle, Circle, Upload, X, Image } from "lucide-react";
 import { format } from "date-fns";
 import { ko } from "date-fns/locale";
 
@@ -44,8 +44,11 @@ export default function ProjectManagement() {
     description: '',
     priority: 'medium' as 'high' | 'medium' | 'low',
     startDate: '',
-    endDate: ''
+    endDate: '',
+    image: null as string | null
   });
+  const [selectedProjectImage, setSelectedProjectImage] = useState<string | null>(null);
+  const [selectedTaskImage, setSelectedTaskImage] = useState<string | null>(null);
   const [taskList, setTaskList] = useState([
     { 
       id: Date.now(), 
@@ -53,7 +56,8 @@ export default function ProjectManagement() {
       priority: 'B' as 'A' | 'B' | 'C', 
       notes: '',
       startDate: '',
-      endDate: ''
+      endDate: '',
+      image: null as string | null
     }
   ]);
 
@@ -91,7 +95,7 @@ export default function ProjectManagement() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['projects', MOCK_USER_ID] });
-      setNewProject({ name: '', description: '', priority: 'medium', startDate: '', endDate: '' });
+      setNewProject({ name: '', description: '', priority: 'medium', startDate: '', endDate: '', image: null });
       setIsCreateDialogOpen(false);
       toast({ title: "프로젝트 생성", description: "새 프로젝트가 생성되었습니다." });
     }
@@ -143,7 +147,7 @@ export default function ProjectManagement() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tasks-all', MOCK_USER_ID] });
-      setTaskList([{ id: Date.now(), title: '', priority: 'B', notes: '', startDate: '', endDate: '' }]);
+      setTaskList([{ id: Date.now(), title: '', priority: 'B', notes: '', startDate: '', endDate: '', image: null }]);
       setIsTaskDialogOpen(false);
       toast({ title: "할일 생성", description: "새 할일들이 생성되었습니다." });
     }
@@ -221,7 +225,8 @@ export default function ProjectManagement() {
       priority: 'B' as 'A' | 'B' | 'C', 
       notes: '',
       startDate: '',
-      endDate: ''
+      endDate: '',
+      image: null
     }]);
   };
 
@@ -257,6 +262,38 @@ export default function ProjectManagement() {
       case 'C': return 'bg-green-100 text-green-700';
       default: return 'bg-gray-100 text-gray-700';
     }
+  };
+
+  const handleProjectImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const result = e.target?.result as string;
+        setNewProject(prev => ({...prev, image: result}));
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const removeProjectImage = () => {
+    setNewProject(prev => ({...prev, image: null}));
+  };
+
+  const handleTaskImageUpload = (taskId: number, event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const result = e.target?.result as string;
+        updateTaskInList(taskId, 'image', result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const removeTaskImage = (taskId: number) => {
+    updateTaskInList(taskId, 'image', null);
   };
 
   return (
@@ -337,6 +374,42 @@ export default function ProjectManagement() {
                       value={newProject.endDate}
                       onChange={(e) => setNewProject(prev => ({...prev, endDate: e.target.value}))}
                     />
+                  </div>
+                </div>
+                
+                {/* Project Image Upload */}
+                <div>
+                  <Label>프로젝트 이미지</Label>
+                  <div className="mt-2">
+                    {!newProject.image ? (
+                      <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+                        <Upload className="mx-auto h-8 w-8 text-gray-400" />
+                        <p className="mt-2 text-sm text-gray-600">
+                          이미지를 드래그하거나 클릭하여 업로드
+                        </p>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={handleProjectImageUpload}
+                          className="mt-2 text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                        />
+                      </div>
+                    ) : (
+                      <div className="relative">
+                        <img
+                          src={newProject.image}
+                          alt="프로젝트 이미지"
+                          className="w-full max-h-48 object-cover rounded-lg"
+                        />
+                        <button
+                          type="button"
+                          onClick={removeProjectImage}
+                          className="absolute top-2 right-2 p-1 bg-red-500 text-white rounded-full hover:bg-red-600"
+                        >
+                          <X className="h-4 w-4" />
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </div>
                 
@@ -426,6 +499,21 @@ export default function ProjectManagement() {
                   <CardContent>
                     {project.description && (
                       <p className="text-sm text-gray-600 mb-4">{project.description}</p>
+                    )}
+                    
+                    {project.image && (
+                      <div className="mb-4">
+                        <button
+                          onClick={() => setSelectedProjectImage(project.image)}
+                          className="relative block"
+                        >
+                          <img
+                            src={project.image}
+                            alt="프로젝트 이미지"
+                            className="w-full max-h-32 object-cover rounded-lg hover:opacity-90 transition-opacity"
+                          />
+                        </button>
+                      </div>
                     )}
                     
                     {(project.startDate || project.endDate) && (
@@ -526,6 +614,40 @@ export default function ProjectManagement() {
                                     />
                                   </div>
                                 </div>
+                                
+                                {/* Task Image Upload */}
+                                <div>
+                                  <Label>이미지 첨부</Label>
+                                  <div className="mt-2">
+                                    {!task.image ? (
+                                      <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
+                                        <Upload className="mx-auto h-6 w-6 text-gray-400" />
+                                        <p className="mt-1 text-xs text-gray-600">이미지 업로드</p>
+                                        <input
+                                          type="file"
+                                          accept="image/*"
+                                          onChange={(e) => handleTaskImageUpload(task.id, e)}
+                                          className="mt-1 text-xs text-gray-500 file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:text-xs file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                                        />
+                                      </div>
+                                    ) : (
+                                      <div className="relative">
+                                        <img
+                                          src={task.image}
+                                          alt="할일 이미지"
+                                          className="w-full max-h-32 object-cover rounded-lg"
+                                        />
+                                        <button
+                                          type="button"
+                                          onClick={() => removeTaskImage(task.id)}
+                                          className="absolute top-1 right-1 p-1 bg-red-500 text-white rounded-full hover:bg-red-600"
+                                        >
+                                          <X className="h-3 w-3" />
+                                        </button>
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
                               </div>
                             ))}
                             
@@ -587,6 +709,15 @@ export default function ProjectManagement() {
                               </Badge>
                               {task.notes && (
                                 <span className="text-xs text-gray-500 truncate">{task.notes}</span>
+                              )}
+                              {task.image && (
+                                <button
+                                  onClick={() => setSelectedTaskImage(task.image)}
+                                  className="flex items-center space-x-1 text-xs text-blue-600 hover:text-blue-800"
+                                >
+                                  <Image className="h-3 w-3" />
+                                  <span>이미지</span>
+                                </button>
                               )}
                             </div>
                             {(task.startDate || task.endDate) && (
@@ -719,6 +850,42 @@ export default function ProjectManagement() {
             )}
           </DialogContent>
         </Dialog>
+
+        {/* Project Image Popup */}
+        {selectedProjectImage && (
+          <Dialog open={!!selectedProjectImage} onOpenChange={() => setSelectedProjectImage(null)}>
+            <DialogContent className="max-w-2xl">
+              <DialogHeader>
+                <DialogTitle>프로젝트 이미지</DialogTitle>
+              </DialogHeader>
+              <div className="flex justify-center">
+                <img
+                  src={selectedProjectImage}
+                  alt="프로젝트 이미지"
+                  className="max-w-full max-h-96 object-contain rounded-lg"
+                />
+              </div>
+            </DialogContent>
+          </Dialog>
+        )}
+
+        {/* Task Image Popup */}
+        {selectedTaskImage && (
+          <Dialog open={!!selectedTaskImage} onOpenChange={() => setSelectedTaskImage(null)}>
+            <DialogContent className="max-w-2xl">
+              <DialogHeader>
+                <DialogTitle>할일 이미지</DialogTitle>
+              </DialogHeader>
+              <div className="flex justify-center">
+                <img
+                  src={selectedTaskImage}
+                  alt="할일 이미지"
+                  className="max-w-full max-h-96 object-contain rounded-lg"
+                />
+              </div>
+            </DialogContent>
+          </Dialog>
+        )}
       </div>
     </div>
   );

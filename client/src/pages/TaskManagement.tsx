@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient } from "@/lib/queryClient";
-import { Plus, CheckCircle, Circle, Calendar, Trash2 } from "lucide-react";
+import { Plus, CheckCircle, Circle, Calendar, Trash2, Upload, X, Image } from "lucide-react";
 import { format } from "date-fns";
 import { ko } from "date-fns/locale";
 
@@ -24,8 +24,10 @@ export default function TaskManagement() {
     priority: 'B' as 'A' | 'B' | 'C',
     notes: '',
     startDate: '',
-    endDate: ''
+    endDate: '',
+    image: null as string | null
   });
+  const [selectedTaskImage, setSelectedTaskImage] = useState<string | null>(null);
 
   // 독립 할일 조회 (projectId가 null인 할일들)
   const { data: independentTasks = [] } = useQuery({
@@ -72,7 +74,8 @@ export default function TaskManagement() {
         priority: 'B',
         notes: '',
         startDate: '',
-        endDate: ''
+        endDate: '',
+        image: null
       });
       toast({ title: "할일 생성", description: "독립 할일이 생성되었습니다." });
     }
@@ -118,6 +121,22 @@ export default function TaskManagement() {
       case 'C': return 'bg-green-100 text-green-700';
       default: return 'bg-gray-100 text-gray-700';
     }
+  };
+
+  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const result = e.target?.result as string;
+        setNewIndependentTask(prev => ({...prev, image: result}));
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const removeImage = () => {
+    setNewIndependentTask(prev => ({...prev, image: null}));
   };
 
   return (
@@ -201,6 +220,42 @@ export default function TaskManagement() {
                   </div>
                 </div>
                 
+                {/* Image Upload */}
+                <div>
+                  <Label>이미지 첨부</Label>
+                  <div className="mt-2">
+                    {!newIndependentTask.image ? (
+                      <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+                        <Upload className="mx-auto h-8 w-8 text-gray-400" />
+                        <p className="mt-2 text-sm text-gray-600">
+                          이미지를 드래그하거나 클릭하여 업로드
+                        </p>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={handleImageUpload}
+                          className="mt-2 text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                        />
+                      </div>
+                    ) : (
+                      <div className="relative">
+                        <img
+                          src={newIndependentTask.image}
+                          alt="업로드된 이미지"
+                          className="w-full max-h-48 object-cover rounded-lg"
+                        />
+                        <button
+                          type="button"
+                          onClick={removeImage}
+                          className="absolute top-2 right-2 p-1 bg-red-500 text-white rounded-full hover:bg-red-600"
+                        >
+                          <X className="h-4 w-4" />
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+                
                 <div className="flex justify-end space-x-2 pt-4">
                   <Button variant="outline" onClick={() => setIsIndependentTaskDialogOpen(false)}>
                     취소
@@ -247,6 +302,15 @@ export default function TaskManagement() {
                           {task.notes && (
                             <span className="text-xs text-gray-500 truncate">{task.notes}</span>
                           )}
+                          {task.image && (
+                            <button
+                              onClick={() => setSelectedTaskImage(task.image)}
+                              className="flex items-center space-x-1 text-xs text-blue-600 hover:text-blue-800"
+                            >
+                              <Image className="h-3 w-3" />
+                              <span>이미지</span>
+                            </button>
+                          )}
                         </div>
                         {(task.startDate || task.endDate) && (
                           <div className="flex items-center space-x-2 text-xs text-gray-400 mt-1">
@@ -273,6 +337,24 @@ export default function TaskManagement() {
             )}
           </CardContent>
         </Card>
+
+        {/* Image Popup */}
+        {selectedTaskImage && (
+          <Dialog open={!!selectedTaskImage} onOpenChange={() => setSelectedTaskImage(null)}>
+            <DialogContent className="max-w-2xl">
+              <DialogHeader>
+                <DialogTitle>할일 이미지</DialogTitle>
+              </DialogHeader>
+              <div className="flex justify-center">
+                <img
+                  src={selectedTaskImage}
+                  alt="할일 이미지"
+                  className="max-w-full max-h-96 object-contain rounded-lg"
+                />
+              </div>
+            </DialogContent>
+          </Dialog>
+        )}
       </div>
     </div>
   );
