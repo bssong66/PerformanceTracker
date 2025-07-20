@@ -999,6 +999,53 @@ export default function Planning() {
                   />
                 </div>
               </div>
+
+              {/* 프로젝트 이미지 업로드 */}
+              <div>
+                <Label htmlFor="edit-project-images">이미지</Label>
+                <div className="space-y-2">
+                  <div className="flex items-center space-x-2">
+                    <Input
+                      id="edit-project-images"
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      onChange={(e) => handleProjectImageUpload(e.target.files)}
+                      className="hidden"
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => document.getElementById('edit-project-images')?.click()}
+                    >
+                      <Upload className="h-4 w-4 mr-2" />
+                      이미지 추가
+                    </Button>
+                  </div>
+                  {projectImages.length > 0 && (
+                    <div className="grid grid-cols-3 gap-2">
+                      {projectImages.map((image, index) => (
+                        <div key={index} className="relative">
+                          <img
+                            src={URL.createObjectURL(image)}
+                            alt={`프로젝트 이미지 ${index + 1}`}
+                            className="w-full h-20 object-cover rounded border"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => removeProjectImage(index)}
+                            className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs"
+                          >
+                            <X className="h-3 w-3" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+
               <Button 
                 onClick={handleUpdateProject}
                 disabled={!editingProject?.name.trim() || updateProjectMutation.isPending}
