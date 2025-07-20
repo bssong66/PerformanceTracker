@@ -705,10 +705,11 @@ export default function Planning() {
                 새 프로젝트 생성
               </Button>
             </DialogTrigger>
-            <DialogContent>
+            <DialogContent aria-describedby="new-project-description">
               <DialogHeader>
                 <DialogTitle>새 프로젝트 생성</DialogTitle>
               </DialogHeader>
+              <div id="new-project-description" className="sr-only">새로운 프로젝트를 생성하는 양식입니다.</div>
               <div className="space-y-4">
                 <div>
                   <Label htmlFor="project-name">프로젝트 이름</Label>
@@ -838,7 +839,7 @@ export default function Planning() {
             });
           }
         }}>
-          <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
+          <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto" aria-describedby="task-creation-description">
             <DialogHeader>
               <DialogTitle>할일 추가</DialogTitle>
               {(() => {
@@ -853,6 +854,7 @@ export default function Planning() {
                 );
               })()}
             </DialogHeader>
+            <div id="task-creation-description" className="sr-only">프로젝트 할일을 추가하는 양식입니다.</div>
             <div className="space-y-3">
               {taskList.map((task, index) => (
                 <div key={task.id} className="p-3 border rounded-lg space-y-2">
@@ -1008,7 +1010,7 @@ export default function Planning() {
         <Dialog open={isTaskDetailOpen} onOpenChange={(open) => {
           setIsTaskDetailOpen(open);
         }}>
-          <DialogContent className="max-w-md">
+          <DialogContent className="max-w-md" aria-describedby="task-detail-description">
             <DialogHeader>
               <DialogTitle className="flex items-center justify-between">
                 할일 상세 정보
@@ -1035,6 +1037,7 @@ export default function Planning() {
                 );
               })()}
             </DialogHeader>
+            <div id="task-detail-description" className="sr-only">할일의 상세 정보를 확인하고 수정할 수 있는 화면입니다.</div>
             {selectedTaskDetail && (
               <div className="space-y-4">
                 {/* 수정 모드 */}
@@ -1289,10 +1292,11 @@ export default function Planning() {
 
         {/* Project Edit Dialog */}
         <Dialog open={isEditProjectOpen} onOpenChange={setIsEditProjectOpen}>
-          <DialogContent className="max-w-md">
+          <DialogContent className="max-w-md" aria-describedby="project-edit-description">
             <DialogHeader>
               <DialogTitle>프로젝트 수정</DialogTitle>
             </DialogHeader>
+            <div id="project-edit-description" className="sr-only">기존 프로젝트를 수정하는 양식입니다.</div>
             <div className="space-y-4">
               <div>
                 <Label htmlFor="edit-project-name">프로젝트 이름</Label>
@@ -1638,9 +1642,7 @@ export default function Planning() {
                                                       <span>{(taskImages[task.id] || []).length}</span>
                                                     </div>
                                                   )}
-                                                  {task.notes && (
-                                                    <FileText className="h-3 w-3 text-gray-400" />
-                                                  )}
+
                                                   <Button
                                                     size="sm"
                                                     variant="ghost"
@@ -1679,9 +1681,9 @@ export default function Planning() {
 
                                               {/* 메모 미리보기 */}
                                               {task.notes && (
-                                                <p className="text-sm text-gray-600 line-clamp-2 bg-gray-50 p-2 rounded">
-                                                  {task.notes}
-                                                </p>
+                                                <div className="text-sm text-gray-600 bg-gray-50 p-2 rounded">
+                                                  <p className="whitespace-pre-wrap break-words">{task.notes}</p>
+                                                </div>
                                               )}
                                             </div>
                                           </div>
@@ -1842,9 +1844,7 @@ export default function Planning() {
                                         <span className="ml-0.5">{(independentTaskImages[task.id] || []).length}</span>
                                       </div>
                                     )}
-                                    {task.notes && (
-                                      <FileText className="h-3 w-3 text-gray-400" />
-                                    )}
+
                                     <Button
                                       size="sm"
                                       variant="ghost"
@@ -1888,9 +1888,9 @@ export default function Planning() {
 
                                 {/* 메모 내용 */}
                                 {task.notes && (
-                                  <p className="text-sm text-gray-600 bg-gray-50 p-2 rounded line-clamp-2">
-                                    {task.notes}
-                                  </p>
+                                  <div className="text-sm text-gray-600 bg-gray-50 p-2 rounded">
+                                    <p className="whitespace-pre-wrap break-words">{task.notes}</p>
+                                  </div>
                                 )}
                               </div>
                             </div>
@@ -1914,12 +1914,13 @@ export default function Planning() {
                   });
                 }
               }}>
-                <DialogContent className="max-w-md">
+                <DialogContent className="max-w-md" aria-describedby="independent-task-description">
                   <DialogHeader>
                     <DialogTitle>
                       {isEditingIndependentTask ? '할일 수정' : '새 할일 추가'}
                     </DialogTitle>
                   </DialogHeader>
+                  <div id="independent-task-description" className="sr-only">독립적인 할일을 생성하거나 수정하는 양식입니다.</div>
                   <div className="space-y-4">
                     <div>
                       <Label htmlFor="task-title">할일 제목</Label>
