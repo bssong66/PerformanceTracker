@@ -45,7 +45,7 @@ export default function Planning() {
   const [isEditingTask, setIsEditingTask] = useState(false);
   const [editingTaskData, setEditingTaskData] = useState<any>(null);
   const [taskImages, setTaskImages] = useState<{ [taskId: number]: File[] }>({});
-  
+
 
   const [projectImages, setProjectImages] = useState<{ [projectId: number]: File[] }>({});
   const [isImageViewerOpen, setIsImageViewerOpen] = useState(false);
@@ -398,29 +398,29 @@ export default function Planning() {
         endDate: new Date(project.endDate)
       };
     }
-    
+
     // 프로젝트에 날짜가 없으면 할일들의 날짜로 계산
     const tasks = (allTasks as any[]).filter((task: any) => task.projectId === project.id);
     if (tasks.length === 0) return null;
-    
+
     const dates = tasks.reduce((acc: Date[], task: any) => {
       if (task.startDate) acc.push(new Date(task.startDate));
       if (task.endDate) acc.push(new Date(task.endDate));
       return acc;
     }, []);
-    
+
     if (dates.length === 0) return null;
-    
+
     const startDate = new Date(Math.min(...dates.map(d => d.getTime())));
     const endDate = new Date(Math.max(...dates.map(d => d.getTime())));
-    
+
     return { startDate, endDate };
   };
 
   const getProjectProgress = (projectId: number) => {
     const tasks = (allTasks as any[]).filter((task: any) => task.projectId === projectId);
     if (tasks.length === 0) return 0;
-    
+
     const completedTasks = tasks.filter((task: any) => task.completed).length;
     return Math.round((completedTasks / tasks.length) * 100);
   };
@@ -512,7 +512,7 @@ export default function Planning() {
                     />
                   </div>
                 </div>
-                
+
                 {/* 이미지 업로드 */}
                 <div>
                   <Label htmlFor="project-images">프로젝트 이미지</Label>
@@ -558,7 +558,7 @@ export default function Planning() {
                     )}
                   </div>
                 </div>
-                
+
                 <Button 
                   onClick={handleCreateProject}
                   disabled={!newProject.name.trim() || createProjectMutation.isPending}
@@ -617,7 +617,7 @@ export default function Planning() {
                       </Button>
                     </div>
                   )}
-                  
+
                   {/* 첫 번째 줄: 제목과 우선순위 */}
                   <div className="grid grid-cols-3 gap-3">
                     <div className="col-span-2">
@@ -731,7 +731,7 @@ export default function Planning() {
                   </div>
                 </div>
               ))}
-              
+
               <div className="flex space-x-2 pt-2">
                 <Button
                   variant="outline"
@@ -1147,7 +1147,7 @@ export default function Planning() {
             (projects as any[]).map(project => {
               const projectTasksForProject = (allTasks as any[]).filter((task: any) => task.projectId === project.id);
               const isSelected = selectedProject === project.id;
-              
+
               return (
                 <div key={project.id} className="space-y-3">
                   {/* Project Card */}
@@ -1193,30 +1193,32 @@ export default function Planning() {
                                 <div className="text-sm text-gray-600">
                                   {(allTasks as any[]).filter((task: any) => task.projectId === project.id).length}개 할일
                                 </div>
-                                <Button
-                                  size="sm"
-                                  variant="ghost"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    openEditProject(project);
-                                  }}
-                                  className="p-1 h-8 w-8"
-                                >
-                                  <Edit3 className="h-4 w-4" />
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    openTaskDialog(project.id);
-                                  }}
-                                  className="h-8"
-                                >
-                                  <Plus className="h-4 w-4 mr-1" />
-                                  할일 추가
-                                </Button>
                               </div>
+                                <div className="flex items-center space-x-2">
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      openTaskDialog(project.id);
+                                    }}
+                                    className="h-8"
+                                  >
+                                    <Plus className="h-4 w-4 mr-1" />
+                                    할일 추가
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      openEditProject(project);
+                                    }}
+                                    className="p-1 h-8 w-8"
+                                  >
+                                    <Edit3 className="h-4 w-4" />
+                                  </Button>
+                                </div>
                             </div>
                             {project.description && (
                               <p className="text-sm text-gray-600 mt-1">{project.description}</p>
@@ -1300,7 +1302,7 @@ export default function Planning() {
                               {['A', 'B', 'C'].map(priority => {
                                 const priorityTasks = projectTasksForProject.filter((task: any) => task.priority === priority);
                                 if (priorityTasks.length === 0) return null;
-                                
+
                                 return (
                                   <div key={priority}>
                                     <div className="flex items-center space-x-2 mb-2">
@@ -1429,7 +1431,7 @@ export default function Planning() {
                     alt={`이미지 ${currentImageIndex + 1}`}
                     className="max-w-full max-h-full object-contain"
                   />
-                  
+
                   {/* 이미지 네비게이션 */}
                   {viewingImages.length > 1 && (
                     <>
@@ -1449,12 +1451,12 @@ export default function Planning() {
                       </button>
                     </>
                   )}
-                  
+
                   {/* 이미지 카운터 */}
                   <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-black/50 text-white px-3 py-1 rounded-full text-sm">
                     {currentImageIndex + 1} / {viewingImages.length}
                   </div>
-                  
+
                   {/* 닫기 버튼 */}
                   <button
                     onClick={() => setIsImageViewerOpen(false)}
