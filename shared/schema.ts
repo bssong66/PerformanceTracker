@@ -74,6 +74,8 @@ export const events = pgTable("events", {
   repeatInterval: integer("repeat_interval").default(1), // repeat every N days/weeks/months/years
   repeatEndDate: date("repeat_end_date"), // when to stop repeating
   repeatWeekdays: text("repeat_weekdays"), // JSON array for weekly: ["1","3","5"] (Mon, Wed, Fri)
+  coreValue: text("core_value"), // Connected core value from foundation
+  annualGoal: text("annual_goal"), // Connected annual goal
   createdAt: timestamp("created_at").defaultNow(),
 });
 

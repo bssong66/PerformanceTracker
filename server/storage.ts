@@ -303,6 +303,8 @@ export class MemStorage implements IStorage {
       repeatInterval: event.repeatInterval ?? null,
       repeatEndDate: event.repeatEndDate ?? null,
       repeatWeekdays: event.repeatWeekdays ?? null,
+      coreValue: event.coreValue ?? null,
+      annualGoal: event.annualGoal ?? null,
       createdAt: new Date()
     };
     this.events.set(id, newEvent);

@@ -66,7 +66,9 @@ export default function Calendar() {
     repeatType: 'none' as 'none' | 'daily' | 'weekly' | 'monthly' | 'yearly',
     repeatInterval: 1,
     repeatEndDate: '',
-    repeatWeekdays: [] as string[]
+    repeatWeekdays: [] as string[],
+    coreValue: '',
+    annualGoal: ''
   });
 
   // Fetch events
@@ -85,6 +87,18 @@ export default function Calendar() {
   const { data: projects = [] } = useQuery({
     queryKey: ['projects', MOCK_USER_ID],
     queryFn: () => fetch(`/api/projects/${MOCK_USER_ID}`).then(res => res.json()),
+  });
+
+  // Fetch foundation (core values) for dropdown
+  const { data: foundation = null } = useQuery({
+    queryKey: ['foundation', MOCK_USER_ID],
+    queryFn: () => fetch(`/api/foundation/${MOCK_USER_ID}`).then(res => res.json()).catch(() => null),
+  });
+
+  // Fetch annual goals for dropdown
+  const { data: annualGoals = [] } = useQuery({
+    queryKey: ['goals', MOCK_USER_ID],
+    queryFn: () => fetch(`/api/goals/${MOCK_USER_ID}`).then(res => res.json()),
   });
 
   // Create event mutation
@@ -153,7 +167,9 @@ export default function Calendar() {
       repeatType: 'none',
       repeatInterval: 1,
       repeatEndDate: '',
-      repeatWeekdays: []
+      repeatWeekdays: [],
+      coreValue: '',
+      annualGoal: ''
     });
     setIsEditing(false);
     setSelectedEvent(null);
@@ -361,7 +377,9 @@ export default function Calendar() {
         repeatType: eventData.repeatType || 'none',
         repeatInterval: eventData.repeatInterval || 1,
         repeatEndDate: eventData.repeatEndDate || '',
-        repeatWeekdays: eventData.repeatWeekdays ? JSON.parse(eventData.repeatWeekdays) : []
+        repeatWeekdays: eventData.repeatWeekdays ? JSON.parse(eventData.repeatWeekdays) : [],
+        coreValue: eventData.coreValue || '',
+        annualGoal: eventData.annualGoal || ''
       });
       setIsEditing(true);
       setShowEventDialog(true);
@@ -402,7 +420,9 @@ export default function Calendar() {
     const eventData = {
       ...eventForm,
       color: priorityColors[eventForm.priority],
-      repeatWeekdays: eventForm.repeatWeekdays.length > 0 ? JSON.stringify(eventForm.repeatWeekdays) : null
+      repeatWeekdays: eventForm.repeatWeekdays.length > 0 ? JSON.stringify(eventForm.repeatWeekdays) : null,
+      coreValue: eventForm.coreValue || null,
+      annualGoal: eventForm.annualGoal || null
     };
 
     if (isEditing && eventForm.id) {
@@ -614,6 +634,53 @@ export default function Calendar() {
                   </div>
                 </div>
               )}
+
+              {/* 가치 중심 연결 */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label>핵심가치</Label>
+                  <Select
+                    value={eventForm.coreValue}
+                    onValueChange={(value) => setEventForm(prev => ({ ...prev, coreValue: value }))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="핵심가치 선택" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="">선택안함</SelectItem>
+                      {foundation?.coreValue1 && (
+                        <SelectItem value={foundation.coreValue1}>{foundation.coreValue1}</SelectItem>
+                      )}
+                      {foundation?.coreValue2 && (
+                        <SelectItem value={foundation.coreValue2}>{foundation.coreValue2}</SelectItem>
+                      )}
+                      {foundation?.coreValue3 && (
+                        <SelectItem value={foundation.coreValue3}>{foundation.coreValue3}</SelectItem>
+                      )}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <Label>연간목표</Label>
+                  <Select
+                    value={eventForm.annualGoal}
+                    onValueChange={(value) => setEventForm(prev => ({ ...prev, annualGoal: value }))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="연간목표 선택" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="">선택안함</SelectItem>
+                      {annualGoals.map((goal: any) => (
+                        <SelectItem key={goal.id} value={goal.title}>
+                          {goal.title}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
 
               {/* 반복 설정 */}
               <div className="space-y-3">
