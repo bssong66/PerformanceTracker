@@ -632,11 +632,11 @@ export default function Calendar() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="none">반복 없음</SelectItem>
-                    <SelectItem value="daily">매일</SelectItem>
-                    <SelectItem value="weekly">매주</SelectItem>
-                    <SelectItem value="monthly">매월</SelectItem>
-                    <SelectItem value="yearly">매년</SelectItem>
+                    <SelectItem value="none">반복없음</SelectItem>
+                    <SelectItem value="daily">일</SelectItem>
+                    <SelectItem value="weekly">주</SelectItem>
+                    <SelectItem value="monthly">월</SelectItem>
+                    <SelectItem value="yearly">연</SelectItem>
                   </SelectContent>
                 </Select>
 
