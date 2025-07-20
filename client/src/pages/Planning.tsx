@@ -1138,12 +1138,16 @@ export default function Planning() {
                               >
                                 {project.priority === 'high' ? '높음' : project.priority === 'medium' ? '보통' : '낮음'}
                               </Badge>
-                              {(projectImages[project.id] || []).length > 0 && (
-                                <div className="flex items-center text-xs text-gray-500">
-                                  <ImageIcon className="h-3 w-3 mr-1" />
-                                  {(projectImages[project.id] || []).length}
-                                </div>
-                              )}
+                              {(() => {
+                                const imageCount = (projectImages[project.id] || []).length;
+                                console.log(`프로젝트 ${project.id} 이미지 개수:`, imageCount, projectImages);
+                                return (
+                                  <div className="flex items-center text-xs text-gray-500">
+                                    <ImageIcon className="h-3 w-3 mr-1" />
+                                    {imageCount}
+                                  </div>
+                                );
+                              })()}
                               <div className="text-sm text-gray-500">
                                 {(allTasks as any[]).filter((task: any) => task.projectId === project.id).length}개 할일
                               </div>
