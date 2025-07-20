@@ -93,12 +93,16 @@ export default function Calendar() {
   const { data: foundation = null } = useQuery({
     queryKey: ['foundation', MOCK_USER_ID],
     queryFn: () => fetch(`/api/foundation/${MOCK_USER_ID}`).then(res => res.json()).catch(() => null),
+    refetchOnWindowFocus: true,
+    refetchInterval: 5000, // 5초마다 자동 새로고침
   });
 
   // Fetch annual goals for dropdown
   const { data: annualGoals = [] } = useQuery({
     queryKey: ['goals', MOCK_USER_ID],
     queryFn: () => fetch(`/api/goals/${MOCK_USER_ID}`).then(res => res.json()),
+    refetchOnWindowFocus: true,
+    refetchInterval: 5000, // 5초마다 자동 새로고침
   });
 
   // Create event mutation
