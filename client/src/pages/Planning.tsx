@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -46,10 +46,7 @@ export default function Planning() {
   const [editingTaskData, setEditingTaskData] = useState<any>(null);
   const [taskImages, setTaskImages] = useState<{ [taskId: number]: File[] }>({});
   
-  // taskImages 상태 변화 추적
-  useEffect(() => {
-    console.log('taskImages 상태 변화:', taskImages);
-  }, [taskImages]);
+
   const [projectImages, setProjectImages] = useState<{ [projectId: number]: File[] }>({});
   const [isImageViewerOpen, setIsImageViewerOpen] = useState(false);
   const [viewingImages, setViewingImages] = useState<File[]>([]);
@@ -578,7 +575,17 @@ export default function Planning() {
         {/* Task Creation Dialog */}
         <Dialog open={isTaskDialogOpen} onOpenChange={(open) => {
           setIsTaskDialogOpen(open);
-          if (!open) setTaskImages({});
+          // 할일 생성 다이얼로그가 닫힐 때는 임시 이미지만 정리 (실제 할일 이미지는 보존)
+          if (!open) {
+            setTaskImages(prev => {
+              const newImages = { ...prev };
+              // taskList의 임시 ID들만 제거
+              taskList.forEach(task => {
+                delete newImages[task.id];
+              });
+              return newImages;
+            });
+          }
         }}>
           <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
             <DialogHeader>
@@ -749,7 +756,6 @@ export default function Planning() {
         {/* Task Detail Dialog */}
         <Dialog open={isTaskDetailOpen} onOpenChange={(open) => {
           setIsTaskDetailOpen(open);
-          if (!open) setTaskImages({});
         }}>
           <DialogContent className="max-w-md">
             <DialogHeader>
@@ -1329,25 +1335,21 @@ export default function Planning() {
                                                   {task.title}
                                                 </h4>
                                                 <div className="flex items-center space-x-1">
-                                                  {(() => {
-                                                    const images = taskImages[task.id] || [];
-                                                    const count = images.length;
-                                                    console.log(`할일 ${task.id} 이미지:`, count, images);
-                                                    return count > 0 && (
-                                                      <div 
-                                                        className="flex items-center text-xs text-gray-400 cursor-pointer hover:text-gray-600 transition-colors"
-                                                        onClick={(e) => {
-                                                          e.stopPropagation();
-                                                          if (count > 0) {
-                                                            openImageViewer(images);
-                                                          }
-                                                        }}
-                                                      >
-                                                        <ImageIcon className="h-3 w-3" />
-                                                        <span className="ml-0.5">{count}</span>
-                                                      </div>
-                                                    );
-                                                  })()}
+                                                  {(taskImages[task.id] || []).length > 0 && (
+                                                    <div 
+                                                      className="flex items-center text-xs text-gray-400 cursor-pointer hover:text-gray-600 transition-colors"
+                                                      onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        const images = taskImages[task.id] || [];
+                                                        if (images.length > 0) {
+                                                          openImageViewer(images);
+                                                        }
+                                                      }}
+                                                    >
+                                                      <ImageIcon className="h-3 w-3" />
+                                                      <span className="ml-0.5">{(taskImages[task.id] || []).length}</span>
+                                                    </div>
+                                                  )}
                                                   {task.notes && (
                                                     <FileText className="h-3 w-3 text-gray-400" />
                                                   )}
