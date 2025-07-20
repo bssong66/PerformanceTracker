@@ -81,3 +81,10 @@
     @apply bg-purple-50 text-purple-800 border-purple-200;
   }
 }
+
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}

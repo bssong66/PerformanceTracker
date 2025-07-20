@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient } from "@/lib/queryClient";
-import { Plus, FolderPlus, CheckCircle, Circle, Calendar, Clock, CalendarDays, Edit3 } from "lucide-react";
+import { Plus, FolderPlus, CheckCircle, Circle, Calendar, Clock, CalendarDays, Edit3, Upload, Image, X, FileText } from "lucide-react";
 import { format } from "date-fns";
 import { ko } from "date-fns/locale";
 
@@ -44,6 +44,8 @@ export default function Planning() {
   const [editingProject, setEditingProject] = useState<any>(null);
   const [isEditingTask, setIsEditingTask] = useState(false);
   const [editingTaskData, setEditingTaskData] = useState<any>(null);
+  const [taskImages, setTaskImages] = useState<File[]>([]);
+  const [projectImages, setProjectImages] = useState<File[]>([]);
   const [newProject, setNewProject] = useState({
     name: '',
     description: '',
@@ -175,6 +177,7 @@ export default function Planning() {
   const handleCreateProject = () => {
     if (newProject.name.trim()) {
       createProjectMutation.mutate(newProject);
+      setProjectImages([]);
     }
   };
 
@@ -202,6 +205,7 @@ export default function Planning() {
         endDate: task.endDate || null
       }));
       createTaskMutation.mutate(tasksToCreate);
+      setTaskImages([]);
     }
   };
 
@@ -231,6 +235,29 @@ export default function Planning() {
   const openTaskDialog = (projectId: number) => {
     setTaskDialogProjectId(projectId);
     setIsTaskDialogOpen(true);
+  };
+
+  // 이미지 업로드 핸들러
+  const handleTaskImageUpload = (files: FileList | null) => {
+    if (files) {
+      const newImages = Array.from(files).filter(file => file.type.startsWith('image/'));
+      setTaskImages(prev => [...prev, ...newImages]);
+    }
+  };
+
+  const handleProjectImageUpload = (files: FileList | null) => {
+    if (files) {
+      const newImages = Array.from(files).filter(file => file.type.startsWith('image/'));
+      setProjectImages(prev => [...prev, ...newImages]);
+    }
+  };
+
+  const removeTaskImage = (index: number) => {
+    setTaskImages(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const removeProjectImage = (index: number) => {
+    setProjectImages(prev => prev.filter((_, i) => i !== index));
   };
 
   // 선택된 프로젝트의 날짜 범위 가져오기
@@ -344,7 +371,10 @@ export default function Planning() {
 
         {/* Create Project Button */}
         <div className="mb-6 flex justify-end">
-          <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+          <Dialog open={isCreateDialogOpen} onOpenChange={(open) => {
+          setIsCreateDialogOpen(open);
+          if (!open) setProjectImages([]);
+        }}>
             <DialogTrigger asChild>
               <Button className="w-1/10" size="sm">
                 <Plus className="h-4 w-4 mr-2" />
@@ -409,6 +439,53 @@ export default function Planning() {
                     />
                   </div>
                 </div>
+                
+                {/* 이미지 업로드 */}
+                <div>
+                  <Label htmlFor="project-images">프로젝트 이미지</Label>
+                  <div className="space-y-2">
+                    <div className="flex items-center space-x-2">
+                      <Input
+                        id="project-images"
+                        type="file"
+                        accept="image/*"
+                        multiple
+                        onChange={(e) => handleProjectImageUpload(e.target.files)}
+                        className="hidden"
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => document.getElementById('project-images')?.click()}
+                      >
+                        <Upload className="h-4 w-4 mr-2" />
+                        이미지 추가
+                      </Button>
+                    </div>
+                    {projectImages.length > 0 && (
+                      <div className="grid grid-cols-3 gap-2">
+                        {projectImages.map((image, index) => (
+                          <div key={index} className="relative">
+                            <img
+                              src={URL.createObjectURL(image)}
+                              alt={`프로젝트 이미지 ${index + 1}`}
+                              className="w-full h-20 object-cover rounded border"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => removeProjectImage(index)}
+                              className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs"
+                            >
+                              <X className="h-3 w-3" />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+                
                 <Button 
                   onClick={handleCreateProject}
                   disabled={!newProject.name.trim() || createProjectMutation.isPending}
@@ -423,7 +500,10 @@ export default function Planning() {
         </div>
 
         {/* Task Creation Dialog */}
-        <Dialog open={isTaskDialogOpen} onOpenChange={setIsTaskDialogOpen}>
+        <Dialog open={isTaskDialogOpen} onOpenChange={(open) => {
+          setIsTaskDialogOpen(open);
+          if (!open) setTaskImages([]);
+        }}>
           <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>할일 추가</DialogTitle>
@@ -520,6 +600,52 @@ export default function Planning() {
                       className="h-8"
                     />
                   </div>
+
+                  {/* 할일 이미지 업로드 */}
+                  <div>
+                    <Label className="text-xs">이미지</Label>
+                    <div className="space-y-2">
+                      <div className="flex items-center space-x-2">
+                        <Input
+                          id={`task-images-${task.id}`}
+                          type="file"
+                          accept="image/*"
+                          multiple
+                          onChange={(e) => handleTaskImageUpload(e.target.files)}
+                          className="hidden"
+                        />
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => document.getElementById(`task-images-${task.id}`)?.click()}
+                        >
+                          <Upload className="h-3 w-3 mr-1" />
+                          이미지 추가
+                        </Button>
+                      </div>
+                      {taskImages.length > 0 && (
+                        <div className="grid grid-cols-4 gap-1">
+                          {taskImages.map((image, imageIndex) => (
+                            <div key={imageIndex} className="relative">
+                              <img
+                                src={URL.createObjectURL(image)}
+                                alt={`할일 이미지 ${imageIndex + 1}`}
+                                className="w-full h-12 object-cover rounded border"
+                              />
+                              <button
+                                type="button"
+                                onClick={() => removeTaskImage(imageIndex)}
+                                className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-4 h-4 flex items-center justify-center text-xs"
+                              >
+                                <X className="h-2 w-2" />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 </div>
               ))}
               
@@ -545,7 +671,10 @@ export default function Planning() {
         </Dialog>
 
         {/* Task Detail Dialog */}
-        <Dialog open={isTaskDetailOpen} onOpenChange={setIsTaskDetailOpen}>
+        <Dialog open={isTaskDetailOpen} onOpenChange={(open) => {
+          setIsTaskDetailOpen(open);
+          if (!open) setTaskImages([]);
+        }}>
           <DialogContent className="max-w-md">
             <DialogHeader>
               <DialogTitle className="flex items-center justify-between">
@@ -639,6 +768,52 @@ export default function Planning() {
                         placeholder="할일에 대한 추가 정보"
                         rows={3}
                       />
+                    </div>
+
+                    {/* 이미지 업로드 */}
+                    <div>
+                      <Label htmlFor="edit-task-images">이미지</Label>
+                      <div className="space-y-2">
+                        <div className="flex items-center space-x-2">
+                          <Input
+                            id="edit-task-images"
+                            type="file"
+                            accept="image/*"
+                            multiple
+                            onChange={(e) => handleTaskImageUpload(e.target.files)}
+                            className="hidden"
+                          />
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => document.getElementById('edit-task-images')?.click()}
+                          >
+                            <Upload className="h-4 w-4 mr-2" />
+                            이미지 추가
+                          </Button>
+                        </div>
+                        {taskImages.length > 0 && (
+                          <div className="grid grid-cols-3 gap-2">
+                            {taskImages.map((image, index) => (
+                              <div key={index} className="relative">
+                                <img
+                                  src={URL.createObjectURL(image)}
+                                  alt={`할일 이미지 ${index + 1}`}
+                                  className="w-full h-20 object-cover rounded border"
+                                />
+                                <button
+                                  type="button"
+                                  onClick={() => removeTaskImage(index)}
+                                  className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs"
+                                >
+                                  <X className="h-3 w-3" />
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
                     </div>
 
                     <div className="flex space-x-2">
@@ -1000,37 +1175,57 @@ export default function Planning() {
                                             )}
                                           </button>
                                           <div 
-                                            className="flex-1 cursor-pointer hover:bg-gray-50 rounded p-1 -m-1 transition-colors"
+                                            className="flex-1 cursor-pointer hover:bg-gray-50 rounded p-2 -m-2 transition-colors"
                                             onClick={() => openTaskDetail(task)}
                                           >
-                                            <div className="flex items-center justify-between">
-                                              <h4 className={`font-medium ${task.completed ? 'line-through text-gray-500' : 'text-gray-900'}`}>
-                                                {task.title}
-                                              </h4>
+                                            <div className="space-y-2">
+                                              {/* 할일 제목과 우선순위 */}
+                                              <div className="flex items-center justify-between">
+                                                <div className="flex items-center space-x-2">
+                                                  <h4 className={`font-medium ${task.completed ? 'line-through text-gray-500' : 'text-gray-900'}`}>
+                                                    {task.title}
+                                                  </h4>
+                                                  <Badge 
+                                                    variant={task.priority === 'A' ? 'destructive' : task.priority === 'B' ? 'default' : 'secondary'}
+                                                    className="text-xs"
+                                                  >
+                                                    {task.priority}급
+                                                  </Badge>
+                                                </div>
+                                                {task.notes && (
+                                                  <FileText className="h-3 w-3 text-gray-400" />
+                                                )}
+                                              </div>
+
+                                              {/* 일정 정보 */}
                                               {(task.startDate || task.endDate) && (
-                                                <div className="flex items-center space-x-2 text-xs text-gray-500">
+                                                <div className="flex items-center space-x-2 text-xs">
                                                   {task.startDate && task.endDate ? (
-                                                    <span className="flex items-center bg-blue-50 px-2 py-1 rounded">
+                                                    <span className="flex items-center bg-blue-50 px-2 py-1 rounded text-blue-700">
                                                       <Calendar className="h-3 w-3 mr-1" />
                                                       {format(new Date(task.startDate), 'M/d', { locale: ko })} ~ {format(new Date(task.endDate), 'M/d', { locale: ko })}
                                                     </span>
                                                   ) : task.startDate ? (
-                                                    <span className="flex items-center bg-green-50 px-2 py-1 rounded">
+                                                    <span className="flex items-center bg-green-50 px-2 py-1 rounded text-green-700">
                                                       <Calendar className="h-3 w-3 mr-1" />
                                                       시작: {format(new Date(task.startDate), 'M/d', { locale: ko })}
                                                     </span>
                                                   ) : task.endDate ? (
-                                                    <span className="flex items-center bg-red-50 px-2 py-1 rounded">
+                                                    <span className="flex items-center bg-red-50 px-2 py-1 rounded text-red-700">
                                                       <CalendarDays className="h-3 w-3 mr-1" />
                                                       마감: {format(new Date(task.endDate), 'M/d', { locale: ko })}
                                                     </span>
                                                   ) : null}
                                                 </div>
                                               )}
+
+                                              {/* 메모 미리보기 */}
+                                              {task.notes && (
+                                                <p className="text-sm text-gray-600 line-clamp-2 bg-gray-50 p-2 rounded">
+                                                  {task.notes}
+                                                </p>
+                                              )}
                                             </div>
-                                            {task.notes && (
-                                              <p className="text-sm text-gray-600 mt-1">{task.notes}</p>
-                                            )}
                                           </div>
                                         </div>
                                       ))}
