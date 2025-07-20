@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient } from "@/lib/queryClient";
-import { Plus, FolderPlus, Calendar, Edit3, Trash2 } from "lucide-react";
+import { Plus, FolderPlus, Calendar, Edit3, Trash2, CheckCircle, Circle } from "lucide-react";
 import { format } from "date-fns";
 import { ko } from "date-fns/locale";
 
@@ -34,8 +34,10 @@ const priorityColors = {
 
 export default function ProjectManagement() {
   const { toast } = useToast();
+  const [selectedProject, setSelectedProject] = useState<number | null>(null);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isEditProjectOpen, setIsEditProjectOpen] = useState(false);
+  const [isTaskDialogOpen, setIsTaskDialogOpen] = useState(false);
   const [editingProject, setEditingProject] = useState<any>(null);
   const [newProject, setNewProject] = useState({
     name: '',
@@ -44,12 +46,33 @@ export default function ProjectManagement() {
     startDate: '',
     endDate: ''
   });
+  const [taskList, setTaskList] = useState([
+    { 
+      id: Date.now(), 
+      title: '', 
+      priority: 'B' as 'A' | 'B' | 'C', 
+      notes: '',
+      startDate: '',
+      endDate: ''
+    }
+  ]);
 
   // API Queries
   const { data: projects = [] } = useQuery({
     queryKey: ['projects', MOCK_USER_ID],
     queryFn: () => fetch(`/api/projects/${MOCK_USER_ID}`).then(res => res.json()),
   });
+
+  const { data: allTasks = [] } = useQuery({
+    queryKey: ['tasks-all', MOCK_USER_ID],
+    queryFn: () => fetch(`/api/tasks/${MOCK_USER_ID}`).then(res => res.json()),
+  });
+
+  // 선택된 프로젝트의 할일 필터링
+  const projectTasks = useMemo(() => {
+    if (!selectedProject) return [];
+    return (allTasks as any[]).filter((task: any) => task.projectId === selectedProject);
+  }, [allTasks, selectedProject]);
 
   // Mutations
   const createProjectMutation = useMutation({
@@ -100,7 +123,56 @@ export default function ProjectManagement() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['projects', MOCK_USER_ID] });
+      queryClient.invalidateQueries({ queryKey: ['tasks-all', MOCK_USER_ID] });
       toast({ title: "프로젝트 삭제", description: "프로젝트가 삭제되었습니다." });
+    }
+  });
+
+  const createTaskMutation = useMutation({
+    mutationFn: async (tasks: any[]) => {
+      const responses = await Promise.all(
+        tasks.map(task => 
+          fetch('/api/tasks', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ ...task, userId: MOCK_USER_ID })
+          }).then(res => res.json())
+        )
+      );
+      return responses;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['tasks-all', MOCK_USER_ID] });
+      setTaskList([{ id: Date.now(), title: '', priority: 'B', notes: '', startDate: '', endDate: '' }]);
+      setIsTaskDialogOpen(false);
+      toast({ title: "할일 생성", description: "새 할일들이 생성되었습니다." });
+    }
+  });
+
+  const updateTaskMutation = useMutation({
+    mutationFn: async ({ id, updates }: { id: number; updates: any }) => {
+      const response = await fetch(`/api/tasks/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updates)
+      });
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['tasks-all', MOCK_USER_ID] });
+    }
+  });
+
+  const deleteTaskMutation = useMutation({
+    mutationFn: async (taskId: number) => {
+      const response = await fetch(`/api/tasks/${taskId}`, {
+        method: 'DELETE'
+      });
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['tasks-all', MOCK_USER_ID] });
+      toast({ title: "할일 삭제", description: "할일이 삭제되었습니다." });
     }
   });
 
@@ -127,6 +199,66 @@ export default function ProjectManagement() {
     }
   };
 
+  const handleCreateTasks = () => {
+    const validTasks = taskList.filter(task => task.title.trim());
+    if (validTasks.length > 0 && selectedProject) {
+      const tasksToCreate = validTasks.map(task => ({
+        title: task.title,
+        priority: task.priority,
+        notes: task.notes,
+        projectId: selectedProject,
+        startDate: task.startDate || null,
+        endDate: task.endDate || null
+      }));
+      createTaskMutation.mutate(tasksToCreate);
+    }
+  };
+
+  const addTaskToList = () => {
+    setTaskList(prev => [...prev, { 
+      id: Date.now(), 
+      title: '', 
+      priority: 'B' as 'A' | 'B' | 'C', 
+      notes: '',
+      startDate: '',
+      endDate: ''
+    }]);
+  };
+
+  const removeTaskFromList = (id: number) => {
+    if (taskList.length > 1) {
+      setTaskList(prev => prev.filter(task => task.id !== id));
+    }
+  };
+
+  const updateTaskInList = (id: number, field: string, value: string) => {
+    setTaskList(prev => prev.map(task => 
+      task.id === id ? { ...task, [field]: value } : task
+    ));
+  };
+
+  const toggleTaskCompletion = (taskId: number, currentStatus: boolean) => {
+    updateTaskMutation.mutate({
+      id: taskId,
+      updates: { completed: !currentStatus }
+    });
+  };
+
+  const handleDeleteTask = (taskId: number) => {
+    if (confirm('이 할일을 삭제하시겠습니까?')) {
+      deleteTaskMutation.mutate(taskId);
+    }
+  };
+
+  const getPriorityColor = (priority: string) => {
+    switch (priority) {
+      case 'A': return 'bg-red-100 text-red-700';
+      case 'B': return 'bg-yellow-100 text-yellow-700';
+      case 'C': return 'bg-green-100 text-green-700';
+      default: return 'bg-gray-100 text-gray-700';
+    }
+  };
+
   return (
     <div className="py-6">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -134,7 +266,7 @@ export default function ProjectManagement() {
         <div className="flex justify-between items-center mb-8">
           <div>
             <h1 className="text-2xl font-bold text-gray-900">프로젝트 관리</h1>
-            <p className="text-sm text-gray-600">프로젝트를 생성하고 관리하세요</p>
+            <p className="text-sm text-gray-600">프로젝트와 프로젝트 할일을 함께 관리하세요</p>
           </div>
           
           <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
@@ -221,70 +353,269 @@ export default function ProjectManagement() {
           </Dialog>
         </div>
 
-        {/* Projects Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {projects.map((project: any) => (
-            <Card key={project.id} className="hover:shadow-lg transition-shadow">
-              <CardHeader className="pb-3">
-                <div className="flex items-start justify-between">
-                  <div className="flex items-center space-x-3">
-                    <div 
-                      className="w-4 h-4 rounded-full" 
-                      style={{ backgroundColor: project.color }}
-                    />
-                    <div>
-                      <CardTitle className="text-lg">{project.name}</CardTitle>
-                      <Badge 
-                        className={`${priorityColors[project.priority as keyof typeof priorityColors]?.bg} ${priorityColors[project.priority as keyof typeof priorityColors]?.text} text-xs`}
-                      >
-                        {project.priority === 'high' ? '높음' : project.priority === 'medium' ? '보통' : '낮음'}
-                      </Badge>
+        {/* Project Selection */}
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle>프로젝트 선택</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Select value={selectedProject?.toString() || ''} onValueChange={(value) => setSelectedProject(Number(value))}>
+              <SelectTrigger>
+                <SelectValue placeholder="관리할 프로젝트를 선택하세요" />
+              </SelectTrigger>
+              <SelectContent>
+                {projects.map((project: any) => (
+                  <SelectItem key={project.id} value={project.id.toString()}>
+                    <div className="flex items-center space-x-2">
+                      <div 
+                        className="w-3 h-3 rounded-full" 
+                        style={{ backgroundColor: project.color }}
+                      />
+                      <span>{project.name}</span>
                     </div>
-                  </div>
-                  <div className="flex space-x-1">
-                    <Button 
-                      variant="ghost" 
-                      size="sm"
-                      onClick={() => openEditDialog(project)}
-                    >
-                      <Edit3 className="h-4 w-4" />
-                    </Button>
-                    <Button 
-                      variant="ghost" 
-                      size="sm"
-                      onClick={() => handleDeleteProject(project.id)}
-                    >
-                      <Trash2 className="h-4 w-4 text-red-500" />
-                    </Button>
-                  </div>
-                </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </CardContent>
+        </Card>
+
+        {selectedProject && (
+          <div className="space-y-6">
+            {/* Selected Project Details */}
+            {(() => {
+              const project = projects.find((p: any) => p.id === selectedProject);
+              if (!project) return null;
+              
+              return (
+                <Card>
+                  <CardHeader className="pb-3">
+                    <div className="flex items-start justify-between">
+                      <div className="flex items-center space-x-3">
+                        <div 
+                          className="w-4 h-4 rounded-full" 
+                          style={{ backgroundColor: project.color }}
+                        />
+                        <div>
+                          <CardTitle className="text-lg">{project.name}</CardTitle>
+                          <Badge 
+                            className={`${priorityColors[project.priority as keyof typeof priorityColors]?.bg} ${priorityColors[project.priority as keyof typeof priorityColors]?.text} text-xs`}
+                          >
+                            {project.priority === 'high' ? '높음' : project.priority === 'medium' ? '보통' : '낮음'}
+                          </Badge>
+                        </div>
+                      </div>
+                      <div className="flex space-x-1">
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          onClick={() => openEditDialog(project)}
+                        >
+                          <Edit3 className="h-4 w-4" />
+                        </Button>
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          onClick={() => handleDeleteProject(project.id)}
+                        >
+                          <Trash2 className="h-4 w-4 text-red-500" />
+                        </Button>
+                      </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    {project.description && (
+                      <p className="text-sm text-gray-600 mb-4">{project.description}</p>
+                    )}
+                    
+                    {(project.startDate || project.endDate) && (
+                      <div className="flex items-center space-x-2 text-xs text-gray-500 mb-4">
+                        <Calendar className="h-3 w-3" />
+                        <span>
+                          {project.startDate && format(new Date(project.startDate), 'M/d', { locale: ko })}
+                          {project.startDate && project.endDate && ' - '}
+                          {project.endDate && format(new Date(project.endDate), 'M/d', { locale: ko })}
+                        </span>
+                      </div>
+                    )}
+                    
+                    <div className="flex items-center justify-between">
+                      <Badge variant="outline" className="text-xs">
+                        {project.status === 'planning' ? '계획 중' : 
+                         project.status === 'in-progress' ? '진행 중' : '완료'}
+                      </Badge>
+                      
+                      <Dialog open={isTaskDialogOpen} onOpenChange={setIsTaskDialogOpen}>
+                        <DialogTrigger asChild>
+                          <Button size="sm">
+                            <Plus className="h-4 w-4 mr-2" />
+                            할일 추가
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent className="max-w-2xl">
+                          <DialogHeader>
+                            <DialogTitle>프로젝트 할일 생성</DialogTitle>
+                          </DialogHeader>
+                          <div className="space-y-4 max-h-96 overflow-y-auto">
+                            {taskList.map((task, index) => (
+                              <div key={task.id} className="border rounded-lg p-4 space-y-3">
+                                <div className="flex justify-between items-center">
+                                  <h4 className="font-medium">할일 {index + 1}</h4>
+                                  {taskList.length > 1 && (
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={() => removeTaskFromList(task.id)}
+                                    >
+                                      삭제
+                                    </Button>
+                                  )}
+                                </div>
+                                
+                                <div>
+                                  <Label>제목</Label>
+                                  <Input
+                                    placeholder="할일을 입력하세요"
+                                    value={task.title}
+                                    onChange={(e) => updateTaskInList(task.id, 'title', e.target.value)}
+                                  />
+                                </div>
+                                
+                                <div>
+                                  <Label>우선순위</Label>
+                                  <Select 
+                                    value={task.priority} 
+                                    onValueChange={(value) => updateTaskInList(task.id, 'priority', value)}
+                                  >
+                                    <SelectTrigger>
+                                      <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      <SelectItem value="A">A (높음)</SelectItem>
+                                      <SelectItem value="B">B (보통)</SelectItem>
+                                      <SelectItem value="C">C (낮음)</SelectItem>
+                                    </SelectContent>
+                                  </Select>
+                                </div>
+                                
+                                <div>
+                                  <Label>메모</Label>
+                                  <Textarea
+                                    placeholder="추가 메모..."
+                                    value={task.notes}
+                                    onChange={(e) => updateTaskInList(task.id, 'notes', e.target.value)}
+                                    rows={2}
+                                  />
+                                </div>
+                                
+                                <div className="grid grid-cols-2 gap-4">
+                                  <div>
+                                    <Label>시작일</Label>
+                                    <Input
+                                      type="date"
+                                      value={task.startDate}
+                                      onChange={(e) => updateTaskInList(task.id, 'startDate', e.target.value)}
+                                    />
+                                  </div>
+                                  <div>
+                                    <Label>종료일</Label>
+                                    <Input
+                                      type="date"
+                                      value={task.endDate}
+                                      onChange={(e) => updateTaskInList(task.id, 'endDate', e.target.value)}
+                                    />
+                                  </div>
+                                </div>
+                              </div>
+                            ))}
+                            
+                            <Button 
+                              variant="outline" 
+                              onClick={addTaskToList}
+                              className="w-full"
+                            >
+                              <Plus className="h-4 w-4 mr-2" />
+                              할일 추가
+                            </Button>
+                          </div>
+                          
+                          <div className="flex justify-end space-x-2 pt-4">
+                            <Button variant="outline" onClick={() => setIsTaskDialogOpen(false)}>
+                              취소
+                            </Button>
+                            <Button onClick={handleCreateTasks}>
+                              생성
+                            </Button>
+                          </div>
+                        </DialogContent>
+                      </Dialog>
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })()}
+
+            {/* Project Tasks List */}
+            <Card>
+              <CardHeader>
+                <CardTitle>프로젝트 할일 목록</CardTitle>
               </CardHeader>
               <CardContent>
-                {project.description && (
-                  <p className="text-sm text-gray-600 mb-4">{project.description}</p>
-                )}
-                
-                {(project.startDate || project.endDate) && (
-                  <div className="flex items-center space-x-2 text-xs text-gray-500">
-                    <Calendar className="h-3 w-3" />
-                    <span>
-                      {project.startDate && format(new Date(project.startDate), 'M/d', { locale: ko })}
-                      {project.startDate && project.endDate && ' - '}
-                      {project.endDate && format(new Date(project.endDate), 'M/d', { locale: ko })}
-                    </span>
+                {projectTasks.length === 0 ? (
+                  <div className="text-center py-8 text-gray-500">
+                    이 프로젝트에 할일이 없습니다.
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {projectTasks.map((task: any) => (
+                      <div key={task.id} className="flex items-center justify-between p-3 border rounded-lg">
+                        <div className="flex items-center space-x-3 flex-1">
+                          <button onClick={() => toggleTaskCompletion(task.id, task.completed)}>
+                            {task.completed ? (
+                              <CheckCircle className="h-5 w-5 text-green-500" />
+                            ) : (
+                              <Circle className="h-5 w-5" />
+                            )}
+                          </button>
+                          <div className="flex-1">
+                            <h4 className={`font-medium ${task.completed ? 'line-through text-gray-500' : 'text-gray-900'}`}>
+                              {task.title}
+                            </h4>
+                            <div className="flex items-center space-x-2 mt-1">
+                              <Badge className={`${getPriorityColor(task.priority)} text-xs`}>
+                                {task.priority}
+                              </Badge>
+                              {task.notes && (
+                                <span className="text-xs text-gray-500 truncate">{task.notes}</span>
+                              )}
+                            </div>
+                            {(task.startDate || task.endDate) && (
+                              <div className="flex items-center space-x-2 text-xs text-gray-400 mt-1">
+                                <Calendar className="h-3 w-3" />
+                                <span>
+                                  {task.startDate && format(new Date(task.startDate), 'M/d', { locale: ko })}
+                                  {task.startDate && task.endDate && ' - '}
+                                  {task.endDate && format(new Date(task.endDate), 'M/d', { locale: ko })}
+                                </span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          onClick={() => handleDeleteTask(task.id)}
+                        >
+                          <Trash2 className="h-4 w-4 text-red-500" />
+                        </Button>
+                      </div>
+                    ))}
                   </div>
                 )}
-                
-                <div className="mt-4">
-                  <Badge variant="outline" className="text-xs">
-                    {project.status === 'planning' ? '계획 중' : 
-                     project.status === 'in-progress' ? '진행 중' : '완료'}
-                  </Badge>
-                </div>
               </CardContent>
             </Card>
-          ))}
-        </div>
+          </div>
+        )}
 
         {projects.length === 0 && (
           <div className="text-center py-12">
