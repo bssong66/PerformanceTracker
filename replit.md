@@ -163,5 +163,10 @@ Preferred communication style: Simple, everyday language.
 - Integrated all tasks display on calendar with visual distinction from events
 - Enhanced schema with event repeat patterns (daily/weekly/monthly/yearly) and weekday selection
 - Added calendar navigation to main menu as "일정관리"
+- **Implemented event resizing and drag-and-drop functionality**
+- Events can be resized by dragging edges to adjust start/end times
+- Events can be moved by dragging to different dates/times
+- Tasks are read-only on calendar (cannot be resized or moved)
+- Real-time updates with backend synchronization for all calendar modifications
 
 The application follows a monorepo structure with clear separation between frontend, backend, and shared code, enabling efficient development and deployment workflows.

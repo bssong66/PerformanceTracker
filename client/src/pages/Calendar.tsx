@@ -162,6 +162,8 @@ export default function Calendar() {
       title: event.title,
       start: new Date(`${event.startDate}${event.startTime ? `T${event.startTime}` : 'T00:00'}`),
       end: new Date(`${event.endDate || event.startDate}${event.endTime ? `T${event.endTime}` : 'T23:59'}`),
+      resizable: true, // Events can be resized
+      draggable: true, // Events can be dragged
       resource: {
         type: 'event',
         data: event,
@@ -179,6 +181,8 @@ export default function Calendar() {
           title: `[할일] ${task.title}`,
           start: new Date(`${task.startDate || task.endDate}T00:00`),
           end: new Date(`${task.endDate || task.startDate}T23:59`),
+          resizable: false, // Tasks cannot be resized
+          draggable: false, // Tasks cannot be dragged
           resource: {
             type: 'task',
             data: task,
@@ -205,6 +209,42 @@ export default function Calendar() {
     });
     setShowEventDialog(true);
   }, [eventForm]);
+
+  // Handle event resize
+  const handleEventResize = useCallback(({ event, start, end }: { event: any; start: Date; end: Date }) => {
+    // Only allow resizing of events, not tasks
+    if (event.resource.type !== 'event') return;
+    
+    const eventData = event.resource.data;
+    const updatedEvent = {
+      ...eventData,
+      startDate: format(start, 'yyyy-MM-dd'),
+      endDate: format(end, 'yyyy-MM-dd'),
+      startTime: format(start, 'HH:mm'),
+      endTime: format(end, 'HH:mm'),
+      isAllDay: format(start, 'HH:mm') === '00:00' && format(end, 'HH:mm') === '00:00'
+    };
+    
+    updateEventMutation.mutate(updatedEvent);
+  }, [updateEventMutation]);
+
+  // Handle event drag and drop
+  const handleEventDrop = useCallback(({ event, start, end }: { event: any; start: Date; end: Date }) => {
+    // Only allow dragging of events, not tasks
+    if (event.resource.type !== 'event') return;
+    
+    const eventData = event.resource.data;
+    const updatedEvent = {
+      ...eventData,
+      startDate: format(start, 'yyyy-MM-dd'),
+      endDate: format(end, 'yyyy-MM-dd'),
+      startTime: format(start, 'HH:mm'),
+      endTime: format(end, 'HH:mm'),
+      isAllDay: format(start, 'HH:mm') === '00:00' && format(end, 'HH:mm') === '00:00'
+    };
+    
+    updateEventMutation.mutate(updatedEvent);
+  }, [updateEventMutation]);
 
   // Handle event selection
   const handleSelectEvent = useCallback((event: any) => {
@@ -333,7 +373,12 @@ export default function Calendar() {
                 onNavigate={setDate}
                 onSelectSlot={handleSelectSlot}
                 onSelectEvent={handleSelectEvent}
+                onEventResize={handleEventResize}
+                onEventDrop={handleEventDrop}
                 selectable
+                resizable
+                resizableAccessor="resizable"
+                draggableAccessor="draggable"
                 eventPropGetter={eventStyleGetter}
                 culture="ko"
                 messages={{
