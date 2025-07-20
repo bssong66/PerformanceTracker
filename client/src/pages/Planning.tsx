@@ -8,9 +8,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient } from "@/lib/queryClient";
-import { Plus, FolderPlus, CheckCircle, Circle, Calendar, Clock, CalendarDays, Edit3, Upload, Image, X, FileText, ImageIcon, ChevronLeft, ChevronRight } from "lucide-react";
+import { Plus, FolderPlus, CheckCircle, Circle, Calendar, Clock, CalendarDays, Edit3, Upload, Image, X, FileText, ImageIcon, ChevronLeft, ChevronRight, FolderOpen, List, CalendarIcon } from "lucide-react";
 import { format } from "date-fns";
 import { ko } from "date-fns/locale";
 
@@ -34,6 +35,7 @@ const priorityColors = {
 
 export default function Planning() {
   const { toast } = useToast();
+  const [activeTab, setActiveTab] = useState('projects');
   const [selectedProject, setSelectedProject] = useState<number | null>(null);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isTaskDialogOpen, setIsTaskDialogOpen] = useState(false);
@@ -433,17 +435,38 @@ export default function Planning() {
 
   return (
     <div className="py-6">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
-        <div className="mb-8">
+        <div className="mb-6">
           <h1 className="text-2xl font-bold text-gray-900">계획 수립</h1>
           <p className="text-sm text-gray-600">
-            프로젝트를 체계적으로 관리하세요
+            프로젝트, 할일, 일정을 체계적으로 관리하세요
           </p>
         </div>
 
-        {/* Create Project Button */}
-        <div className="mb-6 flex justify-end">
+        {/* Tabs */}
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="projects" className="flex items-center space-x-2">
+              <FolderOpen className="h-4 w-4" />
+              <span>프로젝트관리</span>
+            </TabsTrigger>
+            <TabsTrigger value="tasks" className="flex items-center space-x-2">
+              <List className="h-4 w-4" />
+              <span>할일관리</span>
+            </TabsTrigger>
+            <TabsTrigger value="schedule" className="flex items-center space-x-2">
+              <CalendarIcon className="h-4 w-4" />
+              <span>일정관리</span>
+            </TabsTrigger>
+          </TabsList>
+
+          {/* 프로젝트관리 탭 */}
+          <TabsContent value="projects" className="mt-6">
+            <div className="space-y-6">
+
+              {/* Create Project Button */}
+              <div className="mb-6 flex justify-end">
           <Dialog open={isCreateDialogOpen} onOpenChange={(open) => {
           setIsCreateDialogOpen(open);
           if (!open) setProjectImages([]);
@@ -1468,6 +1491,35 @@ export default function Planning() {
             </div>
           </DialogContent>
         </Dialog>
+            </div>
+          </TabsContent>
+
+          {/* 할일관리 탭 */}
+          <TabsContent value="tasks" className="mt-6">
+            <div className="space-y-6">
+              <Card>
+                <CardContent className="py-8 text-center">
+                  <List className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+                  <p className="text-gray-500">할일관리 기능 준비 중입니다.</p>
+                  <p className="text-sm text-gray-400">프로젝트 기반의 통합 할일 관리 기능이 추가될 예정입니다.</p>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+
+          {/* 일정관리 탭 */}
+          <TabsContent value="schedule" className="mt-6">
+            <div className="space-y-6">
+              <Card>
+                <CardContent className="py-8 text-center">
+                  <CalendarIcon className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+                  <p className="text-gray-500">일정관리 기능 준비 중입니다.</p>
+                  <p className="text-sm text-gray-400">캘린더 기반의 일정 관리 기능이 추가될 예정입니다.</p>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+        </Tabs>
 
       </div>
     </div>
