@@ -1141,12 +1141,10 @@ export default function Planning() {
                               </Badge>
                             </div>
                             <div className="flex items-center justify-end space-x-3">
-                              {(projectImages[project.id] || []).length > 0 && (
-                                <div className="flex items-center text-sm text-gray-600">
-                                  <ImageIcon className="h-4 w-4 mr-1" />
-                                  {(projectImages[project.id] || []).length}
-                                </div>
-                              )}
+                              <div className="flex items-center text-sm text-gray-600">
+                                <ImageIcon className="h-4 w-4 mr-1" />
+                                {(projectImages[project.id] || []).length}
+                              </div>
                               <div className="text-sm text-gray-600">
                                 {(allTasks as any[]).filter((task: any) => task.projectId === project.id).length}개 할일
                               </div>
