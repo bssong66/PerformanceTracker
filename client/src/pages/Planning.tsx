@@ -38,6 +38,8 @@ export default function Planning() {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isTaskDialogOpen, setIsTaskDialogOpen] = useState(false);
   const [taskDialogProjectId, setTaskDialogProjectId] = useState<number | null>(null);
+  const [isTaskDetailOpen, setIsTaskDetailOpen] = useState(false);
+  const [selectedTaskDetail, setSelectedTaskDetail] = useState<any>(null);
   const [newProject, setNewProject] = useState({
     name: '',
     description: '',
@@ -176,6 +178,11 @@ export default function Planning() {
   const openTaskDialog = (projectId: number) => {
     setTaskDialogProjectId(projectId);
     setIsTaskDialogOpen(true);
+  };
+
+  const openTaskDetail = (task: any) => {
+    setSelectedTaskDetail(task);
+    setIsTaskDetailOpen(true);
   };
 
   const handleToggleTask = (id: number, completed: boolean) => {
@@ -362,6 +369,80 @@ export default function Planning() {
           </DialogContent>
         </Dialog>
 
+        {/* Task Detail Dialog */}
+        <Dialog open={isTaskDetailOpen} onOpenChange={setIsTaskDetailOpen}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>할일 상세 정보</DialogTitle>
+            </DialogHeader>
+            {selectedTaskDetail && (
+              <div className="space-y-4">
+                <div>
+                  <Label className="text-sm font-medium text-gray-700">제목</Label>
+                  <p className="mt-1 text-gray-900">{selectedTaskDetail.title}</p>
+                </div>
+
+                <div>
+                  <Label className="text-sm font-medium text-gray-700">우선순위</Label>
+                  <div className="mt-1">
+                    <Badge className={`text-xs ${
+                      selectedTaskDetail.priority === 'A' ? 'bg-red-100 text-red-700' : 
+                      selectedTaskDetail.priority === 'B' ? 'bg-yellow-100 text-yellow-700' : 
+                      'bg-green-100 text-green-700'
+                    }`}>
+                      {selectedTaskDetail.priority}급 우선순위
+                    </Badge>
+                  </div>
+                </div>
+
+                {(selectedTaskDetail.startDate || selectedTaskDetail.endDate) && (
+                  <div>
+                    <Label className="text-sm font-medium text-gray-700">일정</Label>
+                    <div className="mt-1 space-y-1">
+                      {selectedTaskDetail.startDate && (
+                        <div className="flex items-center text-sm text-gray-600">
+                          <Calendar className="h-4 w-4 mr-2" />
+                          시작일: {format(new Date(selectedTaskDetail.startDate), 'yyyy년 M월 d일', { locale: ko })}
+                        </div>
+                      )}
+                      {selectedTaskDetail.endDate && (
+                        <div className="flex items-center text-sm text-gray-600">
+                          <CalendarDays className="h-4 w-4 mr-2" />
+                          종료일: {format(new Date(selectedTaskDetail.endDate), 'yyyy년 M월 d일', { locale: ko })}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {selectedTaskDetail.notes && (
+                  <div>
+                    <Label className="text-sm font-medium text-gray-700">메모</Label>
+                    <p className="mt-1 text-gray-600 whitespace-pre-wrap">{selectedTaskDetail.notes}</p>
+                  </div>
+                )}
+
+                <div>
+                  <Label className="text-sm font-medium text-gray-700">상태</Label>
+                  <div className="mt-1 flex items-center">
+                    {selectedTaskDetail.completed ? (
+                      <div className="flex items-center text-green-600">
+                        <CheckCircle className="h-4 w-4 mr-2" />
+                        완료됨
+                      </div>
+                    ) : (
+                      <div className="flex items-center text-gray-500">
+                        <Circle className="h-4 w-4 mr-2" />
+                        진행 중
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
+
         {/* Projects List */}
         <div className="space-y-3 mb-8">
           {(projects as any[]).length === 0 ? (
@@ -494,7 +575,10 @@ export default function Planning() {
                                     <Circle className="h-5 w-5" />
                                   )}
                                 </button>
-                                <div className="flex-1">
+                                <div 
+                                  className="flex-1 cursor-pointer hover:bg-gray-100 rounded p-1 -m-1 transition-colors"
+                                  onClick={() => openTaskDetail(task)}
+                                >
                                   <h4 className={`font-medium ${task.completed ? 'line-through text-gray-500' : 'text-gray-900'}`}>
                                     {task.title}
                                   </h4>
