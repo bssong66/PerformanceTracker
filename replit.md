@@ -147,31 +147,24 @@ Preferred communication style: Simple, everyday language.
 ```
 
 ### Recent Changes (July 20, 2025)
-- Completely redesigned Planning page with simplified, top-to-bottom layout
-- Moved project creation to popup dialog for cleaner interface
-- Implemented project-centric workflow: select project → view/manage tasks
-- Added task creation within selected project context
-- Removed complex tabs and filters for streamlined user experience
-- Enhanced visual hierarchy with clear project selection and task management sections
-- Fixed critical image state management bug where task images disappeared after viewing task details
-- Implemented popup image viewers for both project and task images with click-to-view functionality
-- Integrated project tasks into daily planning page - tasks automatically appear in today's plan based on start/end dates
-- Removed manual task scheduling interface in favor of automatic date-based inclusion
-- **Added MS Outlook-style Calendar page with drag-to-create functionality**
-- Implemented React Big Calendar with month/week/day views and Korean localization
-- Added comprehensive event management with priority levels and repeat functionality
-- Integrated all tasks display on calendar with visual distinction from events
-- Enhanced schema with event repeat patterns (daily/weekly/monthly/yearly) and weekday selection
-- Added calendar navigation to main menu as "일정관리"
-- **Implemented event resizing and drag-and-drop functionality**
-- Events can be resized by dragging edges to adjust start/end times
-- Events can be moved by dragging to different dates/times
-- Tasks are read-only on calendar (cannot be resized or moved)
-- Real-time updates with backend synchronization for all calendar modifications
-- **Implemented comprehensive recurring event functionality**
-- Supports daily, weekly (with weekday selection), monthly, and yearly recurrence patterns
-- Recurring instances automatically generated and displayed with 🔄 prefix
-- Original events remain editable while recurring instances are read-only
-- Visual distinction with italic styling and borders for recurring instances
+- **Restructured main navigation menu as requested by user**
+- Changed menu structure to: 대시보드/가치중심계획/일정관리/계획수립/리뷰/포커스 모드
+- **계획수립 page now contains three tabs: 프로젝트관리/할일관리/습관관리**
+- Created separate components: ProjectManagement.tsx, TaskManagement.tsx, HabitManagement.tsx
+- **리뷰 page contains tabs for: 주간리뷰/월간리뷰**
+- Created new Review.tsx component integrating existing WeeklyReview with new MonthlyReview
+- **Updated Calendar page with Korean recurrence options**
+- Changed recurring event options to Korean: "반복없음/일/주/월/연"
+- **All existing functionality preserved during reorganization**
+- No changes to features or designs - only menu structure and component organization
+- All calendar features remain intact: drag-and-drop, recurring events, Korean localization
+- All project, task, and habit management features preserved
+- Previous changes maintained:
+  - MS Outlook-style Calendar with drag-to-create functionality
+  - Comprehensive recurring event functionality with 🔄 prefix
+  - Event resizing and drag-and-drop with real-time backend sync
+  - A-B-C priority task management system
+  - Image upload and viewing capabilities for projects and tasks
+  - Habit tracking with streak counting and daily completion
 
 The application follows a monorepo structure with clear separation between frontend, backend, and shared code, enabling efficient development and deployment workflows.
