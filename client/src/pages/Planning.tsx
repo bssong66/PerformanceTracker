@@ -1176,34 +1176,36 @@ export default function Planning() {
                                 </Badge>
                                 <h3 className="font-semibold text-gray-900">{project.name}</h3>
                               </div>
-                              <div className="flex items-center space-x-3 ml-4">
-                                <div 
-                                  className="flex items-center text-sm text-gray-600 cursor-pointer hover:text-gray-800 transition-colors"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    const images = projectImages[project.id] || [];
-                                    if (images.length > 0) {
-                                      openImageViewer(images);
-                                    }
-                                  }}
-                                >
-                                  <ImageIcon className="h-4 w-4 mr-1" />
-                                  {(projectImages[project.id] || []).length}
+                              <div className="flex items-center justify-between ml-4 w-full">
+                                <div className="flex items-center space-x-3">
+                                  <div 
+                                    className="flex items-center text-sm text-gray-600 cursor-pointer hover:text-gray-800 transition-colors"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      const images = projectImages[project.id] || [];
+                                      if (images.length > 0) {
+                                        openImageViewer(images);
+                                      }
+                                    }}
+                                  >
+                                    <ImageIcon className="h-4 w-4 mr-1" />
+                                    {(projectImages[project.id] || []).length}
+                                  </div>
+                                  <div className="text-sm text-gray-600">
+                                    {(allTasks as any[]).filter((task: any) => task.projectId === project.id).length}개 할일
+                                  </div>
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      openEditProject(project);
+                                    }}
+                                    className="p-1 h-8 w-8"
+                                  >
+                                    <Edit3 className="h-4 w-4" />
+                                  </Button>
                                 </div>
-                                <div className="text-sm text-gray-600">
-                                  {(allTasks as any[]).filter((task: any) => task.projectId === project.id).length}개 할일
-                                </div>
-                                <Button
-                                  size="sm"
-                                  variant="ghost"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    openEditProject(project);
-                                  }}
-                                  className="p-1 h-8 w-8"
-                                >
-                                  <Edit3 className="h-4 w-4" />
-                                </Button>
                                 <Button
                                   size="sm"
                                   variant="outline"
