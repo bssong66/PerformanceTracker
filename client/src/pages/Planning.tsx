@@ -1168,7 +1168,14 @@ export default function Planning() {
                           />
                           <div className="flex-1">
                             <div className="flex items-center justify-between">
-                              <h3 className="font-semibold text-gray-900">{project.name}</h3>
+                              <div className="flex items-center space-x-2">
+                                <Badge 
+                                  className={`text-xs ${priorityColors[project.priority as keyof typeof priorityColors].bg} ${priorityColors[project.priority as keyof typeof priorityColors].text}`}
+                                >
+                                  {project.priority === 'high' ? '높음' : project.priority === 'medium' ? '보통' : '낮음'}
+                                </Badge>
+                                <h3 className="font-semibold text-gray-900">{project.name}</h3>
+                              </div>
                               <div className="flex items-center space-x-3 ml-4">
                                 <div 
                                   className="flex items-center text-sm text-gray-600 cursor-pointer hover:text-gray-800 transition-colors"
@@ -1183,11 +1190,6 @@ export default function Planning() {
                                   <ImageIcon className="h-4 w-4 mr-1" />
                                   {(projectImages[project.id] || []).length}
                                 </div>
-                                <Badge 
-                                  className={`text-xs ${priorityColors[project.priority as keyof typeof priorityColors].bg} ${priorityColors[project.priority as keyof typeof priorityColors].text}`}
-                                >
-                                  {project.priority === 'high' ? '높음' : project.priority === 'medium' ? '보통' : '낮음'}
-                                </Badge>
                                 <div className="text-sm text-gray-600">
                                   {(allTasks as any[]).filter((task: any) => task.projectId === project.id).length}개 할일
                                 </div>
