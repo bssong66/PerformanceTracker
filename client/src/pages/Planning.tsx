@@ -1223,7 +1223,7 @@ export default function Planning() {
                                     e.stopPropagation();
                                     openTaskDialog(project.id);
                                   }}
-                                  className="h-8 bg-[#cdcdcd] text-gray-400"
+                                  className="h-8 bg-background text-foreground shadow-sm"
                                 >
                                   <Plus className="h-4 w-4 mr-1" />
                                   할일 추가
