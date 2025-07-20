@@ -35,9 +35,10 @@ export const projects = pgTable("projects", {
   description: text("description"),
   color: text("color").default("#3B82F6"), // hex color for calendar display
   priority: text("priority").notNull(), // 'high', 'medium', 'low'
-  status: text("status").default("planning"), // 'planning', 'in-progress', 'completed'
   startDate: date("start_date"),
   endDate: date("end_date"),
+  coreValue: text("core_value"), // Connected core value from foundation
+  annualGoal: text("annual_goal"), // Connected annual goal
   imageUrl: text("image_url"),
   createdAt: timestamp("created_at").defaultNow(),
 });

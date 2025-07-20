@@ -5,10 +5,12 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { Plus, Folder, Camera, Eye, Trash2 } from 'lucide-react';
+import { Plus, Folder, Camera, Eye, Trash2, Calendar } from 'lucide-react';
+import { format } from 'date-fns';
+import { ko } from 'date-fns/locale';
 
 const MOCK_USER_ID = 1;
 
@@ -23,8 +25,11 @@ interface Project {
   title: string;
   description?: string;
   priority: 'high' | 'medium' | 'low';
-  status: 'planning' | 'in-progress' | 'completed';
   color: string;
+  startDate?: string;
+  endDate?: string;
+  coreValue?: string;
+  annualGoal?: string;
   imageUrl?: string;
   userId: number;
 }
@@ -40,8 +45,11 @@ export default function ProjectManagement() {
     title: '',
     description: '',
     priority: 'medium' as 'high' | 'medium' | 'low',
-    status: 'planning' as 'planning' | 'in-progress' | 'completed',
     color: priorityColors.medium,
+    startDate: '',
+    endDate: '',
+    coreValue: '',
+    annualGoal: '',
     imageUrl: ''
   });
 
@@ -49,6 +57,18 @@ export default function ProjectManagement() {
   const { data: projects = [] } = useQuery({
     queryKey: ['projects', MOCK_USER_ID],
     queryFn: () => fetch(`/api/projects/${MOCK_USER_ID}`).then(res => res.json())
+  });
+
+  // Fetch foundations for core values
+  const { data: foundation } = useQuery({
+    queryKey: ['foundation', MOCK_USER_ID],
+    queryFn: () => fetch(`/api/foundation/${MOCK_USER_ID}`).then(res => res.json())
+  });
+
+  // Fetch annual goals
+  const { data: annualGoals = [] } = useQuery({
+    queryKey: ['goals', MOCK_USER_ID, new Date().getFullYear()],
+    queryFn: () => fetch(`/api/goals/${MOCK_USER_ID}?year=${new Date().getFullYear()}`).then(res => res.json())
   });
 
   // Create project mutation
@@ -106,8 +126,11 @@ export default function ProjectManagement() {
       title: '',
       description: '',
       priority: 'medium',
-      status: 'planning',
       color: priorityColors.medium,
+      startDate: '',
+      endDate: '',
+      coreValue: '',
+      annualGoal: '',
       imageUrl: ''
     });
     setEditingProject(null);
@@ -123,8 +146,11 @@ export default function ProjectManagement() {
       title: project.title,
       description: project.description || '',
       priority: project.priority,
-      status: project.status,
       color: project.color,
+      startDate: project.startDate || '',
+      endDate: project.endDate || '',
+      coreValue: project.coreValue || '',
+      annualGoal: project.annualGoal || '',
       imageUrl: project.imageUrl || ''
     });
     setEditingProject(project);
@@ -191,6 +217,9 @@ export default function ProjectManagement() {
               <DialogTitle>
                 {editingProject ? '프로젝트 수정' : '새 프로젝트 만들기'}
               </DialogTitle>
+              <DialogDescription>
+                {editingProject ? '프로젝트 정보를 수정하세요.' : '새로운 프로젝트를 생성하세요.'}
+              </DialogDescription>
             </DialogHeader>
             
             <form onSubmit={handleSubmit} className="space-y-4">
@@ -216,39 +245,89 @@ export default function ProjectManagement() {
                 />
               </div>
 
+              <div>
+                <Label>우선순위</Label>
+                <Select
+                  value={projectForm.priority}
+                  onValueChange={handlePriorityChange}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="high">높음</SelectItem>
+                    <SelectItem value="medium">보통</SelectItem>
+                    <SelectItem value="low">낮음</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label>우선순위</Label>
+                  <Label htmlFor="startDate">시작일</Label>
+                  <Input
+                    id="startDate"
+                    type="date"
+                    value={projectForm.startDate}
+                    onChange={(e) => setProjectForm(prev => ({ ...prev, startDate: e.target.value }))}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="endDate">종료일</Label>
+                  <Input
+                    id="endDate"
+                    type="date"
+                    value={projectForm.endDate}
+                    onChange={(e) => setProjectForm(prev => ({ ...prev, endDate: e.target.value }))}
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label>핵심가치</Label>
                   <Select
-                    value={projectForm.priority}
-                    onValueChange={handlePriorityChange}
+                    value={projectForm.coreValue}
+                    onValueChange={(value) => 
+                      setProjectForm(prev => ({ ...prev, coreValue: value === 'none' ? '' : value }))
+                    }
                   >
                     <SelectTrigger>
-                      <SelectValue />
+                      <SelectValue placeholder="가치 선택" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="high">높음</SelectItem>
-                      <SelectItem value="medium">보통</SelectItem>
-                      <SelectItem value="low">낮음</SelectItem>
+                      <SelectItem value="none">선택안함</SelectItem>
+                      {foundation?.coreValue1 && (
+                        <SelectItem value={foundation.coreValue1}>{foundation.coreValue1}</SelectItem>
+                      )}
+                      {foundation?.coreValue2 && (
+                        <SelectItem value={foundation.coreValue2}>{foundation.coreValue2}</SelectItem>
+                      )}
+                      {foundation?.coreValue3 && (
+                        <SelectItem value={foundation.coreValue3}>{foundation.coreValue3}</SelectItem>
+                      )}
                     </SelectContent>
                   </Select>
                 </div>
 
                 <div>
-                  <Label>상태</Label>
+                  <Label>연간목표</Label>
                   <Select
-                    value={projectForm.status}
-                    onValueChange={(value: 'planning' | 'in-progress' | 'completed') => 
-                      setProjectForm(prev => ({ ...prev, status: value }))
+                    value={projectForm.annualGoal}
+                    onValueChange={(value) => 
+                      setProjectForm(prev => ({ ...prev, annualGoal: value === 'none' ? '' : value }))
                     }
                   >
                     <SelectTrigger>
-                      <SelectValue />
+                      <SelectValue placeholder="목표 선택" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="planning">계획중</SelectItem>
-                      <SelectItem value="in-progress">진행중</SelectItem>
-                      <SelectItem value="completed">완료</SelectItem>
+                      <SelectItem value="none">선택안함</SelectItem>
+                      {annualGoals.map((goal: any) => (
+                        <SelectItem key={goal.id} value={goal.title}>
+                          {goal.title}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
@@ -339,7 +418,7 @@ export default function ProjectManagement() {
                 </p>
               )}
 
-              <div className="flex items-center justify-between text-xs">
+              <div className="flex flex-wrap items-center gap-2 text-xs mb-3">
                 <span className={`px-2 py-1 rounded-full font-medium ${
                   project.priority === 'high' ? 'bg-red-100 text-red-800' :
                   project.priority === 'medium' ? 'bg-yellow-100 text-yellow-800' :
@@ -349,15 +428,31 @@ export default function ProjectManagement() {
                    project.priority === 'medium' ? '보통' : '낮음'}
                 </span>
                 
-                <span className={`px-2 py-1 rounded-full font-medium ${
-                  project.status === 'completed' ? 'bg-green-100 text-green-800' :
-                  project.status === 'in-progress' ? 'bg-blue-100 text-blue-800' :
-                  'bg-gray-100 text-gray-800'
-                }`}>
-                  {project.status === 'planning' ? '계획중' :
-                   project.status === 'in-progress' ? '진행중' : '완료'}
-                </span>
+                {project.coreValue && (
+                  <span className="px-2 py-1 rounded-full font-medium bg-purple-100 text-purple-800">
+                    {project.coreValue}
+                  </span>
+                )}
               </div>
+
+              {(project.startDate || project.endDate) && (
+                <div className="flex items-center text-xs text-gray-500 mb-3">
+                  <Calendar className="h-3 w-3 mr-1" />
+                  {project.startDate && project.endDate ? (
+                    <span>{format(new Date(project.startDate), 'M/d', { locale: ko })} ~ {format(new Date(project.endDate), 'M/d', { locale: ko })}</span>
+                  ) : project.startDate ? (
+                    <span>시작: {format(new Date(project.startDate), 'M/d', { locale: ko })}</span>
+                  ) : (
+                    <span>종료: {format(new Date(project.endDate!), 'M/d', { locale: ko })}</span>
+                  )}
+                </div>
+              )}
+
+              {project.annualGoal && (
+                <div className="text-xs text-blue-600 mb-3">
+                  목표: {project.annualGoal}
+                </div>
+              )}
 
               <div className="flex items-center justify-between mt-3">
                 {project.imageUrl && (
@@ -392,6 +487,9 @@ export default function ProjectManagement() {
           <DialogContent className="sm:max-w-2xl">
             <DialogHeader>
               <DialogTitle>이미지 보기</DialogTitle>
+              <DialogDescription>
+                프로젝트 이미지를 확인하세요.
+              </DialogDescription>
             </DialogHeader>
             <div className="flex justify-center">
               <img
