@@ -895,6 +895,7 @@ export default function Planning() {
                       <Button
                         size="sm"
                         onClick={() => openTaskDialog(selectedProject)}
+                        className="bg-[#e5e5e5] hover:bg-[#d5d5d5] text-gray-700"
                       >
                         <Plus className="h-4 w-4 mr-2" />
                         할일 추가
