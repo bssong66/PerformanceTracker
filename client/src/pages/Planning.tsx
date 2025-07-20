@@ -219,8 +219,23 @@ export default function Planning() {
         startDate: task.startDate || null,
         endDate: task.endDate || null
       }));
-      createTaskMutation.mutate(tasksToCreate);
-      setTaskImages({});
+      createTaskMutation.mutate(tasksToCreate, {
+        onSuccess: (createdTasks) => {
+          // 임시 ID들로 저장된 이미지를 실제 할일 ID로 이전
+          createdTasks.forEach((createdTask: any, index: number) => {
+            const tempTaskId = taskList[index].id;
+            const tempImages = taskImages[tempTaskId] || [];
+            if (tempImages.length > 0) {
+              setTaskImages(prev => {
+                const newImages = { ...prev };
+                delete newImages[tempTaskId]; // 임시 이미지 삭제
+                newImages[createdTask.id] = tempImages; // 실제 ID로 이전
+                return newImages;
+              });
+            }
+          });
+        }
+      });
     }
   };
 
@@ -313,6 +328,13 @@ export default function Planning() {
     setSelectedTaskDetail(task);
     setIsTaskDetailOpen(true);
     setIsEditingTask(false);
+    // 할일 상세보기 시 해당 할일의 이미지가 없으면 빈 배열로 초기화
+    if (!taskImages[task.id]) {
+      setTaskImages(prev => ({
+        ...prev,
+        [task.id]: []
+      }));
+    }
   };
 
   const startEditingTask = () => {
@@ -1378,7 +1400,13 @@ export default function Planning() {
 
         {/* 이미지 뷰어 다이얼로그 */}
         <Dialog open={isImageViewerOpen} onOpenChange={setIsImageViewerOpen}>
-          <DialogContent className="max-w-4xl w-full h-[80vh] p-0">
+          <DialogContent className="max-w-4xl w-full h-[80vh] p-0" aria-describedby="image-viewer-description">
+            <DialogHeader className="sr-only">
+              <DialogTitle>이미지 뷰어</DialogTitle>
+            </DialogHeader>
+            <div id="image-viewer-description" className="sr-only">
+              업로드된 이미지를 확대해서 볼 수 있는 뷰어입니다.
+            </div>
             <div className="relative w-full h-full flex items-center justify-center bg-black rounded-lg overflow-hidden">
               {viewingImages.length > 0 && (
                 <>
@@ -1394,12 +1422,14 @@ export default function Planning() {
                       <button
                         onClick={prevImage}
                         className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-black/50 text-white p-2 rounded-full hover:bg-black/70 transition-colors"
+                        aria-label="이전 이미지"
                       >
                         <ChevronLeft className="h-6 w-6" />
                       </button>
                       <button
                         onClick={nextImage}
                         className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-black/50 text-white p-2 rounded-full hover:bg-black/70 transition-colors"
+                        aria-label="다음 이미지"
                       >
                         <ChevronRight className="h-6 w-6" />
                       </button>
@@ -1415,6 +1445,7 @@ export default function Planning() {
                   <button
                     onClick={() => setIsImageViewerOpen(false)}
                     className="absolute top-4 right-4 bg-black/50 text-white p-2 rounded-full hover:bg-black/70 transition-colors"
+                    aria-label="이미지 뷰어 닫기"
                   >
                     <X className="h-6 w-6" />
                   </button>
