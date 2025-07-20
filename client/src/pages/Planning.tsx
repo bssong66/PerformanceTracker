@@ -295,6 +295,14 @@ export default function Planning() {
     return { startDate, endDate };
   };
 
+  const getProjectProgress = (projectId: number) => {
+    const tasks = (allTasks as any[]).filter((task: any) => task.projectId === projectId);
+    if (tasks.length === 0) return 0;
+    
+    const completedTasks = tasks.filter((task: any) => task.completed).length;
+    return Math.round((completedTasks / tasks.length) * 100);
+  };
+
   const handleToggleTask = (id: number, completed: boolean) => {
     updateTaskMutation.mutate({ id, updates: { completed } });
   };
@@ -786,6 +794,24 @@ export default function Planning() {
                             </div>
                           );
                         })()}
+                        {(() => {
+                          const progress = getProjectProgress(project.id);
+                          const taskCount = (allTasks as any[]).filter((task: any) => task.projectId === project.id).length;
+                          return taskCount > 0 && (
+                            <div className="mt-2">
+                              <div className="flex items-center justify-between text-xs text-gray-500 mb-1">
+                                <span>진행률</span>
+                                <span>{progress}%</span>
+                              </div>
+                              <div className="w-full bg-gray-200 rounded-full h-2">
+                                <div 
+                                  className="bg-blue-500 h-2 rounded-full transition-all duration-300 ease-in-out"
+                                  style={{ width: `${progress}%` }}
+                                />
+                              </div>
+                            </div>
+                          );
+                        })()}
                       </div>
                     </div>
                     <div className="flex items-center space-x-3">
@@ -843,9 +869,22 @@ export default function Planning() {
                     <span>{selectedProjectData.name} 할일 목록</span>
                   </div>
                   <div className="flex items-center space-x-4">
-                    <span className="text-sm font-normal text-gray-500">
-                      총 {projectTasks.length}개 / 완료 {projectTasks.filter((t: any) => t.completed).length}개
-                    </span>
+                    <div className="flex items-center space-x-4">
+                      <span className="text-sm font-normal text-gray-500">
+                        총 {projectTasks.length}개 / 완료 {projectTasks.filter((t: any) => t.completed).length}개
+                      </span>
+                      <div className="flex items-center space-x-2">
+                        <div className="w-20 bg-gray-200 rounded-full h-2">
+                          <div 
+                            className="bg-blue-500 h-2 rounded-full transition-all duration-300 ease-in-out"
+                            style={{ width: `${getProjectProgress(selectedProject)}%` }}
+                          />
+                        </div>
+                        <span className="text-xs text-gray-500 min-w-[30px]">
+                          {getProjectProgress(selectedProject)}%
+                        </span>
+                      </div>
+                    </div>
                     <Button
                       size="sm"
                       onClick={() => openTaskDialog(selectedProject)}
