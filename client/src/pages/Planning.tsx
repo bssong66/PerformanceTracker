@@ -1187,17 +1187,9 @@ export default function Planning() {
                                             <div className="space-y-2">
                                               {/* 할일 제목과 우선순위 */}
                                               <div className="flex items-center justify-between">
-                                                <div className="flex items-center space-x-2">
-                                                  <h4 className={`font-medium ${task.completed ? 'line-through text-gray-500' : 'text-gray-900'}`}>
-                                                    {task.title}
-                                                  </h4>
-                                                  <Badge 
-                                                    variant={task.priority === 'A' ? 'destructive' : task.priority === 'B' ? 'default' : 'secondary'}
-                                                    className="text-xs"
-                                                  >
-                                                    {task.priority}급
-                                                  </Badge>
-                                                </div>
+                                                <h4 className={`font-medium ${task.completed ? 'line-through text-gray-500' : 'text-gray-900'}`}>
+                                                  {task.title}
+                                                </h4>
                                                 {task.notes && (
                                                   <FileText className="h-3 w-3 text-gray-400" />
                                                 )}
