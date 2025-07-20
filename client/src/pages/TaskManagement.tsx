@@ -222,7 +222,7 @@ export default function TaskManagement() {
           <CardContent>
             {independentTasks.length === 0 ? (
               <div className="text-center py-8 text-gray-500">
-                독립 할일이 없습니다.
+                할일이 없습니다.
               </div>
             ) : (
               <div className="space-y-3">
