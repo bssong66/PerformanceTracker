@@ -892,25 +892,14 @@ export default function Planning() {
                       <span className="text-sm font-normal text-gray-500">
                         총 {projectTasks.length}개 / 완료 {projectTasks.filter((t: any) => t.completed).length}개
                       </span>
-                      <div className="flex items-center space-x-2">
-                        <div className="w-20 bg-gray-200 rounded-full h-2">
-                          <div 
-                            className="bg-blue-500 h-2 rounded-full transition-all duration-300 ease-in-out"
-                            style={{ width: `${getProjectProgress(selectedProject)}%` }}
-                          />
-                        </div>
-                        <span className="text-xs text-gray-500 min-w-[30px]">
-                          {getProjectProgress(selectedProject)}%
-                        </span>
-                      </div>
+                      <Button
+                        size="sm"
+                        onClick={() => openTaskDialog(selectedProject)}
+                      >
+                        <Plus className="h-4 w-4 mr-2" />
+                        할일 추가
+                      </Button>
                     </div>
-                    <Button
-                      size="sm"
-                      onClick={() => openTaskDialog(selectedProject)}
-                    >
-                      <Plus className="h-4 w-4 mr-2" />
-                      할일 추가
-                    </Button>
                   </div>
                 </CardTitle>
               </CardHeader>
