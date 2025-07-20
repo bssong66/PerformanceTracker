@@ -53,6 +53,10 @@ export default function ProjectManagement() {
   const [selectedProjectForTask, setSelectedProjectForTask] = useState<number | null>(null);
   const [expandedProjects, setExpandedProjects] = useState<Set<number>>(new Set());
   const [viewingTaskImage, setViewingTaskImage] = useState<string | null>(null);
+  
+  // State for task sorting
+  const [taskSortBy, setTaskSortBy] = useState<'priority' | 'date' | 'title'>('priority');
+  const [taskSortOrder, setTaskSortOrder] = useState<'asc' | 'desc'>('asc');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const taskFileInputRef = useRef<HTMLInputElement>(null);
   
@@ -222,6 +226,26 @@ export default function ProjectManagement() {
   const getSelectedProject = () => {
     if (!selectedProjectForTask) return null;
     return projects.find((p: Project) => p.id === selectedProjectForTask);
+  };
+
+  // Sort tasks function
+  const sortTasks = (tasks: any[]) => {
+    return [...tasks].sort((a, b) => {
+      let comparison = 0;
+      
+      if (taskSortBy === 'priority') {
+        const priorityOrder = { 'A': 3, 'B': 2, 'C': 1 };
+        comparison = priorityOrder[a.priority] - priorityOrder[b.priority];
+      } else if (taskSortBy === 'date') {
+        const aDate = a.startDate || a.endDate || '';
+        const bDate = b.startDate || b.endDate || '';
+        comparison = aDate.localeCompare(bDate);
+      } else if (taskSortBy === 'title') {
+        comparison = a.title.localeCompare(b.title);
+      }
+      
+      return taskSortOrder === 'desc' ? -comparison : comparison;
+    });
   };
 
   const toggleProjectExpansion = (projectId: number) => {
@@ -642,8 +666,33 @@ export default function ProjectManagement() {
               {isExpanded && (
                 <div className="border-t bg-gray-50 px-4 py-3">
                   {projectTasks.length > 0 ? (
-                    <div className="space-y-2">
-                      {projectTasks.map((task: any) => (
+                    <>
+                      {/* Sorting Controls */}
+                      <div className="flex justify-between items-center mb-3">
+                        <h4 className="text-sm font-medium text-gray-700">할일 목록</h4>
+                        <div className="flex items-center space-x-2">
+                          <Select value={taskSortBy} onValueChange={(value: 'priority' | 'date' | 'title') => setTaskSortBy(value)}>
+                            <SelectTrigger className="w-20 h-7 text-xs">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="priority">중요도</SelectItem>
+                              <SelectItem value="date">일정</SelectItem>
+                              <SelectItem value="title">제목</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => setTaskSortOrder(taskSortOrder === 'asc' ? 'desc' : 'asc')}
+                            className="h-7 w-7 p-0 text-xs"
+                          >
+                            {taskSortOrder === 'asc' ? '↑' : '↓'}
+                          </Button>
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        {sortTasks(projectTasks).map((task: any) => (
                         <div key={task.id} className="flex items-center space-x-3 bg-white p-2 rounded border">
                           <input
                             type="checkbox"
@@ -664,6 +713,11 @@ export default function ProjectManagement() {
                                 ) : (
                                   <span>종료: {format(new Date(task.endDate), 'M/d', { locale: ko })}</span>
                                 )}
+                              </div>
+                            )}
+                            {task.notes && (
+                              <div className="text-xs text-gray-600 mt-1 bg-gray-100 p-2 rounded">
+                                {task.notes}
                               </div>
                             )}
                           </div>
@@ -687,8 +741,9 @@ export default function ProjectManagement() {
                             </span>
                           </div>
                         </div>
-                      ))}
-                    </div>
+                        ))}
+                      </div>
+                    </>
                   ) : (
                     <div className="text-center py-4 text-gray-500 text-sm">
                       아직 할일이 없습니다. 할일을 추가해보세요.
