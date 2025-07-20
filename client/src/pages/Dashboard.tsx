@@ -23,6 +23,11 @@ export default function Dashboard() {
     queryFn: () => fetch(api.habits.list(MOCK_USER_ID)).then(res => res.json()),
   });
 
+  const { data: habitLogs = [] } = useQuery({
+    queryKey: ['habitLogs', MOCK_USER_ID, today],
+    queryFn: () => fetch(api.habitLogs.list(MOCK_USER_ID, today)).then(res => res.json()),
+  });
+
   const { data: timeBlocks = [] } = useQuery({
     queryKey: ['timeBlocks', MOCK_USER_ID, today],
     queryFn: () => fetch(api.timeBlocks.list(MOCK_USER_ID, today)).then(res => res.json()),
@@ -44,6 +49,16 @@ export default function Dashboard() {
     ? Math.round((taskStats.completed / taskStats.total) * 100) 
     : 0;
 
+  // Calculate habit statistics
+  const habitStats = {
+    total: (habits as any[]).length,
+    completed: (habitLogs as any[]).filter((log: any) => log.completed).length,
+  };
+
+  const habitProgress = habitStats.total > 0 
+    ? Math.round((habitStats.completed / habitStats.total) * 100) 
+    : 0;
+
   if (tasksLoading || habitsLoading) {
     return (
       <div className="py-6">
@@ -51,8 +66,8 @@ export default function Dashboard() {
           <div className="animate-pulse">
             <div className="h-8 bg-gray-200 rounded w-1/3 mb-2"></div>
             <div className="h-4 bg-gray-200 rounded w-1/2 mb-8"></div>
-            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4 mb-8">
-              {[...Array(4)].map((_, i) => (
+            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-5 mb-8">
+              {[...Array(5)].map((_, i) => (
                 <div key={i} className="h-24 bg-gray-200 rounded"></div>
               ))}
             </div>
@@ -76,7 +91,7 @@ export default function Dashboard() {
         </div>
 
         {/* Quick Stats */}
-        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4 mb-8">
+        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-5 mb-8">
           <Card>
             <CardContent className="p-5">
               <div className="flex items-center">
@@ -141,7 +156,7 @@ export default function Dashboard() {
                 </div>
                 <div className="ml-5 w-0 flex-1">
                   <div className="text-sm font-medium text-gray-500 truncate">
-                    오늘 진행률
+                    할일 진행률
                   </div>
                   <div className="text-lg font-semibold text-green-600">
                     {weeklyProgress}%
@@ -150,16 +165,36 @@ export default function Dashboard() {
               </div>
             </CardContent>
           </Card>
+
+          <Card>
+            <CardContent className="p-5">
+              <div className="flex items-center">
+                <div className="flex-shrink-0">
+                  <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
+                    <Target className="h-4 w-4 text-purple-600" />
+                  </div>
+                </div>
+                <div className="ml-5 w-0 flex-1">
+                  <div className="text-sm font-medium text-gray-500 truncate">
+                    습관 진행률
+                  </div>
+                  <div className="text-lg font-semibold text-purple-600">
+                    {habitProgress}%
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
         {/* Main Content Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Today's Overview */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center space-x-2">
                 <Calendar className="h-5 w-5" />
-                <span>오늘의 개요</span>
+                <span>할일 개요</span>
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -232,11 +267,63 @@ export default function Dashboard() {
             </CardContent>
           </Card>
 
-          {/* Today's Schedule */}
+          {/* Habit Overview */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center space-x-2">
                 <Target className="h-5 w-5" />
+                <span>습관 개요</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {/* Habit Progress Overview */}
+                <div>
+                  <div className="flex justify-between text-sm mb-2">
+                    <span>오늘 습관 완료율</span>
+                    <span>{habitStats.completed}/{habitStats.total}</span>
+                  </div>
+                  <ProgressBar 
+                    value={habitStats.completed} 
+                    max={habitStats.total} 
+                    color="success"
+                  />
+                </div>
+
+                {/* Individual Habits */}
+                {(habits as any[]).length > 0 ? (
+                  <div className="space-y-2">
+                    {(habits as any[]).slice(0, 4).map((habit: any) => {
+                      const log = (habitLogs as any[]).find((log: any) => log.habitId === habit.id);
+                      const isCompleted = log?.completed || false;
+                      
+                      return (
+                        <div key={habit.id} className="flex items-center justify-between p-2 bg-gray-50 rounded">
+                          <div className="flex items-center space-x-2">
+                            <div className={`w-2 h-2 rounded-full ${isCompleted ? 'bg-green-500' : 'bg-gray-300'}`} />
+                            <span className="text-sm font-medium">{habit.name}</span>
+                          </div>
+                          <div className="text-xs text-gray-500">
+                            {habit.currentStreak}일 연속
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div className="text-center text-gray-500 py-4">
+                    <p className="text-sm">등록된 습관이 없습니다.</p>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Today's Schedule */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2">
+                <BarChart3 className="h-5 w-5" />
                 <span>오늘의 일정</span>
               </CardTitle>
             </CardHeader>
