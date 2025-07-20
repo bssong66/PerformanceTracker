@@ -168,5 +168,10 @@ Preferred communication style: Simple, everyday language.
 - Events can be moved by dragging to different dates/times
 - Tasks are read-only on calendar (cannot be resized or moved)
 - Real-time updates with backend synchronization for all calendar modifications
+- **Implemented comprehensive recurring event functionality**
+- Supports daily, weekly (with weekday selection), monthly, and yearly recurrence patterns
+- Recurring instances automatically generated and displayed with 🔄 prefix
+- Original events remain editable while recurring instances are read-only
+- Visual distinction with italic styling and borders for recurring instances
 
 The application follows a monorepo structure with clear separation between frontend, backend, and shared code, enabling efficient development and deployment workflows.

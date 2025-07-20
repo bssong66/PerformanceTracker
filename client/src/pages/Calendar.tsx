@@ -160,22 +160,104 @@ export default function Calendar() {
     setSelectedSlot(null);
   };
 
-  // Convert events and tasks to calendar format
-  const calendarEvents = useMemo(() => {
-    const eventItems = events.map((event: any) => ({
+  // Helper function to generate recurring events
+  const generateRecurringEvents = (event: any) => {
+    const events = [];
+    const baseStart = new Date(`${event.startDate}${event.startTime ? `T${event.startTime}` : 'T00:00'}`);
+    const baseEnd = new Date(`${event.endDate || event.startDate}${event.endTime ? `T${event.endTime}` : 'T23:59'}`);
+    const duration = baseEnd.getTime() - baseStart.getTime();
+    
+    // Add the original event
+    events.push({
       id: event.id,
       title: event.title,
-      start: new Date(`${event.startDate}${event.startTime ? `T${event.startTime}` : 'T00:00'}`),
-      end: new Date(`${event.endDate || event.startDate}${event.endTime ? `T${event.endTime}` : 'T23:59'}`),
-      resizable: true, // Events can be resized
-      draggable: true, // Events can be dragged
+      start: baseStart,
+      end: baseEnd,
+      resizable: true,
+      draggable: true,
       resource: {
         type: 'event',
         data: event,
         priority: event.priority,
         color: priorityColors[event.priority as keyof typeof priorityColors]
       }
-    }));
+    });
+
+    // Generate recurring instances if repeat settings exist
+    if (event.repeatType && event.repeatType !== 'none' && event.repeatEndDate) {
+      const endDate = new Date(event.repeatEndDate);
+      const interval = event.repeatInterval || 1;
+      const weekdays = event.repeatWeekdays ? JSON.parse(event.repeatWeekdays) : [];
+      
+      let currentDate = new Date(baseStart);
+      let instanceCount = 0;
+      const maxInstances = 100; // Prevent infinite loops
+      
+      while (currentDate <= endDate && instanceCount < maxInstances) {
+        let nextDate = new Date(currentDate);
+        
+        switch (event.repeatType) {
+          case 'daily':
+            nextDate.setDate(currentDate.getDate() + interval);
+            break;
+          case 'weekly':
+            if (weekdays.length > 0) {
+              // Find next occurrence of selected weekdays
+              let found = false;
+              for (let i = 1; i <= 7 * interval; i++) {
+                const testDate = new Date(currentDate);
+                testDate.setDate(currentDate.getDate() + i);
+                const dayOfWeek = testDate.getDay().toString();
+                if (weekdays.includes(dayOfWeek)) {
+                  nextDate = testDate;
+                  found = true;
+                  break;
+                }
+              }
+              if (!found) break;
+            } else {
+              nextDate.setDate(currentDate.getDate() + (7 * interval));
+            }
+            break;
+          case 'monthly':
+            nextDate.setMonth(currentDate.getMonth() + interval);
+            break;
+          case 'yearly':
+            nextDate.setFullYear(currentDate.getFullYear() + interval);
+            break;
+          default:
+            break;
+        }
+        
+        if (nextDate > baseStart && nextDate <= endDate) {
+          const nextEnd = new Date(nextDate.getTime() + duration);
+          events.push({
+            id: `${event.id}-repeat-${instanceCount}`,
+            title: `🔄 ${event.title}`,
+            start: nextDate,
+            end: nextEnd,
+            resizable: false, // Recurring instances can't be resized individually
+            draggable: false, // Recurring instances can't be moved individually
+            resource: {
+              type: 'event',
+              data: { ...event, isRecurring: true, originalId: event.id },
+              priority: event.priority,
+              color: priorityColors[event.priority as keyof typeof priorityColors]
+            }
+          });
+        }
+        
+        currentDate = nextDate;
+        instanceCount++;
+      }
+    }
+    
+    return events;
+  };
+
+  // Convert events and tasks to calendar format
+  const calendarEvents = useMemo(() => {
+    const eventItems = events.flatMap((event: any) => generateRecurringEvents(event));
 
     const taskItems = allTasks
       .filter((task: any) => task.startDate || task.endDate)
@@ -217,8 +299,8 @@ export default function Calendar() {
 
   // Handle event resize
   const handleEventResize = useCallback(({ event, start, end }: { event: any; start: Date; end: Date }) => {
-    // Only allow resizing of events, not tasks
-    if (event.resource.type !== 'event') return;
+    // Only allow resizing of events, not tasks or recurring instances
+    if (event.resource.type !== 'event' || event.resource.data.isRecurring) return;
     
     const eventData = event.resource.data;
     const updatedEvent = {
@@ -235,8 +317,8 @@ export default function Calendar() {
 
   // Handle event drag and drop
   const handleEventDrop = useCallback(({ event, start, end }: { event: any; start: Date; end: Date }) => {
-    // Only allow dragging of events, not tasks
-    if (event.resource.type !== 'event') return;
+    // Only allow dragging of events, not tasks or recurring instances
+    if (event.resource.type !== 'event' || event.resource.data.isRecurring) return;
     
     const eventData = event.resource.data;
     const updatedEvent = {
@@ -255,6 +337,16 @@ export default function Calendar() {
   const handleSelectEvent = useCallback((event: any) => {
     if (event.resource.type === 'event') {
       const eventData = event.resource.data;
+      
+      // Handle recurring event instances
+      if (eventData.isRecurring) {
+        toast({
+          title: "반복 일정",
+          description: "반복 일정의 원본을 수정하려면 첫 번째 일정을 선택하세요. 🔄 표시가 없는 일정이 원본입니다."
+        });
+        return;
+      }
+      
       setSelectedEvent(eventData);
       setEventForm({
         id: eventData.id,
@@ -286,15 +378,17 @@ export default function Calendar() {
   const eventStyleGetter = (event: any) => {
     const backgroundColor = event.resource?.color || '#3174ad';
     const isTask = event.resource?.type === 'task';
+    const isRecurring = event.resource?.data?.isRecurring;
     
     return {
       style: {
         backgroundColor,
         borderRadius: '4px',
-        opacity: isTask ? 0.7 : 1,
-        border: isTask ? '2px dashed rgba(255,255,255,0.8)' : 'none',
+        opacity: isTask ? 0.7 : (isRecurring ? 0.8 : 1),
+        border: isTask ? '2px dashed rgba(255,255,255,0.8)' : (isRecurring ? '2px solid rgba(255,255,255,0.8)' : 'none'),
         fontSize: '12px',
-        fontWeight: isTask ? 'normal' : '500'
+        fontWeight: isTask ? 'normal' : '500',
+        fontStyle: isRecurring ? 'italic' : 'normal'
       }
     };
   };
