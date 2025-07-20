@@ -63,21 +63,25 @@ export default function TaskManagement() {
   // Fetch tasks
   const { data: tasks = [] } = useQuery({
     queryKey: ['tasks', MOCK_USER_ID],
-    queryFn: () => apiRequest(`/api/tasks/${MOCK_USER_ID}`)
+    queryFn: () => fetch(`/api/tasks/${MOCK_USER_ID}`).then(res => res.json())
   });
 
   // Fetch projects for filter
   const { data: projects = [] } = useQuery({
     queryKey: ['projects', MOCK_USER_ID],
-    queryFn: () => apiRequest(`/api/projects/${MOCK_USER_ID}`)
+    queryFn: () => fetch(`/api/projects/${MOCK_USER_ID}`).then(res => res.json())
   });
 
   // Create task mutation
   const createTaskMutation = useMutation({
-    mutationFn: (newTask: any) => apiRequest('/api/tasks', {
-      method: 'POST',
-      body: JSON.stringify(newTask)
-    }),
+    mutationFn: async (newTask: any) => {
+      const response = await fetch('/api/tasks', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newTask)
+      });
+      return response.json();
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tasks', MOCK_USER_ID] });
       setShowTaskDialog(false);
@@ -88,10 +92,14 @@ export default function TaskManagement() {
 
   // Update task mutation
   const updateTaskMutation = useMutation({
-    mutationFn: (updatedTask: Task) => apiRequest(`/api/tasks/${updatedTask.id}`, {
-      method: 'PATCH',
-      body: JSON.stringify(updatedTask)
-    }),
+    mutationFn: async (updatedTask: Task) => {
+      const response = await fetch(`/api/tasks/${updatedTask.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updatedTask)
+      });
+      return response.json();
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tasks', MOCK_USER_ID] });
       setShowTaskDialog(false);
@@ -102,9 +110,12 @@ export default function TaskManagement() {
 
   // Delete task mutation
   const deleteTaskMutation = useMutation({
-    mutationFn: (taskId: number) => apiRequest(`/api/tasks/${taskId}`, {
-      method: 'DELETE'
-    }),
+    mutationFn: async (taskId: number) => {
+      const response = await fetch(`/api/tasks/${taskId}`, {
+        method: 'DELETE'
+      });
+      return response.json();
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tasks', MOCK_USER_ID] });
       toast({ title: "할일 삭제", description: "할일이 삭제되었습니다." });
@@ -113,10 +124,14 @@ export default function TaskManagement() {
 
   // Toggle task completion
   const toggleTaskMutation = useMutation({
-    mutationFn: (task: Task) => apiRequest(`/api/tasks/${task.id}`, {
-      method: 'PATCH',
-      body: JSON.stringify({ ...task, completed: !task.completed })
-    }),
+    mutationFn: async (task: Task) => {
+      const response = await fetch(`/api/tasks/${task.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...task, completed: !task.completed })
+      });
+      return response.json();
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tasks', MOCK_USER_ID] });
     }
