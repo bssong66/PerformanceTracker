@@ -34,16 +34,16 @@ export default function Planning() {
   const { toast } = useToast();
   const [selectedProject, setSelectedProject] = useState<number | null>(null);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [isTaskDialogOpen, setIsTaskDialogOpen] = useState(false);
+  const [taskDialogProjectId, setTaskDialogProjectId] = useState<number | null>(null);
   const [newProject, setNewProject] = useState({
     name: '',
     description: '',
     priority: 'medium' as 'high' | 'medium' | 'low'
   });
-  const [newTask, setNewTask] = useState({
-    title: '',
-    priority: 'B' as 'A' | 'B' | 'C',
-    notes: ''
-  });
+  const [taskList, setTaskList] = useState([
+    { id: Date.now(), title: '', priority: 'B' as 'A' | 'B' | 'C', notes: '' }
+  ]);
 
   // API Queries
   const { data: projects = [] } = useQuery({
@@ -86,18 +86,23 @@ export default function Planning() {
   });
 
   const createTaskMutation = useMutation({
-    mutationFn: async (task: any) => {
-      const response = await fetch('/api/tasks', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...task, userId: MOCK_USER_ID })
-      });
-      return response.json();
+    mutationFn: async (tasks: any[]) => {
+      const responses = await Promise.all(
+        tasks.map(task => 
+          fetch('/api/tasks', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ ...task, userId: MOCK_USER_ID })
+          }).then(res => res.json())
+        )
+      );
+      return responses;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tasks-all', MOCK_USER_ID] });
-      setNewTask({ title: '', priority: 'B', notes: '' });
-      toast({ title: "할일 생성", description: "새 할일이 생성되었습니다." });
+      setTaskList([{ id: Date.now(), title: '', priority: 'B', notes: '' }]);
+      setIsTaskDialogOpen(false);
+      toast({ title: "할일 생성", description: "새 할일들이 생성되었습니다." });
     }
   });
 
@@ -121,13 +126,43 @@ export default function Planning() {
     }
   };
 
-  const handleCreateTask = () => {
-    if (newTask.title.trim() && selectedProject) {
-      createTaskMutation.mutate({
-        ...newTask,
-        projectId: selectedProject
-      });
+  const handleCreateTasks = () => {
+    const validTasks = taskList.filter(task => task.title.trim());
+    if (validTasks.length > 0 && taskDialogProjectId) {
+      const tasksToCreate = validTasks.map(task => ({
+        title: task.title,
+        priority: task.priority,
+        notes: task.notes,
+        projectId: taskDialogProjectId
+      }));
+      createTaskMutation.mutate(tasksToCreate);
     }
+  };
+
+  const addTaskToList = () => {
+    setTaskList(prev => [...prev, { 
+      id: Date.now(), 
+      title: '', 
+      priority: 'B' as 'A' | 'B' | 'C', 
+      notes: '' 
+    }]);
+  };
+
+  const removeTaskFromList = (id: number) => {
+    if (taskList.length > 1) {
+      setTaskList(prev => prev.filter(task => task.id !== id));
+    }
+  };
+
+  const updateTaskInList = (id: number, field: string, value: string) => {
+    setTaskList(prev => prev.map(task => 
+      task.id === id ? { ...task, [field]: value } : task
+    ));
+  };
+
+  const openTaskDialog = (projectId: number) => {
+    setTaskDialogProjectId(projectId);
+    setIsTaskDialogOpen(true);
   };
 
   const handleToggleTask = (id: number, completed: boolean) => {
@@ -207,6 +242,86 @@ export default function Planning() {
           </Dialog>
         </div>
 
+        {/* Task Creation Dialog */}
+        <Dialog open={isTaskDialogOpen} onOpenChange={setIsTaskDialogOpen}>
+          <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>할일 추가</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              {taskList.map((task, index) => (
+                <div key={task.id} className="p-4 border rounded-lg space-y-3">
+                  <div className="flex items-center justify-between">
+                    <h4 className="font-medium">할일 {index + 1}</h4>
+                    {taskList.length > 1 && (
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => removeTaskFromList(task.id)}
+                      >
+                        제거
+                      </Button>
+                    )}
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div>
+                      <Label>할일 제목</Label>
+                      <Input
+                        placeholder="할일을 입력하세요"
+                        value={task.title}
+                        onChange={(e) => updateTaskInList(task.id, 'title', e.target.value)}
+                      />
+                    </div>
+                    <div>
+                      <Label>우선순위</Label>
+                      <Select 
+                        value={task.priority} 
+                        onValueChange={(value) => updateTaskInList(task.id, 'priority', value)}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="A">A (매우 중요)</SelectItem>
+                          <SelectItem value="B">B (중요)</SelectItem>
+                          <SelectItem value="C">C (보통)</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                  <div>
+                    <Label>메모</Label>
+                    <Textarea
+                      placeholder="할일에 대한 추가 정보"
+                      value={task.notes}
+                      onChange={(e) => updateTaskInList(task.id, 'notes', e.target.value)}
+                      rows={2}
+                    />
+                  </div>
+                </div>
+              ))}
+              
+              <div className="flex space-x-2">
+                <Button
+                  variant="outline"
+                  onClick={addTaskToList}
+                  className="flex-1"
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  할일 추가
+                </Button>
+                <Button
+                  onClick={handleCreateTasks}
+                  disabled={!taskList.some(t => t.title.trim()) || createTaskMutation.isPending}
+                  className="flex-1"
+                >
+                  {createTaskMutation.isPending ? '생성 중...' : '모든 할일 생성'}
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+
         {/* Projects List */}
         <div className="space-y-3 mb-8">
           {(projects as any[]).length === 0 ? (
@@ -221,14 +336,16 @@ export default function Planning() {
             (projects as any[]).map(project => (
               <Card 
                 key={project.id} 
-                className={`cursor-pointer transition-all hover:shadow-md ${
+                className={`transition-all hover:shadow-md ${
                   selectedProject === project.id ? 'ring-2 ring-blue-500 shadow-md' : ''
                 }`}
-                onClick={() => setSelectedProject(selectedProject === project.id ? null : project.id)}
               >
                 <CardContent className="p-4">
                   <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-3">
+                    <div 
+                      className="flex items-center space-x-3 flex-1"
+                      onClick={() => setSelectedProject(selectedProject === project.id ? null : project.id)}
+                    >
                       <div 
                         className="w-4 h-4 rounded-full" 
                         style={{ backgroundColor: project.color }}
@@ -240,15 +357,28 @@ export default function Planning() {
                         )}
                       </div>
                     </div>
-                    <div className="flex items-center space-x-2">
-                      <Badge 
-                        className={`text-xs ${priorityColors[project.priority as keyof typeof priorityColors].bg} ${priorityColors[project.priority as keyof typeof priorityColors].text}`}
-                      >
-                        {project.priority === 'high' ? '높음' : project.priority === 'medium' ? '보통' : '낮음'}
-                      </Badge>
-                      <div className="text-sm text-gray-500">
-                        {(allTasks as any[]).filter((task: any) => task.projectId === project.id).length}개 할일
+                    <div className="flex items-center space-x-3">
+                      <div className="flex items-center space-x-2">
+                        <Badge 
+                          className={`text-xs ${priorityColors[project.priority as keyof typeof priorityColors].bg} ${priorityColors[project.priority as keyof typeof priorityColors].text}`}
+                        >
+                          {project.priority === 'high' ? '높음' : project.priority === 'medium' ? '보통' : '낮음'}
+                        </Badge>
+                        <div className="text-sm text-gray-500">
+                          {(allTasks as any[]).filter((task: any) => task.projectId === project.id).length}개 할일
+                        </div>
                       </div>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          openTaskDialog(project.id);
+                        }}
+                      >
+                        <Plus className="h-3 w-3 mr-1" />
+                        할일 추가
+                      </Button>
                     </div>
                   </div>
                 </CardContent>
@@ -263,66 +393,23 @@ export default function Planning() {
             {/* Project Header */}
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center space-x-2">
-                  <div 
-                    className="w-4 h-4 rounded-full" 
-                    style={{ backgroundColor: selectedProjectData.color }}
-                  />
-                  <span>{selectedProjectData.name} 할일 관리</span>
+                <CardTitle className="flex items-center justify-between">
+                  <div className="flex items-center space-x-2">
+                    <div 
+                      className="w-4 h-4 rounded-full" 
+                      style={{ backgroundColor: selectedProjectData.color }}
+                    />
+                    <span>{selectedProjectData.name} 할일 목록</span>
+                  </div>
+                  <Button
+                    size="sm"
+                    onClick={() => openTaskDialog(selectedProject)}
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    할일 추가
+                  </Button>
                 </CardTitle>
               </CardHeader>
-            </Card>
-
-            {/* Add Task Form */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">새 할일 추가</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="task-title">할일 제목</Label>
-                    <Input
-                      id="task-title"
-                      placeholder="할일을 입력하세요"
-                      value={newTask.title}
-                      onChange={(e) => setNewTask(prev => ({ ...prev, title: e.target.value }))}
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="task-priority">우선순위</Label>
-                    <Select value={newTask.priority} onValueChange={(value: 'A' | 'B' | 'C') => 
-                      setNewTask(prev => ({ ...prev, priority: value }))}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="A">A (매우 중요)</SelectItem>
-                        <SelectItem value="B">B (중요)</SelectItem>
-                        <SelectItem value="C">C (보통)</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-                <div>
-                  <Label htmlFor="task-notes">메모</Label>
-                  <Textarea
-                    id="task-notes"
-                    placeholder="할일에 대한 추가 정보"
-                    value={newTask.notes}
-                    onChange={(e) => setNewTask(prev => ({ ...prev, notes: e.target.value }))}
-                    rows={2}
-                  />
-                </div>
-                <Button 
-                  onClick={handleCreateTask}
-                  disabled={!newTask.title.trim() || createTaskMutation.isPending}
-                  className="w-full"
-                >
-                  <Plus className="h-4 w-4 mr-2" />
-                  {createTaskMutation.isPending ? '추가 중...' : '할일 추가'}
-                </Button>
-              </CardContent>
             </Card>
 
             {/* Tasks List */}
