@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient } from "@/lib/queryClient";
-import { Plus, FolderPlus, CheckCircle, Circle, Calendar, Clock, CalendarDays, Edit3, Upload, Image, X, FileText, ImageIcon } from "lucide-react";
+import { Plus, FolderPlus, CheckCircle, Circle, Calendar, Clock, CalendarDays, Edit3, Upload, Image, X, FileText, ImageIcon, ChevronLeft, ChevronRight } from "lucide-react";
 import { format } from "date-fns";
 import { ko } from "date-fns/locale";
 
@@ -46,6 +46,9 @@ export default function Planning() {
   const [editingTaskData, setEditingTaskData] = useState<any>(null);
   const [taskImages, setTaskImages] = useState<{ [taskId: number]: File[] }>({});
   const [projectImages, setProjectImages] = useState<{ [projectId: number]: File[] }>({});
+  const [isImageViewerOpen, setIsImageViewerOpen] = useState(false);
+  const [viewingImages, setViewingImages] = useState<File[]>([]);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [newProject, setNewProject] = useState({
     name: '',
     description: '',
@@ -263,15 +266,10 @@ export default function Planning() {
   const handleProjectImageUpload = (files: FileList | null, projectId: number) => {
     if (files) {
       const newImages = Array.from(files).filter(file => file.type.startsWith('image/'));
-      console.log(`프로젝트 ${projectId}에 이미지 업로드:`, newImages.length, '개');
-      setProjectImages(prev => {
-        const updated = {
-          ...prev,
-          [projectId]: [...(prev[projectId] || []), ...newImages]
-        };
-        console.log('업데이트된 projectImages:', updated);
-        return updated;
-      });
+      setProjectImages(prev => ({
+        ...prev,
+        [projectId]: [...(prev[projectId] || []), ...newImages]
+      }));
     }
   };
 
@@ -351,6 +349,20 @@ export default function Planning() {
         [project.id]: []
       }));
     }
+  };
+
+  const openImageViewer = (images: File[], startIndex: number = 0) => {
+    setViewingImages(images);
+    setCurrentImageIndex(startIndex);
+    setIsImageViewerOpen(true);
+  };
+
+  const nextImage = () => {
+    setCurrentImageIndex((prev) => (prev + 1) % viewingImages.length);
+  };
+
+  const prevImage = () => {
+    setCurrentImageIndex((prev) => (prev - 1 + viewingImages.length) % viewingImages.length);
   };
 
   const getProjectDateRange = (project: any) => {
@@ -1165,13 +1177,18 @@ export default function Planning() {
                               </Badge>
                             </div>
                             <div className="flex items-center justify-end space-x-3">
-                              <div className="flex items-center text-sm text-gray-600">
+                              <div 
+                                className="flex items-center text-sm text-gray-600 cursor-pointer hover:text-gray-800 transition-colors"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  const images = projectImages[project.id] || [];
+                                  if (images.length > 0) {
+                                    openImageViewer(images);
+                                  }
+                                }}
+                              >
                                 <ImageIcon className="h-4 w-4 mr-1" />
-                                {(() => {
-                                  const count = (projectImages[project.id] || []).length;
-                                  console.log(`프로젝트 ${project.id} 이미지:`, count, projectImages[project.id]);
-                                  return count;
-                                })()}
+                                {(projectImages[project.id] || []).length}
                               </div>
                               <div className="text-sm text-gray-600">
                                 {(allTasks as any[]).filter((task: any) => task.projectId === project.id).length}개 할일
@@ -1311,7 +1328,16 @@ export default function Planning() {
                                                 </h4>
                                                 <div className="flex items-center space-x-1">
                                                   {(taskImages[task.id] || []).length > 0 && (
-                                                    <div className="flex items-center text-xs text-gray-400">
+                                                    <div 
+                                                      className="flex items-center text-xs text-gray-400 cursor-pointer hover:text-gray-600 transition-colors"
+                                                      onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        const images = taskImages[task.id] || [];
+                                                        if (images.length > 0) {
+                                                          openImageViewer(images);
+                                                        }
+                                                      }}
+                                                    >
                                                       <ImageIcon className="h-3 w-3" />
                                                       <span className="ml-0.5">{(taskImages[task.id] || []).length}</span>
                                                     </div>
@@ -1376,6 +1402,53 @@ export default function Planning() {
           )}
         </div>
 
+        {/* 이미지 뷰어 다이얼로그 */}
+        <Dialog open={isImageViewerOpen} onOpenChange={setIsImageViewerOpen}>
+          <DialogContent className="max-w-4xl w-full h-[80vh] p-0">
+            <div className="relative w-full h-full flex items-center justify-center bg-black rounded-lg overflow-hidden">
+              {viewingImages.length > 0 && (
+                <>
+                  <img
+                    src={URL.createObjectURL(viewingImages[currentImageIndex])}
+                    alt={`이미지 ${currentImageIndex + 1}`}
+                    className="max-w-full max-h-full object-contain"
+                  />
+                  
+                  {/* 이미지 네비게이션 */}
+                  {viewingImages.length > 1 && (
+                    <>
+                      <button
+                        onClick={prevImage}
+                        className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-black/50 text-white p-2 rounded-full hover:bg-black/70 transition-colors"
+                      >
+                        <ChevronLeft className="h-6 w-6" />
+                      </button>
+                      <button
+                        onClick={nextImage}
+                        className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-black/50 text-white p-2 rounded-full hover:bg-black/70 transition-colors"
+                      >
+                        <ChevronRight className="h-6 w-6" />
+                      </button>
+                    </>
+                  )}
+                  
+                  {/* 이미지 카운터 */}
+                  <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-black/50 text-white px-3 py-1 rounded-full text-sm">
+                    {currentImageIndex + 1} / {viewingImages.length}
+                  </div>
+                  
+                  {/* 닫기 버튼 */}
+                  <button
+                    onClick={() => setIsImageViewerOpen(false)}
+                    className="absolute top-4 right-4 bg-black/50 text-white p-2 rounded-full hover:bg-black/70 transition-colors"
+                  >
+                    <X className="h-6 w-6" />
+                  </button>
+                </>
+              )}
+            </div>
+          </DialogContent>
+        </Dialog>
 
       </div>
     </div>
