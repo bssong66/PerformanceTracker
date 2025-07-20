@@ -511,7 +511,7 @@ export default function Planning() {
         {/* Selected Project Tasks */}
         {selectedProject && selectedProjectData && (
           <div className="space-y-6">
-            {/* Project Header */}
+            {/* Tasks List */}
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center justify-between">
@@ -522,25 +522,18 @@ export default function Planning() {
                     />
                     <span>{selectedProjectData.name} 할일 목록</span>
                   </div>
-                  <Button
-                    size="sm"
-                    onClick={() => openTaskDialog(selectedProject)}
-                  >
-                    <Plus className="h-4 w-4 mr-2" />
-                    할일 추가
-                  </Button>
-                </CardTitle>
-              </CardHeader>
-            </Card>
-
-            {/* Tasks List */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center justify-between">
-                  <span>할일 목록</span>
-                  <span className="text-sm font-normal text-gray-500">
-                    총 {projectTasks.length}개 / 완료 {projectTasks.filter((t: any) => t.completed).length}개
-                  </span>
+                  <div className="flex items-center space-x-4">
+                    <span className="text-sm font-normal text-gray-500">
+                      총 {projectTasks.length}개 / 완료 {projectTasks.filter((t: any) => t.completed).length}개
+                    </span>
+                    <Button
+                      size="sm"
+                      onClick={() => openTaskDialog(selectedProject)}
+                    >
+                      <Plus className="h-4 w-4 mr-2" />
+                      할일 추가
+                    </Button>
+                  </div>
                 </CardTitle>
               </CardHeader>
               <CardContent>
