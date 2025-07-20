@@ -127,7 +127,7 @@ export default function TaskManagement() {
         <div className="flex justify-between items-center mb-8">
           <div>
             <h1 className="text-2xl font-bold text-gray-900">할일 관리</h1>
-            <p className="text-sm text-gray-600">프로젝트와 독립적인 할일을 관리하세요</p>
+            <p className="text-sm text-gray-600">해야할 일이 있다면 여기에 등록하고 관리하세요</p>
           </div>
           
           <Dialog open={isIndependentTaskDialogOpen} onOpenChange={setIsIndependentTaskDialogOpen}>
