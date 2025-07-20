@@ -815,15 +815,34 @@ export default function Planning() {
                       </div>
                     </div>
                     <div className="flex items-center space-x-3">
-                      <div className="flex items-center space-x-2">
-                        <Badge 
-                          className={`text-xs ${priorityColors[project.priority as keyof typeof priorityColors].bg} ${priorityColors[project.priority as keyof typeof priorityColors].text}`}
-                        >
-                          {project.priority === 'high' ? '높음' : project.priority === 'medium' ? '보통' : '낮음'}
-                        </Badge>
-                        <div className="text-sm text-gray-500">
-                          {(allTasks as any[]).filter((task: any) => task.projectId === project.id).length}개 할일
+                      <div className="flex flex-col items-end space-y-2">
+                        <div className="flex items-center space-x-2">
+                          <Badge 
+                            className={`text-xs ${priorityColors[project.priority as keyof typeof priorityColors].bg} ${priorityColors[project.priority as keyof typeof priorityColors].text}`}
+                          >
+                            {project.priority === 'high' ? '높음' : project.priority === 'medium' ? '보통' : '낮음'}
+                          </Badge>
+                          <div className="text-sm text-gray-500">
+                            {(allTasks as any[]).filter((task: any) => task.projectId === project.id).length}개 할일
+                          </div>
                         </div>
+                        {(() => {
+                          const progress = getProjectProgress(project.id);
+                          const taskCount = (allTasks as any[]).filter((task: any) => task.projectId === project.id).length;
+                          return taskCount > 0 && (
+                            <div className="flex items-center space-x-2">
+                              <div className="w-16 bg-gray-200 rounded-full h-1.5">
+                                <div 
+                                  className="bg-blue-500 h-1.5 rounded-full transition-all duration-300 ease-in-out"
+                                  style={{ width: `${progress}%` }}
+                                />
+                              </div>
+                              <span className="text-xs text-gray-500 min-w-[25px]">
+                                {progress}%
+                              </span>
+                            </div>
+                          );
+                        })()}
                       </div>
                       <Button
                         size="sm"
