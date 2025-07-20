@@ -233,6 +233,28 @@ export default function Planning() {
     setIsTaskDialogOpen(true);
   };
 
+  // 선택된 프로젝트의 날짜 범위 가져오기
+  const getSelectedProjectDateRange = () => {
+    if (!taskDialogProjectId) return null;
+    const project = (projects as any[]).find(p => p.id === taskDialogProjectId);
+    if (!project || !project.startDate || !project.endDate) return null;
+    return {
+      min: project.startDate,
+      max: project.endDate
+    };
+  };
+
+  // 할일 상세보기의 프로젝트 날짜 범위
+  const getTaskDetailProjectDateRange = () => {
+    if (!selectedTaskDetail) return null;
+    const project = (projects as any[]).find(p => p.id === selectedTaskDetail.projectId);
+    if (!project || !project.startDate || !project.endDate) return null;
+    return {
+      min: project.startDate,
+      max: project.endDate
+    };
+  };
+
   const openTaskDetail = (task: any) => {
     setSelectedTaskDetail(task);
     setIsTaskDetailOpen(true);
@@ -405,6 +427,17 @@ export default function Planning() {
           <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>할일 추가</DialogTitle>
+              {(() => {
+                const projectDateRange = getSelectedProjectDateRange();
+                const project = (projects as any[]).find(p => p.id === taskDialogProjectId);
+                return project && projectDateRange && (
+                  <div className="text-sm text-gray-600 mt-2 p-2 bg-blue-50 rounded">
+                    <span className="font-medium">{project.name}</span> 프로젝트 기간: {projectDateRange.min} ~ {projectDateRange.max}
+                    <br />
+                    <span className="text-xs text-gray-500">할일 일정은 프로젝트 기간 내에서만 설정할 수 있습니다.</span>
+                  </div>
+                );
+              })()}
             </DialogHeader>
             <div className="space-y-3">
               {taskList.map((task, index) => (
@@ -460,6 +493,8 @@ export default function Planning() {
                         value={task.startDate}
                         onChange={(e) => updateTaskInList(task.id, 'startDate', e.target.value)}
                         className="h-8"
+                        min={getSelectedProjectDateRange()?.min}
+                        max={getSelectedProjectDateRange()?.max}
                       />
                     </div>
                     <div>
@@ -469,6 +504,8 @@ export default function Planning() {
                         value={task.endDate}
                         onChange={(e) => updateTaskInList(task.id, 'endDate', e.target.value)}
                         className="h-8"
+                        min={getSelectedProjectDateRange()?.min}
+                        max={getSelectedProjectDateRange()?.max}
                       />
                     </div>
                   </div>
@@ -524,6 +561,17 @@ export default function Planning() {
                   </Button>
                 )}
               </DialogTitle>
+              {(() => {
+                const projectDateRange = getTaskDetailProjectDateRange();
+                const project = selectedTaskDetail && (projects as any[]).find(p => p.id === selectedTaskDetail.projectId);
+                return isEditingTask && project && projectDateRange && (
+                  <div className="text-sm text-gray-600 mt-2 p-2 bg-blue-50 rounded">
+                    <span className="font-medium">{project.name}</span> 프로젝트 기간: {projectDateRange.min} ~ {projectDateRange.max}
+                    <br />
+                    <span className="text-xs text-gray-500">할일 일정은 프로젝트 기간 내에서만 설정할 수 있습니다.</span>
+                  </div>
+                );
+              })()}
             </DialogHeader>
             {selectedTaskDetail && (
               <div className="space-y-4">
@@ -565,6 +613,8 @@ export default function Planning() {
                           type="date"
                           value={editingTaskData.startDate}
                           onChange={(e) => setEditingTaskData(prev => ({ ...prev, startDate: e.target.value }))}
+                          min={getTaskDetailProjectDateRange()?.min}
+                          max={getTaskDetailProjectDateRange()?.max}
                         />
                       </div>
                       <div>
@@ -574,6 +624,8 @@ export default function Planning() {
                           type="date"
                           value={editingTaskData.endDate}
                           onChange={(e) => setEditingTaskData(prev => ({ ...prev, endDate: e.target.value }))}
+                          min={getTaskDetailProjectDateRange()?.min}
+                          max={getTaskDetailProjectDateRange()?.max}
                         />
                       </div>
                     </div>
