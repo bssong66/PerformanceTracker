@@ -10,7 +10,9 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient } from "@/lib/queryClient";
-import { Plus, FolderPlus, CheckCircle, Circle, Calendar, Clock } from "lucide-react";
+import { Plus, FolderPlus, CheckCircle, Circle, Calendar, Clock, CalendarDays } from "lucide-react";
+import { format } from "date-fns";
+import { ko } from "date-fns/locale";
 
 const MOCK_USER_ID = 1;
 
@@ -42,7 +44,14 @@ export default function Planning() {
     priority: 'medium' as 'high' | 'medium' | 'low'
   });
   const [taskList, setTaskList] = useState([
-    { id: Date.now(), title: '', priority: 'B' as 'A' | 'B' | 'C', notes: '' }
+    { 
+      id: Date.now(), 
+      title: '', 
+      priority: 'B' as 'A' | 'B' | 'C', 
+      notes: '',
+      startDate: '',
+      endDate: ''
+    }
   ]);
 
   // API Queries
@@ -100,7 +109,7 @@ export default function Planning() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tasks-all', MOCK_USER_ID] });
-      setTaskList([{ id: Date.now(), title: '', priority: 'B', notes: '' }]);
+      setTaskList([{ id: Date.now(), title: '', priority: 'B', notes: '', startDate: '', endDate: '' }]);
       setIsTaskDialogOpen(false);
       toast({ title: "할일 생성", description: "새 할일들이 생성되었습니다." });
     }
@@ -133,7 +142,9 @@ export default function Planning() {
         title: task.title,
         priority: task.priority,
         notes: task.notes,
-        projectId: taskDialogProjectId
+        projectId: taskDialogProjectId,
+        startDate: task.startDate || null,
+        endDate: task.endDate || null
       }));
       createTaskMutation.mutate(tasksToCreate);
     }
@@ -144,7 +155,9 @@ export default function Planning() {
       id: Date.now(), 
       title: '', 
       priority: 'B' as 'A' | 'B' | 'C', 
-      notes: '' 
+      notes: '',
+      startDate: '',
+      endDate: ''
     }]);
   };
 
@@ -287,6 +300,24 @@ export default function Planning() {
                           <SelectItem value="C">C (보통)</SelectItem>
                         </SelectContent>
                       </Select>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div>
+                      <Label>시작일</Label>
+                      <Input
+                        type="date"
+                        value={task.startDate}
+                        onChange={(e) => updateTaskInList(task.id, 'startDate', e.target.value)}
+                      />
+                    </div>
+                    <div>
+                      <Label>종료일</Label>
+                      <Input
+                        type="date"
+                        value={task.endDate}
+                        onChange={(e) => updateTaskInList(task.id, 'endDate', e.target.value)}
+                      />
                     </div>
                   </div>
                   <div>
@@ -460,6 +491,22 @@ export default function Planning() {
                                   </h4>
                                   {task.notes && (
                                     <p className="text-sm text-gray-600 mt-1">{task.notes}</p>
+                                  )}
+                                  {(task.startDate || task.endDate) && (
+                                    <div className="flex items-center space-x-4 text-xs text-gray-500 mt-2">
+                                      {task.startDate && (
+                                        <span className="flex items-center">
+                                          <Calendar className="h-3 w-3 mr-1" />
+                                          시작: {format(new Date(task.startDate), 'M/d', { locale: ko })}
+                                        </span>
+                                      )}
+                                      {task.endDate && (
+                                        <span className="flex items-center">
+                                          <CalendarDays className="h-3 w-3 mr-1" />
+                                          종료: {format(new Date(task.endDate), 'M/d', { locale: ko })}
+                                        </span>
+                                      )}
+                                    </div>
                                   )}
                                 </div>
                               </div>
