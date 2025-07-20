@@ -196,9 +196,10 @@ export default function Planning() {
     onSuccess: (updatedTask) => {
       queryClient.invalidateQueries({ queryKey: ['tasks-all', MOCK_USER_ID] });
       queryClient.invalidateQueries({ queryKey: ['independent-tasks', MOCK_USER_ID] });
-      setSelectedTaskDetail(updatedTask);
+      setSelectedTaskDetail(null);
       setIsEditingTask(false);
       setEditingTaskData(null);
+      setIsTaskDetailOpen(false);
       toast({ title: "할일 수정", description: "할일이 수정되었습니다." });
     }
   });
@@ -493,6 +494,8 @@ export default function Planning() {
   const cancelEditingTask = () => {
     setIsEditingTask(false);
     setEditingTaskData(null);
+    setIsTaskDetailOpen(false);
+    setSelectedTaskDetail(null);
   };
 
   const openEditProject = (project: any) => {
