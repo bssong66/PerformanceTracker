@@ -217,7 +217,7 @@ export default function TaskManagement() {
         {/* Independent Tasks List */}
         <Card>
           <CardHeader>
-            <CardTitle>독립 할일 목록</CardTitle>
+            <CardTitle>할일 목록</CardTitle>
           </CardHeader>
           <CardContent>
             {independentTasks.length === 0 ? (
