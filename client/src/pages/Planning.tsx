@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -45,6 +45,11 @@ export default function Planning() {
   const [isEditingTask, setIsEditingTask] = useState(false);
   const [editingTaskData, setEditingTaskData] = useState<any>(null);
   const [taskImages, setTaskImages] = useState<{ [taskId: number]: File[] }>({});
+  
+  // taskImages 상태 변화 추적
+  useEffect(() => {
+    console.log('taskImages 상태 변화:', taskImages);
+  }, [taskImages]);
   const [projectImages, setProjectImages] = useState<{ [projectId: number]: File[] }>({});
   const [isImageViewerOpen, setIsImageViewerOpen] = useState(false);
   const [viewingImages, setViewingImages] = useState<File[]>([]);
