@@ -139,7 +139,7 @@ export default function TaskManagement() {
             </DialogTrigger>
             <DialogContent className="max-w-md">
               <DialogHeader>
-                <DialogTitle>독립 할일 생성</DialogTitle>
+                <DialogTitle>할일 생성</DialogTitle>
               </DialogHeader>
               <div className="space-y-4">
                 <div>
