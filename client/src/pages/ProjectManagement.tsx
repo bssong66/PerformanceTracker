@@ -155,50 +155,9 @@ export default function ProjectManagement() {
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      // 파일 크기 체크 (5MB 제한)
-      if (file.size > 5 * 1024 * 1024) {
-        toast({ 
-          title: "파일 크기 초과", 
-          description: "이미지 파일은 5MB 이하로 선택해주세요.", 
-          variant: "destructive" 
-        });
-        return;
-      }
-
       const reader = new FileReader();
       reader.onload = () => {
-        const img = new Image();
-        img.onload = () => {
-          const canvas = document.createElement('canvas');
-          const ctx = canvas.getContext('2d');
-          
-          // 최대 크기 설정 (800x600)
-          const maxWidth = 800;
-          const maxHeight = 600;
-          let { width, height } = img;
-          
-          if (width > height) {
-            if (width > maxWidth) {
-              height = (height * maxWidth) / width;
-              width = maxWidth;
-            }
-          } else {
-            if (height > maxHeight) {
-              width = (width * maxHeight) / height;
-              height = maxHeight;
-            }
-          }
-          
-          canvas.width = width;
-          canvas.height = height;
-          
-          ctx?.drawImage(img, 0, 0, width, height);
-          
-          // 압축된 이미지를 base64로 변환 (품질 0.8)
-          const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.8);
-          setProjectForm(prev => ({ ...prev, imageUrl: compressedDataUrl }));
-        };
-        img.src = reader.result as string;
+        setProjectForm(prev => ({ ...prev, imageUrl: reader.result as string }));
       };
       reader.readAsDataURL(file);
     }
