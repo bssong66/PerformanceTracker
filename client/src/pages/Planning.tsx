@@ -328,8 +328,9 @@ export default function Planning() {
     setSelectedTaskDetail(task);
     setIsTaskDetailOpen(true);
     setIsEditingTask(false);
-    // 할일 상세보기 시 해당 할일의 이미지가 없으면 빈 배열로 초기화
-    if (!taskImages[task.id]) {
+    // 할일 상세보기 시 해당 할일의 이미지가 undefined인 경우에만 빈 배열로 초기화
+    // 이미 배열이 존재하면 건드리지 않음
+    if (taskImages[task.id] === undefined) {
       setTaskImages(prev => ({
         ...prev,
         [task.id]: []
@@ -1323,21 +1324,25 @@ export default function Planning() {
                                                   {task.title}
                                                 </h4>
                                                 <div className="flex items-center space-x-1">
-                                                  {(taskImages[task.id] || []).length > 0 && (
-                                                    <div 
-                                                      className="flex items-center text-xs text-gray-400 cursor-pointer hover:text-gray-600 transition-colors"
-                                                      onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        const images = taskImages[task.id] || [];
-                                                        if (images.length > 0) {
-                                                          openImageViewer(images);
-                                                        }
-                                                      }}
-                                                    >
-                                                      <ImageIcon className="h-3 w-3" />
-                                                      <span className="ml-0.5">{(taskImages[task.id] || []).length}</span>
-                                                    </div>
-                                                  )}
+                                                  {(() => {
+                                                    const images = taskImages[task.id] || [];
+                                                    const count = images.length;
+                                                    console.log(`할일 ${task.id} 이미지:`, count, images);
+                                                    return count > 0 && (
+                                                      <div 
+                                                        className="flex items-center text-xs text-gray-400 cursor-pointer hover:text-gray-600 transition-colors"
+                                                        onClick={(e) => {
+                                                          e.stopPropagation();
+                                                          if (count > 0) {
+                                                            openImageViewer(images);
+                                                          }
+                                                        }}
+                                                      >
+                                                        <ImageIcon className="h-3 w-3" />
+                                                        <span className="ml-0.5">{count}</span>
+                                                      </div>
+                                                    );
+                                                  })()}
                                                   {task.notes && (
                                                     <FileText className="h-3 w-3 text-gray-400" />
                                                   )}
