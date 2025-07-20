@@ -61,17 +61,25 @@ export default function DailyPlanning() {
     queryFn: () => fetch(`/api/tasks/${MOCK_USER_ID}`).then(res => res.json()),
   });
 
-  // 일일 할일과 프로젝트 할일을 통합
-  const allTasks = [...dailyTasks, ...projectTasks.filter((projectTask: any) => 
+  // 프로젝트 할일 중 오늘 날짜에 해당하는 것들을 자동으로 포함
+  const todayProjectTasks = projectTasks.filter((task: any) => {
+    // 할일의 시작일이 오늘이거나, 시작일과 마감일 사이에 오늘이 포함되는 경우
+    if (task.startDate && task.endDate) {
+      return today >= task.startDate && today <= task.endDate;
+    } else if (task.startDate) {
+      return today >= task.startDate;
+    } else if (task.endDate) {
+      return today <= task.endDate;
+    }
+    return false;
+  });
+
+  // 일일 할일과 오늘에 해당하는 프로젝트 할일을 통합
+  const allTasks = [...dailyTasks, ...todayProjectTasks.filter((projectTask: any) => 
     !dailyTasks.some((dailyTask: any) => dailyTask.id === projectTask.id)
   )];
 
-  // 오늘 할 일로 선택된 프로젝트 할일들만 필터링 (scheduledDate가 오늘인 것들)
-  const todayTasks = allTasks.filter((task: any) => 
-    task.scheduledDate === today || (!task.scheduledDate && task.projectId)
-  );
-
-  const tasks = todayTasks;
+  const tasks = allTasks;
 
   const { data: timeBlocks = [] } = useQuery({
     queryKey: ['timeBlocks', MOCK_USER_ID, today],
@@ -168,12 +176,7 @@ export default function DailyPlanning() {
     }
   };
 
-  const handleScheduleProjectTask = (taskId: number) => {
-    updateTaskMutation.mutate({ 
-      id: taskId, 
-      updates: { scheduledDate: today } 
-    });
-  };
+
 
   const handleToggleTask = (id: number, completed: boolean) => {
     updateTaskMutation.mutate({ id, updates: { completed } });
@@ -252,10 +255,7 @@ export default function DailyPlanning() {
     C: (tasks as any[]).filter((t: any) => t.priority === 'C'),
   };
 
-  // 아직 스케줄되지 않은 프로젝트 할일들 (오늘의 계획에 추가할 수 있는 할일들)
-  const unscheduledProjectTasks = projectTasks.filter((task: any) => 
-    !task.scheduledDate && !task.completed
-  );
+
 
   if (tasksLoading) {
     return (
@@ -326,54 +326,7 @@ export default function DailyPlanning() {
                 </Button>
               </div>
 
-              {/* Project Tasks to Schedule */}
-              {unscheduledProjectTasks.length > 0 && (
-                <div className="border-t pt-4">
-                  <Label className="text-sm font-medium text-gray-700 mb-3 block">
-                    프로젝트 할일을 오늘 계획에 추가
-                  </Label>
-                  <div className="space-y-2 max-h-32 overflow-y-auto">
-                    {unscheduledProjectTasks.slice(0, 5).map((task: any) => {
-                      const project = (projects as any[]).find(p => p.id === task.projectId);
-                      return (
-                        <div key={task.id} className="flex items-center justify-between p-2 bg-gray-50 rounded-lg">
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center space-x-2">
-                              <div 
-                                className="w-2 h-2 rounded-full flex-shrink-0" 
-                                style={{ backgroundColor: project?.color || '#gray' }}
-                              />
-                              <span className="text-xs text-gray-500 truncate">
-                                {project?.name}
-                              </span>
-                            </div>
-                            <p className="text-sm font-medium text-gray-900 truncate">
-                              {task.title}
-                            </p>
-                            <div className="flex items-center space-x-1">
-                              <PriorityBadge priority={task.priority} size="sm" />
-                            </div>
-                          </div>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => handleScheduleProjectTask(task.id)}
-                            className="ml-2 h-7 px-2 text-xs"
-                          >
-                            <Plus className="h-3 w-3 mr-1" />
-                            추가
-                          </Button>
-                        </div>
-                      );
-                    })}
-                    {unscheduledProjectTasks.length > 5 && (
-                      <p className="text-xs text-gray-500 text-center">
-                        외 {unscheduledProjectTasks.length - 5}개 더...
-                      </p>
-                    )}
-                  </div>
-                </div>
-              )}
+
 
               {/* A Priority Tasks */}
               <div>

@@ -153,5 +153,9 @@ Preferred communication style: Simple, everyday language.
 - Added task creation within selected project context
 - Removed complex tabs and filters for streamlined user experience
 - Enhanced visual hierarchy with clear project selection and task management sections
+- Fixed critical image state management bug where task images disappeared after viewing task details
+- Implemented popup image viewers for both project and task images with click-to-view functionality
+- Integrated project tasks into daily planning page - tasks automatically appear in today's plan based on start/end dates
+- Removed manual task scheduling interface in favor of automatic date-based inclusion
 
 The application follows a monorepo structure with clear separation between frontend, backend, and shared code, enabling efficient development and deployment workflows.
