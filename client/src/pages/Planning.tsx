@@ -472,7 +472,7 @@ export default function Planning() {
           if (!open) setProjectImages([]);
         }}>
             <DialogTrigger asChild>
-              <Button className="w-1/10 bg-[#f5f5f5] text-[#737373] hover:bg-[#e5e5e5]" size="sm">
+              <Button className="bg-[#f5f5f5] text-[#737373]" size="sm">
                 <Plus className="h-4 w-4 mr-2" />
                 새 프로젝트 생성
               </Button>
