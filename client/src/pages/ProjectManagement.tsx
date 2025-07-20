@@ -42,6 +42,8 @@ export default function ProjectManagement() {
     title: '',
     priority: 'B' as 'A' | 'B' | 'C',
     notes: '',
+    startDate: '',
+    endDate: '',
     imageUrl: ''
   });
   const [showProjectDialog, setShowProjectDialog] = useState(false);
@@ -154,7 +156,7 @@ export default function ProjectManagement() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tasks', MOCK_USER_ID] });
       setShowTaskDialog(false);
-      setTaskForm({ title: '', priority: 'B', notes: '', imageUrl: '' });
+      setTaskForm({ title: '', priority: 'B', notes: '', startDate: '', endDate: '', imageUrl: '' });
       toast({ title: "할일 생성", description: "새로운 할일이 생성되었습니다." });
     }
   });
@@ -216,6 +218,12 @@ export default function ProjectManagement() {
     setShowTaskDialog(true);
   };
 
+  // Get the selected project for date validation
+  const getSelectedProject = () => {
+    if (!selectedProjectForTask) return null;
+    return projects.find((p: Project) => p.id === selectedProjectForTask);
+  };
+
   const toggleProjectExpansion = (projectId: number) => {
     const newExpanded = new Set(expandedProjects);
     if (newExpanded.has(projectId)) {
@@ -236,6 +244,8 @@ export default function ProjectManagement() {
       title: taskForm.title,
       priority: taskForm.priority,
       notes: taskForm.notes,
+      startDate: taskForm.startDate || null,
+      endDate: taskForm.endDate || null,
       imageUrl: taskForm.imageUrl,
       completed: false
     });
@@ -641,9 +651,22 @@ export default function ProjectManagement() {
                             onChange={() => handleTaskToggle(task.id, task.completed)}
                             className="rounded"
                           />
-                          <span className={`flex-1 text-sm ${task.completed ? 'line-through text-gray-500' : 'text-gray-900'}`}>
-                            {task.title}
-                          </span>
+                          <div className="flex-1">
+                            <span className={`text-sm ${task.completed ? 'line-through text-gray-500' : 'text-gray-900'}`}>
+                              {task.title}
+                            </span>
+                            {(task.startDate || task.endDate) && (
+                              <div className="text-xs text-gray-500 mt-1">
+                                {task.startDate && task.endDate ? (
+                                  <span>{format(new Date(task.startDate), 'M/d', { locale: ko })} ~ {format(new Date(task.endDate), 'M/d', { locale: ko })}</span>
+                                ) : task.startDate ? (
+                                  <span>시작: {format(new Date(task.startDate), 'M/d', { locale: ko })}</span>
+                                ) : (
+                                  <span>종료: {format(new Date(task.endDate), 'M/d', { locale: ko })}</span>
+                                )}
+                              </div>
+                            )}
+                          </div>
                           <div className="flex items-center space-x-2">
                             {task.imageUrl && (
                               <Button
@@ -738,6 +761,36 @@ export default function ProjectManagement() {
                   <SelectItem value="C">C (보통)</SelectItem>
                 </SelectContent>
               </Select>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="taskStartDate">시작일</Label>
+                <Input
+                  id="taskStartDate"
+                  type="date"
+                  value={taskForm.startDate}
+                  min={getSelectedProject()?.startDate || undefined}
+                  max={getSelectedProject()?.endDate || undefined}
+                  onChange={(e) => setTaskForm(prev => ({ ...prev, startDate: e.target.value }))}
+                />
+                {getSelectedProject()?.startDate && (
+                  <p className="text-xs text-gray-500 mt-1">
+                    프로젝트 기간: {getSelectedProject()?.startDate} ~ {getSelectedProject()?.endDate || '미정'}
+                  </p>
+                )}
+              </div>
+              <div>
+                <Label htmlFor="taskEndDate">종료일</Label>
+                <Input
+                  id="taskEndDate"
+                  type="date"
+                  value={taskForm.endDate}
+                  min={taskForm.startDate || getSelectedProject()?.startDate || undefined}
+                  max={getSelectedProject()?.endDate || undefined}
+                  onChange={(e) => setTaskForm(prev => ({ ...prev, endDate: e.target.value }))}
+                />
+              </div>
             </div>
 
             <div>
