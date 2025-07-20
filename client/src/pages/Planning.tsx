@@ -458,8 +458,16 @@ export default function Planning() {
 
   const openTaskDetail = (task: any) => {
     setSelectedTaskDetail(task);
+    setEditingTaskData({
+      id: task.id,
+      title: task.title,
+      priority: task.priority,
+      notes: task.notes || '',
+      startDate: task.startDate || '',
+      endDate: task.endDate || ''
+    });
+    setIsEditingTask(true);
     setIsTaskDetailOpen(true);
-    setIsEditingTask(false);
     // 할일 상세보기 시 해당 할일의 이미지가 undefined인 경우에만 빈 배열로 초기화
     // 이미 배열이 존재하면 건드리지 않음
     if (taskImages[task.id] === undefined) {
@@ -1012,19 +1020,7 @@ export default function Planning() {
         }}>
           <DialogContent className="max-w-md" aria-describedby="task-detail-description">
             <DialogHeader>
-              <DialogTitle className="flex items-center justify-between">
-                할일 상세 정보
-                {!isEditingTask && (
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={startEditingTask}
-                  >
-                    <Edit3 className="h-3 w-3 mr-1" />
-                    수정
-                  </Button>
-                )}
-              </DialogTitle>
+              <DialogTitle>할일 상세 정보</DialogTitle>
               {(() => {
                 const projectDateRange = getTaskDetailProjectDateRange();
                 const project = selectedTaskDetail && (projects as any[]).find(p => p.id === selectedTaskDetail.projectId);
@@ -1038,11 +1034,8 @@ export default function Planning() {
               })()}
             </DialogHeader>
             <div id="task-detail-description" className="sr-only">할일의 상세 정보를 확인하고 수정할 수 있는 화면입니다.</div>
-            {selectedTaskDetail && (
+            {selectedTaskDetail && editingTaskData && (
               <div className="space-y-4">
-                {/* 수정 모드 */}
-                {isEditingTask && editingTaskData ? (
-                  <div className="space-y-4">
                     <div>
                       <Label htmlFor="edit-task-title">제목</Label>
                       <Input
@@ -1178,113 +1171,6 @@ export default function Planning() {
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     </div>
-                  </div>
-                ) : (
-                  /* 보기 모드 */
-                  <div className="space-y-4">
-                    <div>
-                      <Label className="text-sm font-medium text-gray-700">제목</Label>
-                      <p className="mt-1 text-gray-900">{selectedTaskDetail.title}</p>
-                    </div>
-
-                    <div>
-                      <Label className="text-sm font-medium text-gray-700">우선순위</Label>
-                      <div className="mt-1">
-                        <Badge className={`text-xs ${
-                          selectedTaskDetail.priority === 'A' ? 'bg-red-100 text-red-700' : 
-                          selectedTaskDetail.priority === 'B' ? 'bg-yellow-100 text-yellow-700' : 
-                          'bg-green-100 text-green-700'
-                        }`}>
-                          {selectedTaskDetail.priority}급 우선순위
-                        </Badge>
-                      </div>
-                    </div>
-
-                    {(selectedTaskDetail.startDate || selectedTaskDetail.endDate) && (
-                      <div>
-                        <Label className="text-sm font-medium text-gray-700">일정</Label>
-                        <div className="mt-1 space-y-1">
-                          {selectedTaskDetail.startDate && (
-                            <div className="flex items-center text-sm text-gray-600">
-                              <Calendar className="h-4 w-4 mr-2" />
-                              시작일: {format(new Date(selectedTaskDetail.startDate), 'yyyy년 M월 d일', { locale: ko })}
-                            </div>
-                          )}
-                          {selectedTaskDetail.endDate && (
-                            <div className="flex items-center text-sm text-gray-600">
-                              <CalendarDays className="h-4 w-4 mr-2" />
-                              종료일: {format(new Date(selectedTaskDetail.endDate), 'yyyy년 M월 d일', { locale: ko })}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    )}
-
-                    {selectedTaskDetail.notes && (
-                      <div>
-                        <Label className="text-sm font-medium text-gray-700">메모</Label>
-                        <p className="mt-1 text-gray-600 whitespace-pre-wrap">{selectedTaskDetail.notes}</p>
-                      </div>
-                    )}
-
-                    {/* 업로드된 이미지 표시 */}
-                    {(taskImages[selectedTaskDetail.id] || []).length > 0 && (
-                      <div>
-                        <Label className="text-sm font-medium text-gray-700">첨부 이미지</Label>
-                        <div className="mt-2 grid grid-cols-3 gap-2">
-                          {(taskImages[selectedTaskDetail.id] || []).map((image, index) => (
-                            <div key={index} className="relative">
-                              <img
-                                src={URL.createObjectURL(image)}
-                                alt={`할일 이미지 ${index + 1}`}
-                                className="w-full h-20 object-cover rounded border cursor-pointer hover:opacity-75 transition-opacity"
-                                onClick={() => {
-                                  // 클릭 시 이미지를 새 창에서 열기
-                                  const newWindow = window.open();
-                                  if (newWindow) {
-                                    newWindow.document.write(`<img src="${URL.createObjectURL(image)}" style="max-width: 100%; height: auto;" />`);
-                                  }
-                                }}
-                              />
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    <div>
-                      <Label className="text-sm font-medium text-gray-700">상태</Label>
-                      <div className="mt-1 flex items-center">
-                        {selectedTaskDetail.completed ? (
-                          <div className="flex items-center text-green-600">
-                            <CheckCircle className="h-4 w-4 mr-2" />
-                            완료됨
-                          </div>
-                        ) : (
-                          <div className="flex items-center text-gray-500">
-                            <Circle className="h-4 w-4 mr-2" />
-                            진행 중
-                          </div>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* 삭제 버튼 (보기 모드에서만 표시) */}
-                    <div className="pt-4 border-t border-gray-200">
-                      <Button
-                        variant="outline"
-                        onClick={() => {
-                          handleDeleteProjectTask(selectedTaskDetail.id);
-                          setIsTaskDetailOpen(false);
-                        }}
-                        className="w-full text-red-500 hover:text-red-700 hover:bg-red-50"
-                      >
-                        <Trash2 className="h-4 w-4 mr-2" />
-                        할일 삭제
-                      </Button>
-                    </div>
-                  </div>
-                )}
               </div>
             )}
           </DialogContent>
@@ -1639,10 +1525,22 @@ export default function Planning() {
                                                         }
                                                       }}
                                                     >
-                                                      <span>{(taskImages[task.id] || []).length}</span>
+                                                      <ImageIcon className="h-3 w-3" />
+                                                      <span className="ml-0.5">{(taskImages[task.id] || []).length}</span>
                                                     </div>
                                                   )}
 
+                                                  <Button
+                                                    size="sm"
+                                                    variant="ghost"
+                                                    onClick={(e) => {
+                                                      e.stopPropagation();
+                                                      openTaskDetail(task);
+                                                    }}
+                                                    className="h-6 w-6 p-0"
+                                                  >
+                                                    <Edit3 className="h-3 w-3" />
+                                                  </Button>
                                                   <Button
                                                     size="sm"
                                                     variant="ghost"
@@ -1652,7 +1550,7 @@ export default function Planning() {
                                                     }}
                                                     className="h-6 w-6 p-0 text-red-500 hover:text-red-700"
                                                   >
-                                                    <Trash2 className="h-3 w-3"                                                   />
+                                                    <Trash2 className="h-3 w-3" />
                                                   </Button>
                                                 </div>
                                               </div>
