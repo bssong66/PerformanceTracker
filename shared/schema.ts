@@ -49,6 +49,8 @@ export const tasks = pgTable("tasks", {
   priority: text("priority").notNull(), // 'A', 'B', 'C'
   completed: boolean("completed").default(false),
   scheduledDate: date("scheduled_date"),
+  startDate: date("start_date"),
+  endDate: date("end_date"),
   completedAt: timestamp("completed_at"),
   timeEstimate: integer("time_estimate"), // in minutes
   notes: text("notes"),

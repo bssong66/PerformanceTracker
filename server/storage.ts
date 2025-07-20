@@ -248,6 +248,8 @@ export class MemStorage implements IStorage {
       projectId: task.projectId ?? null,
       completed: task.completed ?? null,
       scheduledDate: task.scheduledDate ?? null,
+      startDate: task.startDate ?? null,
+      endDate: task.endDate ?? null,
       timeEstimate: task.timeEstimate ?? null,
       notes: task.notes ?? null,
       completedAt: null,
