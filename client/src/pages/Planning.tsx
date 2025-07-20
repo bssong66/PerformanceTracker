@@ -148,10 +148,10 @@ export default function Planning() {
         </div>
 
         {/* Create Project Button */}
-        <div className="mb-6">
+        <div className="mb-6 flex justify-end">
           <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
             <DialogTrigger asChild>
-              <Button className="w-full" size="lg">
+              <Button className="w-1/10" size="sm">
                 <Plus className="h-4 w-4 mr-2" />
                 새 프로젝트 생성
               </Button>
