@@ -20,7 +20,7 @@ interface LayoutProps {
 const navigation = [
   { name: '대시보드', href: '/', icon: Home },
   { name: '가치 중심 계획', href: '/foundation', icon: Sprout },
-  { name: '일일 관리', href: '/daily', icon: Calendar },
+  { name: '일일 관리', href: '/daily-planning', icon: Calendar },
   { name: '계획 수립', href: '/planning', icon: CalendarDays },
   { name: '주간 리뷰', href: '/weekly', icon: Repeat },
   { name: '습관 관리', href: '/habit-tracking', icon: Target },
