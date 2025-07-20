@@ -70,6 +70,10 @@ export const events = pgTable("events", {
   priority: text("priority").notNull(), // 'high', 'medium', 'low'
   color: text("color").default("#3B82F6"),
   isAllDay: boolean("is_all_day").default(false),
+  repeatType: text("repeat_type"), // 'none', 'daily', 'weekly', 'monthly', 'yearly'
+  repeatInterval: integer("repeat_interval").default(1), // repeat every N days/weeks/months/years
+  repeatEndDate: date("repeat_end_date"), // when to stop repeating
+  repeatWeekdays: text("repeat_weekdays"), // JSON array for weekly: ["1","3","5"] (Mon, Wed, Fri)
   createdAt: timestamp("created_at").defaultNow(),
 });
 
