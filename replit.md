@@ -148,7 +148,8 @@ Preferred communication style: Simple, everyday language.
 
 ### Recent Changes (July 20, 2025)
 - **Restructured main navigation menu as requested by user**
-- Changed menu structure to: 대시보드/가치중심계획/일정관리/계획수립/리뷰/포커스 모드
+- Changed menu structure to: 대시보드/가치중심계획/일정관리/계획수립/일일관리/리뷰/포커스 모드
+- Added back 일일관리 page positioned after 계획수립 as requested
 - **계획수립 page now contains three tabs: 프로젝트관리/할일관리/습관관리**
 - Created separate components: ProjectManagement.tsx, TaskManagement.tsx, HabitManagement.tsx
 - **리뷰 page contains tabs for: 주간리뷰/월간리뷰**

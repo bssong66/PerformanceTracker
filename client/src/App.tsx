@@ -10,6 +10,7 @@ import Dashboard from "@/pages/Dashboard";
 import Foundation from "@/pages/Foundation";
 import Calendar from "@/pages/Calendar";
 import Planning from "@/pages/Planning";
+import DailyPlanning from "@/pages/DailyPlanning";
 import Review from "@/pages/Review";
 import FocusMode from "@/pages/FocusMode";
 import NotFound from "@/pages/not-found";
@@ -22,6 +23,7 @@ function Router() {
         <Route path="/foundation" component={Foundation} />
         <Route path="/calendar" component={Calendar} />
         <Route path="/planning" component={Planning} />
+        <Route path="/daily-planning" component={DailyPlanning} />
         <Route path="/review" component={Review} />
         <Route path="/focus" component={FocusMode} />
         <Route component={NotFound} />
