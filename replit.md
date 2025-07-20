@@ -146,11 +146,12 @@ Preferred communication style: Simple, everyday language.
 └── attached_assets/ # Project documentation and requirements
 ```
 
-### Recent Changes (July 19, 2025)
-- Removed task management, event scheduling, and calendar features from Planning page
-- Simplified Planning page to focus solely on project management
-- Maintained project-task relationships for Daily Planning page integration
-- Kept project color coding for visual task identification
-- Planning page now serves as dedicated project lifecycle management tool
+### Recent Changes (July 20, 2025)
+- Completely redesigned Planning page with simplified, top-to-bottom layout
+- Moved project creation to popup dialog for cleaner interface
+- Implemented project-centric workflow: select project → view/manage tasks
+- Added task creation within selected project context
+- Removed complex tabs and filters for streamlined user experience
+- Enhanced visual hierarchy with clear project selection and task management sections
 
 The application follows a monorepo structure with clear separation between frontend, backend, and shared code, enabling efficient development and deployment workflows.
