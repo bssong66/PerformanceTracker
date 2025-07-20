@@ -257,86 +257,96 @@ export default function Planning() {
 
         {/* Task Creation Dialog */}
         <Dialog open={isTaskDialogOpen} onOpenChange={setIsTaskDialogOpen}>
-          <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>할일 추가</DialogTitle>
             </DialogHeader>
-            <div className="space-y-4">
+            <div className="space-y-3">
               {taskList.map((task, index) => (
-                <div key={task.id} className="p-4 border rounded-lg space-y-3">
-                  <div className="flex items-center justify-between">
-                    <h4 className="font-medium">할일 {index + 1}</h4>
+                <div key={task.id} className="p-3 border rounded-lg space-y-2">
+                  <div className="flex items-center justify-between mb-1">
+                    <h4 className="text-sm font-medium">할일 {index + 1}</h4>
                     {taskList.length > 1 && (
                       <Button
                         size="sm"
                         variant="ghost"
                         onClick={() => removeTaskFromList(task.id)}
+                        className="h-6 px-2 text-xs"
                       >
                         제거
                       </Button>
                     )}
                   </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    <div>
-                      <Label>할일 제목</Label>
+                  
+                  {/* 첫 번째 줄: 제목과 우선순위 */}
+                  <div className="grid grid-cols-3 gap-3">
+                    <div className="col-span-2">
+                      <Label className="text-xs">할일 제목</Label>
                       <Input
                         placeholder="할일을 입력하세요"
                         value={task.title}
                         onChange={(e) => updateTaskInList(task.id, 'title', e.target.value)}
+                        className="h-8"
                       />
                     </div>
                     <div>
-                      <Label>우선순위</Label>
+                      <Label className="text-xs">우선순위</Label>
                       <Select 
                         value={task.priority} 
                         onValueChange={(value) => updateTaskInList(task.id, 'priority', value)}
                       >
-                        <SelectTrigger>
+                        <SelectTrigger className="h-8">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="A">A (매우 중요)</SelectItem>
-                          <SelectItem value="B">B (중요)</SelectItem>
-                          <SelectItem value="C">C (보통)</SelectItem>
+                          <SelectItem value="A">A급</SelectItem>
+                          <SelectItem value="B">B급</SelectItem>
+                          <SelectItem value="C">C급</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
                   </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+
+                  {/* 두 번째 줄: 시작일과 종료일 */}
+                  <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <Label>시작일</Label>
+                      <Label className="text-xs">시작일</Label>
                       <Input
                         type="date"
                         value={task.startDate}
                         onChange={(e) => updateTaskInList(task.id, 'startDate', e.target.value)}
+                        className="h-8"
                       />
                     </div>
                     <div>
-                      <Label>종료일</Label>
+                      <Label className="text-xs">종료일</Label>
                       <Input
                         type="date"
                         value={task.endDate}
                         onChange={(e) => updateTaskInList(task.id, 'endDate', e.target.value)}
+                        className="h-8"
                       />
                     </div>
                   </div>
+
+                  {/* 세 번째 줄: 메모 */}
                   <div>
-                    <Label>메모</Label>
-                    <Textarea
+                    <Label className="text-xs">메모</Label>
+                    <Input
                       placeholder="할일에 대한 추가 정보"
                       value={task.notes}
                       onChange={(e) => updateTaskInList(task.id, 'notes', e.target.value)}
-                      rows={2}
+                      className="h-8"
                     />
                   </div>
                 </div>
               ))}
               
-              <div className="flex space-x-2">
+              <div className="flex space-x-2 pt-2">
                 <Button
                   variant="outline"
                   onClick={addTaskToList}
-                  className="flex-1"
+                  className="flex-1 h-9"
                 >
                   <Plus className="h-4 w-4 mr-2" />
                   할일 추가
@@ -344,7 +354,7 @@ export default function Planning() {
                 <Button
                   onClick={handleCreateTasks}
                   disabled={!taskList.some(t => t.title.trim()) || createTaskMutation.isPending}
-                  className="flex-1"
+                  className="flex-1 h-9"
                 >
                   {createTaskMutation.isPending ? '생성 중...' : '모든 할일 생성'}
                 </Button>
