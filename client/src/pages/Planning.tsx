@@ -45,7 +45,9 @@ export default function Planning() {
   const [newProject, setNewProject] = useState({
     name: '',
     description: '',
-    priority: 'medium' as 'high' | 'medium' | 'low'
+    priority: 'medium' as 'high' | 'medium' | 'low',
+    startDate: '',
+    endDate: ''
   });
   const [taskList, setTaskList] = useState([
     { 
@@ -92,7 +94,7 @@ export default function Planning() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['projects', MOCK_USER_ID] });
-      setNewProject({ name: '', description: '', priority: 'medium' });
+      setNewProject({ name: '', description: '', priority: 'medium', startDate: '', endDate: '' });
       setIsCreateDialogOpen(false);
       toast({ title: "프로젝트 생성", description: "새 프로젝트가 생성되었습니다." });
     }
@@ -215,13 +217,24 @@ export default function Planning() {
       id: project.id,
       name: project.name,
       description: project.description,
-      priority: project.priority
+      priority: project.priority,
+      startDate: project.startDate || '',
+      endDate: project.endDate || ''
     });
     setIsEditProjectOpen(true);
   };
 
-  const getProjectDateRange = (projectId: number) => {
-    const tasks = (allTasks as any[]).filter((task: any) => task.projectId === projectId);
+  const getProjectDateRange = (project: any) => {
+    // 프로젝트 자체에 시작일/종료일이 있으면 우선 사용
+    if (project.startDate && project.endDate) {
+      return {
+        startDate: new Date(project.startDate),
+        endDate: new Date(project.endDate)
+      };
+    }
+    
+    // 프로젝트에 날짜가 없으면 할일들의 날짜로 계산
+    const tasks = (allTasks as any[]).filter((task: any) => task.projectId === project.id);
     if (tasks.length === 0) return null;
     
     const dates = tasks.reduce((acc: Date[], task: any) => {
@@ -301,6 +314,26 @@ export default function Planning() {
                     onChange={(e) => setNewProject(prev => ({ ...prev, description: e.target.value }))}
                     rows={3}
                   />
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label htmlFor="project-start-date">시작일</Label>
+                    <Input
+                      id="project-start-date"
+                      type="date"
+                      value={newProject.startDate}
+                      onChange={(e) => setNewProject(prev => ({ ...prev, startDate: e.target.value }))}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="project-end-date">종료일</Label>
+                    <Input
+                      id="project-end-date"
+                      type="date"
+                      value={newProject.endDate}
+                      onChange={(e) => setNewProject(prev => ({ ...prev, endDate: e.target.value }))}
+                    />
+                  </div>
                 </div>
                 <Button 
                   onClick={handleCreateProject}
@@ -540,6 +573,26 @@ export default function Planning() {
                   </SelectContent>
                 </Select>
               </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label htmlFor="edit-project-start-date">시작일</Label>
+                  <Input
+                    id="edit-project-start-date"
+                    type="date"
+                    value={editingProject?.startDate || ''}
+                    onChange={(e) => setEditingProject(prev => ({ ...prev, startDate: e.target.value }))}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="edit-project-end-date">종료일</Label>
+                  <Input
+                    id="edit-project-end-date"
+                    type="date"
+                    value={editingProject?.endDate || ''}
+                    onChange={(e) => setEditingProject(prev => ({ ...prev, endDate: e.target.value }))}
+                  />
+                </div>
+              </div>
               <Button 
                 onClick={handleUpdateProject}
                 disabled={!editingProject?.name.trim() || updateProjectMutation.isPending}
@@ -585,7 +638,7 @@ export default function Planning() {
                           <p className="text-sm text-gray-600">{project.description}</p>
                         )}
                         {(() => {
-                          const dateRange = getProjectDateRange(project.id);
+                          const dateRange = getProjectDateRange(project);
                           return dateRange && (
                             <div className="flex items-center text-xs text-gray-500 mt-1">
                               <Calendar className="h-3 w-3 mr-1" />
