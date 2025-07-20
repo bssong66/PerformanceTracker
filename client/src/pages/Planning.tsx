@@ -11,7 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient } from "@/lib/queryClient";
-import { Plus, FolderPlus, CheckCircle, Circle, Calendar, Clock, CalendarDays, Edit3, Upload, Image, X, FileText, ImageIcon, ChevronLeft, ChevronRight, FolderOpen, List, CalendarIcon } from "lucide-react";
+import { Plus, FolderPlus, CheckCircle, Circle, Calendar, Clock, CalendarDays, Edit3, Upload, Image, X, FileText, ImageIcon, ChevronLeft, ChevronRight, FolderOpen, List, CalendarIcon, Trash2 } from "lucide-react";
 import { format } from "date-fns";
 import { ko } from "date-fns/locale";
 
@@ -217,9 +217,21 @@ export default function Planning() {
       });
       return response.json();
     },
-    onSuccess: () => {
+    onSuccess: (createdTask) => {
       queryClient.invalidateQueries({ queryKey: ['independent-tasks', MOCK_USER_ID] });
       queryClient.invalidateQueries({ queryKey: ['tasks-all', MOCK_USER_ID] });
+      
+      // 임시 ID(0)로 저장된 이미지를 실제 할일 ID로 이전
+      const tempImages = independentTaskImages[0] || [];
+      if (tempImages.length > 0) {
+        setIndependentTaskImages(prev => {
+          const newImages = { ...prev };
+          delete newImages[0]; // 임시 이미지 삭제
+          newImages[createdTask.id] = tempImages; // 실제 ID로 이전
+          return newImages;
+        });
+      }
+      
       setIsIndependentTaskDialogOpen(false);
       setNewIndependentTask({
         title: '',
@@ -249,6 +261,21 @@ export default function Planning() {
       setEditingIndependentTask(null);
       setIsIndependentTaskDialogOpen(false);
       toast({ title: "할일 수정", description: "독립 할일이 수정되었습니다." });
+    }
+  });
+
+  // 독립 할일 삭제 mutation
+  const deleteIndependentTaskMutation = useMutation({
+    mutationFn: async (taskId: number) => {
+      const response = await fetch(`/api/tasks/${taskId}`, {
+        method: 'DELETE'
+      });
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['independent-tasks', MOCK_USER_ID] });
+      queryClient.invalidateQueries({ queryKey: ['tasks-all', MOCK_USER_ID] });
+      toast({ title: "할일 삭제", description: "독립 할일이 삭제되었습니다." });
     }
   });
 
@@ -525,7 +552,25 @@ export default function Planning() {
       startDate: '',
       endDate: ''
     });
+    // 새 할일 추가 시 임시 이미지 삭제
+    setIndependentTaskImages(prev => {
+      const newImages = { ...prev };
+      delete newImages[0]; // 임시 ID(0) 이미지 삭제
+      return newImages;
+    });
     setIsIndependentTaskDialogOpen(true);
+  };
+
+  const handleDeleteIndependentTask = (taskId: number) => {
+    if (confirm('이 할일을 삭제하시겠습니까?')) {
+      deleteIndependentTaskMutation.mutate(taskId);
+      // 해당 할일의 이미지도 삭제
+      setIndependentTaskImages(prev => {
+        const newImages = { ...prev };
+        delete newImages[taskId];
+        return newImages;
+      });
+    }
   };
 
   const openEditIndependentTask = (task: any) => {
@@ -1699,6 +1744,14 @@ export default function Planning() {
                                     >
                                       <Edit3 className="h-3 w-3" />
                                     </Button>
+                                    <Button
+                                      size="sm"
+                                      variant="ghost"
+                                      onClick={() => handleDeleteIndependentTask(task.id)}
+                                      className="h-7 w-7 p-0 text-red-500 hover:text-red-700"
+                                    >
+                                      <Trash2 className="h-3 w-3" />
+                                    </Button>
                                   </div>
                                 </div>
 
@@ -1741,7 +1794,17 @@ export default function Planning() {
               </div>
 
               {/* 독립 할일 생성/수정 다이얼로그 */}
-              <Dialog open={isIndependentTaskDialogOpen} onOpenChange={setIsIndependentTaskDialogOpen}>
+              <Dialog open={isIndependentTaskDialogOpen} onOpenChange={(open) => {
+                setIsIndependentTaskDialogOpen(open);
+                if (!open && !isEditingIndependentTask) {
+                  // 새 할일 추가 창을 닫을 때 임시 이미지 삭제
+                  setIndependentTaskImages(prev => {
+                    const newImages = { ...prev };
+                    delete newImages[0];
+                    return newImages;
+                  });
+                }
+              }}>
                 <DialogContent className="max-w-md">
                   <DialogHeader>
                     <DialogTitle>
