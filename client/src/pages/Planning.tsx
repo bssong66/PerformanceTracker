@@ -951,27 +951,33 @@ export default function Planning() {
                                             className="flex-1 cursor-pointer hover:bg-gray-50 rounded p-1 -m-1 transition-colors"
                                             onClick={() => openTaskDetail(task)}
                                           >
-                                            <h4 className={`font-medium ${task.completed ? 'line-through text-gray-500' : 'text-gray-900'}`}>
-                                              {task.title}
-                                            </h4>
+                                            <div className="flex items-center justify-between">
+                                              <h4 className={`font-medium ${task.completed ? 'line-through text-gray-500' : 'text-gray-900'}`}>
+                                                {task.title}
+                                              </h4>
+                                              {(task.startDate || task.endDate) && (
+                                                <div className="flex items-center space-x-2 text-xs text-gray-500">
+                                                  {task.startDate && task.endDate ? (
+                                                    <span className="flex items-center bg-blue-50 px-2 py-1 rounded">
+                                                      <Calendar className="h-3 w-3 mr-1" />
+                                                      {format(new Date(task.startDate), 'M/d', { locale: ko })} ~ {format(new Date(task.endDate), 'M/d', { locale: ko })}
+                                                    </span>
+                                                  ) : task.startDate ? (
+                                                    <span className="flex items-center bg-green-50 px-2 py-1 rounded">
+                                                      <Calendar className="h-3 w-3 mr-1" />
+                                                      시작: {format(new Date(task.startDate), 'M/d', { locale: ko })}
+                                                    </span>
+                                                  ) : task.endDate ? (
+                                                    <span className="flex items-center bg-red-50 px-2 py-1 rounded">
+                                                      <CalendarDays className="h-3 w-3 mr-1" />
+                                                      마감: {format(new Date(task.endDate), 'M/d', { locale: ko })}
+                                                    </span>
+                                                  ) : null}
+                                                </div>
+                                              )}
+                                            </div>
                                             {task.notes && (
                                               <p className="text-sm text-gray-600 mt-1">{task.notes}</p>
-                                            )}
-                                            {(task.startDate || task.endDate) && (
-                                              <div className="flex items-center space-x-4 text-xs text-gray-500 mt-2">
-                                                {task.startDate && (
-                                                  <span className="flex items-center">
-                                                    <Calendar className="h-3 w-3 mr-1" />
-                                                    시작: {format(new Date(task.startDate), 'M/d', { locale: ko })}
-                                                  </span>
-                                                )}
-                                                {task.endDate && (
-                                                  <span className="flex items-center">
-                                                    <CalendarDays className="h-3 w-3 mr-1" />
-                                                    종료: {format(new Date(task.endDate), 'M/d', { locale: ko })}
-                                                  </span>
-                                                )}
-                                              </div>
                                             )}
                                           </div>
                                         </div>
