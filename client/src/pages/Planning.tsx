@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient } from "@/lib/queryClient";
-import { Plus, FolderPlus, CheckCircle, Circle, Calendar, Clock, CalendarDays, Edit3, Upload, Image, X, FileText } from "lucide-react";
+import { Plus, FolderPlus, CheckCircle, Circle, Calendar, Clock, CalendarDays, Edit3, Upload, Image, X, FileText, ImageIcon } from "lucide-react";
 import { format } from "date-fns";
 import { ko } from "date-fns/locale";
 
@@ -1132,6 +1132,12 @@ export default function Planning() {
                               >
                                 {project.priority === 'high' ? '높음' : project.priority === 'medium' ? '보통' : '낮음'}
                               </Badge>
+                              {projectImages.length > 0 && (
+                                <div className="flex items-center text-xs text-gray-500">
+                                  <ImageIcon className="h-3 w-3 mr-1" />
+                                  {projectImages.length}
+                                </div>
+                              )}
                               <div className="text-sm text-gray-500">
                                 {(allTasks as any[]).filter((task: any) => task.projectId === project.id).length}개 할일
                               </div>
@@ -1262,9 +1268,17 @@ export default function Planning() {
                                                 <h4 className={`font-medium ${task.completed ? 'line-through text-gray-500' : 'text-gray-900'}`}>
                                                   {task.title}
                                                 </h4>
-                                                {task.notes && (
-                                                  <FileText className="h-3 w-3 text-gray-400" />
-                                                )}
+                                                <div className="flex items-center space-x-1">
+                                                  {(taskImages[task.id] || []).length > 0 && (
+                                                    <div className="flex items-center text-xs text-gray-400">
+                                                      <ImageIcon className="h-3 w-3" />
+                                                      <span className="ml-0.5">{(taskImages[task.id] || []).length}</span>
+                                                    </div>
+                                                  )}
+                                                  {task.notes && (
+                                                    <FileText className="h-3 w-3 text-gray-400" />
+                                                  )}
+                                                </div>
                                               </div>
 
                                               {/* 일정 정보 */}
