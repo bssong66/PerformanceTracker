@@ -44,7 +44,7 @@ export default function Planning() {
   const [editingProject, setEditingProject] = useState<any>(null);
   const [isEditingTask, setIsEditingTask] = useState(false);
   const [editingTaskData, setEditingTaskData] = useState<any>(null);
-  const [taskImages, setTaskImages] = useState<File[]>([]);
+  const [taskImages, setTaskImages] = useState<{ [taskId: number]: File[] }>({});
   const [projectImages, setProjectImages] = useState<File[]>([]);
   const [newProject, setNewProject] = useState({
     name: '',
@@ -205,7 +205,7 @@ export default function Planning() {
         endDate: task.endDate || null
       }));
       createTaskMutation.mutate(tasksToCreate);
-      setTaskImages([]);
+      setTaskImages({});
     }
   };
 
@@ -238,10 +238,13 @@ export default function Planning() {
   };
 
   // 이미지 업로드 핸들러
-  const handleTaskImageUpload = (files: FileList | null) => {
+  const handleTaskImageUpload = (files: FileList | null, taskId: number) => {
     if (files) {
       const newImages = Array.from(files).filter(file => file.type.startsWith('image/'));
-      setTaskImages(prev => [...prev, ...newImages]);
+      setTaskImages(prev => ({
+        ...prev,
+        [taskId]: [...(prev[taskId] || []), ...newImages]
+      }));
     }
   };
 
@@ -252,8 +255,11 @@ export default function Planning() {
     }
   };
 
-  const removeTaskImage = (index: number) => {
-    setTaskImages(prev => prev.filter((_, i) => i !== index));
+  const removeTaskImage = (taskId: number, index: number) => {
+    setTaskImages(prev => ({
+      ...prev,
+      [taskId]: (prev[taskId] || []).filter((_, i) => i !== index)
+    }));
   };
 
   const removeProjectImage = (index: number) => {
@@ -502,7 +508,7 @@ export default function Planning() {
         {/* Task Creation Dialog */}
         <Dialog open={isTaskDialogOpen} onOpenChange={(open) => {
           setIsTaskDialogOpen(open);
-          if (!open) setTaskImages([]);
+          if (!open) setTaskImages({});
         }}>
           <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
             <DialogHeader>
@@ -611,7 +617,7 @@ export default function Planning() {
                           type="file"
                           accept="image/*"
                           multiple
-                          onChange={(e) => handleTaskImageUpload(e.target.files)}
+                          onChange={(e) => handleTaskImageUpload(e.target.files, task.id)}
                           className="hidden"
                         />
                         <Button
@@ -624,9 +630,9 @@ export default function Planning() {
                           이미지 추가
                         </Button>
                       </div>
-                      {taskImages.length > 0 && (
+                      {(taskImages[task.id] || []).length > 0 && (
                         <div className="grid grid-cols-4 gap-1">
-                          {taskImages.map((image, imageIndex) => (
+                          {(taskImages[task.id] || []).map((image, imageIndex) => (
                             <div key={imageIndex} className="relative">
                               <img
                                 src={URL.createObjectURL(image)}
@@ -635,7 +641,7 @@ export default function Planning() {
                               />
                               <button
                                 type="button"
-                                onClick={() => removeTaskImage(imageIndex)}
+                                onClick={() => removeTaskImage(task.id, imageIndex)}
                                 className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-4 h-4 flex items-center justify-center text-xs"
                               >
                                 <X className="h-2 w-2" />
@@ -673,7 +679,7 @@ export default function Planning() {
         {/* Task Detail Dialog */}
         <Dialog open={isTaskDetailOpen} onOpenChange={(open) => {
           setIsTaskDetailOpen(open);
-          if (!open) setTaskImages([]);
+          if (!open) setTaskImages({});
         }}>
           <DialogContent className="max-w-md">
             <DialogHeader>
@@ -780,7 +786,7 @@ export default function Planning() {
                             type="file"
                             accept="image/*"
                             multiple
-                            onChange={(e) => handleTaskImageUpload(e.target.files)}
+                            onChange={(e) => handleTaskImageUpload(e.target.files, selectedTaskDetail?.id || 0)}
                             className="hidden"
                           />
                           <Button
@@ -793,9 +799,9 @@ export default function Planning() {
                             이미지 추가
                           </Button>
                         </div>
-                        {taskImages.length > 0 && (
+                        {(taskImages[selectedTaskDetail?.id || 0] || []).length > 0 && (
                           <div className="grid grid-cols-3 gap-2">
-                            {taskImages.map((image, index) => (
+                            {(taskImages[selectedTaskDetail?.id || 0] || []).map((image, index) => (
                               <div key={index} className="relative">
                                 <img
                                   src={URL.createObjectURL(image)}
@@ -804,7 +810,7 @@ export default function Planning() {
                                 />
                                 <button
                                   type="button"
-                                  onClick={() => removeTaskImage(index)}
+                                  onClick={() => removeTaskImage(selectedTaskDetail?.id || 0, index)}
                                   className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs"
                                 >
                                   <X className="h-3 w-3" />
