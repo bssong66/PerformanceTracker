@@ -1195,17 +1195,6 @@ export default function Planning() {
                                 </div>
                                 <Button
                                   size="sm"
-                                  variant="ghost"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    openEditProject(project);
-                                  }}
-                                  className="p-1 h-8 w-8"
-                                >
-                                  <Edit3 className="h-4 w-4" />
-                                </Button>
-                                <Button
-                                  size="sm"
                                   variant="outline"
                                   onClick={(e) => {
                                     e.stopPropagation();
@@ -1215,6 +1204,17 @@ export default function Planning() {
                                 >
                                   <Plus className="h-4 w-4 mr-1" />
                                   할일 추가
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    openEditProject(project);
+                                  }}
+                                  className="p-1 h-8 w-8"
+                                >
+                                  <Edit3 className="h-4 w-4" />
                                 </Button>
                               </div>
                             </div>
