@@ -41,7 +41,8 @@ export default function ProjectManagement() {
   const [taskForm, setTaskForm] = useState({
     title: '',
     priority: 'B' as 'A' | 'B' | 'C',
-    notes: ''
+    notes: '',
+    imageUrl: ''
   });
   const [showProjectDialog, setShowProjectDialog] = useState(false);
   const [editingProject, setEditingProject] = useState<Project | null>(null);
@@ -49,7 +50,9 @@ export default function ProjectManagement() {
   const [showTaskDialog, setShowTaskDialog] = useState(false);
   const [selectedProjectForTask, setSelectedProjectForTask] = useState<number | null>(null);
   const [expandedProjects, setExpandedProjects] = useState<Set<number>>(new Set());
+  const [viewingTaskImage, setViewingTaskImage] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const taskFileInputRef = useRef<HTMLInputElement>(null);
   
   const [projectForm, setProjectForm] = useState({
     title: '',
@@ -151,7 +154,7 @@ export default function ProjectManagement() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tasks', MOCK_USER_ID] });
       setShowTaskDialog(false);
-      setTaskForm({ title: '', priority: 'B', notes: '' });
+      setTaskForm({ title: '', priority: 'B', notes: '', imageUrl: '' });
       toast({ title: "할일 생성", description: "새로운 할일이 생성되었습니다." });
     }
   });
@@ -233,6 +236,7 @@ export default function ProjectManagement() {
       title: taskForm.title,
       priority: taskForm.priority,
       notes: taskForm.notes,
+      imageUrl: taskForm.imageUrl,
       completed: false
     });
   };
@@ -292,6 +296,17 @@ export default function ProjectManagement() {
       priority,
       color: priorityColors[priority]
     }));
+  };
+
+  const handleTaskImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = () => {
+        setTaskForm(prev => ({ ...prev, imageUrl: reader.result as string }));
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   return (
@@ -629,13 +644,25 @@ export default function ProjectManagement() {
                           <span className={`flex-1 text-sm ${task.completed ? 'line-through text-gray-500' : 'text-gray-900'}`}>
                             {task.title}
                           </span>
-                          <span className={`px-2 py-1 rounded text-xs font-medium ${
-                            task.priority === 'A' ? 'bg-red-100 text-red-800' :
-                            task.priority === 'B' ? 'bg-yellow-100 text-yellow-800' :
-                            'bg-green-100 text-green-800'
-                          }`}>
-                            {task.priority}
-                          </span>
+                          <div className="flex items-center space-x-2">
+                            {task.imageUrl && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setViewingTaskImage(task.imageUrl)}
+                                className="h-6 w-6 p-0"
+                              >
+                                <Image className="h-3 w-3" />
+                              </Button>
+                            )}
+                            <span className={`px-2 py-1 rounded text-xs font-medium ${
+                              task.priority === 'A' ? 'bg-red-100 text-red-800' :
+                              task.priority === 'B' ? 'bg-yellow-100 text-yellow-800' :
+                              'bg-green-100 text-green-800'
+                            }`}>
+                              {task.priority}
+                            </span>
+                          </div>
                         </div>
                       ))}
                     </div>
@@ -724,6 +751,39 @@ export default function ProjectManagement() {
               />
             </div>
 
+            <div>
+              <Label>이미지</Label>
+              <div className="flex items-center space-x-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => taskFileInputRef.current?.click()}
+                  className="flex items-center space-x-2"
+                >
+                  <Image className="h-4 w-4" />
+                  <span>이미지 선택</span>
+                </Button>
+                
+                {taskForm.imageUrl && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setViewingTaskImage(taskForm.imageUrl)}
+                  >
+                    <Eye className="h-4 w-4" />
+                  </Button>
+                )}
+              </div>
+              <input
+                type="file"
+                ref={taskFileInputRef}
+                onChange={handleTaskImageUpload}
+                accept="image/*"
+                className="hidden"
+              />
+            </div>
+
             <div className="flex justify-end space-x-2 pt-4">
               <Button
                 type="button"
@@ -739,6 +799,27 @@ export default function ProjectManagement() {
           </form>
         </DialogContent>
       </Dialog>
+
+      {/* Task Image Viewer Dialog */}
+      {viewingTaskImage && (
+        <Dialog open={true} onOpenChange={() => setViewingTaskImage(null)}>
+          <DialogContent className="sm:max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>할일 이미지 보기</DialogTitle>
+              <DialogDescription>
+                할일 이미지를 확인하세요.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="flex justify-center">
+              <img
+                src={viewingTaskImage}
+                alt="할일 이미지"
+                className="max-w-full h-auto rounded-lg"
+              />
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
 
       {projects.length === 0 && (
         <div className="text-center py-12">

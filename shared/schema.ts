@@ -56,6 +56,7 @@ export const tasks = pgTable("tasks", {
   completedAt: timestamp("completed_at"),
   timeEstimate: integer("time_estimate"), // in minutes
   notes: text("notes"),
+  imageUrl: text("image_url"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
