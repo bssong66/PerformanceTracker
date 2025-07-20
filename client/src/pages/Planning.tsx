@@ -1132,10 +1132,58 @@ export default function Planning() {
                             className="w-4 h-4 rounded-full" 
                             style={{ backgroundColor: project.color }}
                           />
-                          <div>
-                            <h3 className="font-semibold text-gray-900">{project.name}</h3>
+                          <div className="flex-1">
+                            <div className="flex items-center justify-between">
+                              <h3 className="font-semibold text-gray-900">{project.name}</h3>
+                              <div className="flex items-center space-x-3 ml-4">
+                                <div 
+                                  className="flex items-center text-sm text-gray-600 cursor-pointer hover:text-gray-800 transition-colors"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    const images = projectImages[project.id] || [];
+                                    if (images.length > 0) {
+                                      openImageViewer(images);
+                                    }
+                                  }}
+                                >
+                                  <ImageIcon className="h-4 w-4 mr-1" />
+                                  {(projectImages[project.id] || []).length}
+                                </div>
+                                <Badge 
+                                  className={`text-xs ${priorityColors[project.priority as keyof typeof priorityColors].bg} ${priorityColors[project.priority as keyof typeof priorityColors].text}`}
+                                >
+                                  {project.priority === 'high' ? '높음' : project.priority === 'medium' ? '보통' : '낮음'}
+                                </Badge>
+                                <div className="text-sm text-gray-600">
+                                  {(allTasks as any[]).filter((task: any) => task.projectId === project.id).length}개 할일
+                                </div>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    openEditProject(project);
+                                  }}
+                                  className="p-1 h-8 w-8"
+                                >
+                                  <Edit3 className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    openTaskDialog(project.id);
+                                  }}
+                                  className="h-8"
+                                >
+                                  <Plus className="h-4 w-4 mr-1" />
+                                  할일 추가
+                                </Button>
+                              </div>
+                            </div>
                             {project.description && (
-                              <p className="text-sm text-gray-600">{project.description}</p>
+                              <p className="text-sm text-gray-600 mt-1">{project.description}</p>
                             )}
                             {(() => {
                               const dateRange = getProjectDateRange(project);
@@ -1164,80 +1212,6 @@ export default function Planning() {
                                 </div>
                               );
                             })()}
-                          </div>
-                        </div>
-                        <div className="grid grid-cols-2 gap-4 items-center">
-                          {/* 첫 번째 열: 중요도, 이미지, 할일 개수 */}
-                          <div className="flex flex-col space-y-2">
-                            <div className="flex items-center justify-end space-x-2">
-                              <Badge 
-                                className={`text-xs ${priorityColors[project.priority as keyof typeof priorityColors].bg} ${priorityColors[project.priority as keyof typeof priorityColors].text}`}
-                              >
-                                {project.priority === 'high' ? '높음' : project.priority === 'medium' ? '보통' : '낮음'}
-                              </Badge>
-                            </div>
-                            <div className="flex items-center justify-end space-x-3">
-                              <div 
-                                className="flex items-center text-sm text-gray-600 cursor-pointer hover:text-gray-800 transition-colors"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  const images = projectImages[project.id] || [];
-                                  if (images.length > 0) {
-                                    openImageViewer(images);
-                                  }
-                                }}
-                              >
-                                <ImageIcon className="h-4 w-4 mr-1" />
-                                {(projectImages[project.id] || []).length}
-                              </div>
-                              <div className="text-sm text-gray-600">
-                                {(allTasks as any[]).filter((task: any) => task.projectId === project.id).length}개 할일
-                              </div>
-                            </div>
-                            {(() => {
-                              const progress = getProjectProgress(project.id);
-                              const taskCount = (allTasks as any[]).filter((task: any) => task.projectId === project.id).length;
-                              return taskCount > 0 && (
-                                <div className="flex items-center justify-end space-x-2">
-                                  <div className="w-16 bg-gray-200 rounded-full h-1.5">
-                                    <div 
-                                      className="bg-blue-500 h-1.5 rounded-full transition-all duration-300 ease-in-out"
-                                      style={{ width: `${progress}%` }}
-                                    />
-                                  </div>
-                                  <span className="text-xs text-gray-500 min-w-[25px]">
-                                    {progress}%
-                                  </span>
-                                </div>
-                              );
-                            })()}
-                          </div>
-                          
-                          {/* 두 번째 열: 수정 아이콘, 할일 추가 버튼 */}
-                          <div className="flex flex-col space-y-2">
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                openEditProject(project);
-                              }}
-                              className="w-full justify-center"
-                            >
-                              <Edit3 className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                openTaskDialog(project.id);
-                              }}
-                              className="w-full justify-center"
-                            >
-                              <Plus className="h-4 w-4 mr-1" />
-                              할일 추가
-                            </Button>
                           </div>
                         </div>
                       </div>
