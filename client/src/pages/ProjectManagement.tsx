@@ -119,13 +119,28 @@ export default function ProjectManagement() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(newProject)
       });
+      
+      if (!response.ok) {
+        throw new Error('프로젝트 생성에 실패했습니다.');
+      }
+      
       return response.json();
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['projects', MOCK_USER_ID] });
+    onSuccess: (newProject) => {
+      // Optimistic update for better UX
+      queryClient.setQueryData(['projects', MOCK_USER_ID], (oldProjects: any) => {
+        return oldProjects ? [...oldProjects, newProject] : [newProject];
+      });
       setShowProjectDialog(false);
       resetForm();
       toast({ title: "프로젝트 생성", description: "새 프로젝트가 생성되었습니다." });
+    },
+    onError: (error: Error) => {
+      toast({ 
+        title: "생성 실패", 
+        description: error.message || "프로젝트 생성 중 오류가 발생했습니다.", 
+        variant: "destructive" 
+      });
     }
   });
 
@@ -137,13 +152,30 @@ export default function ProjectManagement() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(updatedProject)
       });
+      
+      if (!response.ok) {
+        throw new Error('프로젝트 수정에 실패했습니다.');
+      }
+      
       return response.json();
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['projects', MOCK_USER_ID] });
+    onSuccess: (updatedProject) => {
+      // Optimistic update for better UX
+      queryClient.setQueryData(['projects', MOCK_USER_ID], (oldProjects: any) => {
+        if (!oldProjects) return [updatedProject];
+        return oldProjects.map((p: any) => p.id === updatedProject.id ? updatedProject : p);
+      });
       setShowProjectDialog(false);
       resetForm();
+      setEditingProject(null);
       toast({ title: "프로젝트 수정", description: "프로젝트가 수정되었습니다." });
+    },
+    onError: (error: Error) => {
+      toast({ 
+        title: "수정 실패", 
+        description: error.message || "프로젝트 수정 중 오류가 발생했습니다.", 
+        variant: "destructive" 
+      });
     }
   });
 
@@ -249,8 +281,8 @@ export default function ProjectManagement() {
       let comparison = 0;
       
       if (taskSortBy === 'priority') {
-        const priorityOrder = { 'A': 3, 'B': 2, 'C': 1 };
-        comparison = priorityOrder[a.priority] - priorityOrder[b.priority];
+        const priorityOrder: { [key: string]: number } = { 'A': 3, 'B': 2, 'C': 1 };
+        comparison = (priorityOrder[a.priority] || 0) - (priorityOrder[b.priority] || 0);
       } else if (taskSortBy === 'date') {
         const aDate = a.startDate || a.endDate || '';
         const bDate = b.startDate || b.endDate || '';
@@ -309,6 +341,11 @@ export default function ProjectManagement() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Prevent double submission
+    if (createProjectMutation.isPending || updateProjectMutation.isPending) {
+      return;
+    }
     
     if (!projectForm.title.trim()) {
       toast({ title: "오류", description: "프로젝트 제목을 입력해주세요.", variant: "destructive" });
@@ -555,8 +592,11 @@ export default function ProjectManagement() {
                 >
                   취소
                 </Button>
-                <Button type="submit">
-                  {editingProject ? '수정' : '생성'}
+                <Button type="submit" disabled={createProjectMutation.isPending || updateProjectMutation.isPending}>
+                  {createProjectMutation.isPending || updateProjectMutation.isPending ? 
+                    (editingProject ? '수정 중...' : '생성 중...') : 
+                    (editingProject ? '수정' : '생성')
+                  }
                 </Button>
               </div>
             </form>
