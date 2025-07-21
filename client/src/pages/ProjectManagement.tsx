@@ -534,7 +534,7 @@ export default function ProjectManagement() {
                           )}
                         </>
                       ) : (
-                        <SelectItem value="" disabled>핵심가치가 설정되지 않았습니다</SelectItem>
+                        <SelectItem value="none" disabled>핵심가치가 설정되지 않았습니다</SelectItem>
                       )}
                     </SelectContent>
                   </Select>
@@ -565,7 +565,7 @@ export default function ProjectManagement() {
                           </SelectItem>
                         ))
                       ) : (
-                        <SelectItem value="" disabled>연간목표가 설정되지 않았습니다</SelectItem>
+                        <SelectItem value="none" disabled>연간목표가 설정되지 않았습니다</SelectItem>
                       )}
                     </SelectContent>
                   </Select>
