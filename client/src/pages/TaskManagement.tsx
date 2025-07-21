@@ -33,7 +33,7 @@ interface Task {
   endDate?: string;
   projectId?: number;
   userId: number;
-  imageUrl?: string;
+  imageUrls?: string[];
 }
 
 interface Project {
@@ -57,7 +57,7 @@ export default function TaskManagement() {
     startDate: '',
     endDate: '',
     projectId: null as number | null,
-    imageUrl: ''
+    imageUrls: [] as string[]
   });
 
   // Fetch tasks
@@ -145,7 +145,7 @@ export default function TaskManagement() {
       startDate: '',
       endDate: '',
       projectId: null,
-      imageUrl: ''
+      imageUrls: []
     });
     setEditingTask(null);
   };
@@ -163,7 +163,7 @@ export default function TaskManagement() {
       startDate: task.startDate || '',
       endDate: task.endDate || '',
       projectId: task.projectId || null,
-      imageUrl: task.imageUrl || ''
+      imageUrls: task.imageUrls || []
     });
     setEditingTask(task);
     setShowTaskDialog(true);
@@ -191,13 +191,18 @@ export default function TaskManagement() {
   };
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = () => {
-        setTaskForm(prev => ({ ...prev, imageUrl: reader.result as string }));
-      };
-      reader.readAsDataURL(file);
+    const files = e.target.files;
+    if (files && files.length > 0) {
+      Array.from(files).forEach(file => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          setTaskForm(prev => ({ 
+            ...prev, 
+            imageUrls: [...prev.imageUrls, reader.result as string]
+          }));
+        };
+        reader.readAsDataURL(file);
+      });
     }
   };
 
@@ -339,26 +344,49 @@ export default function TaskManagement() {
 
               <div>
                 <Label>이미지</Label>
-                <div className="flex items-center space-x-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => fileInputRef.current?.click()}
-                    className="flex items-center space-x-2"
-                  >
-                    <Camera className="h-4 w-4" />
-                    <span>이미지 선택</span>
-                  </Button>
-                  
-                  {taskForm.imageUrl && (
+                <div className="space-y-3">
+                  <div className="flex items-center space-x-2">
                     <Button
                       type="button"
                       variant="outline"
-                      size="sm"
-                      onClick={() => setViewingImage(taskForm.imageUrl)}
+                      onClick={() => fileInputRef.current?.click()}
+                      className="flex items-center space-x-2"
                     >
-                      <Eye className="h-4 w-4" />
+                      <Camera className="h-4 w-4" />
+                      <span>이미지 추가</span>
                     </Button>
+                    <span className="text-sm text-gray-500">
+                      {taskForm.imageUrls.length}개의 이미지
+                    </span>
+                  </div>
+                  
+                  {taskForm.imageUrls.length > 0 && (
+                    <div className="grid grid-cols-4 gap-2">
+                      {taskForm.imageUrls.map((imageUrl, index) => (
+                        <div key={index} className="relative group">
+                          <img
+                            src={imageUrl}
+                            alt={`할일 이미지 ${index + 1}`}
+                            className="w-16 h-16 object-cover rounded border cursor-pointer hover:opacity-80"
+                            onClick={() => setViewingImage(imageUrl)}
+                          />
+                          <Button
+                            type="button"
+                            variant="destructive"
+                            size="sm"
+                            className="absolute -top-2 -right-2 h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                            onClick={() => {
+                              setTaskForm(prev => ({
+                                ...prev,
+                                imageUrls: prev.imageUrls.filter((_, i) => i !== index)
+                              }));
+                            }}
+                          >
+                            ×
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
                   )}
                 </div>
                 <input
@@ -366,6 +394,7 @@ export default function TaskManagement() {
                   ref={fileInputRef}
                   onChange={handleImageUpload}
                   accept="image/*"
+                  multiple
                   className="hidden"
                 />
               </div>
@@ -493,16 +522,16 @@ export default function TaskManagement() {
                     </p>
                   )}
 
-                  {/* Image */}
-                  {task.imageUrl && (
+                  {/* Images */}
+                  {task.imageUrls && task.imageUrls.length > 0 && (
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => setViewingImage(task.imageUrl!)}
+                      onClick={() => setViewingImage(task.imageUrls[0])}
                       className="mt-2"
                     >
                       <Eye className="h-3 w-3 mr-1" />
-                      이미지
+                      이미지 ({task.imageUrls.length})
                     </Button>
                   )}
                 </div>

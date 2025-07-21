@@ -39,7 +39,7 @@ export const projects = pgTable("projects", {
   endDate: date("end_date"),
   coreValue: text("core_value"), // Connected core value from foundation
   annualGoal: text("annual_goal"), // Connected annual goal
-  imageUrl: text("image_url"),
+  imageUrls: text("image_urls").array(),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -56,7 +56,7 @@ export const tasks = pgTable("tasks", {
   completedAt: timestamp("completed_at"),
   timeEstimate: integer("time_estimate"), // in minutes
   notes: text("notes"),
-  imageUrl: text("image_url"),
+  imageUrls: text("image_urls").array(),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
