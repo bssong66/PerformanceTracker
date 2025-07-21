@@ -79,15 +79,30 @@ export default function ProjectManagement() {
   });
 
   // Fetch foundations for core values
-  const { data: foundation } = useQuery({
+  const { data: foundation, error: foundationError } = useQuery({
     queryKey: ['foundation', MOCK_USER_ID],
-    queryFn: () => fetch(`/api/foundation/${MOCK_USER_ID}`).then(res => res.json())
+    queryFn: async () => {
+      const response = await fetch(`/api/foundation/${MOCK_USER_ID}`);
+      if (!response.ok && response.status !== 404) {
+        throw new Error('Failed to fetch foundation');
+      }
+      if (response.status === 404) {
+        return null;
+      }
+      return response.json();
+    }
   });
 
   // Fetch annual goals
-  const { data: annualGoals = [] } = useQuery({
+  const { data: annualGoals = [], error: goalsError } = useQuery({
     queryKey: ['goals', MOCK_USER_ID, new Date().getFullYear()],
-    queryFn: () => fetch(`/api/goals/${MOCK_USER_ID}?year=${new Date().getFullYear()}`).then(res => res.json())
+    queryFn: async () => {
+      const response = await fetch(`/api/goals/${MOCK_USER_ID}?year=${new Date().getFullYear()}`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch goals');
+      }
+      return response.json();
+    }
   });
 
   // Fetch tasks for all projects
@@ -439,21 +454,32 @@ export default function ProjectManagement() {
                     }
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="가치 선택" />
+                      <SelectValue placeholder={foundation ? "가치 선택" : "가치중심계획에서 핵심가치를 먼저 설정하세요"} />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="none">선택안함</SelectItem>
-                      {foundation?.coreValue1 && (
-                        <SelectItem value={foundation.coreValue1}>{foundation.coreValue1}</SelectItem>
-                      )}
-                      {foundation?.coreValue2 && (
-                        <SelectItem value={foundation.coreValue2}>{foundation.coreValue2}</SelectItem>
-                      )}
-                      {foundation?.coreValue3 && (
-                        <SelectItem value={foundation.coreValue3}>{foundation.coreValue3}</SelectItem>
+                      {foundation ? (
+                        <>
+                          {foundation.coreValue1 && (
+                            <SelectItem value={foundation.coreValue1}>{foundation.coreValue1}</SelectItem>
+                          )}
+                          {foundation.coreValue2 && (
+                            <SelectItem value={foundation.coreValue2}>{foundation.coreValue2}</SelectItem>
+                          )}
+                          {foundation.coreValue3 && (
+                            <SelectItem value={foundation.coreValue3}>{foundation.coreValue3}</SelectItem>
+                          )}
+                        </>
+                      ) : (
+                        <SelectItem value="" disabled>핵심가치가 설정되지 않았습니다</SelectItem>
                       )}
                     </SelectContent>
                   </Select>
+                  {!foundation && (
+                    <p className="text-xs text-orange-600 mt-1">
+                      가치중심계획 메뉴에서 핵심가치를 먼저 설정해주세요.
+                    </p>
+                  )}
                 </div>
 
                 <div>
@@ -465,17 +491,26 @@ export default function ProjectManagement() {
                     }
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="목표 선택" />
+                      <SelectValue placeholder={annualGoals.length > 0 ? "목표 선택" : "가치중심계획에서 연간목표를 먼저 설정하세요"} />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="none">선택안함</SelectItem>
-                      {annualGoals.map((goal: any) => (
-                        <SelectItem key={goal.id} value={goal.title}>
-                          {goal.title}
-                        </SelectItem>
-                      ))}
+                      {annualGoals.length > 0 ? (
+                        annualGoals.map((goal: any) => (
+                          <SelectItem key={goal.id} value={goal.title}>
+                            {goal.title}
+                          </SelectItem>
+                        ))
+                      ) : (
+                        <SelectItem value="" disabled>연간목표가 설정되지 않았습니다</SelectItem>
+                      )}
                     </SelectContent>
                   </Select>
+                  {annualGoals.length === 0 && (
+                    <p className="text-xs text-orange-600 mt-1">
+                      가치중심계획 메뉴에서 연간목표를 먼저 설정해주세요.
+                    </p>
+                  )}
                 </div>
               </div>
 
