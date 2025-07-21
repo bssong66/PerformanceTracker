@@ -30,7 +30,7 @@ interface Project {
   endDate?: string;
   coreValue?: string;
   annualGoal?: string;
-  imageUrl?: string;
+  imageUrls?: string[];
   userId: number;
 }
 
@@ -212,7 +212,7 @@ export default function ProjectManagement() {
       
       // Ensure the project is expanded to show the new task
       if (selectedProjectForTask) {
-        setExpandedProjects(prev => new Set([...prev, selectedProjectForTask]));
+        setExpandedProjects(prev => new Set([...Array.from(prev), selectedProjectForTask]));
       }
       
       setShowTaskDialog(false);
@@ -274,7 +274,7 @@ export default function ProjectManagement() {
       endDate: project.endDate || '',
       coreValue: project.coreValue || '',
       annualGoal: project.annualGoal || '',
-      imageUrl: project.imageUrl || ''
+      imageUrls: project.imageUrls || []
     });
     setEditingProject(project);
     setShowProjectDialog(true);
@@ -759,14 +759,14 @@ export default function ProjectManagement() {
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => setViewingImage(project.imageUrls[0])}
+                        onClick={() => setViewingImage(project.imageUrls![0])}
                         className="h-8 w-8 p-0 relative"
-                        title={`${project.imageUrls.length}개의 이미지`}
+                        title={`${project.imageUrls!.length}개의 이미지`}
                       >
                         <Image className="h-3 w-3" />
-                        {project.imageUrls.length > 1 && (
+                        {project.imageUrls!.length > 1 && (
                           <span className="absolute -top-1 -right-1 bg-blue-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">
-                            {project.imageUrls.length}
+                            {project.imageUrls!.length}
                           </span>
                         )}
                       </Button>
@@ -795,12 +795,14 @@ export default function ProjectManagement() {
               
               {/* Project Tasks (Expandable) */}
               {isExpanded && (
-                <div className="border-t bg-gray-50 px-6 py-4">
+                <div className="border-t bg-gray-50 px-6 py-4 relative">
+                  {/* Visual connector line */}
+                  <div className="absolute left-8 top-0 bottom-0 w-px bg-gray-300"></div>
                   {projectTasks.length > 0 ? (
                     <>
                       {/* Sorting Controls */}
                       <div className="flex justify-between items-center mb-4">
-                        <div className="flex items-center space-x-2">
+                        <div className="flex items-center space-x-2 ml-8">
                           <div className="w-4 h-px bg-gray-300"></div>
                           <h4 className="text-sm font-medium text-gray-600">📋 하위 할일 목록</h4>
                         </div>
@@ -826,10 +828,13 @@ export default function ProjectManagement() {
                         </div>
                       </div>
                       <div className="space-y-3">
-                        {sortTasks(projectTasks).map((task: any) => (
-                        <div key={task.id} className="flex items-start space-x-3 bg-white p-3 rounded-lg border-l-4 border-blue-200 shadow-sm ml-4">
-                          <div className="flex items-center space-x-3 w-full">
-                            <div className="w-2 h-2 bg-blue-400 rounded-full mt-2 flex-shrink-0"></div>
+                        {sortTasks(projectTasks).map((task: any, index: number) => (
+                        <div key={task.id} className="relative">
+                          {/* Horizontal connector line */}
+                          <div className="absolute left-6 top-6 w-6 h-px bg-gray-300"></div>
+                          <div className="flex items-start space-x-3 bg-white p-3 rounded-lg border-l-4 border-blue-200 shadow-sm ml-12">
+                            <div className="flex items-center space-x-3 w-full">
+                              <div className="w-2 h-2 bg-blue-400 rounded-full mt-2 flex-shrink-0"></div>
                             <input
                               type="checkbox"
                               checked={task.completed}
@@ -884,13 +889,14 @@ export default function ProjectManagement() {
                                 {task.priority}
                               </span>
                             </div>
+                            </div>
                           </div>
                         </div>
                         ))}
                       </div>
                     </>
                   ) : (
-                    <div className="text-center py-6 text-gray-500 text-sm bg-gray-100 rounded-lg mx-4 border-2 border-dashed border-gray-300">
+                    <div className="text-center py-6 text-gray-500 text-sm bg-gray-100 rounded-lg ml-8 mr-4 border-2 border-dashed border-gray-300">
                       <div className="flex flex-col items-center space-y-2">
                         <div className="w-3 h-3 bg-gray-300 rounded-full"></div>
                         <span>아직 할일이 없습니다. 할일을 추가해보세요.</span>
