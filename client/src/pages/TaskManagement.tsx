@@ -31,7 +31,7 @@ interface Task {
   notes?: string;
   startDate?: string;
   endDate?: string;
-  projectId?: number;
+  projectId?: number | null;
   userId: number;
   imageUrls?: string[];
 }
@@ -218,13 +218,13 @@ export default function TaskManagement() {
     C: filteredTasks.filter((task: Task) => task.priority === 'C')
   };
 
-  const getProjectName = (projectId: number | undefined) => {
+  const getProjectName = (projectId: number | null | undefined) => {
     if (!projectId) return '독립 할일';
     const project = projects.find((p: Project) => p.id === projectId);
     return project?.title || '알 수 없는 프로젝트';
   };
 
-  const getProjectColor = (projectId: number | undefined) => {
+  const getProjectColor = (projectId: number | null | undefined) => {
     if (!projectId) return '#6B7280';
     const project = projects.find((p: Project) => p.id === projectId);
     return project?.color || '#6B7280';
@@ -527,7 +527,7 @@ export default function TaskManagement() {
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => setViewingImage(task.imageUrls[0])}
+                      onClick={() => setViewingImage(task.imageUrls?.[0] || '')}
                       className="mt-2"
                     >
                       <Eye className="h-3 w-3 mr-1" />
