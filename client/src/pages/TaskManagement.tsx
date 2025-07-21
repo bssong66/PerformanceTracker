@@ -36,18 +36,14 @@ interface Task {
   imageUrls?: string[];
 }
 
-interface Project {
-  id: number;
-  title: string;
-  color: string;
-}
+
 
 export default function TaskManagement() {
   const { toast } = useToast();
   const [showTaskDialog, setShowTaskDialog] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [viewingImage, setViewingImage] = useState<string | null>(null);
-  const [selectedProjectFilter, setSelectedProjectFilter] = useState<string>('all');
+
   const fileInputRef = useRef<HTMLInputElement>(null);
   
   const [taskForm, setTaskForm] = useState({
@@ -66,11 +62,7 @@ export default function TaskManagement() {
     queryFn: () => fetch(`/api/tasks/${MOCK_USER_ID}`).then(res => res.json())
   });
 
-  // Fetch projects for filter
-  const { data: projects = [] } = useQuery({
-    queryKey: ['projects', MOCK_USER_ID],
-    queryFn: () => fetch(`/api/projects/${MOCK_USER_ID}`).then(res => res.json())
-  });
+
 
   // Create task mutation
   const createTaskMutation = useMutation({
@@ -144,7 +136,7 @@ export default function TaskManagement() {
       notes: '',
       startDate: '',
       endDate: '',
-      projectId: null,
+      projectId: null, // Always null for independent tasks
       imageUrls: []
     });
     setEditingTask(null);
@@ -162,7 +154,7 @@ export default function TaskManagement() {
       notes: task.notes || '',
       startDate: task.startDate || '',
       endDate: task.endDate || '',
-      projectId: task.projectId || null,
+      projectId: null, // Always null for independent tasks
       imageUrls: task.imageUrls || []
     });
     setEditingTask(task);
@@ -180,7 +172,8 @@ export default function TaskManagement() {
     const taskData = {
       ...taskForm,
       userId: MOCK_USER_ID,
-      completed: false
+      completed: false,
+      projectId: null // Ensure tasks are always independent
     };
 
     if (editingTask) {
@@ -206,11 +199,8 @@ export default function TaskManagement() {
     }
   };
 
-  const filteredTasks = tasks.filter((task: Task) => {
-    if (selectedProjectFilter === 'all') return true;
-    if (selectedProjectFilter === 'independent') return !task.projectId;
-    return task.projectId?.toString() === selectedProjectFilter;
-  });
+  // Only show independent tasks (no projectId)
+  const filteredTasks = tasks.filter((task: Task) => !task.projectId);
 
   const tasksByPriority = {
     A: filteredTasks.filter((task: Task) => task.priority === 'A'),
@@ -218,17 +208,7 @@ export default function TaskManagement() {
     C: filteredTasks.filter((task: Task) => task.priority === 'C')
   };
 
-  const getProjectName = (projectId: number | null | undefined) => {
-    if (!projectId) return '독립 할일';
-    const project = projects.find((p: Project) => p.id === projectId);
-    return project?.title || '알 수 없는 프로젝트';
-  };
 
-  const getProjectColor = (projectId: number | null | undefined) => {
-    if (!projectId) return '#6B7280';
-    const project = projects.find((p: Project) => p.id === projectId);
-    return project?.color || '#6B7280';
-  };
 
   return (
     <div className="p-6 space-y-6">
@@ -264,50 +244,23 @@ export default function TaskManagement() {
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label>우선순위</Label>
-                  <Select
-                    value={taskForm.priority}
-                    onValueChange={(value: 'A' | 'B' | 'C') => 
-                      setTaskForm(prev => ({ ...prev, priority: value }))
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="A">A급 (긴급+중요)</SelectItem>
-                      <SelectItem value="B">B급 (중요)</SelectItem>
-                      <SelectItem value="C">C급 (일반)</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
-                  <Label>프로젝트</Label>
-                  <Select
-                    value={taskForm.projectId?.toString() || 'none'}
-                    onValueChange={(value) => 
-                      setTaskForm(prev => ({ 
-                        ...prev, 
-                        projectId: value === 'none' ? null : parseInt(value) 
-                      }))
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="none">독립 할일</SelectItem>
-                      {projects.map((project: Project) => (
-                        <SelectItem key={project.id} value={project.id.toString()}>
-                          {project.title}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+              <div>
+                <Label>우선순위</Label>
+                <Select
+                  value={taskForm.priority}
+                  onValueChange={(value: 'A' | 'B' | 'C') => 
+                    setTaskForm(prev => ({ ...prev, priority: value }))
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="A">A급 (긴급+중요)</SelectItem>
+                    <SelectItem value="B">B급 (중요)</SelectItem>
+                    <SelectItem value="C">C급 (일반)</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
@@ -416,24 +369,7 @@ export default function TaskManagement() {
         </Dialog>
       </div>
 
-      {/* Filter */}
-      <div className="flex items-center space-x-4">
-        <Label>필터:</Label>
-        <Select value={selectedProjectFilter} onValueChange={setSelectedProjectFilter}>
-          <SelectTrigger className="w-48">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">모든 할일</SelectItem>
-            <SelectItem value="independent">독립 할일</SelectItem>
-            {projects.map((project: Project) => (
-              <SelectItem key={project.id} value={project.id.toString()}>
-                {project.title}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
+
 
       {/* Tasks by Priority */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -488,14 +424,7 @@ export default function TaskManagement() {
                     </div>
                   </div>
 
-                  {/* Project info */}
-                  <div className="flex items-center space-x-2 text-xs text-gray-500 mb-2">
-                    <div
-                      className="w-3 h-3 rounded-full"
-                      style={{ backgroundColor: getProjectColor(task.projectId) }}
-                    />
-                    <span>{getProjectName(task.projectId)}</span>
-                  </div>
+
 
                   {/* Dates */}
                   {(task.startDate || task.endDate) && (
@@ -566,7 +495,7 @@ export default function TaskManagement() {
         </Dialog>
       )}
 
-      {tasks.length === 0 && (
+      {filteredTasks.length === 0 && (
         <div className="text-center py-12">
           <ListTodo className="h-12 w-12 text-gray-400 mx-auto mb-4" />
           <h3 className="text-lg font-medium text-gray-900 mb-2">할일이 없습니다</h3>

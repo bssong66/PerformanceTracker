@@ -146,7 +146,22 @@ Preferred communication style: Simple, everyday language.
 └── attached_assets/ # Project documentation and requirements
 ```
 
-### Recent Changes (July 20, 2025)
+### Recent Changes (July 21, 2025)
+- **TaskManagement page completely separated from ProjectManagement**
+- TaskManagement now only displays standalone tasks (projectId: null)
+- Removed project selection from task creation form in TaskManagement
+- Removed project filtering options - only shows independent tasks
+- Removed project-related visual indicators and color coding
+- Tasks created in TaskManagement are always independent (no project association)
+- **Fixed SelectItem validation errors in ProjectManagement**
+- Resolved duplicate key warnings in select components
+- Added debugging information and refresh functionality for foundation data
+- **ProjectManagement retains full project-task integration**
+- Project-linked tasks remain fully functional within ProjectManagement
+- Visual hierarchy preserved with task indentation and connector lines
+- Multiple image upload support maintained for both systems
+
+### Previous Changes (July 20, 2025)
 - **Restructured main navigation menu as requested by user**
 - Changed menu structure to: 대시보드/가치중심계획/일정관리/계획수립/일일관리/리뷰/포커스 모드
 - Added back 일일관리 page positioned after 계획수립 as requested
