@@ -79,7 +79,7 @@ export default function ProjectManagement() {
   });
 
   // Fetch foundations for core values
-  const { data: foundation, error: foundationError } = useQuery({
+  const { data: foundation, error: foundationError, refetch: refetchFoundation } = useQuery({
     queryKey: ['foundation', MOCK_USER_ID],
     queryFn: async () => {
       const response = await fetch(`/api/foundation/${MOCK_USER_ID}`);
@@ -90,7 +90,8 @@ export default function ProjectManagement() {
         return null;
       }
       return response.json();
-    }
+    },
+    refetchOnWindowFocus: true
   });
 
   // Fetch annual goals
@@ -427,6 +428,22 @@ export default function ProjectManagement() {
         <div>
           <h1 className="text-2xl font-bold text-gray-900">프로젝트 관리</h1>
           <p className="text-gray-600">프로젝트를 생성하고 관리하세요</p>
+          {/* Debug info */}
+          <div className="text-xs text-gray-500 mt-1">
+            Foundation: {foundation ? '✅ 로드됨' : '❌ 없음'} | 
+            연간목표: {annualGoals.length}개 | 
+            <Button 
+              size="sm" 
+              variant="ghost" 
+              onClick={() => {
+                queryClient.invalidateQueries({ queryKey: ['foundation', MOCK_USER_ID] });
+                queryClient.invalidateQueries({ queryKey: ['goals', MOCK_USER_ID] });
+              }}
+              className="h-4 px-2 ml-2 text-xs"
+            >
+              새로고침
+            </Button>
+          </div>
         </div>
         
         <Dialog open={showProjectDialog} onOpenChange={setShowProjectDialog}>
@@ -513,14 +530,14 @@ export default function ProjectManagement() {
                   <Select
                     value={projectForm.coreValue}
                     onValueChange={(value) => 
-                      setProjectForm(prev => ({ ...prev, coreValue: value === 'none' ? '' : value }))
+                      setProjectForm(prev => ({ ...prev, coreValue: value === 'empty' ? '' : value }))
                     }
                   >
                     <SelectTrigger>
                       <SelectValue placeholder={foundation ? "가치 선택" : "가치중심계획에서 핵심가치를 먼저 설정하세요"} />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="none">선택안함</SelectItem>
+                      <SelectItem value="empty">선택안함</SelectItem>
                       {foundation ? (
                         <>
                           {foundation.coreValue1 && (
@@ -534,7 +551,7 @@ export default function ProjectManagement() {
                           )}
                         </>
                       ) : (
-                        <SelectItem value="none" disabled>핵심가치가 설정되지 않았습니다</SelectItem>
+                        <SelectItem value="no-foundation" disabled>핵심가치가 설정되지 않았습니다</SelectItem>
                       )}
                     </SelectContent>
                   </Select>
@@ -565,7 +582,7 @@ export default function ProjectManagement() {
                           </SelectItem>
                         ))
                       ) : (
-                        <SelectItem value="none" disabled>연간목표가 설정되지 않았습니다</SelectItem>
+                        <SelectItem value="no-goals" disabled>연간목표가 설정되지 않았습니다</SelectItem>
                       )}
                     </SelectContent>
                   </Select>
