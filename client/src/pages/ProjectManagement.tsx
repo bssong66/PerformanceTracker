@@ -659,11 +659,18 @@ export default function ProjectManagement() {
                 >
                   취소
                 </Button>
-                <Button type="submit" disabled={createProjectMutation.isPending || updateProjectMutation.isPending}>
-                  {createProjectMutation.isPending || updateProjectMutation.isPending ? 
-                    (editingProject ? '수정 중...' : '생성 중...') : 
-                    (editingProject ? '수정' : '생성')
-                  }
+                <Button 
+                  type="submit" 
+                  disabled={createProjectMutation.isPending || updateProjectMutation.isPending}
+                >
+                  {createProjectMutation.isPending || updateProjectMutation.isPending ? (
+                    <div className="flex items-center">
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                      {editingProject ? '수정 중...' : '생성 중...'}
+                    </div>
+                  ) : (
+                    editingProject ? '수정' : '생성'
+                  )}
                 </Button>
               </div>
             </form>
@@ -1095,8 +1102,18 @@ export default function ProjectManagement() {
               >
                 취소
               </Button>
-              <Button type="submit" disabled={createTaskMutation.isPending}>
-                생성
+              <Button 
+                type="submit" 
+                disabled={createTaskMutation.isPending}
+              >
+                {createTaskMutation.isPending ? (
+                  <div className="flex items-center">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    생성 중...
+                  </div>
+                ) : (
+                  '생성'
+                )}
               </Button>
             </div>
           </form>

@@ -360,8 +360,18 @@ export default function TaskManagement() {
                 >
                   취소
                 </Button>
-                <Button type="submit">
-                  {editingTask ? '수정' : '생성'}
+                <Button 
+                  type="submit" 
+                  disabled={createTaskMutation.isPending || updateTaskMutation.isPending}
+                >
+                  {createTaskMutation.isPending || updateTaskMutation.isPending ? (
+                    <div className="flex items-center">
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                      {editingTask ? '수정 중...' : '생성 중...'}
+                    </div>
+                  ) : (
+                    editingTask ? '수정' : '생성'
+                  )}
                 </Button>
               </div>
             </form>
