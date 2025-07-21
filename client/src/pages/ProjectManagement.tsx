@@ -201,14 +201,30 @@ export default function ProjectManagement() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(taskData)
       });
-      if (!response.ok) throw new Error('Failed to create task');
+      if (!response.ok) throw new Error('할일 생성에 실패했습니다.');
       return response.json();
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['tasks', MOCK_USER_ID] });
+    onSuccess: (newTask) => {
+      // Optimistic update for real-time display
+      queryClient.setQueryData(['tasks', MOCK_USER_ID], (oldTasks: any) => {
+        return oldTasks ? [...oldTasks, newTask] : [newTask];
+      });
+      
+      // Ensure the project is expanded to show the new task
+      if (selectedProjectForTask) {
+        setExpandedProjects(prev => new Set([...prev, selectedProjectForTask]));
+      }
+      
       setShowTaskDialog(false);
       setTaskForm({ title: '', priority: 'B', notes: '', startDate: '', endDate: '', imageUrl: '' });
       toast({ title: "할일 생성", description: "새로운 할일이 생성되었습니다." });
+    },
+    onError: (error: Error) => {
+      toast({ 
+        title: "생성 실패", 
+        description: error.message || "할일 생성 중 오류가 발생했습니다.", 
+        variant: "destructive" 
+      });
     }
   });
 
@@ -739,12 +755,15 @@ export default function ProjectManagement() {
               
               {/* Project Tasks (Expandable) */}
               {isExpanded && (
-                <div className="border-t bg-gray-50 px-4 py-3">
+                <div className="border-t bg-gray-50 px-6 py-4">
                   {projectTasks.length > 0 ? (
                     <>
                       {/* Sorting Controls */}
-                      <div className="flex justify-between items-center mb-3">
-                        <h4 className="text-sm font-medium text-gray-700">할일 목록</h4>
+                      <div className="flex justify-between items-center mb-4">
+                        <div className="flex items-center space-x-2">
+                          <div className="w-4 h-px bg-gray-300"></div>
+                          <h4 className="text-sm font-medium text-gray-600">📋 하위 할일 목록</h4>
+                        </div>
                         <div className="flex items-center space-x-2">
                           <Select value={taskSortBy} onValueChange={(value: 'priority' | 'date' | 'title') => setTaskSortBy(value)}>
                             <SelectTrigger className="w-20 h-7 text-xs">
@@ -766,62 +785,71 @@ export default function ProjectManagement() {
                           </Button>
                         </div>
                       </div>
-                      <div className="space-y-2">
+                      <div className="space-y-3">
                         {sortTasks(projectTasks).map((task: any) => (
-                        <div key={task.id} className="flex items-center space-x-3 bg-white p-2 rounded border">
-                          <input
-                            type="checkbox"
-                            checked={task.completed}
-                            onChange={() => handleTaskToggle(task.id, task.completed)}
-                            className="rounded"
-                          />
-                          <div className="flex-1">
-                            <span className={`text-sm ${task.completed ? 'line-through text-gray-500' : 'text-gray-900'}`}>
-                              {task.title}
-                            </span>
-                            {(task.startDate || task.endDate) && (
-                              <div className="text-xs text-gray-500 mt-1">
-                                {task.startDate && task.endDate ? (
-                                  <span>{format(new Date(task.startDate), 'M/d', { locale: ko })} ~ {format(new Date(task.endDate), 'M/d', { locale: ko })}</span>
-                                ) : task.startDate ? (
-                                  <span>시작: {format(new Date(task.startDate), 'M/d', { locale: ko })}</span>
-                                ) : (
-                                  <span>종료: {format(new Date(task.endDate), 'M/d', { locale: ko })}</span>
-                                )}
-                              </div>
-                            )}
-                            {task.notes && (
-                              <div className="text-xs text-gray-600 mt-1 bg-gray-100 p-2 rounded">
-                                {task.notes}
-                              </div>
-                            )}
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            {task.imageUrl && (
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => setViewingTaskImage(task.imageUrl)}
-                                className="h-6 w-6 p-0"
-                              >
-                                <Image className="h-3 w-3" />
-                              </Button>
-                            )}
-                            <span className={`px-2 py-1 rounded text-xs font-medium ${
-                              task.priority === 'A' ? 'bg-red-100 text-red-800' :
-                              task.priority === 'B' ? 'bg-yellow-100 text-yellow-800' :
-                              'bg-green-100 text-green-800'
-                            }`}>
-                              {task.priority}
-                            </span>
+                        <div key={task.id} className="flex items-start space-x-3 bg-white p-3 rounded-lg border-l-4 border-blue-200 shadow-sm ml-4">
+                          <div className="flex items-center space-x-3 w-full">
+                            <div className="w-2 h-2 bg-blue-400 rounded-full mt-2 flex-shrink-0"></div>
+                            <input
+                              type="checkbox"
+                              checked={task.completed}
+                              onChange={() => handleTaskToggle(task.id, task.completed)}
+                              className="rounded mt-1 flex-shrink-0"
+                            />
+                            <div className="flex-1">
+                              <span className={`text-sm font-medium ${task.completed ? 'line-through text-gray-500' : 'text-gray-800'}`}>
+                                {task.title}
+                              </span>
+                              {(task.startDate || task.endDate) && (
+                                <div className="text-xs text-gray-500 mt-1 flex items-center">
+                                  <span className="text-gray-400 mr-1">📅</span>
+                                  {task.startDate && task.endDate ? (
+                                    <span>{format(new Date(task.startDate), 'M/d', { locale: ko })} ~ {format(new Date(task.endDate), 'M/d', { locale: ko })}</span>
+                                  ) : task.startDate ? (
+                                    <span>시작: {format(new Date(task.startDate), 'M/d', { locale: ko })}</span>
+                                  ) : (
+                                    <span>종료: {format(new Date(task.endDate), 'M/d', { locale: ko })}</span>
+                                  )}
+                                </div>
+                              )}
+                              {task.notes && (
+                                <div className="text-xs text-gray-600 mt-2 bg-blue-50 p-2 rounded border-l-2 border-blue-200">
+                                  <span className="text-gray-400 mr-1">💬</span>
+                                  {task.notes}
+                                </div>
+                              )}
+                            </div>
+                            <div className="flex items-center space-x-2 flex-shrink-0">
+                              {task.imageUrl && (
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => setViewingTaskImage(task.imageUrl)}
+                                  className="h-7 w-7 p-0"
+                                  title="이미지 보기"
+                                >
+                                  <Image className="h-3 w-3" />
+                                </Button>
+                              )}
+                              <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                task.priority === 'A' ? 'bg-red-100 text-red-800' :
+                                task.priority === 'B' ? 'bg-yellow-100 text-yellow-800' :
+                                'bg-green-100 text-green-800'
+                              }`}>
+                                {task.priority}
+                              </span>
+                            </div>
                           </div>
                         </div>
                         ))}
                       </div>
                     </>
                   ) : (
-                    <div className="text-center py-4 text-gray-500 text-sm">
-                      아직 할일이 없습니다. 할일을 추가해보세요.
+                    <div className="text-center py-6 text-gray-500 text-sm bg-gray-100 rounded-lg mx-4 border-2 border-dashed border-gray-300">
+                      <div className="flex flex-col items-center space-y-2">
+                        <div className="w-3 h-3 bg-gray-300 rounded-full"></div>
+                        <span>아직 할일이 없습니다. 할일을 추가해보세요.</span>
+                      </div>
                     </div>
                   )}
                 </div>
