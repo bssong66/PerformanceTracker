@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Trash2, Plus, Save } from "lucide-react";
+import { Trash2, Plus, Save, RefreshCw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { api, saveFoundation, createAnnualGoal, deleteAnnualGoal } from "@/lib/api";
 import { queryClient } from "@/lib/queryClient";
@@ -21,12 +21,12 @@ export default function Foundation() {
   const [values, setValues] = useState(["", "", ""]);
   const [newGoal, setNewGoal] = useState("");
 
-  const { data: foundation, isLoading: foundationLoading } = useQuery({
+  const { data: foundation, isLoading: foundationLoading, refetch: refetchFoundation } = useQuery({
     queryKey: [api.foundation.get(MOCK_USER_ID)],
     meta: { errorMessage: "Foundation not found" },
   });
 
-  const { data: goals = [], isLoading: goalsLoading } = useQuery({
+  const { data: goals = [], isLoading: goalsLoading, refetch: refetchGoals } = useQuery({
     queryKey: [api.goals.list(MOCK_USER_ID, currentYear)],
   });
 
@@ -133,6 +133,25 @@ export default function Foundation() {
     setValues(newValues);
   };
 
+  const handleLoadData = async () => {
+    try {
+      await Promise.all([
+        refetchFoundation(),
+        refetchGoals()
+      ]);
+      toast({
+        title: "데이터 불러오기 완료",
+        description: "저장된 가치 중심 계획을 성공적으로 불러왔습니다.",
+      });
+    } catch (error) {
+      toast({
+        title: "불러오기 실패",
+        description: "데이터를 불러오는데 실패했습니다.",
+        variant: "destructive",
+      });
+    }
+  };
+
   if (foundationLoading || goalsLoading) {
     return (
       <div className="py-6">
@@ -156,10 +175,33 @@ export default function Foundation() {
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-2xl font-bold text-gray-900">가치 중심 계획</h1>
-          <p className="text-sm text-gray-600">
-            개인 미션과 핵심 가치를 설정하여 목표 달성의 기반을 만드세요
-          </p>
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900">가치 중심 계획</h1>
+              <p className="text-sm text-gray-600">
+                개인 미션과 핵심 가치를 설정하여 목표 달성의 기반을 만드세요
+              </p>
+            </div>
+            <div className="flex items-center space-x-3">
+              <Button
+                variant="outline"
+                onClick={handleLoadData}
+                disabled={foundationLoading || goalsLoading}
+                className="flex items-center space-x-2"
+              >
+                <RefreshCw className={`h-4 w-4 ${foundationLoading || goalsLoading ? 'animate-spin' : ''}`} />
+                <span>데이터 불러오기</span>
+              </Button>
+              <Button
+                onClick={handleSaveFoundation}
+                disabled={saveFoundationMutation.isPending}
+                className="flex items-center space-x-2"
+              >
+                <Save className="h-4 w-4" />
+                <span>저장</span>
+              </Button>
+            </div>
+          </div>
         </div>
 
         <div className="space-y-8">
@@ -273,17 +315,35 @@ export default function Foundation() {
             </CardContent>
           </Card>
 
-          {/* Save Button */}
-          <div className="flex justify-end">
-            <Button
-              onClick={handleSaveFoundation}
-              disabled={saveFoundationMutation.isPending}
-              size="lg"
-            >
-              <Save className="h-4 w-4 mr-2" />
-              {saveFoundationMutation.isPending ? '저장 중...' : '저장하기'}
-            </Button>
-          </div>
+          {/* Data Status */}
+          {foundation && (
+            <Card className="bg-green-50 border-green-200">
+              <CardContent className="p-4">
+                <div className="flex items-center space-x-2">
+                  <div className="flex-shrink-0 w-2 h-2 bg-green-500 rounded-full"></div>
+                  <div className="text-sm text-green-700">
+                    <strong>저장된 데이터:</strong> 미션과 핵심가치가 데이터베이스에 저장되어 있습니다.
+                  </div>
+                </div>
+                <div className="text-xs text-green-600 mt-2">
+                  마지막 업데이트: {new Date((foundation as any).updatedAt).toLocaleString('ko-KR')}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+          
+          {!foundation && (
+            <Card className="bg-blue-50 border-blue-200">
+              <CardContent className="p-4">
+                <div className="flex items-center space-x-2">
+                  <div className="flex-shrink-0 w-2 h-2 bg-blue-500 rounded-full"></div>
+                  <div className="text-sm text-blue-700">
+                    아직 저장된 가치 중심 계획이 없습니다. 위에서 내용을 입력하고 저장 버튼을 클릭하세요.
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
         </div>
       </div>
     </div>
