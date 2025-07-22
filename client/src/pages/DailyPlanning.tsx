@@ -209,6 +209,37 @@ export default function DailyPlanning() {
     updateTaskMutation.mutate({ id, updates: { completed } });
   };
 
+  const handleToggleHabit = async (habitId: number, completed: boolean) => {
+    try {
+      const method = completed ? 'POST' : 'DELETE';
+      const response = await fetch(`/api/habit-logs`, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          habitId,
+          userId: MOCK_USER_ID,
+          date: today,
+          completed
+        })
+      });
+
+      if (response.ok) {
+        queryClient.invalidateQueries({ queryKey: ['habitLogs', MOCK_USER_ID, today] });
+        queryClient.invalidateQueries({ queryKey: ['habits', MOCK_USER_ID] });
+        toast({
+          title: completed ? "습관 완료" : "습관 완료 취소",
+          description: completed ? "습관이 완료되었습니다." : "습관 완료가 취소되었습니다.",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "오류",
+        description: "습관 상태 업데이트에 실패했습니다.",
+        variant: "destructive",
+      });
+    }
+  };
+
   const handleImageSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
@@ -585,7 +616,7 @@ export default function DailyPlanning() {
                             <input
                               type="checkbox"
                               checked={log?.completed || false}
-                              onChange={() => {/* Handle habit toggle */}}
+                              onChange={(e) => handleToggleHabit(habit.id, e.target.checked)}
                               className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
                             />
                           </div>
