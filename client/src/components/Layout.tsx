@@ -90,7 +90,7 @@ export function Layout({ children }: LayoutProps) {
             <Button
               variant="ghost"
               size="sm"
-              className="fixed top-4 left-4 z-40 lg:hidden"
+              className="fixed top-2 left-2 z-50 lg:hidden bg-white/90 backdrop-blur-sm border border-gray-200 shadow-sm"
             >
               <Menu className="h-6 w-6" />
             </Button>
