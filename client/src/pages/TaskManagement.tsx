@@ -528,7 +528,7 @@ function TaskManagement() {
                     size="sm"
                     variant="ghost"
                     onClick={() => openCreateDialog(priority)}
-                    className="h-6 w-6 p-0 text-white hover:bg-white/20"
+                    className="h-6 w-6 p-0 text-gray-700 bg-white/80 hover:bg-white hover:text-gray-900 border border-gray-200/50"
                     title={`${priority}급 할일 추가`}
                   >
                     <Plus className="h-3 w-3" />
