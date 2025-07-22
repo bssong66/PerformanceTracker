@@ -44,8 +44,8 @@ export default function HabitManagement() {
     repeatType: 'daily',
     repeatWeekdays: [] as string[],
     repeatMonthDates: [] as string[],
-    coreValue: '',
-    annualGoal: ''
+    coreValue: 'none',
+    annualGoal: 'none'
   });
 
   // Fetch habits
@@ -187,8 +187,8 @@ export default function HabitManagement() {
       ...habitForm,
       repeatWeekdays: habitForm.repeatWeekdays.length > 0 ? JSON.stringify(habitForm.repeatWeekdays) : null,
       repeatMonthDates: habitForm.repeatMonthDates.length > 0 ? JSON.stringify(habitForm.repeatMonthDates) : null,
-      coreValue: habitForm.coreValue || null,
-      annualGoal: habitForm.annualGoal || null,
+      coreValue: habitForm.coreValue === 'none' ? null : habitForm.coreValue,
+      annualGoal: habitForm.annualGoal === 'none' ? null : habitForm.annualGoal,
       userId: MOCK_USER_ID
     };
 
@@ -339,7 +339,7 @@ export default function HabitManagement() {
                     <SelectValue placeholder="핵심가치 선택 (선택사항)" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">없음</SelectItem>
+                    <SelectItem value="none">없음</SelectItem>
                     {foundation?.coreValue1 && (
                       <SelectItem value={foundation.coreValue1}>{foundation.coreValue1}</SelectItem>
                     )}
@@ -361,7 +361,7 @@ export default function HabitManagement() {
                     <SelectValue placeholder="연간계획 선택 (선택사항)" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">없음</SelectItem>
+                    <SelectItem value="none">없음</SelectItem>
                     {annualGoals.map((goal: any) => (
                       <SelectItem key={goal.id} value={goal.title}>{goal.title}</SelectItem>
                     ))}
