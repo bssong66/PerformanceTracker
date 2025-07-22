@@ -11,7 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
-import { Plus, ListTodo, Calendar, Clock, Eye, Trash2, Edit, CheckCircle, Circle, Camera, Image } from 'lucide-react';
+import { Plus, ListTodo, Calendar, Clock, Eye, Trash2, Edit, CheckCircle, Circle, Camera, Image, ArrowLeft, ArrowRight } from 'lucide-react';
 import { format } from 'date-fns';
 import { ko } from 'date-fns/locale';
 
@@ -43,6 +43,8 @@ export default function TaskManagement() {
   const [showTaskDialog, setShowTaskDialog] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [viewingImage, setViewingImage] = useState<string | null>(null);
+  const [viewingTask, setViewingTask] = useState<Task | null>(null);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   
@@ -234,6 +236,22 @@ export default function TaskManagement() {
     }
   };
 
+  const handlePrevImage = () => {
+    if (viewingTask && viewingTask.imageUrls && currentImageIndex > 0) {
+      const newIndex = currentImageIndex - 1;
+      setCurrentImageIndex(newIndex);
+      setViewingImage(viewingTask.imageUrls[newIndex]);
+    }
+  };
+
+  const handleNextImage = () => {
+    if (viewingTask && viewingTask.imageUrls && currentImageIndex < viewingTask.imageUrls.length - 1) {
+      const newIndex = currentImageIndex + 1;
+      setCurrentImageIndex(newIndex);
+      setViewingImage(viewingTask.imageUrls[newIndex]);
+    }
+  };
+
   // Only show independent tasks (no projectId)
   const filteredTasks = tasks.filter((task: Task) => !task.projectId);
 
@@ -413,7 +431,12 @@ export default function TaskManagement() {
                             src={imageUrl}
                             alt={`할일 이미지 ${index + 1}`}
                             className="w-16 h-16 object-cover rounded border cursor-pointer hover:opacity-80"
-                            onClick={() => setViewingImage(imageUrl)}
+                            onClick={() => {
+                              const tempTask = { ...taskForm, imageUrls: taskForm.imageUrls };
+                              setViewingTask(tempTask as Task);
+                              setViewingImage(imageUrl);
+                              setCurrentImageIndex(index);
+                            }}
                           />
                           <Button
                             type="button"
@@ -511,7 +534,11 @@ export default function TaskManagement() {
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => setViewingImage(task.imageUrls?.[0] || '')}
+                          onClick={() => {
+                            setViewingTask(task);
+                            setViewingImage(task.imageUrls?.[0] || '');
+                            setCurrentImageIndex(0);
+                          }}
                           className="h-8 w-8 p-0"
                           title={`${task.imageUrls.length}개의 이미지`}
                         >
@@ -594,19 +621,68 @@ export default function TaskManagement() {
       </div>
 
       {/* Image Viewer Dialog */}
-      {viewingImage && (
-        <Dialog open={true} onOpenChange={() => setViewingImage(null)}>
-          <DialogContent className="sm:max-w-2xl">
+      {viewingImage && viewingTask && (
+        <Dialog open={true} onOpenChange={() => {
+          setViewingImage(null);
+          setViewingTask(null);
+          setCurrentImageIndex(0);
+        }}>
+          <DialogContent className="sm:max-w-3xl">
             <DialogHeader>
-              <DialogTitle>이미지 보기</DialogTitle>
+              <DialogTitle>
+                이미지 보기 ({currentImageIndex + 1} / {viewingTask.imageUrls?.length || 0})
+              </DialogTitle>
             </DialogHeader>
-            <div className="flex justify-center">
+            <div className="relative flex justify-center items-center">
+              {/* Previous Button */}
+              {viewingTask.imageUrls && viewingTask.imageUrls.length > 1 && currentImageIndex > 0 && (
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="absolute left-2 z-10 h-10 w-10 rounded-full bg-white/80 hover:bg-white"
+                  onClick={handlePrevImage}
+                >
+                  <ArrowLeft className="h-4 w-4" />
+                </Button>
+              )}
+              
+              {/* Image */}
               <img
                 src={viewingImage}
-                alt="할일 이미지"
-                className="max-w-full h-auto rounded-lg"
+                alt={`할일 이미지 ${currentImageIndex + 1}`}
+                className="max-w-full max-h-[70vh] h-auto rounded-lg"
               />
+              
+              {/* Next Button */}
+              {viewingTask.imageUrls && viewingTask.imageUrls.length > 1 && currentImageIndex < viewingTask.imageUrls.length - 1 && (
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="absolute right-2 z-10 h-10 w-10 rounded-full bg-white/80 hover:bg-white"
+                  onClick={handleNextImage}
+                >
+                  <ArrowRight className="h-4 w-4" />
+                </Button>
+              )}
             </div>
+            
+            {/* Image Navigation Dots */}
+            {viewingTask.imageUrls && viewingTask.imageUrls.length > 1 && (
+              <div className="flex justify-center space-x-2 mt-4">
+                {viewingTask.imageUrls.map((_, index) => (
+                  <button
+                    key={index}
+                    className={`w-3 h-3 rounded-full transition-colors ${
+                      index === currentImageIndex ? 'bg-blue-600' : 'bg-gray-300 hover:bg-gray-400'
+                    }`}
+                    onClick={() => {
+                      setCurrentImageIndex(index);
+                      setViewingImage(viewingTask.imageUrls![index]);
+                    }}
+                  />
+                ))}
+              </div>
+            )}
           </DialogContent>
         </Dialog>
       )}
