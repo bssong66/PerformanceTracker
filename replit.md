@@ -146,7 +146,20 @@ Preferred communication style: Simple, everyday language.
 └── attached_assets/ # Project documentation and requirements
 ```
 
-### Recent Changes (July 21, 2025)
+### Recent Changes (July 22, 2025)
+- **Implemented automatic task carryover system**
+- Incomplete scheduled tasks automatically roll over to the next day
+- Added isCarriedOver and originalScheduledDate fields to task schema
+- TaskItem components show orange warning indicators for carried over tasks
+- Carryover processing runs automatically when accessing daily planning
+- **Enhanced WeeklyReview with automatic data calculation**
+- Work/personal hours automatically calculated from time block data
+- Value alignment scores computed from tasks, events, and time blocks
+- Removed manual input fields in favor of data-driven analytics
+- Added keyword mapping for accurate value-activity correlation
+- Streamlined UI by removing "Next Week Preparation" section
+
+### Previous Changes (July 21, 2025)
 - **TaskManagement page completely separated from ProjectManagement**
 - TaskManagement now only displays standalone tasks (projectId: null)
 - Removed project selection from task creation form in TaskManagement
