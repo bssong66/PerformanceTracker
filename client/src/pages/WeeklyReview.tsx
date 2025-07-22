@@ -332,7 +332,7 @@ export default function WeeklyReview() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* This Week's Performance */}
           <div className="space-y-6">
-            <Card>
+            <Card className="h-full">
               <CardContent className="space-y-6 pt-6">
                 {/* Task Completion Summary */}
                 <div>
