@@ -7,7 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { ProgressBar } from "@/components/ProgressBar";
 import { PriorityBadge } from "@/components/PriorityBadge";
-import { Save, TrendingUp, BarChart3, Target, Plus, X, ChevronLeft, ChevronRight, AlertTriangle } from "lucide-react";
+import { Save, TrendingUp, BarChart3, Target, Plus, X, ChevronLeft, ChevronRight, Siren } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { api, saveWeeklyReview } from "@/lib/api";
 import { queryClient } from "@/lib/queryClient";
@@ -75,7 +75,7 @@ export default function WeeklyReview() {
     queryFn: async () => {
       const startDate = format(subDays(weekStart, 7), 'yyyy-MM-dd');
       const endDate = format(weekEnd, 'yyyy-MM-dd');
-      return fetch(api.events.list(MOCK_USER_ID, startDate, endDate)).then(res => res.json());
+      return [];
     },
   });
 
@@ -122,8 +122,8 @@ export default function WeeklyReview() {
 
   // Calculate value alignment based on tasks, events, and time blocks
   useEffect(() => {
-    if (foundation && (weekTasks.length > 0 || weekEvents.length > 0 || weekTimeBlocks.length > 0)) {
-      const coreValues = foundation.coreValues ? foundation.coreValues.split(',').map((v: string) => v.trim()) : [];
+    if (foundation && ((weekTasks as any[]).length > 0 || weekEvents.length > 0 || weekTimeBlocks.length > 0)) {
+      const coreValues = (foundation as any).coreValues ? (foundation as any).coreValues.split(',').map((v: string) => v.trim()) : [];
       
       if (coreValues.length > 0) {
         const alignmentScores = coreValues.map((value: string) => {
@@ -131,7 +131,7 @@ export default function WeeklyReview() {
           let alignedActivities = 0;
 
           // Check tasks
-          weekTasks.forEach((task: any) => {
+          (weekTasks as any[]).forEach((task: any) => {
             if (task.coreValue === value) {
               totalActivities++;
               alignedActivities++;
@@ -234,22 +234,22 @@ export default function WeeklyReview() {
   useEffect(() => {
     if (weeklyReview) {
       setWeeklyGoals([
-        weeklyReview.weeklyGoal1 || "",
-        weeklyReview.weeklyGoal2 || "",
-        weeklyReview.weeklyGoal3 || "",
+        (weeklyReview as any).weeklyGoal1 || "",
+        (weeklyReview as any).weeklyGoal2 || "",
+        (weeklyReview as any).weeklyGoal3 || "",
       ]);
-      setReflection(weeklyReview.reflection || "");
+      setReflection((weeklyReview as any).reflection || "");
       // Only override calculated hours if they exist in saved review
-      if (weeklyReview.workHours !== undefined) {
-        setWorkHours(weeklyReview.workHours);
+      if ((weeklyReview as any).workHours !== undefined) {
+        setWorkHours((weeklyReview as any).workHours);
       }
-      if (weeklyReview.personalHours !== undefined) {
-        setPersonalHours(weeklyReview.personalHours);
+      if ((weeklyReview as any).personalHours !== undefined) {
+        setPersonalHours((weeklyReview as any).personalHours);
       }
       setValueAlignments([
-        weeklyReview.valueAlignment1 || 0,
-        weeklyReview.valueAlignment2 || 0,
-        weeklyReview.valueAlignment3 || 0,
+        (weeklyReview as any).valueAlignment1 || 0,
+        (weeklyReview as any).valueAlignment2 || 0,
+        (weeklyReview as any).valueAlignment3 || 0,
       ]);
     }
   }, [weeklyReview]);
@@ -304,18 +304,18 @@ export default function WeeklyReview() {
 
   // Calculate task completion stats
   const taskStats = {
-    total: weekTasks.length,
-    completed: weekTasks.filter((t: any) => t.completed).length,
-    aTotal: weekTasks.filter((t: any) => t.priority === 'A').length,
-    aCompleted: weekTasks.filter((t: any) => t.priority === 'A' && t.completed).length,
-    bTotal: weekTasks.filter((t: any) => t.priority === 'B').length,
-    bCompleted: weekTasks.filter((t: any) => t.priority === 'B' && t.completed).length,
+    total: (weekTasks as any[]).length,
+    completed: (weekTasks as any[]).filter((t: any) => t.completed).length,
+    aTotal: (weekTasks as any[]).filter((t: any) => t.priority === 'A').length,
+    aCompleted: (weekTasks as any[]).filter((t: any) => t.priority === 'A' && t.completed).length,
+    bTotal: (weekTasks as any[]).filter((t: any) => t.priority === 'B').length,
+    bCompleted: (weekTasks as any[]).filter((t: any) => t.priority === 'B' && t.completed).length,
   };
 
   const coreValues = [
-    foundation?.coreValue1 || "가치 1",
-    foundation?.coreValue2 || "가치 2", 
-    foundation?.coreValue3 || "가치 3",
+    (foundation as any)?.coreValue1 || "가치 1",
+    (foundation as any)?.coreValue2 || "가치 2", 
+    (foundation as any)?.coreValue3 || "가치 3",
   ];
 
   return (
@@ -404,7 +404,7 @@ export default function WeeklyReview() {
                 <div>
                   <h4 className="text-sm font-semibold text-gray-900 mb-4">습관 실행률</h4>
                   <div className="space-y-2">
-                    {habits.slice(0, 3).map((habit: any, index: number) => (
+                    {(habits as any[]).slice(0, 3).map((habit: any, index: number) => (
                       <div key={habit.id} className="flex items-center justify-between">
                         <span className="text-sm text-gray-600">{habit.name}</span>
                         <span className="text-sm font-medium text-green-600">
@@ -412,7 +412,7 @@ export default function WeeklyReview() {
                         </span>
                       </div>
                     ))}
-                    {habits.length === 0 && (
+                    {(habits as any[]).length === 0 && (
                       <p className="text-sm text-gray-500 italic">등록된 습관이 없습니다.</p>
                     )}
                   </div>
@@ -425,22 +425,22 @@ export default function WeeklyReview() {
                   </h4>
                   <div className="space-y-2 max-h-48 overflow-y-auto">
                     {/* Incomplete tasks from this week */}
-                    {weekTasks.filter((task: any) => !task.completed).length > 0 && (
+                    {(weekTasks as any[]).filter((task: any) => !task.completed).length > 0 && (
                       <div className="space-y-1">
                         <div className="text-xs font-medium text-red-600 mb-2 flex items-center space-x-1">
-                          <AlertTriangle className="h-3 w-3" />
+                          <Siren className="h-3 w-3 text-red-500" />
                           <span>이번주 미완료</span>
-                          <AlertTriangle className="h-3 w-3 text-yellow-500" />
+                          <Siren className="h-3 w-3 text-yellow-500" />
                         </div>
-                        {weekTasks.filter((task: any) => !task.completed).slice(0, 3).map((task: any) => (
+                        {(weekTasks as any[]).filter((task: any) => !task.completed).slice(0, 3).map((task: any) => (
                           <div key={`incomplete-${task.id}`} className="flex items-center space-x-2 p-2 bg-red-50 rounded border-l-2 border-red-200">
                             <PriorityBadge priority={task.priority} size="sm" />
                             <span className="text-xs text-red-700 truncate flex-1">{task.title}</span>
                           </div>
                         ))}
-                        {weekTasks.filter((task: any) => !task.completed).length > 3 && (
+                        {(weekTasks as any[]).filter((task: any) => !task.completed).length > 3 && (
                           <div className="text-xs text-red-500 ml-4">
-                            외 {weekTasks.filter((task: any) => !task.completed).length - 3}개 더...
+                            외 {(weekTasks as any[]).filter((task: any) => !task.completed).length - 3}개 더...
                           </div>
                         )}
                       </div>
@@ -450,7 +450,7 @@ export default function WeeklyReview() {
                     {(() => {
                       const nextWeekStart = format(addDays(weekStart, 7), 'yyyy-MM-dd');
                       const nextWeekEnd = format(addDays(weekEnd, 7), 'yyyy-MM-dd');
-                      const nextWeekTasks = weekTasks.filter((task: any) => 
+                      const nextWeekTasks = (weekTasks as any[]).filter((task: any) => 
                         task.scheduledDate && 
                         task.scheduledDate >= nextWeekStart && 
                         task.scheduledDate <= nextWeekEnd
@@ -479,8 +479,8 @@ export default function WeeklyReview() {
                       return null;
                     })()}
 
-                    {weekTasks.filter((task: any) => !task.completed).length === 0 && 
-                     weekTasks.filter((task: any) => {
+                    {(weekTasks as any[]).filter((task: any) => !task.completed).length === 0 && 
+                     (weekTasks as any[]).filter((task: any) => {
                        const nextWeekStart = format(addDays(weekStart, 7), 'yyyy-MM-dd');
                        const nextWeekEnd = format(addDays(weekEnd, 7), 'yyyy-MM-dd');
                        return task.scheduledDate && 
