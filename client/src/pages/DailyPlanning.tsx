@@ -229,6 +229,7 @@ export default function DailyPlanning() {
         toast({
           title: completed ? "습관 완료" : "습관 완료 취소",
           description: completed ? "습관이 완료되었습니다." : "습관 완료가 취소되었습니다.",
+          duration: 1000,
         });
       }
     } catch (error) {
@@ -236,6 +237,7 @@ export default function DailyPlanning() {
         title: "오류",
         description: "습관 상태 업데이트에 실패했습니다.",
         variant: "destructive",
+        duration: 1000,
       });
     }
   };
