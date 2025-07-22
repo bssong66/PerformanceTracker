@@ -113,8 +113,11 @@ export default function MonthlyReview() {
       }
     });
 
-    setWorkHours(Math.round(totalWork));
-    setPersonalHours(Math.round(totalPersonal));
+    const newWorkHours = Math.round(totalWork);
+    const newPersonalHours = Math.round(totalPersonal);
+    
+    if (newWorkHours !== workHours) setWorkHours(newWorkHours);
+    if (newPersonalHours !== personalHours) setPersonalHours(newPersonalHours);
 
     // 가치 정렬도 자동 계산
     if (coreValues.length > 0) {
@@ -162,9 +165,13 @@ export default function MonthlyReview() {
         return totalCount > 0 ? Math.round((alignedCount / totalCount) * 100) : 0;
       });
 
-      setValueAlignments(alignments);
+      // 값이 변경될 때만 업데이트
+      const hasChanged = alignments.some((value, index) => value !== valueAlignments[index]);
+      if (hasChanged) {
+        setValueAlignments(alignments);
+      }
     }
-  }, [allTasks, timeBlockQueries, coreValues, monthStartDate, monthEndDate]);
+  }, [allTasks, coreValues, monthStartDate, monthEndDate, workHours, personalHours, valueAlignments]);
 
   // 기존 월간 리뷰 데이터 로드
   useEffect(() => {
@@ -330,7 +337,7 @@ export default function MonthlyReview() {
                 <ProgressBar 
                   value={workHours + personalHours > 0 ? (workHours / (workHours + personalHours)) * 100 : 0} 
                   max={100}
-                  color="info"
+                  color="default"
                 />
               </div>
             </CardContent>

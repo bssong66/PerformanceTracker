@@ -7,11 +7,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { ProgressBar } from "@/components/ProgressBar";
 import { PriorityBadge } from "@/components/PriorityBadge";
-import { Save, TrendingUp, BarChart3, Target, Plus, X, ChevronLeft, ChevronRight } from "lucide-react";
+import { Save, TrendingUp, BarChart3, Target, Plus, X, ChevronLeft, ChevronRight, AlertTriangle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { api, saveWeeklyReview } from "@/lib/api";
 import { queryClient } from "@/lib/queryClient";
-import { format, startOfWeek, endOfWeek, subDays } from "date-fns";
+import { format, startOfWeek, endOfWeek, subDays, addDays } from "date-fns";
 import { ko } from "date-fns/locale";
 
 // Mock user ID for demo
@@ -414,6 +414,79 @@ export default function WeeklyReview() {
                     ))}
                     {habits.length === 0 && (
                       <p className="text-sm text-gray-500 italic">등록된 습관이 없습니다.</p>
+                    )}
+                  </div>
+                </div>
+
+                {/* Next Week Tasks */}
+                <div>
+                  <h4 className="text-sm font-semibold text-gray-900 mb-4 flex items-center space-x-2">
+                    <span>다음 주 할일</span>
+                  </h4>
+                  <div className="space-y-2 max-h-48 overflow-y-auto">
+                    {/* Incomplete tasks from this week */}
+                    {weekTasks.filter((task: any) => !task.completed).length > 0 && (
+                      <div className="space-y-1">
+                        <div className="text-xs font-medium text-red-600 mb-2 flex items-center space-x-1">
+                          <AlertTriangle className="h-3 w-3" />
+                          <span>이번주 미완료 (경고)</span>
+                        </div>
+                        {weekTasks.filter((task: any) => !task.completed).slice(0, 3).map((task: any) => (
+                          <div key={`incomplete-${task.id}`} className="flex items-center space-x-2 p-2 bg-red-50 rounded border-l-2 border-red-200">
+                            <PriorityBadge priority={task.priority} size="sm" />
+                            <span className="text-xs text-red-700 truncate flex-1">{task.title}</span>
+                          </div>
+                        ))}
+                        {weekTasks.filter((task: any) => !task.completed).length > 3 && (
+                          <div className="text-xs text-red-500 ml-4">
+                            외 {weekTasks.filter((task: any) => !task.completed).length - 3}개 더...
+                          </div>
+                        )}
+                      </div>
+                    )}
+                    
+                    {/* Next week scheduled tasks */}
+                    {(() => {
+                      const nextWeekStart = format(addDays(weekStart, 7), 'yyyy-MM-dd');
+                      const nextWeekEnd = format(addDays(weekEnd, 7), 'yyyy-MM-dd');
+                      const nextWeekTasks = weekTasks.filter((task: any) => 
+                        task.scheduledDate && 
+                        task.scheduledDate >= nextWeekStart && 
+                        task.scheduledDate <= nextWeekEnd
+                      );
+                      
+                      if (nextWeekTasks.length > 0) {
+                        return (
+                          <div className="space-y-1">
+                            <div className="text-xs font-medium text-blue-600 mb-2 mt-3">
+                              다음주 계획된 할일
+                            </div>
+                            {nextWeekTasks.slice(0, 3).map((task: any) => (
+                              <div key={`next-${task.id}`} className="flex items-center space-x-2 p-2 bg-blue-50 rounded">
+                                <PriorityBadge priority={task.priority} size="sm" />
+                                <span className="text-xs text-blue-700 truncate flex-1">{task.title}</span>
+                              </div>
+                            ))}
+                            {nextWeekTasks.length > 3 && (
+                              <div className="text-xs text-blue-500 ml-4">
+                                외 {nextWeekTasks.length - 3}개 더...
+                              </div>
+                            )}
+                          </div>
+                        );
+                      }
+                      return null;
+                    })()}
+
+                    {weekTasks.filter((task: any) => !task.completed).length === 0 && 
+                     weekTasks.filter((task: any) => {
+                       const nextWeekStart = format(addDays(weekStart, 7), 'yyyy-MM-dd');
+                       const nextWeekEnd = format(addDays(weekEnd, 7), 'yyyy-MM-dd');
+                       return task.scheduledDate && 
+                              task.scheduledDate >= nextWeekStart && 
+                              task.scheduledDate <= nextWeekEnd;
+                     }).length === 0 && (
+                      <p className="text-xs text-gray-500 italic">다음 주 할일이 없습니다.</p>
                     )}
                   </div>
                 </div>
