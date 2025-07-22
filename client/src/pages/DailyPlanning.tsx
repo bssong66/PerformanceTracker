@@ -48,6 +48,7 @@ export default function DailyPlanning() {
     title: "",
     type: "focus",
   });
+  const [showCustomActivity, setShowCustomActivity] = useState(false);
 
   const { data: dailyTasks = [], isLoading: tasksLoading } = useQuery({
     queryKey: ['tasks', MOCK_USER_ID, today],
@@ -195,6 +196,7 @@ export default function DailyPlanning() {
     mutationFn: createTimeBlock,
     onSuccess: () => {
       setNewTimeBlock({ startTime: ":", endTime: ":", title: "", type: "focus" });
+      setShowCustomActivity(false);
       queryClient.invalidateQueries({ queryKey: ['timeBlocks', MOCK_USER_ID, today] });
       toast({
         title: "시간 블록 추가",
@@ -556,12 +558,51 @@ export default function DailyPlanning() {
                   
                   {/* Activity Input */}
                   <div className="col-span-2">
-                    <Input
-                      placeholder="활동"
-                      value={newTimeBlock.title}
-                      onChange={(e) => setNewTimeBlock(prev => ({ ...prev, title: e.target.value }))}
-                      className="text-xs h-7"
-                    />
+                    {showCustomActivity ? (
+                      <Input
+                        placeholder="활동 입력..."
+                        value={newTimeBlock.title}
+                        onChange={(e) => setNewTimeBlock(prev => ({ ...prev, title: e.target.value }))}
+                        onBlur={() => {
+                          if (!newTimeBlock.title.trim()) {
+                            setShowCustomActivity(false);
+                          }
+                        }}
+                        className="text-xs h-7"
+                        autoFocus
+                      />
+                    ) : (
+                      <Select
+                        value={newTimeBlock.title}
+                        onValueChange={(value) => {
+                          if (value === "기타") {
+                            setShowCustomActivity(true);
+                            setNewTimeBlock(prev => ({ ...prev, title: "" }));
+                          } else {
+                            setNewTimeBlock(prev => ({ ...prev, title: value }));
+                            setShowCustomActivity(false);
+                          }
+                        }}
+                      >
+                        <SelectTrigger className="h-7 text-xs">
+                          <SelectValue placeholder="활동" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {(() => {
+                            const commonActivities = ["회의", "업무", "휴식", "학습", "운동", "식사", "이동", "개인시간"];
+                            const existingActivities = Array.from(new Set((timeBlocks as any[]).map((block: any) => block.title)));
+                            const uniqueExisting = existingActivities.filter(title => !commonActivities.includes(title) && title !== "기타");
+                            const allActivities = [...uniqueExisting, ...commonActivities, "기타"];
+                            
+                            return allActivities.map((title: string) => (
+                              <SelectItem key={title} value={title}>
+                                {title}
+                              </SelectItem>
+                            ));
+                          })()}
+                        </SelectContent>
+                      </Select>
+                    )}
                   </div>
                   
                   {/* Add Button */}
