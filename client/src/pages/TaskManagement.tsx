@@ -167,8 +167,8 @@ export default function TaskManagement() {
       endDate: '',
       projectId: null, // Always null for independent tasks
       imageUrls: [],
-      coreValue: '',
-      annualGoal: ''
+      coreValue: 'none',
+      annualGoal: 'none'
     });
     setEditingTask(null);
   };
@@ -187,8 +187,8 @@ export default function TaskManagement() {
       endDate: task.endDate || '',
       projectId: null, // Always null for independent tasks
       imageUrls: task.imageUrls || [],
-      coreValue: (task as any).coreValue || '',
-      annualGoal: (task as any).annualGoal || ''
+      coreValue: (task as any).coreValue || 'none',
+      annualGoal: (task as any).annualGoal || 'none'
     });
     setEditingTask(task);
     setShowTaskDialog(true);
@@ -206,7 +206,9 @@ export default function TaskManagement() {
       ...taskForm,
       userId: MOCK_USER_ID,
       completed: false,
-      projectId: null // Ensure tasks are always independent
+      projectId: null, // Ensure tasks are always independent
+      coreValue: taskForm.coreValue === 'none' ? null : taskForm.coreValue,
+      annualGoal: taskForm.annualGoal === 'none' ? null : taskForm.annualGoal
     };
 
     if (editingTask) {
@@ -312,7 +314,7 @@ export default function TaskManagement() {
                     <SelectValue placeholder="핵심가치를 선택하세요 (선택사항)" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">선택 안함</SelectItem>
+                    <SelectItem value="none">선택 안함</SelectItem>
                     {foundation && (
                       <>
                         {foundation.coreValue1 && (
@@ -343,7 +345,7 @@ export default function TaskManagement() {
                     <SelectValue placeholder="연간목표를 선택하세요 (선택사항)" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">선택 안함</SelectItem>
+                    <SelectItem value="none">선택 안함</SelectItem>
                     {annualGoals.map((goal: any) => (
                       <SelectItem key={goal.id} value={goal.title}>
                         {goal.title}
@@ -553,12 +555,12 @@ export default function TaskManagement() {
 
                   {/* Core Value and Annual Goal indicators */}
                   <div className="flex flex-wrap gap-1 mb-2">
-                    {(task as any).coreValue && (
+                    {(task as any).coreValue && (task as any).coreValue !== 'none' && (
                       <span className="px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded-full">
                         🎯 {(task as any).coreValue}
                       </span>
                     )}
-                    {(task as any).annualGoal && (
+                    {(task as any).annualGoal && (task as any).annualGoal !== 'none' && (
                       <span className="px-2 py-1 bg-purple-100 text-purple-700 text-xs rounded-full">
                         📅 {(task as any).annualGoal}
                       </span>
