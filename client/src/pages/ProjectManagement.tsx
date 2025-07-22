@@ -8,7 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { Plus, Folder, Image, Eye, Trash2, Calendar, Edit, ChevronDown, ChevronRight } from 'lucide-react';
+import { Plus, Folder, Image, Eye, Trash2, Calendar, Edit, ChevronDown, ChevronRight, ChevronLeft } from 'lucide-react';
 import { format } from 'date-fns';
 import { ko } from 'date-fns/locale';
 
@@ -49,6 +49,8 @@ export default function ProjectManagement() {
   const [showProjectDialog, setShowProjectDialog] = useState(false);
   const [editingProject, setEditingProject] = useState<Project | null>(null);
   const [viewingImage, setViewingImage] = useState<string | null>(null);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [currentImageProject, setCurrentImageProject] = useState<Project | null>(null);
   const [showTaskDialog, setShowTaskDialog] = useState(false);
   const [selectedProjectForTask, setSelectedProjectForTask] = useState<number | null>(null);
   const [expandedProjects, setExpandedProjects] = useState<Set<number>>(new Set());
@@ -731,7 +733,14 @@ export default function ProjectManagement() {
                             src={imageUrl}
                             alt={`프로젝트 이미지 ${index + 1}`}
                             className="w-16 h-16 object-cover rounded border cursor-pointer hover:opacity-80"
-                            onClick={() => setViewingImage(imageUrl)}
+                            onClick={() => {
+                              setViewingImage(imageUrl);
+                              setCurrentImageIndex(index);
+                              setCurrentImageProject({
+                                ...editingProject,
+                                imageUrls: projectForm.imageUrls
+                              } as Project);
+                            }}
                           />
                           <Button
                             type="button"
@@ -894,7 +903,11 @@ export default function ProjectManagement() {
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => setViewingImage(project.imageUrls![0])}
+                        onClick={() => {
+                          setViewingImage(project.imageUrls![0]);
+                          setCurrentImageIndex(0);
+                          setCurrentImageProject(project);
+                        }}
                         className="h-8 w-8 p-0 relative"
                         title={`${project.imageUrls!.length}개의 이미지`}
                       >
@@ -1055,23 +1068,81 @@ export default function ProjectManagement() {
         })}
       </div>
 
-      {/* Image Viewer Dialog */}
-      {viewingImage && (
-        <Dialog open={true} onOpenChange={() => setViewingImage(null)}>
-          <DialogContent className="sm:max-w-2xl">
+      {/* Image Viewer Dialog with Carousel */}
+      {viewingImage && currentImageProject && (
+        <Dialog open={true} onOpenChange={() => {
+          setViewingImage(null);
+          setCurrentImageProject(null);
+          setCurrentImageIndex(0);
+        }}>
+          <DialogContent className="sm:max-w-3xl">
             <DialogHeader>
               <DialogTitle>이미지 보기</DialogTitle>
               <DialogDescription>
-                프로젝트 이미지를 확인하세요.
+                프로젝트 이미지를 확인하세요. ({currentImageIndex + 1}/{currentImageProject.imageUrls?.length || 0})
               </DialogDescription>
             </DialogHeader>
-            <div className="flex justify-center">
+            <div className="relative flex items-center justify-center">
+              {/* Previous Button */}
+              {currentImageProject.imageUrls && currentImageProject.imageUrls.length > 1 && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    const newIndex = currentImageIndex > 0 ? currentImageIndex - 1 : currentImageProject.imageUrls!.length - 1;
+                    setCurrentImageIndex(newIndex);
+                    setViewingImage(currentImageProject.imageUrls![newIndex]);
+                  }}
+                  className="absolute left-2 z-10 h-10 w-10 p-0 bg-white/80 hover:bg-white"
+                  title="이전 이미지"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+              )}
+
+              {/* Image */}
               <img
                 src={viewingImage}
-                alt="프로젝트 이미지"
-                className="max-w-full h-auto rounded-lg"
+                alt={`프로젝트 이미지 ${currentImageIndex + 1}`}
+                className="max-w-full h-auto rounded-lg max-h-96 object-contain"
               />
+
+              {/* Next Button */}
+              {currentImageProject.imageUrls && currentImageProject.imageUrls.length > 1 && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    const newIndex = currentImageIndex < currentImageProject.imageUrls!.length - 1 ? currentImageIndex + 1 : 0;
+                    setCurrentImageIndex(newIndex);
+                    setViewingImage(currentImageProject.imageUrls![newIndex]);
+                  }}
+                  className="absolute right-2 z-10 h-10 w-10 p-0 bg-white/80 hover:bg-white"
+                  title="다음 이미지"
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              )}
             </div>
+
+            {/* Image indicators */}
+            {currentImageProject.imageUrls && currentImageProject.imageUrls.length > 1 && (
+              <div className="flex justify-center space-x-2 mt-4">
+                {currentImageProject.imageUrls.map((_, index) => (
+                  <button
+                    key={index}
+                    onClick={() => {
+                      setCurrentImageIndex(index);
+                      setViewingImage(currentImageProject.imageUrls![index]);
+                    }}
+                    className={`w-2 h-2 rounded-full transition-colors ${
+                      index === currentImageIndex ? 'bg-blue-600' : 'bg-gray-300'
+                    }`}
+                    title={`이미지 ${index + 1}로 이동`}
+                  />
+                ))}
+              </div>
+            )}
           </DialogContent>
         </Dialog>
       )}
