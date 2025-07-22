@@ -45,11 +45,13 @@ export default function Foundation() {
   const saveFoundationMutation = useMutation({
     mutationFn: saveFoundation,
     onSuccess: () => {
+      // Invalidate foundation queries across all pages
+      queryClient.invalidateQueries({ queryKey: [api.foundation.get(MOCK_USER_ID)] });
+      queryClient.invalidateQueries({ queryKey: ['foundation', MOCK_USER_ID] });
       toast({
         title: "저장 완료",
         description: "가치 중심 계획이 저장되었습니다.",
       });
-      queryClient.invalidateQueries({ queryKey: [api.foundation.get(MOCK_USER_ID)] });
     },
     onError: () => {
       toast({
@@ -64,7 +66,9 @@ export default function Foundation() {
     mutationFn: createAnnualGoal,
     onSuccess: () => {
       setNewGoal("");
+      // Invalidate goals queries across all pages
       queryClient.invalidateQueries({ queryKey: [api.goals.list(MOCK_USER_ID, currentYear)] });
+      queryClient.invalidateQueries({ queryKey: ['goals', MOCK_USER_ID, currentYear] });
       toast({
         title: "목표 추가",
         description: "새로운 연간 목표가 추가되었습니다.",
@@ -82,7 +86,9 @@ export default function Foundation() {
   const deleteGoalMutation = useMutation({
     mutationFn: deleteAnnualGoal,
     onSuccess: () => {
+      // Invalidate goals queries across all pages
       queryClient.invalidateQueries({ queryKey: [api.goals.list(MOCK_USER_ID, currentYear)] });
+      queryClient.invalidateQueries({ queryKey: ['goals', MOCK_USER_ID, currentYear] });
       toast({
         title: "목표 삭제",
         description: "연간 목표가 삭제되었습니다.",

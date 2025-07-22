@@ -11,7 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
-import { Plus, ListTodo, Calendar, Clock, Eye, Trash2, Edit, CheckCircle, Circle, Camera, Image, ArrowLeft, ArrowRight } from 'lucide-react';
+import { Plus, ListTodo, Calendar, Clock, Eye, Trash2, Edit, CheckCircle, Circle, Camera, Image, ArrowLeft, ArrowRight, RefreshCw } from 'lucide-react';
 import { format } from 'date-fns';
 import { ko } from 'date-fns/locale';
 
@@ -38,7 +38,7 @@ interface Task {
 
 
 
-export default function TaskManagement() {
+function TaskManagement() {
   const { toast } = useToast();
   const [showTaskDialog, setShowTaskDialog] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
@@ -67,7 +67,7 @@ export default function TaskManagement() {
   });
 
   // Fetch foundations for core values
-  const { data: foundation } = useQuery({
+  const { data: foundation, refetch: refetchFoundation, isLoading: foundationLoading } = useQuery({
     queryKey: ['foundation', MOCK_USER_ID],
     queryFn: async () => {
       const response = await fetch(`/api/foundation/${MOCK_USER_ID}`);
@@ -82,7 +82,7 @@ export default function TaskManagement() {
   });
 
   // Fetch annual goals
-  const { data: annualGoals = [] } = useQuery({
+  const { data: annualGoals = [], refetch: refetchGoals, isLoading: goalsLoading } = useQuery({
     queryKey: ['goals', MOCK_USER_ID, new Date().getFullYear()],
     queryFn: async () => {
       const response = await fetch(`/api/goals/${MOCK_USER_ID}?year=${new Date().getFullYear()}`);
@@ -92,6 +92,18 @@ export default function TaskManagement() {
       return response.json();
     }
   });
+
+  // Function to refresh foundation and goals data
+  const handleRefreshData = async () => {
+    await Promise.all([
+      refetchFoundation(),
+      refetchGoals()
+    ]);
+    toast({ 
+      title: "데이터 새로고침", 
+      description: "가치 중심 계획 데이터를 새로고침했습니다." 
+    });
+  };
 
 
 
@@ -271,13 +283,26 @@ export default function TaskManagement() {
           <p className="text-gray-600">A-B-C 우선순위로 할일을 관리하세요</p>
         </div>
         
-        <Dialog open={showTaskDialog} onOpenChange={setShowTaskDialog}>
-          <DialogTrigger asChild>
-            <Button onClick={openCreateDialog} className="bg-blue-600 hover:bg-blue-700">
-              <Plus className="h-4 w-4 mr-2" />
-              새 할일
-            </Button>
-          </DialogTrigger>
+        <div className="flex items-center space-x-3">
+          <Button
+            variant="outline"
+            onClick={handleRefreshData}
+            disabled={foundationLoading || goalsLoading}
+            className="flex items-center space-x-2"
+          >
+            <RefreshCw className={`h-4 w-4 ${foundationLoading || goalsLoading ? 'animate-spin' : ''}`} />
+            <span>가치계획 새로고침</span>
+          </Button>
+        </div>
+      </div>
+
+      <Dialog open={showTaskDialog} onOpenChange={setShowTaskDialog}>
+        <DialogTrigger asChild>
+          <Button onClick={openCreateDialog} className="bg-blue-600 hover:bg-blue-700">
+            <Plus className="h-4 w-4 mr-2" />
+            새 할일
+          </Button>
+        </DialogTrigger>
           <DialogContent className="sm:max-w-md">
             <DialogHeader>
               <DialogTitle>
@@ -492,9 +517,6 @@ export default function TaskManagement() {
             </form>
           </DialogContent>
         </Dialog>
-      </div>
-
-
 
       {/* Tasks by Priority */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -701,3 +723,5 @@ export default function TaskManagement() {
     </div>
   );
 }
+
+export default TaskManagement;
