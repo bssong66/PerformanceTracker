@@ -815,27 +815,6 @@ export default function DailyPlanning() {
                   {saveReflectionMutation.isPending ? '저장 중...' : '저장'}
                 </Button>
               </div>
-
-              {/* 이월된 할일 목록 */}
-              {carriedOverTasks.length > 0 && (
-                <div className="mt-4 pt-4 border-t border-gray-200">
-                  <h4 className="text-sm font-medium text-orange-600 mb-2 flex items-center space-x-1">
-                    <AlertTriangle className="h-3 w-3" />
-                    <span>어제에서 이월된 할일</span>
-                  </h4>
-                  <div className="space-y-1">
-                    {carriedOverTasks.map((task: any) => (
-                      <div key={task.id} className="flex items-center space-x-2 text-xs bg-orange-50 p-2 rounded">
-                        <PriorityBadge priority={task.priority as 'A' | 'B' | 'C'} />
-                        <span className="flex-1">{task.title}</span>
-                        <span className="text-orange-600 text-xs">
-                          {task.originalScheduledDate}부터
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
             </CardContent>
           </Card>
         </div>
