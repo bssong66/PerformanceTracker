@@ -51,25 +51,52 @@ export default function HabitManagement() {
   // Fetch habits
   const { data: habits = [] } = useQuery({
     queryKey: ['habits', MOCK_USER_ID],
-    queryFn: () => fetch(`/api/habits/${MOCK_USER_ID}`).then(res => res.json())
+    queryFn: async () => {
+      const response = await fetch(`/api/habits/${MOCK_USER_ID}`);
+      if (!response.ok) {
+        return [];
+      }
+      const data = await response.json();
+      return Array.isArray(data) ? data : [];
+    }
   });
 
   // Fetch foundation for core values
   const { data: foundation } = useQuery({
     queryKey: ['foundation', MOCK_USER_ID],
-    queryFn: () => fetch(`/api/foundation/${MOCK_USER_ID}`).then(res => res.json())
+    queryFn: async () => {
+      const response = await fetch(`/api/foundation/${MOCK_USER_ID}`);
+      if (!response.ok) {
+        return null;
+      }
+      return response.json();
+    }
   });
 
   // Fetch annual goals
   const { data: annualGoals = [] } = useQuery({
     queryKey: ['goals', MOCK_USER_ID],
-    queryFn: () => fetch(`/api/goals/${MOCK_USER_ID}`).then(res => res.json())
+    queryFn: async () => {
+      const response = await fetch(`/api/goals/${MOCK_USER_ID}`);
+      if (!response.ok) {
+        return [];
+      }
+      const data = await response.json();
+      return Array.isArray(data) ? data : [];
+    }
   });
 
   // Fetch today's habit logs
   const { data: habitLogs = [] } = useQuery({
     queryKey: ['habit-logs', MOCK_USER_ID, today],
-    queryFn: () => fetch(`/api/habit-logs/${MOCK_USER_ID}/${today}`).then(res => res.json())
+    queryFn: async () => {
+      const response = await fetch(`/api/habit-logs/${MOCK_USER_ID}/${today}`);
+      if (!response.ok) {
+        return [];
+      }
+      const data = await response.json();
+      return Array.isArray(data) ? data : [];
+    }
   });
 
   // Create habit mutation

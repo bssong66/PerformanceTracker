@@ -511,7 +511,7 @@ export class MemStorage implements IStorage {
 
 import { drizzle } from 'drizzle-orm/neon-http';
 import { neon } from '@neondatabase/serverless';
-import { eq, and } from 'drizzle-orm';
+import { eq, and, inArray } from 'drizzle-orm';
 
 // Initialize database connection
 const sql = neon(process.env.DATABASE_URL!);
@@ -735,7 +735,7 @@ export class DatabaseStorage implements IStorage {
       .from(habitLogs)
       .where(and(
         eq(habitLogs.date, date),
-        // Note: Would need proper IN operator for habitIds
+        inArray(habitLogs.habitId, habitIds)
       ));
   }
 
