@@ -388,13 +388,7 @@ export default function WeeklyReview() {
           {/* Next Week Preparation */}
           <div className="space-y-6">
             <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-2">
-                  <Target className="h-5 w-5" />
-                  <span>다음 주 준비</span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-6">
+              <CardContent className="space-y-6 pt-6">
                 {/* Weekly Big 3 */}
                 <div>
                   <Label className="text-sm font-semibold text-gray-900 mb-3 block">
