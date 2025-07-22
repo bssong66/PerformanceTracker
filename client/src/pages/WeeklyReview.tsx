@@ -7,7 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { ProgressBar } from "@/components/ProgressBar";
 import { PriorityBadge } from "@/components/PriorityBadge";
-import { Save, TrendingUp, BarChart3, Target, Plus, X, ChevronLeft, ChevronRight, Siren, AlertTriangle } from "lucide-react";
+import { Save, TrendingUp, BarChart3, Target, Plus, X, ChevronLeft, ChevronRight, Siren } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { api, saveWeeklyReview } from "@/lib/api";
 import { queryClient } from "@/lib/queryClient";
@@ -424,6 +424,30 @@ export default function WeeklyReview() {
                     <span>다음 주 할일</span>
                   </h4>
                   <div className="space-y-2 max-h-48 overflow-y-auto">
+                    {/* Incomplete tasks from this week */}
+                    {(weekTasks as any[]).filter((task: any) => !task.completed).length > 0 && (
+                      <div className="space-y-1">
+                        <div className="text-xs font-medium text-red-600 mb-2 flex items-center space-x-1">
+                          <Siren className="h-3 w-3 text-red-500" />
+                          <span>이번주 미완료</span>
+                          <Siren className="h-3 w-3 text-yellow-500" />
+                        </div>
+                        {(weekTasks as any[]).filter((task: any) => !task.completed).slice(0, 3).map((task: any) => (
+                          <div key={`incomplete-${task.id}`} className="flex items-center space-x-2 p-2 bg-red-50 rounded border-l-2 border-red-200">
+                            <Siren className="h-3 w-3 text-red-500 animate-pulse" />
+                            <PriorityBadge priority={task.priority} size="sm" />
+                            <span className="text-xs text-red-700 truncate flex-1">{task.title}</span>
+                            <Siren className="h-3 w-3 text-yellow-500 animate-pulse" />
+                          </div>
+                        ))}
+                        {(weekTasks as any[]).filter((task: any) => !task.completed).length > 3 && (
+                          <div className="text-xs text-red-500 ml-4">
+                            외 {(weekTasks as any[]).filter((task: any) => !task.completed).length - 3}개 더...
+                          </div>
+                        )}
+                      </div>
+                    )}
+                    
                     {/* Next week scheduled tasks */}
                     {(() => {
                       const nextWeekStart = format(addDays(weekStart, 7), 'yyyy-MM-dd');
@@ -457,7 +481,8 @@ export default function WeeklyReview() {
                       return null;
                     })()}
 
-                    {(weekTasks as any[]).filter((task: any) => {
+                    {(weekTasks as any[]).filter((task: any) => !task.completed).length === 0 && 
+                     (weekTasks as any[]).filter((task: any) => {
                        const nextWeekStart = format(addDays(weekStart, 7), 'yyyy-MM-dd');
                        const nextWeekEnd = format(addDays(weekEnd, 7), 'yyyy-MM-dd');
                        return task.scheduledDate && 
