@@ -56,6 +56,7 @@ export interface IStorage {
   getHabitLogsForDate(userId: number, date: string): Promise<HabitLog[]>;
   createHabitLog(log: InsertHabitLog): Promise<HabitLog>;
   updateHabitLog(id: number, updates: Partial<HabitLog>): Promise<HabitLog | undefined>;
+  deleteHabitLog(habitId: number, userId: number, date: string): Promise<boolean>;
   
   // Weekly review methods
   getWeeklyReviews(userId: number): Promise<WeeklyReview[]>;
@@ -205,6 +206,9 @@ export class MemStorage implements IStorage {
       color: project.color ?? "#3B82F6",
       startDate: project.startDate ?? null,
       endDate: project.endDate ?? null,
+      coreValue: project.coreValue ?? null,
+      annualGoal: project.annualGoal ?? null,
+      imageUrls: project.imageUrls ?? null,
       createdAt: new Date()
     };
     this.projects.set(id, newProject);
@@ -346,6 +350,10 @@ export class MemStorage implements IStorage {
       isActive: habit.isActive ?? true,
       currentStreak: 0,
       longestStreak: 0,
+      coreValue: habit.coreValue ?? null,
+      annualGoal: habit.annualGoal ?? null,
+      excludeWeekends: habit.excludeWeekends ?? null,
+      excludeHolidays: habit.excludeHolidays ?? null,
       createdAt: new Date()
     };
     this.habits.set(id, newHabit);
@@ -409,6 +417,16 @@ export class MemStorage implements IStorage {
     const updated = { ...log, ...updates };
     this.habitLogs.set(id, updated);
     return updated;
+  }
+
+  async deleteHabitLog(habitId: number, userId: number, date: string): Promise<boolean> {
+    const existingLog = Array.from(this.habitLogs.values())
+      .find(log => log.habitId === habitId && log.date === date);
+    
+    if (existingLog) {
+      return this.habitLogs.delete(existingLog.id);
+    }
+    return false;
   }
 
   // Weekly review methods
@@ -751,6 +769,16 @@ export class DatabaseStorage implements IStorage {
       .where(eq(habitLogs.id, id))
       .returning();
     return result[0];
+  }
+
+  async deleteHabitLog(habitId: number, userId: number, date: string): Promise<boolean> {
+    const result = await db
+      .delete(habitLogs)
+      .where(and(
+        eq(habitLogs.habitId, habitId),
+        eq(habitLogs.date, date)
+      ));
+    return result.rowCount > 0;
   }
 
   // Weekly review methods

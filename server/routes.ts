@@ -277,7 +277,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(habits);
     } catch (error) {
       console.error('Get habits error:', error);
-      res.status(500).json({ message: "Internal server error", error: error.message });
+      res.status(500).json({ message: "Internal server error", error: error instanceof Error ? error.message : String(error) });
     }
   });
 
@@ -290,7 +290,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(habit);
     } catch (error) {
       console.error('Habit creation error:', error);
-      res.status(400).json({ message: "Invalid habit data", error: error.message });
+      res.status(400).json({ message: "Invalid habit data", error: error instanceof Error ? error.message : String(error) });
     }
   });
 
@@ -336,7 +336,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(logs);
     } catch (error) {
       console.error('Get habit logs error:', error);
-      res.status(500).json({ message: "Internal server error", error: error.message });
+      res.status(500).json({ message: "Internal server error", error: error instanceof Error ? error.message : String(error) });
     }
   });
 
@@ -362,6 +362,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json(log);
     } catch (error) {
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.delete("/api/habit-logs", async (req, res) => {
+    try {
+      const { habitId, userId, date } = req.body;
+      const success = await storage.deleteHabitLog(habitId, userId, date);
+      res.json({ success });
+    } catch (error) {
+      console.error('Delete habit log error:', error);
       res.status(500).json({ message: "Internal server error" });
     }
   });
