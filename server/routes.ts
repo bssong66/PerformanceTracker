@@ -271,20 +271,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/habits/:userId", async (req, res) => {
     try {
       const userId = parseInt(req.params.userId);
+      console.log('Getting habits for user:', userId);
       const habits = await storage.getHabits(userId);
+      console.log('Found habits:', habits);
       res.json(habits);
     } catch (error) {
-      res.status(500).json({ message: "Internal server error" });
+      console.error('Get habits error:', error);
+      res.status(500).json({ message: "Internal server error", error: error.message });
     }
   });
 
   app.post("/api/habits", async (req, res) => {
     try {
+      console.log('Creating habit with data:', req.body);
       const habitData = insertHabitSchema.parse(req.body);
+      console.log('Parsed habit data:', habitData);
       const habit = await storage.createHabit(habitData);
       res.json(habit);
     } catch (error) {
-      res.status(400).json({ message: "Invalid habit data" });
+      console.error('Habit creation error:', error);
+      res.status(400).json({ message: "Invalid habit data", error: error.message });
     }
   });
 
@@ -324,10 +330,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = parseInt(req.params.userId);
       const date = req.params.date;
+      console.log('Getting habit logs for user:', userId, 'date:', date);
       const logs = await storage.getHabitLogsForDate(userId, date);
+      console.log('Found habit logs:', logs);
       res.json(logs);
     } catch (error) {
-      res.status(500).json({ message: "Internal server error" });
+      console.error('Get habit logs error:', error);
+      res.status(500).json({ message: "Internal server error", error: error.message });
     }
   });
 
