@@ -1202,7 +1202,7 @@ export default function ProjectManagement() {
                   onChange={(e) => setTaskForm(prev => ({ ...prev, startDate: e.target.value }))}
                 />
                 {getSelectedProject()?.startDate && (
-                  <p className="text-xs text-gray-500 mt-1">
+                  <p className="text-xs text-gray-500 mt-1 whitespace-nowrap">
                     프로젝트 기간: {getSelectedProject()?.startDate} ~ {getSelectedProject()?.endDate || '미정'}
                   </p>
                 )}
