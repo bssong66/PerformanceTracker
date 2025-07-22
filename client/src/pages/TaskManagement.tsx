@@ -53,13 +53,42 @@ export default function TaskManagement() {
     startDate: '',
     endDate: '',
     projectId: null as number | null,
-    imageUrls: [] as string[]
+    imageUrls: [] as string[],
+    coreValue: '',
+    annualGoal: ''
   });
 
   // Fetch tasks
   const { data: tasks = [] } = useQuery({
     queryKey: ['tasks', MOCK_USER_ID],
     queryFn: () => fetch(`/api/tasks/${MOCK_USER_ID}`).then(res => res.json())
+  });
+
+  // Fetch foundations for core values
+  const { data: foundation } = useQuery({
+    queryKey: ['foundation', MOCK_USER_ID],
+    queryFn: async () => {
+      const response = await fetch(`/api/foundation/${MOCK_USER_ID}`);
+      if (!response.ok && response.status !== 404) {
+        throw new Error('Failed to fetch foundation');
+      }
+      if (response.status === 404) {
+        return null;
+      }
+      return response.json();
+    }
+  });
+
+  // Fetch annual goals
+  const { data: annualGoals = [] } = useQuery({
+    queryKey: ['goals', MOCK_USER_ID, new Date().getFullYear()],
+    queryFn: async () => {
+      const response = await fetch(`/api/goals/${MOCK_USER_ID}?year=${new Date().getFullYear()}`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch goals');
+      }
+      return response.json();
+    }
   });
 
 
@@ -137,7 +166,9 @@ export default function TaskManagement() {
       startDate: '',
       endDate: '',
       projectId: null, // Always null for independent tasks
-      imageUrls: []
+      imageUrls: [],
+      coreValue: '',
+      annualGoal: ''
     });
     setEditingTask(null);
   };
@@ -155,7 +186,9 @@ export default function TaskManagement() {
       startDate: task.startDate || '',
       endDate: task.endDate || '',
       projectId: null, // Always null for independent tasks
-      imageUrls: task.imageUrls || []
+      imageUrls: task.imageUrls || [],
+      coreValue: (task as any).coreValue || '',
+      annualGoal: (task as any).annualGoal || ''
     });
     setEditingTask(task);
     setShowTaskDialog(true);
@@ -230,6 +263,9 @@ export default function TaskManagement() {
               <DialogTitle>
                 {editingTask ? '할일 수정' : '새 할일 만들기'}
               </DialogTitle>
+              <p className="text-sm text-gray-500 mt-2">
+                {editingTask ? '할일 정보를 수정하세요.' : '새로운 독립 할일을 생성하세요.'}
+              </p>
             </DialogHeader>
             
             <form onSubmit={handleSubmit} className="space-y-4">
@@ -259,6 +295,60 @@ export default function TaskManagement() {
                     <SelectItem value="A">A급 (긴급+중요)</SelectItem>
                     <SelectItem value="B">B급 (중요)</SelectItem>
                     <SelectItem value="C">C급 (일반)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Core Values Selection */}
+              <div>
+                <Label>연관 핵심가치</Label>
+                <Select
+                  value={taskForm.coreValue}
+                  onValueChange={(value) => 
+                    setTaskForm(prev => ({ ...prev, coreValue: value }))
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="핵심가치를 선택하세요 (선택사항)" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">선택 안함</SelectItem>
+                    {foundation && (
+                      <>
+                        {foundation.coreValue1 && (
+                          <SelectItem value={foundation.coreValue1}>{foundation.coreValue1}</SelectItem>
+                        )}
+                        {foundation.coreValue2 && (
+                          <SelectItem value={foundation.coreValue2}>{foundation.coreValue2}</SelectItem>
+                        )}
+                        {foundation.coreValue3 && (
+                          <SelectItem value={foundation.coreValue3}>{foundation.coreValue3}</SelectItem>
+                        )}
+                      </>
+                    )}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Annual Goals Selection */}
+              <div>
+                <Label>연관 연간목표</Label>
+                <Select
+                  value={taskForm.annualGoal}
+                  onValueChange={(value) => 
+                    setTaskForm(prev => ({ ...prev, annualGoal: value }))
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="연간목표를 선택하세요 (선택사항)" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">선택 안함</SelectItem>
+                    {annualGoals.map((goal: any) => (
+                      <SelectItem key={goal.id} value={goal.title}>
+                        {goal.title}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
@@ -460,6 +550,20 @@ export default function TaskManagement() {
                       {task.notes}
                     </p>
                   )}
+
+                  {/* Core Value and Annual Goal indicators */}
+                  <div className="flex flex-wrap gap-1 mb-2">
+                    {(task as any).coreValue && (
+                      <span className="px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded-full">
+                        🎯 {(task as any).coreValue}
+                      </span>
+                    )}
+                    {(task as any).annualGoal && (
+                      <span className="px-2 py-1 bg-purple-100 text-purple-700 text-xs rounded-full">
+                        📅 {(task as any).annualGoal}
+                      </span>
+                    )}
+                  </div>
 
                   {/* Images */}
                   {task.imageUrls && task.imageUrls.length > 0 && (
