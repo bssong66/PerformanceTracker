@@ -803,7 +803,7 @@ export default function ProjectManagement() {
               
               {/* Project Tasks (Expandable) */}
               {isExpanded && (
-                <div className="border-t bg-gray-50 px-6 py-4">
+                <div className="border-t bg-gray-50 px-6 py-4 ml-5">
                   {projectTasks.length > 0 ? (
                     <>
                       {/* Sorting Controls */}
