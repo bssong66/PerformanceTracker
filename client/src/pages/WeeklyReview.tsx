@@ -434,8 +434,10 @@ export default function WeeklyReview() {
                         </div>
                         {(weekTasks as any[]).filter((task: any) => !task.completed).slice(0, 3).map((task: any) => (
                           <div key={`incomplete-${task.id}`} className="flex items-center space-x-2 p-2 bg-red-50 rounded border-l-2 border-red-200">
+                            <Siren className="h-3 w-3 text-red-500 animate-pulse" />
                             <PriorityBadge priority={task.priority} size="sm" />
                             <span className="text-xs text-red-700 truncate flex-1">{task.title}</span>
+                            <Siren className="h-3 w-3 text-yellow-500 animate-pulse" />
                           </div>
                         ))}
                         {(weekTasks as any[]).filter((task: any) => !task.completed).length > 3 && (
