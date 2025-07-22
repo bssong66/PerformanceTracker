@@ -7,7 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { ProgressBar } from "@/components/ProgressBar";
 import { PriorityBadge } from "@/components/PriorityBadge";
-import { Save, TrendingUp, BarChart3, Target } from "lucide-react";
+import { Save, TrendingUp, BarChart3, Target, Plus, X, ChevronLeft, ChevronRight } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { api, saveWeeklyReview } from "@/lib/api";
 import { queryClient } from "@/lib/queryClient";
@@ -31,6 +31,10 @@ export default function WeeklyReview() {
   const [workHours, setWorkHours] = useState(0);
   const [personalHours, setPersonalHours] = useState(0);
   const [valueAlignments, setValueAlignments] = useState([85, 90, 65]);
+  const [selectedImages, setSelectedImages] = useState<File[]>([]);
+  const [imagePreviews, setImagePreviews] = useState<string[]>([]);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [showImageViewer, setShowImageViewer] = useState(false);
 
   const { data: weeklyReview } = useQuery({
     queryKey: [api.weeklyReview.get(MOCK_USER_ID, weekStartDate)],
@@ -186,6 +190,44 @@ export default function WeeklyReview() {
     };
     
     return keywordMap[value] || [value];
+  };
+
+  // Image handling functions
+  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length > 0) {
+      setSelectedImages(prev => [...prev, ...files]);
+      
+      // Create previews for new images
+      files.forEach(file => {
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          if (event.target?.result) {
+            setImagePreviews(prev => [...prev, event.target!.result as string]);
+          }
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+  };
+
+  const handleRemoveImage = (index: number) => {
+    setSelectedImages(prev => prev.filter((_, i) => i !== index));
+    setImagePreviews(prev => prev.filter((_, i) => i !== index));
+    if (currentImageIndex >= imagePreviews.length - 1) {
+      setCurrentImageIndex(Math.max(0, imagePreviews.length - 2));
+    }
+  };
+
+  // Auto-resize textarea
+  const handleReflectionChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const textarea = e.target;
+    setReflection(textarea.value);
+    
+    // Reset height to auto to get the correct scrollHeight
+    textarea.style.height = 'auto';
+    // Set height to scrollHeight
+    textarea.style.height = `${Math.max(120, textarea.scrollHeight)}px`;
   };
 
   // Set initial values when weekly review data loads
@@ -427,10 +469,60 @@ export default function WeeklyReview() {
                     id="reflection"
                     placeholder="이번 주를 돌아보며 배운 점, 개선할 점을 기록하세요..."
                     value={reflection}
-                    onChange={(e) => setReflection(e.target.value)}
-                    rows={5}
-                    className="resize-none"
+                    onChange={handleReflectionChange}
+                    className="resize-none min-h-[120px]"
+                    style={{ height: 'auto' }}
                   />
+                  
+                  {/* Image Upload */}
+                  <div className="mt-4">
+                    <div className="mb-2">
+                      <input
+                        type="file"
+                        id="weekly-image-upload"
+                        accept="image/*"
+                        multiple
+                        onChange={handleImageSelect}
+                        className="hidden"
+                      />
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => document.getElementById('weekly-image-upload')?.click()}
+                        className="h-8 px-3 text-sm"
+                      >
+                        <Plus className="h-4 w-4 mr-1" />
+                        이미지 추가
+                      </Button>
+                    </div>
+                    
+                    {/* Image Previews */}
+                    {imagePreviews.length > 0 && (
+                      <div className="space-y-2">
+                        <div className="flex flex-wrap gap-2">
+                          {imagePreviews.map((preview, index) => (
+                            <div key={index} className="relative group">
+                              <img
+                                src={preview}
+                                alt={`Preview ${index + 1}`}
+                                className="w-20 h-20 object-cover rounded cursor-pointer"
+                                onClick={() => {
+                                  setCurrentImageIndex(index);
+                                  setShowImageViewer(true);
+                                }}
+                              />
+                              <button
+                                onClick={() => handleRemoveImage(index)}
+                                className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity"
+                              >
+                                ×
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -448,6 +540,53 @@ export default function WeeklyReview() {
           </div>
         </div>
       </div>
+
+      {/* Image Viewer Dialog */}
+      {showImageViewer && imagePreviews.length > 0 && (
+        <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50" onClick={() => setShowImageViewer(false)}>
+          <div className="relative max-w-4xl max-h-full p-4" onClick={(e) => e.stopPropagation()}>
+            {/* Close Button */}
+            <button
+              onClick={() => setShowImageViewer(false)}
+              className="absolute top-2 right-2 text-white bg-black bg-opacity-50 rounded-full p-2 hover:bg-opacity-75 z-10"
+            >
+              <X className="h-5 w-5" />
+            </button>
+            
+            {/* Navigation Buttons */}
+            {imagePreviews.length > 1 && (
+              <>
+                <button
+                  onClick={() => setCurrentImageIndex((prev) => (prev - 1 + imagePreviews.length) % imagePreviews.length)}
+                  className="absolute left-2 top-1/2 transform -translate-y-1/2 text-white bg-black bg-opacity-50 rounded-full p-2 hover:bg-opacity-75 z-10"
+                >
+                  <ChevronLeft className="h-6 w-6" />
+                </button>
+                <button
+                  onClick={() => setCurrentImageIndex((prev) => (prev + 1) % imagePreviews.length)}
+                  className="absolute right-2 top-1/2 transform -translate-y-1/2 text-white bg-black bg-opacity-50 rounded-full p-2 hover:bg-opacity-75 z-10"
+                >
+                  <ChevronRight className="h-6 w-6" />
+                </button>
+              </>
+            )}
+            
+            {/* Current Image */}
+            <img
+              src={imagePreviews[currentImageIndex]}
+              alt={`Image ${currentImageIndex + 1}`}
+              className="max-w-full max-h-full object-contain"
+            />
+            
+            {/* Image Counter */}
+            {imagePreviews.length > 1 && (
+              <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 text-white bg-black bg-opacity-50 px-3 py-1 rounded">
+                {currentImageIndex + 1} / {imagePreviews.length}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
