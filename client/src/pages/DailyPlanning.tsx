@@ -186,6 +186,7 @@ export default function DailyPlanning() {
       toast({
         title: "기록 저장",
         description: "하루 기록이 저장되었습니다.",
+        duration: 1000,
       });
     },
   });
