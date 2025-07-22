@@ -11,7 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
-import { Plus, ListTodo, Calendar, Clock, Eye, Trash2, Edit, CheckCircle, Circle, Camera } from 'lucide-react';
+import { Plus, ListTodo, Calendar, Clock, Eye, Trash2, Edit, CheckCircle, Circle, Camera, Image } from 'lucide-react';
 import { format } from 'date-fns';
 import { ko } from 'date-fns/locale';
 
@@ -507,14 +507,6 @@ export default function TaskManagement() {
                     </div>
                     
                     <div className="flex items-center space-x-1">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => openEditDialog(task)}
-                        className="h-8 w-8 p-0"
-                      >
-                        <Edit className="h-3 w-3" />
-                      </Button>
                       {task.imageUrls && task.imageUrls.length > 0 && (
                         <Button
                           variant="ghost"
@@ -523,9 +515,17 @@ export default function TaskManagement() {
                           className="h-8 w-8 p-0"
                           title={`${task.imageUrls.length}개의 이미지`}
                         >
-                          <Camera className="h-3 w-3" />
+                          <Image className="h-3 w-3" />
                         </Button>
                       )}
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => openEditDialog(task)}
+                        className="h-8 w-8 p-0"
+                      >
+                        <Edit className="h-3 w-3" />
+                      </Button>
                       <Button
                         variant="ghost"
                         size="sm"
