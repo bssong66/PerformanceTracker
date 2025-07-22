@@ -428,24 +428,6 @@ export default function ProjectManagement() {
         <div>
           <h1 className="text-2xl font-bold text-gray-900">프로젝트 관리</h1>
           <p className="text-gray-600">프로젝트를 생성하고 관리하세요</p>
-          {/* Debug info */}
-          <div className="text-xs text-gray-500 mt-1">
-            Foundation: {foundation ? `✅ 로드됨 (${foundation.coreValue1 || 'N/A'}, ${foundation.coreValue2 || 'N/A'}, ${foundation.coreValue3 || 'N/A'})` : '❌ 없음'} | 
-            연간목표: {annualGoals.length}개 {annualGoals.length > 0 && `(${annualGoals.map((g: any) => g.title).join(', ')})`} | 
-            <Button 
-              size="sm" 
-              variant="ghost" 
-              onClick={() => {
-                queryClient.invalidateQueries({ queryKey: ['foundation', MOCK_USER_ID] });
-                queryClient.invalidateQueries({ queryKey: ['goals', MOCK_USER_ID] });
-                console.log('Foundation data:', foundation);
-                console.log('Annual goals:', annualGoals);
-              }}
-              className="h-4 px-2 ml-2 text-xs"
-            >
-              새로고침
-            </Button>
-          </div>
         </div>
         
         <Dialog open={showProjectDialog} onOpenChange={setShowProjectDialog}>
