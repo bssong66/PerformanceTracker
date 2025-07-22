@@ -103,7 +103,7 @@ export function Layout({ children }: LayoutProps) {
 
       {/* Main Content */}
       <div className="lg:pl-64 flex flex-col flex-1 overflow-hidden">
-        <main className="flex-1 relative overflow-y-auto focus:outline-none">
+        <main className="flex-1 relative overflow-y-auto focus:outline-none pt-14 lg:pt-0">
           {children}
         </main>
       </div>
