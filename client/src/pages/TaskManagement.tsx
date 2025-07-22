@@ -187,8 +187,11 @@ function TaskManagement() {
     setEditingTask(null);
   };
 
-  const openCreateDialog = () => {
+  const openCreateDialog = (priority?: 'A' | 'B' | 'C') => {
     resetForm();
+    if (priority) {
+      setTaskForm(prev => ({ ...prev, priority }));
+    }
     setShowTaskDialog(true);
   };
 
@@ -297,12 +300,6 @@ function TaskManagement() {
       </div>
 
       <Dialog open={showTaskDialog} onOpenChange={setShowTaskDialog}>
-        <DialogTrigger asChild>
-          <Button onClick={openCreateDialog} className="bg-blue-600 hover:bg-blue-700">
-            <Plus className="h-4 w-4 mr-2" />
-            새 할일
-          </Button>
-        </DialogTrigger>
           <DialogContent className="sm:max-w-md">
             <DialogHeader>
               <DialogTitle>
@@ -525,7 +522,18 @@ function TaskManagement() {
             <CardHeader className={`${priorityColors[priority].bg} ${priorityColors[priority].text}`}>
               <CardTitle className="flex items-center justify-between">
                 <span>{priority}급 우선순위</span>
-                <Badge variant="secondary">{tasksByPriority[priority].length}</Badge>
+                <div className="flex items-center space-x-2">
+                  <Badge variant="secondary">{tasksByPriority[priority].length}</Badge>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => openCreateDialog(priority)}
+                    className="h-6 w-6 p-0 text-white hover:bg-white/20"
+                    title={`${priority}급 할일 추가`}
+                  >
+                    <Plus className="h-3 w-3" />
+                  </Button>
+                </div>
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3 p-4">
@@ -634,7 +642,16 @@ function TaskManagement() {
               {tasksByPriority[priority].length === 0 && (
                 <div className="text-center py-8 text-gray-500">
                   <ListTodo className="h-8 w-8 mx-auto mb-2" />
-                  <p className="text-sm">{priority}급 할일이 없습니다</p>
+                  <p className="text-sm mb-3">{priority}급 할일이 없습니다</p>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => openCreateDialog(priority)}
+                    className="text-gray-600 hover:text-gray-800"
+                  >
+                    <Plus className="h-3 w-3 mr-1" />
+                    {priority}급 할일 추가
+                  </Button>
                 </div>
               )}
             </CardContent>
