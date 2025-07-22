@@ -354,10 +354,9 @@ export default function DailyPlanning() {
                 <span>오늘의 계획</span>
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-6">
+            <CardContent className="space-y-3">
               {/* Quick Add Task */}
-              <div className="space-y-3">
-                <Label>빠른 할일 추가</Label>
+              <div className="space-y-2">
                 <div className="flex space-x-2">
                   <Input
                     placeholder="할일을 입력하세요..."
@@ -367,7 +366,7 @@ export default function DailyPlanning() {
                     className="flex-1"
                   />
                   <Select value={selectedPriority} onValueChange={(value: 'A' | 'B' | 'C') => setSelectedPriority(value)}>
-                    <SelectTrigger className="w-20">
+                    <SelectTrigger className="w-16">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -376,141 +375,79 @@ export default function DailyPlanning() {
                       <SelectItem value="C">C</SelectItem>
                     </SelectContent>
                   </Select>
-                  <Button onClick={handleAddTask} disabled={!newTask.trim() || addTaskMutation.isPending}>
+                  <Button onClick={handleAddTask} disabled={!newTask.trim() || addTaskMutation.isPending} size="sm">
                     <Plus className="h-4 w-4" />
                   </Button>
                 </div>
                 
-                {/* Core Value and Annual Goal Selection */}
-                <div className="grid grid-cols-2 gap-2">
-                  <div>
-                    <Label className="text-xs text-gray-600">핵심가치 연결</Label>
-                    <Select value={selectedCoreValue} onValueChange={setSelectedCoreValue}>
-                      <SelectTrigger className="h-8">
-                        <SelectValue placeholder="선택 안함" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="none">선택 안함</SelectItem>
-                        {foundation?.coreValue1 && (
-                          <SelectItem value={foundation.coreValue1}>{foundation.coreValue1}</SelectItem>
-                        )}
-                        {foundation?.coreValue2 && (
-                          <SelectItem value={foundation.coreValue2}>{foundation.coreValue2}</SelectItem>
-                        )}
-                        {foundation?.coreValue3 && (
-                          <SelectItem value={foundation.coreValue3}>{foundation.coreValue3}</SelectItem>
-                        )}
-                      </SelectContent>
-                    </Select>
+                {/* Value Selection */}
+                <div className="flex space-x-2">
+                  <Select value={selectedCoreValue} onValueChange={setSelectedCoreValue}>
+                    <SelectTrigger className="h-8 text-xs">
+                      <SelectValue placeholder="핵심가치" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">선택 안함</SelectItem>
+                      {foundation?.coreValue1 && (
+                        <SelectItem value={foundation.coreValue1}>{foundation.coreValue1}</SelectItem>
+                      )}
+                      {foundation?.coreValue2 && (
+                        <SelectItem value={foundation.coreValue2}>{foundation.coreValue2}</SelectItem>
+                      )}
+                      {foundation?.coreValue3 && (
+                        <SelectItem value={foundation.coreValue3}>{foundation.coreValue3}</SelectItem>
+                      )}
+                    </SelectContent>
+                  </Select>
+                  <Select value={selectedAnnualGoal} onValueChange={setSelectedAnnualGoal}>
+                    <SelectTrigger className="h-8 text-xs">
+                      <SelectValue placeholder="연간목표" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">선택 안함</SelectItem>
+                      {annualGoals.map((goal: any) => (
+                        <SelectItem key={goal.id} value={goal.title}>{goal.title}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+
+
+              {/* Tasks by Priority */}
+              {(['A', 'B', 'C'] as const).map((priority) => (
+                <div key={priority}>
+                  <div className="flex items-center space-x-2 mb-2">
+                    <PriorityBadge priority={priority} />
+                    <h4 className="text-sm font-medium text-gray-900">
+                      {priority === 'A' ? '중요&긴급' : priority === 'B' ? '중요' : '기타'}
+                    </h4>
+                    <span className="text-xs text-gray-500">
+                      ({tasksByPriority[priority].length}개)
+                    </span>
                   </div>
-                  <div>
-                    <Label className="text-xs text-gray-600">연간목표 연결</Label>
-                    <Select value={selectedAnnualGoal} onValueChange={setSelectedAnnualGoal}>
-                      <SelectTrigger className="h-8">
-                        <SelectValue placeholder="선택 안함" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="none">선택 안함</SelectItem>
-                        {annualGoals.map((goal: any) => (
-                          <SelectItem key={goal.id} value={goal.title}>{goal.title}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                  <div className="space-y-1 mb-4">
+                    {tasksByPriority[priority].length === 0 ? (
+                      <p className="text-xs text-gray-400 italic">할일이 없습니다.</p>
+                    ) : (
+                      tasksByPriority[priority].map((task: any) => {
+                        const project = (projects as any[]).find(p => p.id === task.projectId);
+                        return (
+                          <TaskItem
+                            key={task.id}
+                            task={task}
+                            onToggleComplete={handleToggleTask}
+                            showPriority={false}
+                            showTime={false}
+                            project={project}
+                          />
+                        );
+                      })
+                    )}
                   </div>
                 </div>
-
-                <Button variant="outline" size="sm" className="w-full">
-                  <Mic className="h-4 w-4 mr-2" />
-                  음성으로 추가 (준비 중)
-                </Button>
-              </div>
-
-
-
-              {/* A Priority Tasks */}
-              <div>
-                <div className="flex items-center space-x-2 mb-3">
-                  <PriorityBadge priority="A" />
-                  <h4 className="text-sm font-semibold text-gray-900">
-                    중요하고 긴급한 일 (최대 3개)
-                  </h4>
-                </div>
-                <div className="space-y-2">
-                  {tasksByPriority.A.length === 0 ? (
-                    <p className="text-sm text-gray-500 italic">A급 할일이 없습니다.</p>
-                  ) : (
-                    tasksByPriority.A.map((task: any) => {
-                      const project = (projects as any[]).find(p => p.id === task.projectId);
-                      return (
-                        <TaskItem
-                          key={task.id}
-                          task={task}
-                          onToggleComplete={handleToggleTask}
-                          showPriority={false}
-                          showTime
-                          project={project}
-                        />
-                      );
-                    })
-                  )}
-                </div>
-              </div>
-
-              {/* B Priority Tasks */}
-              <div>
-                <div className="flex items-center space-x-2 mb-3">
-                  <PriorityBadge priority="B" />
-                  <h4 className="text-sm font-semibold text-gray-900">
-                    중요하지만 긴급하지 않은 일 (최대 5개)
-                  </h4>
-                </div>
-                <div className="space-y-2">
-                  {tasksByPriority.B.length === 0 ? (
-                    <p className="text-sm text-gray-500 italic">B급 할일이 없습니다.</p>
-                  ) : (
-                    tasksByPriority.B.map((task: any) => {
-                      const project = (projects as any[]).find(p => p.id === task.projectId);
-                      return (
-                        <TaskItem
-                          key={task.id}
-                          task={task}
-                          onToggleComplete={handleToggleTask}
-                          showPriority={false}
-                          showTime
-                          project={project}
-                        />
-                      );
-                    })
-                  )}
-                </div>
-              </div>
-
-              {/* C Priority Tasks */}
-              <div>
-                <div className="flex items-center space-x-2 mb-3">
-                  <PriorityBadge priority="C" />
-                  <h4 className="text-sm font-semibold text-gray-900">하면 좋은 일</h4>
-                </div>
-                <div className="space-y-2">
-                  {tasksByPriority.C.length === 0 ? (
-                    <p className="text-sm text-gray-500 italic">C급 할일이 없습니다.</p>
-                  ) : (
-                    tasksByPriority.C.map((task: any) => {
-                      const project = (projects as any[]).find(p => p.id === task.projectId);
-                      return (
-                        <TaskItem
-                          key={task.id}
-                          task={task}
-                          onToggleComplete={handleToggleTask}
-                          showPriority={false}
-                          showTime
-                          project={project}
-                        />
-                      );
-                    })
-                  )}
-                </div>
-              </div>
+              ))}
             </CardContent>
           </Card>
 
@@ -519,107 +456,61 @@ export default function DailyPlanning() {
             <CardHeader>
               <CardTitle>오늘의 기록</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-6">
-              {/* Time Blocks */}
+            <CardContent className="space-y-3">
+              {/* Time Blocks - Simplified */}
               <div>
-                <h4 className="text-sm font-semibold text-gray-900 mb-3">시간 블록</h4>
-                
-                {/* Add Time Block */}
-                <div className="space-y-2 mb-4">
-                  <div className="grid grid-cols-2 gap-2">
-                    <Input
-                      type="time"
-                      placeholder="시작 시간"
-                      value={newTimeBlock.startTime}
-                      onChange={(e) => setNewTimeBlock(prev => ({ ...prev, startTime: e.target.value }))}
-                    />
-                    <Input
-                      type="time"
-                      placeholder="종료 시간"
-                      value={newTimeBlock.endTime}
-                      onChange={(e) => setNewTimeBlock(prev => ({ ...prev, endTime: e.target.value }))}
-                    />
-                  </div>
+                <h4 className="text-sm font-medium text-gray-900 mb-2">시간 블록</h4>
+                <div className="flex space-x-1 mb-2">
                   <Input
-                    placeholder="활동명"
+                    type="time"
+                    value={newTimeBlock.startTime}
+                    onChange={(e) => setNewTimeBlock(prev => ({ ...prev, startTime: e.target.value }))}
+                    className="text-xs h-8"
+                  />
+                  <Input
+                    type="time"
+                    value={newTimeBlock.endTime}
+                    onChange={(e) => setNewTimeBlock(prev => ({ ...prev, endTime: e.target.value }))}
+                    className="text-xs h-8"
+                  />
+                  <Input
+                    placeholder="활동"
                     value={newTimeBlock.title}
                     onChange={(e) => setNewTimeBlock(prev => ({ ...prev, title: e.target.value }))}
+                    className="text-xs h-8 flex-1"
                   />
-                  <div className="flex space-x-2">
-                    <Select 
-                      value={newTimeBlock.type} 
-                      onValueChange={(value: 'focus' | 'meeting' | 'break') => 
-                        setNewTimeBlock(prev => ({ ...prev, type: value }))
-                      }
-                    >
-                      <SelectTrigger className="flex-1">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="focus">집중업무</SelectItem>
-                        <SelectItem value="meeting">미팅</SelectItem>
-                        <SelectItem value="break">휴식</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <Button onClick={handleAddTimeBlock} size="sm">
-                      <Plus className="h-4 w-4" />
-                    </Button>
-                  </div>
+                  <Button onClick={handleAddTimeBlock} size="sm" className="h-8 w-8 p-0">
+                    <Plus className="h-3 w-3" />
+                  </Button>
                 </div>
-
-                {/* Time Block List */}
-                <div className="space-y-2">
-                  {(timeBlocks as any[]).length === 0 ? (
-                    <p className="text-sm text-gray-500 italic">등록된 시간 블록이 없습니다.</p>
-                  ) : (
-                    (timeBlocks as any[]).map((block: any) => (
-                      <div 
-                        key={block.id}
-                        className="flex items-center justify-between py-2 px-3 rounded-md border border-gray-200"
-                      >
-                        <div className="flex items-center space-x-3">
-                          <span className="text-sm font-medium text-gray-900">
-                            {block.startTime}-{block.endTime}
-                          </span>
-                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                            block.type === 'focus' ? 'bg-blue-100 text-blue-800' :
-                            block.type === 'meeting' ? 'bg-purple-100 text-purple-800' :
-                            'bg-gray-100 text-gray-800'
-                          }`}>
-                            {block.type === 'focus' ? '집중업무' :
-                             block.type === 'meeting' ? '미팅' : '휴식'}
-                          </span>
-                        </div>
-                        <span className="text-sm text-gray-600">{block.title}</span>
-                      </div>
-                    ))
-                  )}
+                <div className="space-y-1">
+                  {(timeBlocks as any[]).slice(0, 3).map((block: any) => (
+                    <div key={block.id} className="text-xs text-gray-600 bg-gray-50 px-2 py-1 rounded">
+                      {block.startTime}-{block.endTime} {block.title}
+                    </div>
+                  ))}
                 </div>
               </div>
 
               {/* Daily Habits */}
               <div>
-                <h4 className="text-sm font-semibold text-gray-900 mb-3">오늘의 습관</h4>
-                <div className="space-y-2">
+                <h4 className="text-sm font-medium text-gray-900 mb-2">습관</h4>
+                <div className="space-y-1">
                   {(habits as any[]).length === 0 ? (
-                    <p className="text-sm text-gray-500 italic">
-                      등록된 습관이 없습니다. 습관 관리에서 추가해보세요.
-                    </p>
+                    <p className="text-xs text-gray-400 italic">습관이 없습니다</p>
                   ) : (
                     (habits as any[]).slice(0, 3).map((habit: any) => {
                       const log = (habitLogs as any[]).find((l: any) => l.habitId === habit.id);
                       return (
-                        <div key={habit.id} className="flex items-center justify-between">
-                          <span className="text-sm text-gray-900">{habit.name}</span>
-                          <div className="flex items-center space-x-2">
-                            <span className="text-xs text-green-600">
-                              {habit.currentStreak}일 연속
-                            </span>
+                        <div key={habit.id} className="flex items-center justify-between bg-gray-50 px-2 py-1 rounded">
+                          <span className="text-xs text-gray-900">{habit.name}</span>
+                          <div className="flex items-center space-x-1">
+                            <span className="text-xs text-green-600">{habit.currentStreak}일</span>
                             <input
                               type="checkbox"
                               checked={log?.completed || false}
                               onChange={(e) => handleToggleHabit(habit.id, e.target.checked)}
-                              className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
+                              className="h-3 w-3 text-green-600"
                             />
                           </div>
                         </div>
@@ -631,103 +522,22 @@ export default function DailyPlanning() {
 
               {/* Daily Reflection */}
               <div>
-                <h4 className="text-sm font-semibold text-gray-900 mb-3">하루 성찰</h4>
-                
-                {/* Text reflection */}
+                <h4 className="text-sm font-medium text-gray-900 mb-2">하루 기록</h4>
                 <Textarea
-                  placeholder="오늘 하루를 돌아보며 한 줄로 기록해보세요..."
+                  placeholder="오늘의 한줄 기록..."
                   value={reflection || (dailyReflection as any)?.reflection || ""}
                   onChange={(e) => setReflection(e.target.value)}
-                  rows={3}
-                  className="resize-none mb-3"
+                  rows={2}
+                  className="resize-none text-xs mb-2"
                 />
-                
-                {/* Image upload section */}
-                <div className="space-y-3">
-                  <div className="flex items-center space-x-2">
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={handleImageSelect}
-                      className="hidden"
-                      id="image-upload"
-                    />
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => document.getElementById('image-upload')?.click()}
-                    >
-                      <Upload className="h-4 w-4 mr-2" />
-                      사진 선택
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={handleCameraCapture}
-                    >
-                      <Camera className="h-4 w-4 mr-2" />
-                      사진 촬영
-                    </Button>
-                  </div>
-                  
-                  {/* Image preview */}
-                  {imagePreview && (
-                    <div className="relative">
-                      <img
-                        src={imagePreview}
-                        alt="선택된 이미지"
-                        className="w-full max-w-xs rounded-lg border border-gray-200"
-                      />
-                      <Button
-                        type="button"
-                        variant="destructive"
-                        size="sm"
-                        className="absolute top-2 right-2"
-                        onClick={handleRemoveImage}
-                      >
-                        <X className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  )}
-                  
-                  {/* Existing image display */}
-                  {!imagePreview && (dailyReflection as any)?.imageUrl && (
-                    <div className="relative">
-                      <img
-                        src={(dailyReflection as any).imageUrl}
-                        alt="저장된 이미지"
-                        className="w-full max-w-xs rounded-lg border border-gray-200"
-                      />
-                    </div>
-                  )}
-                </div>
-                
                 <Button 
                   onClick={handleSaveReflection} 
                   size="sm" 
-                  className="mt-3"
-                  disabled={saveReflectionMutation.isPending || (!reflection.trim() && !selectedImage)}
+                  className="h-7 text-xs"
+                  disabled={saveReflectionMutation.isPending || !reflection.trim()}
                 >
                   {saveReflectionMutation.isPending ? '저장 중...' : '저장'}
                 </Button>
-              </div>
-
-              {/* Tomorrow's Rollover */}
-              <div>
-                <h4 className="text-sm font-semibold text-gray-900 mb-3">내일로 이월</h4>
-                <div className="space-y-2">
-                  {(tasks as any[]).filter((t: any) => !t.completed).length === 0 ? (
-                    <p className="text-sm text-green-600 italic">
-                      훌륭합니다! 모든 할일을 완료했습니다.
-                    </p>
-                  ) : (
-                    <div className="text-sm text-gray-600">
-                      미완료 할일 {(tasks as any[]).filter((t: any) => !t.completed).length}개가 내일로 이월됩니다.
-                    </div>
-                  )}
-                </div>
               </div>
             </CardContent>
           </Card>

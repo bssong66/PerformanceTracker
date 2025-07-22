@@ -37,68 +37,49 @@ export function TaskItem({
   };
 
   return (
-    <div className="flex items-center space-x-3 group py-2">
+    <div className="flex items-center space-x-2 group py-1 px-2 bg-gray-50 rounded text-xs">
       <Checkbox
         checked={!!isCompleted}
         onCheckedChange={handleToggle}
-        className="h-4 w-4"
+        className="h-3 w-3"
       />
       
-      {showPriority && (
-        <PriorityBadge priority={task.priority as Priority} size="sm" />
-      )}
-      
-      <div className="flex-1">
-        <div className="flex items-center space-x-2">
-          {project && (
-            <div 
-              className="w-3 h-3 rounded-full" 
-              style={{ backgroundColor: project.color }}
-              title={project.name}
-            />
-          )}
-          <span 
-            className={`text-sm ${
-              isCompleted 
-                ? 'line-through text-gray-500' 
-                : 'text-gray-900'
-            }`}
-          >
-            {task.title}
-          </span>
-        </div>
+      <div className="flex-1 flex items-center space-x-1">
         {project && (
-          <p className="text-xs text-gray-400 mt-1">{project.name}</p>
+          <div 
+            className="w-2 h-2 rounded-full" 
+            style={{ backgroundColor: project.color }}
+          />
         )}
-        {task.notes && (
-          <p className="text-xs text-gray-500 mt-1">{task.notes}</p>
+        <span 
+          className={`${
+            isCompleted 
+              ? 'line-through text-gray-500' 
+              : 'text-gray-900'
+          }`}
+        >
+          {task.title}
+        </span>
+        {(task as any).coreValue && (task as any).coreValue !== 'none' && (
+          <span className="px-1 py-0 bg-blue-100 text-blue-600 rounded text-xs">
+            🎯 {(task as any).coreValue}
+          </span>
+        )}
+        {(task as any).annualGoal && (task as any).annualGoal !== 'none' && (
+          <span className="px-1 py-0 bg-purple-100 text-purple-600 rounded text-xs">
+            📅 {(task as any).annualGoal}
+          </span>
         )}
       </div>
-      
-      {showTime && task.timeEstimate && (
-        <div className="flex items-center text-xs text-gray-500 space-x-1">
-          <Clock className="h-3 w-3" />
-          <span>{task.timeEstimate}분</span>
-        </div>
-      )}
-      
-      {task.scheduledDate && (
-        <span className="text-xs text-gray-500">
-          {new Date(task.scheduledDate).toLocaleDateString('ko-KR', {
-            month: 'short',
-            day: 'numeric'
-          })}
-        </span>
-      )}
       
       {onDelete && (
         <Button
           variant="ghost"
           size="sm"
           onClick={handleDelete}
-          className="opacity-0 group-hover:opacity-100 transition-opacity h-6 w-6 p-0"
+          className="opacity-0 group-hover:opacity-100 transition-opacity h-4 w-4 p-0"
         >
-          <Trash2 className="h-3 w-3 text-gray-400" />
+          <Trash2 className="h-2 w-2 text-gray-400" />
         </Button>
       )}
     </div>
