@@ -9,6 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { Plus, Target, Calendar, CheckCircle, Circle, Trash2, Edit, TrendingUp } from 'lucide-react';
 import { format } from 'date-fns';
@@ -39,13 +40,30 @@ export default function HabitManagement() {
   
   const [habitForm, setHabitForm] = useState({
     name: '',
-    description: ''
+    description: '',
+    repeatType: 'daily',
+    repeatWeekdays: [] as string[],
+    repeatMonthDates: [] as string[],
+    coreValue: '',
+    annualGoal: ''
   });
 
   // Fetch habits
   const { data: habits = [] } = useQuery({
     queryKey: ['habits', MOCK_USER_ID],
     queryFn: () => fetch(`/api/habits/${MOCK_USER_ID}`).then(res => res.json())
+  });
+
+  // Fetch foundation for core values
+  const { data: foundation } = useQuery({
+    queryKey: ['foundation', MOCK_USER_ID],
+    queryFn: () => fetch(`/api/foundation/${MOCK_USER_ID}`).then(res => res.json())
+  });
+
+  // Fetch annual goals
+  const { data: annualGoals = [] } = useQuery({
+    queryKey: ['goals', MOCK_USER_ID],
+    queryFn: () => fetch(`/api/goals/${MOCK_USER_ID}`).then(res => res.json())
   });
 
   // Fetch today's habit logs
@@ -128,7 +146,12 @@ export default function HabitManagement() {
   const resetForm = () => {
     setHabitForm({
       name: '',
-      description: ''
+      description: '',
+      repeatType: 'daily',
+      repeatWeekdays: [],
+      repeatMonthDates: [],
+      coreValue: '',
+      annualGoal: ''
     });
     setEditingHabit(null);
   };
@@ -138,10 +161,15 @@ export default function HabitManagement() {
     setShowHabitDialog(true);
   };
 
-  const openEditDialog = (habit: Habit) => {
+  const openEditDialog = (habit: any) => {
     setHabitForm({
       name: habit.name,
-      description: habit.description || ''
+      description: habit.description || '',
+      repeatType: habit.repeatType || 'daily',
+      repeatWeekdays: habit.repeatWeekdays ? JSON.parse(habit.repeatWeekdays) : [],
+      repeatMonthDates: habit.repeatMonthDates ? JSON.parse(habit.repeatMonthDates) : [],
+      coreValue: habit.coreValue || '',
+      annualGoal: habit.annualGoal || ''
     });
     setEditingHabit(habit);
     setShowHabitDialog(true);
@@ -157,6 +185,10 @@ export default function HabitManagement() {
 
     const habitData = {
       ...habitForm,
+      repeatWeekdays: habitForm.repeatWeekdays.length > 0 ? JSON.stringify(habitForm.repeatWeekdays) : null,
+      repeatMonthDates: habitForm.repeatMonthDates.length > 0 ? JSON.stringify(habitForm.repeatMonthDates) : null,
+      coreValue: habitForm.coreValue || null,
+      annualGoal: habitForm.annualGoal || null,
       userId: MOCK_USER_ID
     };
 
@@ -230,6 +262,113 @@ export default function HabitManagement() {
                 />
               </div>
 
+              {/* Repeat Type Selection */}
+              <div>
+                <Label>반복 주기</Label>
+                <Select value={habitForm.repeatType} onValueChange={(value) => setHabitForm(prev => ({ ...prev, repeatType: value }))}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="반복 주기 선택" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="daily">매일</SelectItem>
+                    <SelectItem value="weekly">매주</SelectItem>
+                    <SelectItem value="monthly">매월</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Weekly Days Selection */}
+              {habitForm.repeatType === 'weekly' && (
+                <div>
+                  <Label>요일 선택</Label>
+                  <div className="grid grid-cols-7 gap-2 mt-2">
+                    {['일', '월', '화', '수', '목', '금', '토'].map((day, index) => (
+                      <div key={index} className="flex items-center space-x-1">
+                        <Checkbox
+                          id={`day-${index}`}
+                          checked={habitForm.repeatWeekdays.includes(index.toString())}
+                          onCheckedChange={(checked) => {
+                            const dayStr = index.toString();
+                            setHabitForm(prev => ({
+                              ...prev,
+                              repeatWeekdays: checked 
+                                ? [...prev.repeatWeekdays, dayStr]
+                                : prev.repeatWeekdays.filter(d => d !== dayStr)
+                            }));
+                          }}
+                        />
+                        <Label htmlFor={`day-${index}`} className="text-sm">{day}</Label>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Monthly Dates Selection */}
+              {habitForm.repeatType === 'monthly' && (
+                <div>
+                  <Label>날짜 선택</Label>
+                  <div className="grid grid-cols-7 gap-2 mt-2">
+                    {Array.from({ length: 31 }, (_, i) => i + 1).map(date => (
+                      <div key={date} className="flex items-center space-x-1">
+                        <Checkbox
+                          id={`date-${date}`}
+                          checked={habitForm.repeatMonthDates.includes(date.toString())}
+                          onCheckedChange={(checked) => {
+                            const dateStr = date.toString();
+                            setHabitForm(prev => ({
+                              ...prev,
+                              repeatMonthDates: checked 
+                                ? [...prev.repeatMonthDates, dateStr]
+                                : prev.repeatMonthDates.filter(d => d !== dateStr)
+                            }));
+                          }}
+                        />
+                        <Label htmlFor={`date-${date}`} className="text-sm">{date}</Label>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Core Value Selection */}
+              <div>
+                <Label>핵심가치 연결</Label>
+                <Select value={habitForm.coreValue} onValueChange={(value) => setHabitForm(prev => ({ ...prev, coreValue: value }))}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="핵심가치 선택 (선택사항)" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">없음</SelectItem>
+                    {foundation?.coreValue1 && (
+                      <SelectItem value={foundation.coreValue1}>{foundation.coreValue1}</SelectItem>
+                    )}
+                    {foundation?.coreValue2 && (
+                      <SelectItem value={foundation.coreValue2}>{foundation.coreValue2}</SelectItem>
+                    )}
+                    {foundation?.coreValue3 && (
+                      <SelectItem value={foundation.coreValue3}>{foundation.coreValue3}</SelectItem>
+                    )}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Annual Goal Selection */}
+              <div>
+                <Label>연간계획 연결</Label>
+                <Select value={habitForm.annualGoal} onValueChange={(value) => setHabitForm(prev => ({ ...prev, annualGoal: value }))}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="연간계획 선택 (선택사항)" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">없음</SelectItem>
+                    {annualGoals.map((goal: any) => (
+                      <SelectItem key={goal.id} value={goal.title}>{goal.title}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
               <div className="flex justify-end space-x-2 pt-4">
                 <Button
                   type="button"
@@ -297,6 +436,33 @@ export default function HabitManagement() {
                 {habit.description && (
                   <p className="text-sm text-gray-600">{habit.description}</p>
                 )}
+                
+                {/* Repeat Pattern */}
+                <div className="text-xs text-gray-500">
+                  {habit.repeatType === 'daily' && '매일'}
+                  {habit.repeatType === 'weekly' && habit.repeatWeekdays && (
+                    `매주 ${JSON.parse(habit.repeatWeekdays).map((day: string) => 
+                      ['일', '월', '화', '수', '목', '금', '토'][parseInt(day)]
+                    ).join(', ')}`
+                  )}
+                  {habit.repeatType === 'monthly' && habit.repeatMonthDates && (
+                    `매월 ${JSON.parse(habit.repeatMonthDates).join(', ')}일`
+                  )}
+                </div>
+
+                {/* Core Value & Annual Goal Connection */}
+                <div className="flex flex-wrap gap-1">
+                  {habit.coreValue && (
+                    <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700">
+                      {habit.coreValue}
+                    </Badge>
+                  )}
+                  {habit.annualGoal && (
+                    <Badge variant="outline" className="text-xs bg-green-50 text-green-700">
+                      {habit.annualGoal}
+                    </Badge>
+                  )}
+                </div>
                 
                 {/* Today's completion */}
                 <div className="flex items-center justify-between">
