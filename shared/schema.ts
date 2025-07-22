@@ -92,9 +92,8 @@ export const habits = pgTable("habits", {
   isActive: boolean("is_active").default(true),
   currentStreak: integer("current_streak").default(0),
   longestStreak: integer("longest_streak").default(0),
-  repeatType: text("repeat_type").notNull().default("daily"), // 'daily', 'weekly', 'monthly'
-  repeatWeekdays: text("repeat_weekdays"), // JSON array for weekly: ["1","3","5"] (Mon, Wed, Fri)
-  repeatMonthDates: text("repeat_month_dates"), // JSON array for monthly: ["1","15","31"] (specific dates)
+  excludeWeekends: boolean("exclude_weekends").default(false),
+  excludeHolidays: boolean("exclude_holidays").default(false),
   coreValue: text("core_value"), // Connected core value from foundation
   annualGoal: text("annual_goal"), // Connected annual goal
   createdAt: timestamp("created_at").defaultNow(),

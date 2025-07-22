@@ -41,9 +41,8 @@ export default function HabitManagement() {
   const [habitForm, setHabitForm] = useState({
     name: '',
     description: '',
-    repeatType: 'daily',
-    repeatWeekdays: [] as string[],
-    repeatMonthDates: [] as string[],
+    excludeWeekends: false,
+    excludeHolidays: false,
     coreValue: 'none',
     annualGoal: 'none'
   });
@@ -174,11 +173,10 @@ export default function HabitManagement() {
     setHabitForm({
       name: '',
       description: '',
-      repeatType: 'daily',
-      repeatWeekdays: [],
-      repeatMonthDates: [],
-      coreValue: '',
-      annualGoal: ''
+      excludeWeekends: false,
+      excludeHolidays: false,
+      coreValue: 'none',
+      annualGoal: 'none'
     });
     setEditingHabit(null);
   };
@@ -192,11 +190,10 @@ export default function HabitManagement() {
     setHabitForm({
       name: habit.name,
       description: habit.description || '',
-      repeatType: habit.repeatType || 'daily',
-      repeatWeekdays: habit.repeatWeekdays ? JSON.parse(habit.repeatWeekdays) : [],
-      repeatMonthDates: habit.repeatMonthDates ? JSON.parse(habit.repeatMonthDates) : [],
-      coreValue: habit.coreValue || '',
-      annualGoal: habit.annualGoal || ''
+      excludeWeekends: habit.excludeWeekends || false,
+      excludeHolidays: habit.excludeHolidays || false,
+      coreValue: habit.coreValue || 'none',
+      annualGoal: habit.annualGoal || 'none'
     });
     setEditingHabit(habit);
     setShowHabitDialog(true);
@@ -212,8 +209,6 @@ export default function HabitManagement() {
 
     const habitData = {
       ...habitForm,
-      repeatWeekdays: habitForm.repeatWeekdays.length > 0 ? JSON.stringify(habitForm.repeatWeekdays) : null,
-      repeatMonthDates: habitForm.repeatMonthDates.length > 0 ? JSON.stringify(habitForm.repeatMonthDates) : null,
       coreValue: habitForm.coreValue === 'none' ? null : habitForm.coreValue,
       annualGoal: habitForm.annualGoal === 'none' ? null : habitForm.annualGoal,
       userId: MOCK_USER_ID
@@ -289,97 +284,32 @@ export default function HabitManagement() {
                 />
               </div>
 
-              {/* Repeat Type Selection */}
-              <div>
-                <Label>반복 주기</Label>
-                <Select value={habitForm.repeatType} onValueChange={(value) => setHabitForm(prev => ({ ...prev, repeatType: value }))}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="반복 주기 선택" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="daily">매일</SelectItem>
-                    <SelectItem value="weekly">매주</SelectItem>
-                    <SelectItem value="monthly">매월</SelectItem>
-                  </SelectContent>
-                </Select>
+              {/* Exclude Options */}
+              <div className="space-y-3">
+                <Label>제외 설정</Label>
+                <div className="space-y-2">
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="excludeWeekends"
+                      checked={habitForm.excludeWeekends}
+                      onCheckedChange={(checked) => 
+                        setHabitForm(prev => ({ ...prev, excludeWeekends: !!checked }))
+                      }
+                    />
+                    <Label htmlFor="excludeWeekends" className="text-sm">주말 제외 (토, 일)</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="excludeHolidays"
+                      checked={habitForm.excludeHolidays}
+                      onCheckedChange={(checked) => 
+                        setHabitForm(prev => ({ ...prev, excludeHolidays: !!checked }))
+                      }
+                    />
+                    <Label htmlFor="excludeHolidays" className="text-sm">공휴일 제외</Label>
+                  </div>
+                </div>
               </div>
-
-              {/* Weekly Days Selection */}
-              {habitForm.repeatType === 'weekly' && (
-                <div>
-                  <Label>요일 선택</Label>
-                  <div className="grid grid-cols-7 gap-2 mt-2">
-                    {['일', '월', '화', '수', '목', '금', '토'].map((day, index) => (
-                      <div key={index} className="flex items-center space-x-1">
-                        <Checkbox
-                          id={`day-${index}`}
-                          checked={habitForm.repeatWeekdays.includes(index.toString())}
-                          onCheckedChange={(checked) => {
-                            const dayStr = index.toString();
-                            setHabitForm(prev => ({
-                              ...prev,
-                              repeatWeekdays: checked 
-                                ? [...prev.repeatWeekdays, dayStr]
-                                : prev.repeatWeekdays.filter(d => d !== dayStr)
-                            }));
-                          }}
-                        />
-                        <Label htmlFor={`day-${index}`} className="text-sm">{day}</Label>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Monthly Dates Selection */}
-              {habitForm.repeatType === 'monthly' && (
-                <div>
-                  <Label>날짜 선택</Label>
-                  <div className="mt-2 p-4 border rounded-lg bg-gray-50">
-                    <div className="grid grid-cols-7 gap-1 mb-2">
-                      {['일', '월', '화', '수', '목', '금', '토'].map(day => (
-                        <div key={day} className="text-center text-xs font-medium text-gray-500 p-2">
-                          {day}
-                        </div>
-                      ))}
-                    </div>
-                    <div className="grid grid-cols-7 gap-1">
-                      {Array.from({ length: 31 }, (_, i) => i + 1).map(date => {
-                        const isSelected = habitForm.repeatMonthDates.includes(date.toString());
-                        return (
-                          <button
-                            key={date}
-                            type="button"
-                            onClick={() => {
-                              const dateStr = date.toString();
-                              setHabitForm(prev => ({
-                                ...prev,
-                                repeatMonthDates: isSelected 
-                                  ? prev.repeatMonthDates.filter(d => d !== dateStr)
-                                  : [...prev.repeatMonthDates, dateStr]
-                              }));
-                            }}
-                            className={`
-                              h-8 w-8 text-sm rounded-full transition-all duration-200
-                              ${isSelected 
-                                ? 'bg-blue-600 text-white shadow-md' 
-                                : 'bg-white text-gray-700 border border-gray-200 hover:bg-blue-50 hover:border-blue-300'
-                              }
-                            `}
-                          >
-                            {date}
-                          </button>
-                        );
-                      })}
-                    </div>
-                    {habitForm.repeatMonthDates.length > 0 && (
-                      <div className="mt-3 text-sm text-gray-600">
-                        선택된 날짜: {habitForm.repeatMonthDates.sort((a, b) => parseInt(a) - parseInt(b)).join(', ')}일
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
 
               {/* Core Value Selection */}
               <div>
@@ -487,16 +417,17 @@ export default function HabitManagement() {
                   <p className="text-sm text-gray-600">{habit.description}</p>
                 )}
                 
-                {/* Repeat Pattern */}
+                {/* Exclude Pattern */}
                 <div className="text-xs text-gray-500">
-                  {habit.repeatType === 'daily' && '매일'}
-                  {habit.repeatType === 'weekly' && habit.repeatWeekdays && (
-                    `매주 ${JSON.parse(habit.repeatWeekdays).map((day: string) => 
-                      ['일', '월', '화', '수', '목', '금', '토'][parseInt(day)]
-                    ).join(', ')}`
-                  )}
-                  {habit.repeatType === 'monthly' && habit.repeatMonthDates && (
-                    `매월 ${JSON.parse(habit.repeatMonthDates).join(', ')}일`
+                  매일
+                  {(habit.excludeWeekends || habit.excludeHolidays) && (
+                    <span className="ml-1">
+                      (
+                      {habit.excludeWeekends && "주말 제외"}
+                      {habit.excludeWeekends && habit.excludeHolidays && ", "}
+                      {habit.excludeHolidays && "공휴일 제외"}
+                      )
+                    </span>
                   )}
                 </div>
 
