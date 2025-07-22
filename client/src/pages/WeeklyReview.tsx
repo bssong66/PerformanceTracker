@@ -65,6 +65,16 @@ export default function WeeklyReview() {
     },
   });
 
+  // Get events for the past week
+  const { data: weekEvents = [] } = useQuery({
+    queryKey: ['events', 'week', MOCK_USER_ID, weekStartDate],
+    queryFn: async () => {
+      const startDate = format(subDays(weekStart, 7), 'yyyy-MM-dd');
+      const endDate = format(weekEnd, 'yyyy-MM-dd');
+      return fetch(api.events.list(MOCK_USER_ID, startDate, endDate)).then(res => res.json());
+    },
+  });
+
   // Calculate work and personal hours from time blocks
   useEffect(() => {
     if (weekTimeBlocks && weekTimeBlocks.length > 0) {
@@ -105,6 +115,78 @@ export default function WeeklyReview() {
       setPersonalHours(Math.round(personalHoursTotal));
     }
   }, [weekTimeBlocks]);
+
+  // Calculate value alignment based on tasks, events, and time blocks
+  useEffect(() => {
+    if (foundation && (weekTasks.length > 0 || weekEvents.length > 0 || weekTimeBlocks.length > 0)) {
+      const coreValues = foundation.coreValues ? foundation.coreValues.split(',').map((v: string) => v.trim()) : [];
+      
+      if (coreValues.length > 0) {
+        const alignmentScores = coreValues.map((value: string) => {
+          let totalActivities = 0;
+          let alignedActivities = 0;
+
+          // Check tasks
+          weekTasks.forEach((task: any) => {
+            if (task.coreValue === value) {
+              totalActivities++;
+              alignedActivities++;
+            } else if (task.coreValue && task.coreValue !== 'none') {
+              totalActivities++;
+            }
+          });
+
+          // Check time blocks
+          weekTimeBlocks.forEach((block: any) => {
+            totalActivities++;
+            // Simple keyword matching for value alignment
+            const blockText = `${block.title || ''} ${block.activity || ''}`.toLowerCase();
+            const valueKeywords = getValueKeywords(value);
+            
+            if (valueKeywords.some(keyword => blockText.includes(keyword.toLowerCase()))) {
+              alignedActivities++;
+            }
+          });
+
+          // Check events
+          weekEvents.forEach((event: any) => {
+            totalActivities++;
+            const eventText = `${event.title || ''} ${event.description || ''}`.toLowerCase();
+            const valueKeywords = getValueKeywords(value);
+            
+            if (valueKeywords.some(keyword => eventText.includes(keyword.toLowerCase()))) {
+              alignedActivities++;
+            }
+          });
+
+          // Calculate percentage with minimum baseline
+          const percentage = totalActivities > 0 
+            ? Math.max(30, Math.min(100, Math.round((alignedActivities / totalActivities) * 100)))
+            : 50; // Default if no activities
+
+          return percentage;
+        });
+
+        setValueAlignments(alignmentScores);
+      }
+    }
+  }, [foundation, weekTasks, weekEvents, weekTimeBlocks]);
+
+  // Helper function to get keywords for each core value
+  const getValueKeywords = (value: string): string[] => {
+    const keywordMap: { [key: string]: string[] } = {
+      '건강': ['운동', '체력', '건강', '피트니스', '요가', '헬스', '조깅', '산책'],
+      '성장': ['학습', '공부', '교육', '독서', '성장', '발전', '스킬', '역량'],
+      '가족': ['가족', '아이', '부모', '배우자', '형제', '자매', '가정', '육아'],
+      '창의': ['창의', '아이디어', '디자인', '예술', '창작', '혁신', '기획'],
+      '리더십': ['리더', '관리', '팀', '회의', '프로젝트', '책임', '지도'],
+      '소통': ['대화', '미팅', '협업', '네트워킹', '관계', '소통', '커뮤니케이션'],
+      '도전': ['도전', '새로운', '시도', '모험', '변화', '혁신', '개선'],
+      '안정': ['계획', '정리', '관리', '체계', '안정', '질서', '루틴']
+    };
+    
+    return keywordMap[value] || [value];
+  };
 
   // Set initial values when weekly review data loads
   useEffect(() => {
@@ -336,7 +418,7 @@ export default function WeeklyReview() {
                     가치 점검
                   </Label>
                   <p className="text-xs text-gray-600 mb-4">
-                    이번 주 활동이 개인 가치와 얼마나 일치했는지 평가해보세요 (0-100%)
+                    일정, 할일, 시간블록 데이터를 분석하여 자동으로 계산된 가치 정렬도입니다
                   </p>
                   <div className="space-y-4">
                     {coreValues.map((value, index) => (
@@ -344,25 +426,22 @@ export default function WeeklyReview() {
                         <div className="flex items-center justify-between mb-2">
                           <span className="text-sm text-gray-600">{value}</span>
                           <div className="flex items-center space-x-2">
-                            <Input
-                              type="number"
-                              min="0"
-                              max="100"
-                              value={valueAlignments[index]}
-                              onChange={(e) => handleValueAlignmentChange(index, parseInt(e.target.value) || 0)}
-                              className="w-16 text-center"
-                            />
-                            <span className="text-sm text-gray-500">%</span>
+                            <div className="w-16 text-center font-semibold">
+                              {valueAlignments[index] || 0}%
+                            </div>
                           </div>
                         </div>
                         <ProgressBar 
-                          value={valueAlignments[index]} 
+                          value={valueAlignments[index] || 0} 
                           max={100}
                           color={
-                            valueAlignments[index] >= 80 ? 'success' :
-                            valueAlignments[index] >= 60 ? 'warning' : 'danger'
+                            (valueAlignments[index] || 0) >= 80 ? 'success' :
+                            (valueAlignments[index] || 0) >= 60 ? 'warning' : 'danger'
                           }
                         />
+                        <div className="text-xs text-gray-500 mt-1">
+                          키워드 매칭 및 연결된 가치 기반 자동 계산
+                        </div>
                       </div>
                     ))}
                   </div>
