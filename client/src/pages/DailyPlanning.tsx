@@ -23,6 +23,8 @@ export default function DailyPlanning() {
   const today = format(new Date(), 'yyyy-MM-dd');
   const [newTask, setNewTask] = useState("");
   const [selectedPriority, setSelectedPriority] = useState<'A' | 'B' | 'C'>('B');
+  const [selectedCoreValue, setSelectedCoreValue] = useState<string>('none');
+  const [selectedAnnualGoal, setSelectedAnnualGoal] = useState<string>('none');
   const [selectedProject, setSelectedProject] = useState<number | null>(null);
   const [showProjectForm, setShowProjectForm] = useState(false);
   const [newProject, setNewProject] = useState({
@@ -102,11 +104,34 @@ export default function DailyPlanning() {
     queryFn: () => fetch(api.habitLogs.list(MOCK_USER_ID, today)).then(res => res.json()),
   });
 
+  // Fetch foundation data for core values
+  const { data: foundation } = useQuery({
+    queryKey: ['foundation', MOCK_USER_ID],
+    queryFn: async () => {
+      const response = await fetch(`/api/foundation/${MOCK_USER_ID}`);
+      if (!response.ok) return null;
+      return response.json();
+    }
+  });
+
+  // Fetch annual goals
+  const { data: annualGoals = [] } = useQuery({
+    queryKey: ['goals', MOCK_USER_ID],
+    queryFn: async () => {
+      const response = await fetch(`/api/goals/${MOCK_USER_ID}`);
+      if (!response.ok) return [];
+      const data = await response.json();
+      return Array.isArray(data) ? data : [];
+    }
+  });
+
   const addTaskMutation = useMutation({
     mutationFn: createTask,
     onSuccess: () => {
       setNewTask("");
       setSelectedProject(null);
+      setSelectedCoreValue('none');
+      setSelectedAnnualGoal('none');
       queryClient.invalidateQueries({ queryKey: ['tasks', MOCK_USER_ID, today] });
       queryClient.invalidateQueries({ queryKey: ['tasks-all', MOCK_USER_ID] });
       toast({
@@ -172,6 +197,8 @@ export default function DailyPlanning() {
         priority: selectedPriority,
         scheduledDate: today,
         projectId: selectedProject,
+        coreValue: selectedCoreValue === 'none' ? null : selectedCoreValue,
+        annualGoal: selectedAnnualGoal === 'none' ? null : selectedAnnualGoal,
       });
     }
   };
@@ -320,6 +347,45 @@ export default function DailyPlanning() {
                     <Plus className="h-4 w-4" />
                   </Button>
                 </div>
+                
+                {/* Core Value and Annual Goal Selection */}
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <Label className="text-xs text-gray-600">핵심가치 연결</Label>
+                    <Select value={selectedCoreValue} onValueChange={setSelectedCoreValue}>
+                      <SelectTrigger className="h-8">
+                        <SelectValue placeholder="선택 안함" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">선택 안함</SelectItem>
+                        {foundation?.coreValue1 && (
+                          <SelectItem value={foundation.coreValue1}>{foundation.coreValue1}</SelectItem>
+                        )}
+                        {foundation?.coreValue2 && (
+                          <SelectItem value={foundation.coreValue2}>{foundation.coreValue2}</SelectItem>
+                        )}
+                        {foundation?.coreValue3 && (
+                          <SelectItem value={foundation.coreValue3}>{foundation.coreValue3}</SelectItem>
+                        )}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label className="text-xs text-gray-600">연간목표 연결</Label>
+                    <Select value={selectedAnnualGoal} onValueChange={setSelectedAnnualGoal}>
+                      <SelectTrigger className="h-8">
+                        <SelectValue placeholder="선택 안함" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">선택 안함</SelectItem>
+                        {annualGoals.map((goal: any) => (
+                          <SelectItem key={goal.id} value={goal.title}>{goal.title}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
                 <Button variant="outline" size="sm" className="w-full">
                   <Mic className="h-4 w-4 mr-2" />
                   음성으로 추가 (준비 중)
