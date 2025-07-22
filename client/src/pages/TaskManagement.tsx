@@ -515,6 +515,17 @@ export default function TaskManagement() {
                       >
                         <Edit className="h-3 w-3" />
                       </Button>
+                      {task.imageUrls && task.imageUrls.length > 0 && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setViewingImage(task.imageUrls?.[0] || '')}
+                          className="h-8 w-8 p-0"
+                          title={`${task.imageUrls.length}개의 이미지`}
+                        >
+                          <Camera className="h-3 w-3" />
+                        </Button>
+                      )}
                       <Button
                         variant="ghost"
                         size="sm"
@@ -567,18 +578,7 @@ export default function TaskManagement() {
                     )}
                   </div>
 
-                  {/* Images */}
-                  {task.imageUrls && task.imageUrls.length > 0 && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setViewingImage(task.imageUrls?.[0] || '')}
-                      className="mt-2"
-                    >
-                      <Eye className="h-3 w-3 mr-1" />
-                      이미지 ({task.imageUrls.length})
-                    </Button>
-                  )}
+                  
                 </div>
               ))}
               
