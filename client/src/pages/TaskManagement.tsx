@@ -569,10 +569,13 @@ function TaskManagement() {
                             setViewingImage(task.imageUrls?.[0] || '');
                             setCurrentImageIndex(0);
                           }}
-                          className="h-8 w-8 p-0"
+                          className="h-8 w-8 p-0 relative"
                           title={`${task.imageUrls.length}개의 이미지`}
                         >
                           <Image className="h-3 w-3" />
+                          <span className="absolute -top-1 -right-1 bg-blue-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center font-medium">
+                            {task.imageUrls.length}
+                          </span>
                         </Button>
                       )}
                       <Button
