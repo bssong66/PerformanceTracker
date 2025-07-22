@@ -53,6 +53,7 @@ export default function ProjectManagement() {
   const [selectedProjectForTask, setSelectedProjectForTask] = useState<number | null>(null);
   const [expandedProjects, setExpandedProjects] = useState<Set<number>>(new Set());
   const [viewingTaskImage, setViewingTaskImage] = useState<string | null>(null);
+  const [editingTask, setEditingTask] = useState<any | null>(null);
   
   // State for task sorting
   const [taskSortBy, setTaskSortBy] = useState<'priority' | 'date' | 'title'>('priority');
@@ -225,7 +226,8 @@ export default function ProjectManagement() {
       }
       
       setShowTaskDialog(false);
-      setTaskForm({ title: '', priority: 'B', notes: '', startDate: '', endDate: '', imageUrls: [] });
+      setSelectedProjectForTask(null);
+      resetTaskForm();
       toast({ title: "할일 생성", description: "새로운 할일이 생성되었습니다." });
     },
     onError: (error: Error) => {
@@ -253,6 +255,36 @@ export default function ProjectManagement() {
     }
   });
 
+  // Update task mutation
+  const updateTaskMutation = useMutation({
+    mutationFn: async ({ taskId, updates }: { taskId: number, updates: any }) => {
+      const response = await fetch(`/api/tasks/${taskId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updates)
+      });
+      
+      if (!response.ok) {
+        throw new Error('할일 수정에 실패했습니다.');
+      }
+      
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['tasks', MOCK_USER_ID] });
+      setShowTaskDialog(false);
+      resetTaskForm();
+      toast({ title: "할일 수정", description: "할일이 수정되었습니다." });
+    },
+    onError: (error: Error) => {
+      toast({ 
+        title: "수정 실패", 
+        description: error.message || "할일 수정 중 오류가 발생했습니다.", 
+        variant: "destructive" 
+      });
+    }
+  });
+
   const resetForm = () => {
     setProjectForm({
       title: '',
@@ -266,6 +298,18 @@ export default function ProjectManagement() {
       imageUrls: []
     });
     setEditingProject(null);
+  };
+
+  const resetTaskForm = () => {
+    setTaskForm({
+      title: '',
+      priority: 'B',
+      startDate: '',
+      endDate: '',
+      notes: '',
+      imageUrls: []
+    });
+    setEditingTask(null);
   };
 
   const openCreateDialog = () => {
@@ -291,6 +335,7 @@ export default function ProjectManagement() {
 
   const openTaskDialog = (projectId: number) => {
     setSelectedProjectForTask(projectId);
+    resetTaskForm();
     setShowTaskDialog(true);
   };
 
@@ -332,19 +377,44 @@ export default function ProjectManagement() {
 
   const handleTaskSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedProjectForTask || !taskForm.title.trim()) return;
+    
+    if (!taskForm.title.trim()) {
+      toast({ title: "오류", description: "할일 제목을 입력해주세요.", variant: "destructive" });
+      return;
+    }
 
-    createTaskMutation.mutate({
-      userId: MOCK_USER_ID,
-      projectId: selectedProjectForTask,
-      title: taskForm.title,
-      priority: taskForm.priority,
-      notes: taskForm.notes,
-      startDate: taskForm.startDate || null,
-      endDate: taskForm.endDate || null,
-      imageUrls: taskForm.imageUrls,
-      completed: false
-    });
+    if (editingTask) {
+      // Update existing task
+      updateTaskMutation.mutate({
+        taskId: editingTask.id,
+        updates: {
+          title: taskForm.title,
+          priority: taskForm.priority,
+          notes: taskForm.notes,
+          startDate: taskForm.startDate || null,
+          endDate: taskForm.endDate || null,
+          imageUrls: taskForm.imageUrls
+        }
+      });
+    } else {
+      // Create new task
+      if (!selectedProjectForTask) {
+        toast({ title: "오류", description: "프로젝트를 선택해주세요.", variant: "destructive" });
+        return;
+      }
+
+      createTaskMutation.mutate({
+        userId: MOCK_USER_ID,
+        projectId: selectedProjectForTask,
+        title: taskForm.title,
+        priority: taskForm.priority,
+        notes: taskForm.notes,
+        startDate: taskForm.startDate || null,
+        endDate: taskForm.endDate || null,
+        imageUrls: taskForm.imageUrls,
+        completed: false
+      });
+    }
   };
 
   const handleTaskToggle = (taskId: number, completed: boolean) => {
@@ -426,6 +496,47 @@ export default function ProjectManagement() {
           }));
         };
         reader.readAsDataURL(file);
+      });
+    }
+  };
+
+  // Open task edit dialog
+  const openTaskEditDialog = (task: any) => {
+    setEditingTask(task);
+    setTaskForm({
+      title: task.title || '',
+      priority: task.priority || 'B',
+      startDate: task.startDate || '',
+      endDate: task.endDate || '',
+      notes: task.notes || '',
+      imageUrls: task.imageUrls || []
+    });
+    setShowTaskDialog(true);
+  };
+
+  // Handle task deletion
+  const handleTaskDelete = async (taskId: number) => {
+    if (!window.confirm('이 할일을 삭제하시겠습니까?')) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/tasks/${taskId}`, {
+        method: 'DELETE'
+      });
+
+      if (!response.ok) {
+        throw new Error('할일 삭제에 실패했습니다.');
+      }
+
+      // Invalidate queries to refresh the data
+      queryClient.invalidateQueries({ queryKey: ['tasks', MOCK_USER_ID] });
+      toast({ title: "할일 삭제", description: "할일이 삭제되었습니다." });
+    } catch (error: any) {
+      toast({ 
+        title: "삭제 실패", 
+        description: error.message || "할일 삭제 중 오류가 발생했습니다.", 
+        variant: "destructive" 
       });
     }
   };
@@ -905,6 +1016,24 @@ export default function ProjectManagement() {
                               }`}>
                                 {task.priority}
                               </span>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => openTaskEditDialog(task)}
+                                className="h-7 w-7 p-0"
+                                title="할일 수정"
+                              >
+                                <Edit className="h-3 w-3" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleTaskDelete(task.id)}
+                                className="h-7 w-7 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
+                                title="할일 삭제"
+                              >
+                                <Trash2 className="h-3 w-3" />
+                              </Button>
                             </div>
                           </div>
                         </div>
@@ -951,9 +1080,11 @@ export default function ProjectManagement() {
       <Dialog open={showTaskDialog} onOpenChange={setShowTaskDialog}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>새 할일 만들기</DialogTitle>
+            <DialogTitle>
+              {editingTask ? '할일 수정' : '새 할일 만들기'}
+            </DialogTitle>
             <DialogDescription>
-              프로젝트에 새로운 할일을 추가하세요.
+              {editingTask ? '할일 정보를 수정하세요.' : '프로젝트에 새로운 할일을 추가하세요.'}
             </DialogDescription>
           </DialogHeader>
           
@@ -1090,21 +1221,25 @@ export default function ProjectManagement() {
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => setShowTaskDialog(false)}
+                onClick={() => {
+                  setShowTaskDialog(false);
+                  resetTaskForm();
+                  setSelectedProjectForTask(null);
+                }}
               >
                 취소
               </Button>
               <Button 
                 type="submit" 
-                disabled={createTaskMutation.isPending}
+                disabled={createTaskMutation.isPending || updateTaskMutation.isPending}
               >
-                {createTaskMutation.isPending ? (
+                {(createTaskMutation.isPending || updateTaskMutation.isPending) ? (
                   <div className="flex items-center">
                     <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                    생성 중...
+                    {editingTask ? '수정 중...' : '생성 중...'}
                   </div>
                 ) : (
-                  '생성'
+                  editingTask ? '수정' : '생성'
                 )}
               </Button>
             </div>
