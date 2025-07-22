@@ -23,7 +23,7 @@ function Router() {
         <Route path="/foundation" component={Foundation} />
         <Route path="/calendar" component={Calendar} />
         <Route path="/planning" component={Planning} />
-        <Route path="/daily-planning" component={DailyPlanning} />
+        <Route path="/daily" component={DailyPlanning} />
         <Route path="/review" component={Review} />
         <Route path="/focus" component={FocusMode} />
         <Route component={NotFound} />
