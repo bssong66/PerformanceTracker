@@ -51,6 +51,61 @@ export default function WeeklyReview() {
     queryKey: [`/api/tasks/${MOCK_USER_ID}?startDate=${format(subDays(weekStart, 7), 'yyyy-MM-dd')}&endDate=${format(weekEnd, 'yyyy-MM-dd')}`],
   });
 
+  // Get time blocks for the past week to calculate work-life balance
+  const { data: weekTimeBlocks = [] } = useQuery({
+    queryKey: ['timeBlocks', 'week', MOCK_USER_ID, weekStartDate],
+    queryFn: async () => {
+      const days = [];
+      for (let i = 0; i < 7; i++) {
+        const date = format(subDays(weekStart, 7 - i), 'yyyy-MM-dd');
+        const dayBlocks = await fetch(api.timeBlocks.list(MOCK_USER_ID, date)).then(res => res.json());
+        days.push(...dayBlocks);
+      }
+      return days;
+    },
+  });
+
+  // Calculate work and personal hours from time blocks
+  useEffect(() => {
+    if (weekTimeBlocks && weekTimeBlocks.length > 0) {
+      let workHoursTotal = 0;
+      let personalHoursTotal = 0;
+
+      weekTimeBlocks.forEach((block: any) => {
+        if (!block.startTime || !block.endTime) return;
+
+        // Parse time and calculate duration
+        const [startHour, startMinute] = block.startTime.split(':').map(Number);
+        const [endHour, endMinute] = block.endTime.split(':').map(Number);
+        
+        const startTotalMinutes = startHour * 60 + startMinute;
+        const endTotalMinutes = endHour * 60 + endMinute;
+        const durationMinutes = endTotalMinutes - startTotalMinutes;
+        const durationHours = durationMinutes / 60;
+
+        // Categorize activities as work or personal
+        const workActivities = ['회의', '업무', '학습', '프로젝트', '작업', '개발'];
+        const personalActivities = ['휴식', '운동', '식사', '이동', '개인시간', '취미', '가족시간'];
+
+        if (workActivities.some(activity => block.activity?.includes(activity))) {
+          workHoursTotal += durationHours;
+        } else if (personalActivities.some(activity => block.activity?.includes(activity)) || block.type === 'personal') {
+          personalHoursTotal += durationHours;
+        } else {
+          // Default categorization based on type
+          if (block.type === 'work' || block.type === 'focus') {
+            workHoursTotal += durationHours;
+          } else {
+            personalHoursTotal += durationHours;
+          }
+        }
+      });
+
+      setWorkHours(Math.round(workHoursTotal));
+      setPersonalHours(Math.round(personalHoursTotal));
+    }
+  }, [weekTimeBlocks]);
+
   // Set initial values when weekly review data loads
   useEffect(() => {
     if (weeklyReview) {
@@ -60,8 +115,13 @@ export default function WeeklyReview() {
         weeklyReview.weeklyGoal3 || "",
       ]);
       setReflection(weeklyReview.reflection || "");
-      setWorkHours(weeklyReview.workHours || 0);
-      setPersonalHours(weeklyReview.personalHours || 0);
+      // Only override calculated hours if they exist in saved review
+      if (weeklyReview.workHours !== undefined) {
+        setWorkHours(weeklyReview.workHours);
+      }
+      if (weeklyReview.personalHours !== undefined) {
+        setPersonalHours(weeklyReview.personalHours);
+      }
       setValueAlignments([
         weeklyReview.valueAlignment1 || 0,
         weeklyReview.valueAlignment2 || 0,
@@ -202,22 +262,22 @@ export default function WeeklyReview() {
                   <h4 className="text-sm font-semibold text-gray-900 mb-4">일과 개인 시간 균형</h4>
                   <div className="grid grid-cols-2 gap-4">
                     <div className="text-center p-4 bg-blue-50 rounded-lg">
-                      <Input
-                        type="number"
-                        value={workHours}
-                        onChange={(e) => setWorkHours(parseInt(e.target.value) || 0)}
-                        className="text-center text-lg font-semibold mb-2"
-                      />
+                      <div className="text-center text-lg font-semibold mb-2">
+                        {workHours}시간
+                      </div>
                       <div className="text-xs text-blue-600">업무 시간</div>
+                      <div className="text-xs text-gray-500 mt-1">
+                        (일일관리 시간블록에서 자동 산출)
+                      </div>
                     </div>
                     <div className="text-center p-4 bg-green-50 rounded-lg">
-                      <Input
-                        type="number"
-                        value={personalHours}
-                        onChange={(e) => setPersonalHours(parseInt(e.target.value) || 0)}
-                        className="text-center text-lg font-semibold mb-2"
-                      />
+                      <div className="text-center text-lg font-semibold mb-2">
+                        {personalHours}시간
+                      </div>
                       <div className="text-xs text-green-600">개인 시간</div>
+                      <div className="text-xs text-gray-500 mt-1">
+                        (일일관리 시간블록에서 자동 산출)
+                      </div>
                     </div>
                   </div>
                 </div>
