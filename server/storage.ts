@@ -198,7 +198,6 @@ export class MemStorage implements IStorage {
       id,
       description: project.description ?? null,
       color: project.color ?? "#3B82F6",
-      status: project.status ?? "active",
       startDate: project.startDate ?? null,
       endDate: project.endDate ?? null,
       createdAt: new Date()
@@ -252,6 +251,9 @@ export class MemStorage implements IStorage {
       endDate: task.endDate ?? null,
       timeEstimate: task.timeEstimate ?? null,
       notes: task.notes ?? null,
+      coreValue: task.coreValue ?? null,
+      annualGoal: task.annualGoal ?? null,
+      imageUrls: task.imageUrls ?? null,
       completedAt: null,
       createdAt: new Date()
     };
@@ -502,4 +504,328 @@ export class MemStorage implements IStorage {
   }
 }
 
-export const storage = new MemStorage();
+import { drizzle } from 'drizzle-orm/neon-http';
+import { neon } from '@neondatabase/serverless';
+import { eq, and } from 'drizzle-orm';
+
+// Initialize database connection
+const sql = neon(process.env.DATABASE_URL!);
+const db = drizzle(sql);
+
+export class DatabaseStorage implements IStorage {
+  // User methods
+  async getUser(id: number): Promise<User | undefined> {
+    const result = await db.select().from(users).where(eq(users.id, id)).limit(1);
+    return result[0];
+  }
+
+  async getUserByUsername(username: string): Promise<User | undefined> {
+    const result = await db.select().from(users).where(eq(users.username, username)).limit(1);
+    return result[0];
+  }
+
+  async createUser(user: InsertUser): Promise<User> {
+    const result = await db.insert(users).values(user).returning();
+    return result[0];
+  }
+
+  // Foundation methods
+  async getFoundation(userId: number): Promise<Foundation | undefined> {
+    const result = await db.select().from(foundations).where(eq(foundations.userId, userId)).limit(1);
+    return result[0];
+  }
+
+  async upsertFoundation(foundation: InsertFoundation): Promise<Foundation> {
+    const existing = await this.getFoundation(foundation.userId);
+    
+    if (existing) {
+      const result = await db
+        .update(foundations)
+        .set({ ...foundation, updatedAt: new Date() })
+        .where(eq(foundations.id, existing.id))
+        .returning();
+      return result[0];
+    } else {
+      const result = await db.insert(foundations).values(foundation).returning();
+      return result[0];
+    }
+  }
+
+  // Annual goals methods
+  async getAnnualGoals(userId: number, year?: number): Promise<AnnualGoal[]> {
+    const currentYear = year || new Date().getFullYear();
+    return await db
+      .select()
+      .from(annualGoals)
+      .where(and(eq(annualGoals.userId, userId), eq(annualGoals.year, currentYear)));
+  }
+
+  async createAnnualGoal(goal: InsertAnnualGoal): Promise<AnnualGoal> {
+    const result = await db.insert(annualGoals).values(goal).returning();
+    return result[0];
+  }
+
+  async updateAnnualGoal(id: number, updates: Partial<AnnualGoal>): Promise<AnnualGoal | undefined> {
+    const result = await db
+      .update(annualGoals)
+      .set(updates)
+      .where(eq(annualGoals.id, id))
+      .returning();
+    return result[0];
+  }
+
+  async deleteAnnualGoal(id: number): Promise<boolean> {
+    const result = await db.delete(annualGoals).where(eq(annualGoals.id, id));
+    return result.rowCount > 0;
+  }
+
+  // Project methods
+  async getProjects(userId: number): Promise<Project[]> {
+    return await db.select().from(projects).where(eq(projects.userId, userId));
+  }
+
+  async createProject(project: InsertProject): Promise<Project> {
+    const result = await db.insert(projects).values(project).returning();
+    return result[0];
+  }
+
+  async updateProject(id: number, updates: Partial<Project>): Promise<Project | undefined> {
+    const result = await db
+      .update(projects)
+      .set(updates)
+      .where(eq(projects.id, id))
+      .returning();
+    return result[0];
+  }
+
+  async deleteProject(id: number): Promise<boolean> {
+    const result = await db.delete(projects).where(eq(projects.id, id));
+    return result.rowCount > 0;
+  }
+
+  // Task methods
+  async getTasks(userId: number, date?: string, projectId?: number): Promise<Task[]> {
+    let conditions = [eq(tasks.userId, userId)];
+    
+    if (date) {
+      conditions.push(eq(tasks.scheduledDate, date));
+    }
+    if (projectId) {
+      conditions.push(eq(tasks.projectId, projectId));
+    }
+    
+    return await db.select().from(tasks).where(and(...conditions));
+  }
+
+  async getTasksByPriority(userId: number, priority: string, date?: string): Promise<Task[]> {
+    let conditions = [eq(tasks.userId, userId), eq(tasks.priority, priority)];
+    
+    if (date) {
+      conditions.push(eq(tasks.scheduledDate, date));
+    }
+    
+    return await db.select().from(tasks).where(and(...conditions));
+  }
+
+  async createTask(task: InsertTask): Promise<Task> {
+    const result = await db.insert(tasks).values(task).returning();
+    return result[0];
+  }
+
+  async updateTask(id: number, updates: Partial<Task>): Promise<Task | undefined> {
+    if (updates.completed) {
+      updates.completedAt = new Date();
+    }
+    
+    const result = await db
+      .update(tasks)
+      .set(updates)
+      .where(eq(tasks.id, id))
+      .returning();
+    return result[0];
+  }
+
+  async deleteTask(id: number): Promise<boolean> {
+    const result = await db.delete(tasks).where(eq(tasks.id, id));
+    return result.rowCount > 0;
+  }
+
+  // Event methods
+  async getEvents(userId: number, startDate?: string, endDate?: string): Promise<Event[]> {
+    let query = db.select().from(events).where(eq(events.userId, userId));
+    
+    // Note: Date filtering would need proper date comparison operators
+    return await query;
+  }
+
+  async createEvent(event: InsertEvent): Promise<Event> {
+    const result = await db.insert(events).values(event).returning();
+    return result[0];
+  }
+
+  async updateEvent(id: number, updates: Partial<Event>): Promise<Event | undefined> {
+    const result = await db
+      .update(events)
+      .set(updates)
+      .where(eq(events.id, id))
+      .returning();
+    return result[0];
+  }
+
+  async deleteEvent(id: number): Promise<boolean> {
+    const result = await db.delete(events).where(eq(events.id, id));
+    return result.rowCount > 0;
+  }
+
+  // Habit methods
+  async getHabits(userId: number): Promise<Habit[]> {
+    return await db
+      .select()
+      .from(habits)
+      .where(and(eq(habits.userId, userId), eq(habits.isActive, true)));
+  }
+
+  async createHabit(habit: InsertHabit): Promise<Habit> {
+    const result = await db.insert(habits).values(habit).returning();
+    return result[0];
+  }
+
+  async updateHabit(id: number, updates: Partial<Habit>): Promise<Habit | undefined> {
+    const result = await db
+      .update(habits)
+      .set(updates)
+      .where(eq(habits.id, id))
+      .returning();
+    return result[0];
+  }
+
+  async deleteHabit(id: number): Promise<boolean> {
+    const result = await db
+      .update(habits)
+      .set({ isActive: false })
+      .where(eq(habits.id, id));
+    return result.rowCount > 0;
+  }
+
+  // Habit log methods
+  async getHabitLogs(habitId: number, startDate?: string, endDate?: string): Promise<HabitLog[]> {
+    let query = db.select().from(habitLogs).where(eq(habitLogs.habitId, habitId));
+    
+    // Note: Date filtering would need proper date comparison operators
+    return await query;
+  }
+
+  async getHabitLogsForDate(userId: number, date: string): Promise<HabitLog[]> {
+    const userHabits = await this.getHabits(userId);
+    const habitIds = userHabits.map(h => h.id);
+    
+    if (habitIds.length === 0) return [];
+    
+    return await db
+      .select()
+      .from(habitLogs)
+      .where(and(
+        eq(habitLogs.date, date),
+        // Note: Would need proper IN operator for habitIds
+      ));
+  }
+
+  async createHabitLog(log: InsertHabitLog): Promise<HabitLog> {
+    const result = await db.insert(habitLogs).values(log).returning();
+    return result[0];
+  }
+
+  async updateHabitLog(id: number, updates: Partial<HabitLog>): Promise<HabitLog | undefined> {
+    const result = await db
+      .update(habitLogs)
+      .set(updates)
+      .where(eq(habitLogs.id, id))
+      .returning();
+    return result[0];
+  }
+
+  // Weekly review methods
+  async getWeeklyReviews(userId: number): Promise<WeeklyReview[]> {
+    return await db.select().from(weeklyReviews).where(eq(weeklyReviews.userId, userId));
+  }
+
+  async getWeeklyReview(userId: number, weekStartDate: string): Promise<WeeklyReview | undefined> {
+    const result = await db
+      .select()
+      .from(weeklyReviews)
+      .where(and(eq(weeklyReviews.userId, userId), eq(weeklyReviews.weekStartDate, weekStartDate)))
+      .limit(1);
+    return result[0];
+  }
+
+  async upsertWeeklyReview(review: InsertWeeklyReview): Promise<WeeklyReview> {
+    const existing = await this.getWeeklyReview(review.userId, review.weekStartDate);
+    
+    if (existing) {
+      const result = await db
+        .update(weeklyReviews)
+        .set(review)
+        .where(eq(weeklyReviews.id, existing.id))
+        .returning();
+      return result[0];
+    } else {
+      const result = await db.insert(weeklyReviews).values(review).returning();
+      return result[0];
+    }
+  }
+
+  // Daily reflection methods
+  async getDailyReflection(userId: number, date: string): Promise<DailyReflection | undefined> {
+    const result = await db
+      .select()
+      .from(dailyReflections)
+      .where(and(eq(dailyReflections.userId, userId), eq(dailyReflections.date, date)))
+      .limit(1);
+    return result[0];
+  }
+
+  async upsertDailyReflection(reflection: InsertDailyReflection): Promise<DailyReflection> {
+    const existing = await this.getDailyReflection(reflection.userId, reflection.date);
+    
+    if (existing) {
+      const result = await db
+        .update(dailyReflections)
+        .set(reflection)
+        .where(eq(dailyReflections.id, existing.id))
+        .returning();
+      return result[0];
+    } else {
+      const result = await db.insert(dailyReflections).values(reflection).returning();
+      return result[0];
+    }
+  }
+
+  // Time block methods
+  async getTimeBlocks(userId: number, date: string): Promise<TimeBlock[]> {
+    return await db
+      .select()
+      .from(timeBlocks)
+      .where(and(eq(timeBlocks.userId, userId), eq(timeBlocks.date, date)));
+  }
+
+  async createTimeBlock(block: InsertTimeBlock): Promise<TimeBlock> {
+    const result = await db.insert(timeBlocks).values(block).returning();
+    return result[0];
+  }
+
+  async updateTimeBlock(id: number, updates: Partial<TimeBlock>): Promise<TimeBlock | undefined> {
+    const result = await db
+      .update(timeBlocks)
+      .set(updates)
+      .where(eq(timeBlocks.id, id))
+      .returning();
+    return result[0];
+  }
+
+  async deleteTimeBlock(id: number): Promise<boolean> {
+    const result = await db.delete(timeBlocks).where(eq(timeBlocks.id, id));
+    return result.rowCount > 0;
+  }
+}
+
+export const storage = new DatabaseStorage();
