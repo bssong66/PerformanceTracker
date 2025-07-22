@@ -66,6 +66,12 @@ export default function DailyPlanning() {
     queryFn: () => fetch(`/api/tasks/${MOCK_USER_ID}`).then(res => res.json()),
   });
 
+  // 사용자 설정 데이터 가져오기
+  const { data: userSettings } = useQuery({
+    queryKey: ['userSettings', MOCK_USER_ID],
+    queryFn: () => fetch(api.userSettings.get(MOCK_USER_ID)).then(res => res.json()),
+  });
+
   // 프로젝트 할일 중 오늘 날짜에 해당하는 것들을 자동으로 포함
   const todayProjectTasks = projectTasks.filter((task: any) => {
     // 할일의 시작일이 오늘이거나, 시작일과 마감일 사이에 오늘이 포함되는 경우
@@ -205,6 +211,20 @@ export default function DailyPlanning() {
     },
   });
 
+  const updateUserSettingsMutation = useMutation({
+    mutationFn: async (settingsData: any) => {
+      const response = await fetch(api.userSettings.update(), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(settingsData)
+      });
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['userSettings', MOCK_USER_ID] });
+    },
+  });
+
   const handleAddTask = () => {
     if (newTask.trim()) {
       addTaskMutation.mutate({
@@ -303,11 +323,29 @@ export default function DailyPlanning() {
     }
   };
 
-  const handleAddTimeBlock = () => {
+  const handleAddTimeBlock = async () => {
     const startValid = newTimeBlock.startTime && newTimeBlock.startTime.includes(':') && newTimeBlock.startTime !== ':';
     const endValid = newTimeBlock.endTime && newTimeBlock.endTime.includes(':') && newTimeBlock.endTime !== ':';
     
     if (startValid && endValid && newTimeBlock.title.trim()) {
+      const activityTitle = newTimeBlock.title.trim();
+      
+      // 새로운 활동인 경우 사용자 설정에 추가
+      if (userSettings && showCustomActivity) {
+        const defaultActivities = userSettings.defaultActivities || ["회의", "업무", "휴식", "학습", "운동", "식사", "이동", "개인시간"];
+        const customActivities = userSettings.customActivities || [];
+        const allKnownActivities = [...defaultActivities, ...customActivities];
+        
+        if (!allKnownActivities.includes(activityTitle)) {
+          const updatedCustomActivities = [...customActivities, activityTitle];
+          updateUserSettingsMutation.mutate({
+            userId: MOCK_USER_ID,
+            customActivities: updatedCustomActivities,
+            defaultActivities: userSettings.defaultActivities
+          });
+        }
+      }
+      
       addTimeBlockMutation.mutate({
         userId: MOCK_USER_ID,
         date: today,
@@ -589,10 +627,17 @@ export default function DailyPlanning() {
                         </SelectTrigger>
                         <SelectContent>
                           {(() => {
-                            const commonActivities = ["회의", "업무", "휴식", "학습", "운동", "식사", "이동", "개인시간"];
+                            // 사용자 설정에서 활동 목록 가져오기
+                            const defaultActivities = userSettings?.defaultActivities || ["회의", "업무", "휴식", "학습", "운동", "식사", "이동", "개인시간"];
+                            const customActivities = userSettings?.customActivities || [];
+                            
+                            // 기존 시간 블록에서 사용된 활동들 추출
                             const existingActivities = Array.from(new Set((timeBlocks as any[]).map((block: any) => block.title)));
-                            const uniqueExisting = existingActivities.filter(title => !commonActivities.includes(title) && title !== "기타");
-                            const allActivities = [...uniqueExisting, ...commonActivities, "기타"];
+                            const allKnownActivities = [...defaultActivities, ...customActivities];
+                            const uniqueExisting = existingActivities.filter(title => !allKnownActivities.includes(title) && title !== "기타");
+                            
+                            // 최종 활동 목록: 사용자 정의 + 기본 + 기존 + 기타
+                            const allActivities = [...customActivities, ...defaultActivities, ...uniqueExisting, "기타"];
                             
                             return allActivities.map((title: string) => (
                               <SelectItem key={title} value={title}>

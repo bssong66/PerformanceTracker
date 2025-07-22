@@ -146,6 +146,17 @@ export const timeBlocks = pgTable("time_blocks", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+export const userSettings = pgTable("user_settings", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().unique(),
+  customActivities: text("custom_activities").array().default([]),
+  defaultActivities: text("default_activities").array().default([
+    "회의", "업무", "휴식", "학습", "운동", "식사", "이동", "개인시간"
+  ]),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 // Insert schemas
 export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
@@ -205,6 +216,12 @@ export const insertTimeBlockSchema = createInsertSchema(timeBlocks).omit({
   createdAt: true,
 });
 
+export const insertUserSettingsSchema = createInsertSchema(userSettings).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 // Types
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -238,3 +255,6 @@ export type InsertDailyReflection = z.infer<typeof insertDailyReflectionSchema>;
 
 export type TimeBlock = typeof timeBlocks.$inferSelect;
 export type InsertTimeBlock = z.infer<typeof insertTimeBlockSchema>;
+
+export type UserSettings = typeof userSettings.$inferSelect;
+export type InsertUserSettings = z.infer<typeof insertUserSettingsSchema>;

@@ -66,6 +66,12 @@ export const api = {
     update: (id: number) => `/api/time-blocks/${id}`,
     delete: (id: number) => `/api/time-blocks/${id}`,
   },
+
+  // User Settings
+  userSettings: {
+    get: (userId: number) => `/api/user-settings/${userId}`,
+    update: () => `/api/user-settings`,
+  },
 };
 
 // Utility functions for API calls

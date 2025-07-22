@@ -4,7 +4,8 @@ import { storage } from "./storage";
 import { 
   insertFoundationSchema, insertAnnualGoalSchema, insertProjectSchema,
   insertTaskSchema, insertEventSchema, insertHabitSchema, insertHabitLogSchema, 
-  insertWeeklyReviewSchema, insertDailyReflectionSchema, insertTimeBlockSchema
+  insertWeeklyReviewSchema, insertDailyReflectionSchema, insertTimeBlockSchema,
+  insertUserSettingsSchema
 } from "@shared/schema";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -481,6 +482,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ success: true });
     } catch (error) {
       res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // User settings routes
+  app.get("/api/user-settings/:userId", async (req, res) => {
+    try {
+      const userId = parseInt(req.params.userId);
+      const settings = await storage.getUserSettings(userId);
+      
+      if (!settings) {
+        // Return default settings if none exist
+        const defaultSettings = {
+          userId,
+          customActivities: [],
+          defaultActivities: [
+            "회의", "업무", "휴식", "학습", "운동", "식사", "이동", "개인시간"
+          ]
+        };
+        return res.json(defaultSettings);
+      }
+      
+      res.json(settings);
+    } catch (error) {
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.post("/api/user-settings", async (req, res) => {
+    try {
+      const settingsData = insertUserSettingsSchema.parse(req.body);
+      const settings = await storage.upsertUserSettings(settingsData);
+      res.json(settings);
+    } catch (error) {
+      res.status(400).json({ message: "Invalid settings data" });
     }
   });
 

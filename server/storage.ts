@@ -1,12 +1,13 @@
 import { 
   users, foundations, annualGoals, projects, tasks, events, habits, habitLogs, 
-  weeklyReviews, dailyReflections, timeBlocks,
+  weeklyReviews, dailyReflections, timeBlocks, userSettings,
   type User, type InsertUser, type Foundation, type InsertFoundation,
   type AnnualGoal, type InsertAnnualGoal, type Project, type InsertProject,
   type Task, type InsertTask, type Event, type InsertEvent,
   type Habit, type InsertHabit, type HabitLog, type InsertHabitLog,
   type WeeklyReview, type InsertWeeklyReview, type DailyReflection, 
-  type InsertDailyReflection, type TimeBlock, type InsertTimeBlock
+  type InsertDailyReflection, type TimeBlock, type InsertTimeBlock,
+  type UserSettings, type InsertUserSettings
 } from "@shared/schema";
 
 export interface IStorage {
@@ -72,6 +73,10 @@ export interface IStorage {
   createTimeBlock(block: InsertTimeBlock): Promise<TimeBlock>;
   updateTimeBlock(id: number, updates: Partial<TimeBlock>): Promise<TimeBlock | undefined>;
   deleteTimeBlock(id: number): Promise<boolean>;
+  
+  // User settings methods
+  getUserSettings(userId: number): Promise<UserSettings | undefined>;
+  upsertUserSettings(settings: InsertUserSettings): Promise<UserSettings>;
 }
 
 export class MemStorage implements IStorage {
@@ -86,6 +91,7 @@ export class MemStorage implements IStorage {
   private weeklyReviews: Map<number, WeeklyReview>;
   private dailyReflections: Map<number, DailyReflection>;
   private timeBlocks: Map<number, TimeBlock>;
+  private userSettings: Map<number, UserSettings>;
   private currentId: number;
 
   constructor() {
@@ -100,6 +106,7 @@ export class MemStorage implements IStorage {
     this.weeklyReviews = new Map();
     this.dailyReflections = new Map();
     this.timeBlocks = new Map();
+    this.userSettings = new Map();
     this.currentId = 1;
   }
 
@@ -525,6 +532,34 @@ export class MemStorage implements IStorage {
   async deleteTimeBlock(id: number): Promise<boolean> {
     return this.timeBlocks.delete(id);
   }
+
+  // User settings methods
+  async getUserSettings(userId: number): Promise<UserSettings | undefined> {
+    return Array.from(this.userSettings.values()).find(settings => settings.userId === userId);
+  }
+
+  async upsertUserSettings(settings: InsertUserSettings): Promise<UserSettings> {
+    const existing = await this.getUserSettings(settings.userId);
+    if (existing) {
+      const updated = { ...existing, ...settings, updatedAt: new Date() };
+      this.userSettings.set(existing.id, updated);
+      return updated;
+    } else {
+      const id = this.currentId++;
+      const newSettings: UserSettings = { 
+        ...settings, 
+        id,
+        customActivities: settings.customActivities ?? [],
+        defaultActivities: settings.defaultActivities ?? [
+          "회의", "업무", "휴식", "학습", "운동", "식사", "이동", "개인시간"
+        ],
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
+      this.userSettings.set(id, newSettings);
+      return newSettings;
+    }
+  }
 }
 
 import { drizzle } from 'drizzle-orm/neon-http';
@@ -862,6 +897,32 @@ export class DatabaseStorage implements IStorage {
   async deleteTimeBlock(id: number): Promise<boolean> {
     const result = await db.delete(timeBlocks).where(eq(timeBlocks.id, id));
     return result.rowCount > 0;
+  }
+
+  // User settings methods
+  async getUserSettings(userId: number): Promise<UserSettings | undefined> {
+    const result = await db
+      .select()
+      .from(userSettings)
+      .where(eq(userSettings.userId, userId))
+      .limit(1);
+    return result[0];
+  }
+
+  async upsertUserSettings(settings: InsertUserSettings): Promise<UserSettings> {
+    const existing = await this.getUserSettings(settings.userId);
+    
+    if (existing) {
+      const result = await db
+        .update(userSettings)
+        .set({ ...settings, updatedAt: new Date() })
+        .where(eq(userSettings.id, existing.id))
+        .returning();
+      return result[0];
+    } else {
+      const result = await db.insert(userSettings).values(settings).returning();
+      return result[0];
+    }
   }
 }
 
