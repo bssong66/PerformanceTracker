@@ -85,16 +85,26 @@ export default function HabitManagement() {
     }
   });
 
-  // Fetch today's habit logs
+  // Fetch habit logs for the last 7 days
   const { data: habitLogs = [] } = useQuery({
-    queryKey: ['habit-logs', MOCK_USER_ID, today],
+    queryKey: ['habit-logs', MOCK_USER_ID],
     queryFn: async () => {
-      const response = await fetch(`/api/habit-logs/${MOCK_USER_ID}/${today}`);
-      if (!response.ok) {
-        return [];
+      // Get logs for the last 7 days
+      const logs = [];
+      for (let i = 0; i < 7; i++) {
+        const date = new Date();
+        date.setDate(date.getDate() - i);
+        const dateStr = date.toISOString().split('T')[0];
+        
+        const response = await fetch(`/api/habit-logs/${MOCK_USER_ID}/${dateStr}`);
+        if (response.ok) {
+          const dayLogs = await response.json();
+          if (Array.isArray(dayLogs)) {
+            logs.push(...dayLogs);
+          }
+        }
       }
-      const data = await response.json();
-      return Array.isArray(data) ? data : [];
+      return logs;
     }
   });
 
@@ -165,7 +175,7 @@ export default function HabitManagement() {
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['habit-logs', MOCK_USER_ID, today] });
+      queryClient.invalidateQueries({ queryKey: ['habit-logs', MOCK_USER_ID] });
     }
   });
 
@@ -222,7 +232,9 @@ export default function HabitManagement() {
   };
 
   const isHabitCompleted = (habitId: number) => {
-    const log = habitLogs.find((log: HabitLog) => log.habitId === habitId);
+    const log = habitLogs.find((log: HabitLog) => 
+      log.habitId === habitId && log.date === today
+    );
     return log?.completed || false;
   };
 
@@ -235,8 +247,57 @@ export default function HabitManagement() {
   };
 
   const calculateStreak = (habitId: number) => {
-    // 실제로는 백엔드에서 연속일 계산을 해야 하지만, 여기서는 간단히 구현
-    return Math.floor(Math.random() * 10) + 1; // 임시 데이터
+    if (!habitLogs) return 0;
+    
+    const habitLogsForHabit = habitLogs.filter((log: any) => log.habitId === habitId && log.completed);
+    if (habitLogsForHabit.length === 0) return 0;
+    
+    // Sort by date in descending order
+    const sortedLogs = habitLogsForHabit.sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    
+    let streak = 0;
+    let currentDate = new Date();
+    
+    for (const log of sortedLogs) {
+      const logDate = new Date(log.date);
+      const diffTime = currentDate.getTime() - logDate.getTime();
+      const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+      
+      if (diffDays === streak) {
+        streak++;
+        currentDate = logDate;
+      } else {
+        break;
+      }
+    }
+    
+    return streak;
+  };
+
+  // Calculate recent 7 days completion for a habit
+  const calculateRecentCompletion = (habitId: number) => {
+    if (!habitLogs) return { completed: 0, days: [] };
+    
+    const days = [];
+    const today = new Date();
+    
+    for (let i = 6; i >= 0; i--) {
+      const date = new Date(today);
+      date.setDate(today.getDate() - i);
+      const dateStr = date.toISOString().split('T')[0];
+      
+      const log = habitLogs.find((log: any) => 
+        log.habitId === habitId && log.date === dateStr
+      );
+      
+      days.push({
+        date: dateStr,
+        completed: log ? log.completed : false
+      });
+    }
+    
+    const completed = days.filter(day => day.completed).length;
+    return { completed, days };
   };
 
   return (
@@ -381,6 +442,7 @@ export default function HabitManagement() {
         {habits.map((habit: Habit) => {
           const isCompleted = isHabitCompleted(habit.id);
           const streak = calculateStreak(habit.id);
+          const recentCompletion = calculateRecentCompletion(habit.id);
           
           return (
             <Card key={habit.id} className={`transition-all ${isCompleted ? 'bg-green-50 border-green-200' : 'bg-white'}`}>
@@ -475,15 +537,16 @@ export default function HabitManagement() {
                 <div className="space-y-2">
                   <div className="flex justify-between text-xs text-gray-500">
                     <span>최근 7일</span>
-                    <span>{Math.floor(Math.random() * 8)}/7</span>
+                    <span>{recentCompletion.completed}/7</span>
                   </div>
                   <div className="flex space-x-1">
-                    {Array.from({ length: 7 }, (_, i) => (
+                    {recentCompletion.days.map((day, i) => (
                       <div
                         key={i}
                         className={`h-3 w-full rounded ${
-                          Math.random() > 0.3 ? 'bg-green-400' : 'bg-gray-200'
+                          day.completed ? 'bg-green-400' : 'bg-gray-200'
                         }`}
+                        title={`${day.date}: ${day.completed ? '완료' : '미완료'}`}
                       />
                     ))}
                   </div>
