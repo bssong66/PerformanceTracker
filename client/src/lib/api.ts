@@ -53,6 +53,13 @@ export const api = {
     create: () => `/api/weekly-review`,
   },
 
+  // Monthly Review
+  monthlyReview: {
+    get: (userId: number, year: number, month: number) => 
+      `/api/monthly-review/${userId}/${year}/${month}`,
+    create: () => `/api/monthly-review`,
+  },
+
   // Daily Reflection
   dailyReflection: {
     get: (userId: number, date: string) => `/api/daily-reflection/${userId}/${date}`,
@@ -131,6 +138,10 @@ export const deleteAnnualGoal = async (id: number) => {
 
 export const saveWeeklyReview = async (reviewData: any) => {
   return apiRequest('POST', api.weeklyReview.create(), reviewData);
+};
+
+export const saveMonthlyReview = async (reviewData: any) => {
+  return apiRequest('POST', api.monthlyReview.create(), reviewData);
 };
 
 export const saveDailyReflection = async (reflectionData: any) => {

@@ -126,6 +126,24 @@ export const weeklyReviews = pgTable("weekly_reviews", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+export const monthlyReviews = pgTable("monthly_reviews", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull(),
+  year: integer("year").notNull(),
+  month: integer("month").notNull(),
+  monthlyGoal1: text("monthly_goal_1"),
+  monthlyGoal2: text("monthly_goal_2"),
+  monthlyGoal3: text("monthly_goal_3"),
+  workHours: integer("work_hours").default(0),
+  personalHours: integer("personal_hours").default(0),
+  reflection: text("reflection"),
+  valueAlignment1: integer("value_alignment_1").default(0), // 0-100
+  valueAlignment2: integer("value_alignment_2").default(0), // 0-100
+  valueAlignment3: integer("value_alignment_3").default(0), // 0-100
+  imageUrls: text("image_urls").array(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 export const dailyReflections = pgTable("daily_reflections", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").notNull(),
@@ -208,6 +226,11 @@ export const insertWeeklyReviewSchema = createInsertSchema(weeklyReviews).omit({
   createdAt: true,
 });
 
+export const insertMonthlyReviewSchema = createInsertSchema(monthlyReviews).omit({
+  id: true,
+  createdAt: true,
+});
+
 export const insertDailyReflectionSchema = createInsertSchema(dailyReflections).omit({
   id: true,
   createdAt: true,
@@ -251,6 +274,8 @@ export type InsertHabitLog = z.infer<typeof insertHabitLogSchema>;
 
 export type WeeklyReview = typeof weeklyReviews.$inferSelect;
 export type InsertWeeklyReview = z.infer<typeof insertWeeklyReviewSchema>;
+export type MonthlyReview = typeof monthlyReviews.$inferSelect;
+export type InsertMonthlyReview = z.infer<typeof insertMonthlyReviewSchema>;
 
 export type DailyReflection = typeof dailyReflections.$inferSelect;
 export type InsertDailyReflection = z.infer<typeof insertDailyReflectionSchema>;
