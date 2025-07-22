@@ -5,7 +5,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Trash2, Plus, Save, RefreshCw } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Trash2, Plus, Save, RefreshCw, Database } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { api, saveFoundation, createAnnualGoal, deleteAnnualGoal } from "@/lib/api";
 import { queryClient } from "@/lib/queryClient";
@@ -20,6 +21,7 @@ export default function Foundation() {
   const [mission, setMission] = useState("");
   const [values, setValues] = useState(["", "", ""]);
   const [newGoal, setNewGoal] = useState("");
+  const [showSelectDialog, setShowSelectDialog] = useState(false);
 
   const { data: foundation, isLoading: foundationLoading, refetch: refetchFoundation } = useQuery({
     queryKey: [api.foundation.get(MOCK_USER_ID)],
@@ -28,6 +30,11 @@ export default function Foundation() {
 
   const { data: goals = [], isLoading: goalsLoading, refetch: refetchGoals } = useQuery({
     queryKey: [api.goals.list(MOCK_USER_ID, currentYear)],
+  });
+
+  const { data: allFoundations = [], refetch: refetchAllFoundations } = useQuery({
+    queryKey: [api.foundation.getAll(MOCK_USER_ID)],
+    enabled: showSelectDialog,
   });
 
   // Set initial values when foundation data loads
@@ -135,14 +142,26 @@ export default function Foundation() {
 
   const handleLoadData = async () => {
     try {
-      await Promise.all([
-        refetchFoundation(),
-        refetchGoals()
-      ]);
-      toast({
-        title: "데이터 불러오기 완료",
-        description: "저장된 가치 중심 계획을 성공적으로 불러왔습니다.",
+      // First check if there are multiple foundations
+      await refetchAllFoundations();
+      const foundations = await queryClient.fetchQuery({
+        queryKey: [api.foundation.getAll(MOCK_USER_ID)],
       });
+
+      if (foundations && Array.isArray(foundations) && foundations.length > 1) {
+        // Show selection dialog if multiple foundations exist
+        setShowSelectDialog(true);
+      } else {
+        // Single foundation or no foundations - just refresh current data
+        await Promise.all([
+          refetchFoundation(),
+          refetchGoals()
+        ]);
+        toast({
+          title: "데이터 불러오기 완료",
+          description: "저장된 가치 중심 계획을 성공적으로 불러왔습니다.",
+        });
+      }
     } catch (error) {
       toast({
         title: "불러오기 실패",
@@ -150,6 +169,20 @@ export default function Foundation() {
         variant: "destructive",
       });
     }
+  };
+
+  const handleSelectFoundation = (selectedFoundation: any) => {
+    setMission(selectedFoundation.personalMission || "");
+    setValues([
+      selectedFoundation.coreValue1 || "",
+      selectedFoundation.coreValue2 || "",
+      selectedFoundation.coreValue3 || "",
+    ]);
+    setShowSelectDialog(false);
+    toast({
+      title: "데이터 불러오기 완료",
+      description: "선택한 가치 중심 계획을 불러왔습니다.",
+    });
   };
 
   if (foundationLoading || goalsLoading) {
@@ -183,15 +216,90 @@ export default function Foundation() {
               </p>
             </div>
             <div className="flex items-center space-x-3">
-              <Button
-                variant="outline"
-                onClick={handleLoadData}
-                disabled={foundationLoading || goalsLoading}
-                className="flex items-center space-x-2"
-              >
-                <RefreshCw className={`h-4 w-4 ${foundationLoading || goalsLoading ? 'animate-spin' : ''}`} />
-                <span>데이터 불러오기</span>
-              </Button>
+              <Dialog open={showSelectDialog} onOpenChange={setShowSelectDialog}>
+                <DialogTrigger asChild>
+                  <Button
+                    variant="outline"
+                    onClick={handleLoadData}
+                    disabled={foundationLoading || goalsLoading}
+                    className="flex items-center space-x-2"
+                  >
+                    <Database className="h-4 w-4" />
+                    <span>데이터 불러오기</span>
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-[600px]">
+                  <DialogHeader>
+                    <DialogTitle>가치 중심 계획 선택</DialogTitle>
+                  </DialogHeader>
+                  <div className="py-4">
+                    <p className="text-sm text-gray-600 mb-4">
+                      저장된 여러 개의 가치 중심 계획 중에서 불러올 데이터를 선택하세요.
+                    </p>
+                    <div className="space-y-3 max-h-96 overflow-y-auto">
+                      {Array.isArray(allFoundations) && allFoundations.map((foundation: any, index: number) => (
+                        <Card 
+                          key={foundation.id} 
+                          className="cursor-pointer hover:bg-gray-50 transition-colors"
+                          onClick={() => handleSelectFoundation(foundation)}
+                        >
+                          <CardContent className="p-4">
+                            <div className="flex items-start justify-between">
+                              <div className="flex-1">
+                                <div className="flex items-center space-x-2 mb-2">
+                                  <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                                  <span className="text-sm font-medium text-gray-700">
+                                    계획 #{index + 1}
+                                  </span>
+                                  <span className="text-xs text-gray-500">
+                                    {new Date(foundation.createdAt).toLocaleDateString('ko-KR')}
+                                  </span>
+                                </div>
+                                <div className="space-y-2">
+                                  <div>
+                                    <span className="text-xs text-gray-500">개인 미션:</span>
+                                    <p className="text-sm text-gray-800 truncate">
+                                      {foundation.personalMission || "미션 없음"}
+                                    </p>
+                                  </div>
+                                  <div>
+                                    <span className="text-xs text-gray-500">핵심 가치:</span>
+                                    <p className="text-sm text-gray-800">
+                                      {[foundation.coreValue1, foundation.coreValue2, foundation.coreValue3]
+                                        .filter(Boolean)
+                                        .join(", ") || "가치 없음"}
+                                    </p>
+                                  </div>
+                                </div>
+                              </div>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleSelectFoundation(foundation);
+                                }}
+                                className="ml-2"
+                              >
+                                선택
+                              </Button>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))}
+                      
+                      {(!Array.isArray(allFoundations) || allFoundations.length === 0) && (
+                        <div className="text-center py-8">
+                          <div className="text-gray-500 text-sm">
+                            저장된 가치 중심 계획이 없습니다.
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </DialogContent>
+              </Dialog>
+              
               <Button
                 onClick={handleSaveFoundation}
                 disabled={saveFoundationMutation.isPending}

@@ -4,6 +4,7 @@ export const api = {
   // Foundation
   foundation: {
     get: (userId: number) => `/api/foundation/${userId}`,
+    getAll: (userId: number) => `/api/foundations/${userId}`,
     create: () => `/api/foundation`,
   },
 

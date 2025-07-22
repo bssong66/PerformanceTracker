@@ -24,6 +24,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.get("/api/foundations/:userId", async (req, res) => {
+    try {
+      const userId = parseInt(req.params.userId);
+      const foundations = await storage.getAllFoundations(userId);
+      res.json(foundations);
+    } catch (error) {
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
   app.post("/api/foundation", async (req, res) => {
     try {
       const foundationData = insertFoundationSchema.parse(req.body);

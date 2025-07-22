@@ -17,6 +17,7 @@ export interface IStorage {
   
   // Foundation methods
   getFoundation(userId: number): Promise<Foundation | undefined>;
+  getAllFoundations(userId: number): Promise<Foundation[]>;
   upsertFoundation(foundation: InsertFoundation): Promise<Foundation>;
   
   // Annual goals methods
@@ -120,6 +121,10 @@ export class MemStorage implements IStorage {
   // Foundation methods
   async getFoundation(userId: number): Promise<Foundation | undefined> {
     return Array.from(this.foundations.values()).find(f => f.userId === userId);
+  }
+
+  async getAllFoundations(userId: number): Promise<Foundation[]> {
+    return Array.from(this.foundations.values()).filter(f => f.userId === userId);
   }
 
   async upsertFoundation(foundation: InsertFoundation): Promise<Foundation> {
@@ -533,6 +538,10 @@ export class DatabaseStorage implements IStorage {
   async getFoundation(userId: number): Promise<Foundation | undefined> {
     const result = await db.select().from(foundations).where(eq(foundations.userId, userId)).limit(1);
     return result[0];
+  }
+
+  async getAllFoundations(userId: number): Promise<Foundation[]> {
+    return await db.select().from(foundations).where(eq(foundations.userId, userId));
   }
 
   async upsertFoundation(foundation: InsertFoundation): Promise<Foundation> {
