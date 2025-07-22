@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { TaskItem } from "@/components/TaskItem";
 import { PriorityBadge } from "@/components/PriorityBadge";
-import { Plus, Mic, CalendarDays, Camera, Upload, X } from "lucide-react";
+import { Plus, Mic, CalendarDays, Camera, Upload, X, ChevronLeft, ChevronRight, Eye } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { api, createTask, updateTask, saveDailyReflection, createTimeBlock } from "@/lib/api";
 import { queryClient } from "@/lib/queryClient";
@@ -33,8 +33,10 @@ export default function DailyPlanning() {
     priority: 'medium' as 'high' | 'medium' | 'low'
   });
   const [reflection, setReflection] = useState("");
-  const [selectedImage, setSelectedImage] = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [selectedImages, setSelectedImages] = useState<File[]>([]);
+  const [imagePreviews, setImagePreviews] = useState<string[]>([]);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [showImageViewer, setShowImageViewer] = useState(false);
   const [newTimeBlock, setNewTimeBlock] = useState<{
     startTime: string;
     endTime: string;
@@ -93,6 +95,15 @@ export default function DailyPlanning() {
     queryFn: () => fetch(api.dailyReflection.get(MOCK_USER_ID, today)).then(res => res.json()),
     meta: { errorMessage: "Daily reflection not found" },
   });
+
+  // Load existing images if daily reflection exists
+  useEffect(() => {
+    if (dailyReflection && dailyReflection.imageUrls && dailyReflection.imageNames) {
+      setImagePreviews(dailyReflection.imageUrls || []);
+      // Note: We can't recreate File objects from URLs, so selectedImages will remain empty
+      // This is fine since we only need previews for display and new uploads for editing
+    }
+  }, [dailyReflection]);
 
   const { data: habits = [] } = useQuery({
     queryKey: ['habits', MOCK_USER_ID],
@@ -169,10 +180,12 @@ export default function DailyPlanning() {
   const saveReflectionMutation = useMutation({
     mutationFn: saveDailyReflection,
     onSuccess: () => {
+      setReflection("");
+      setSelectedImages([]);
       queryClient.invalidateQueries({ queryKey: ['dailyReflection', MOCK_USER_ID, today] });
       toast({
-        title: "성찰 저장",
-        description: "하루 성찰이 저장되었습니다.",
+        title: "기록 저장",
+        description: "하루 기록이 저장되었습니다.",
       });
     },
   });
@@ -243,14 +256,17 @@ export default function DailyPlanning() {
   };
 
   const handleImageSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      setSelectedImage(file);
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        setImagePreview(e.target?.result as string);
-      };
-      reader.readAsDataURL(file);
+    const files = Array.from(event.target.files || []);
+    if (files.length > 0) {
+      setSelectedImages(prev => [...prev, ...files]);
+      
+      files.forEach(file => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          setImagePreviews(prev => [...prev, e.target?.result as string]);
+        };
+        reader.readAsDataURL(file);
+      });
     }
   };
 
@@ -260,40 +276,46 @@ export default function DailyPlanning() {
     input.accept = 'image/*';
     input.capture = 'environment';
     input.onchange = (e) => {
-      const file = (e.target as HTMLInputElement).files?.[0];
-      if (file) {
-        setSelectedImage(file);
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          setImagePreview(e.target?.result as string);
-        };
-        reader.readAsDataURL(file);
+      const files = Array.from((e.target as HTMLInputElement).files || []);
+      if (files.length > 0) {
+        setSelectedImages(prev => [...prev, ...files]);
+        
+        files.forEach(file => {
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            setImagePreviews(prev => [...prev, e.target?.result as string]);
+          };
+          reader.readAsDataURL(file);
+        });
       }
     };
     input.click();
   };
 
-  const handleRemoveImage = () => {
-    setSelectedImage(null);
-    setImagePreview(null);
+  const handleRemoveImage = (index: number) => {
+    setSelectedImages(prev => prev.filter((_, i) => i !== index));
+    setImagePreviews(prev => prev.filter((_, i) => i !== index));
   };
 
   const handleSaveReflection = () => {
-    if (reflection.trim() || selectedImage) {
-      let imageUrl = null;
-      let imageName = null;
+    if (reflection.trim() || imagePreviews.length > 0) {
+      // Only save new images (selectedImages), keep existing ones (from dailyReflection)
+      const newImageUrls = selectedImages.length > 0 ? imagePreviews.slice(-selectedImages.length) : [];
+      const newImageNames = selectedImages.map(img => img.name);
       
-      if (selectedImage) {
-        imageUrl = imagePreview;
-        imageName = selectedImage.name;
-      }
+      // Combine existing images with new ones
+      const existingImageUrls = (dailyReflection?.imageUrls || []);
+      const existingImageNames = (dailyReflection?.imageNames || []);
+      
+      const allImageUrls = [...existingImageUrls, ...newImageUrls];
+      const allImageNames = [...existingImageNames, ...newImageNames];
       
       saveReflectionMutation.mutate({
         userId: MOCK_USER_ID,
         date: today,
         reflection: reflection.trim(),
-        imageUrl,
-        imageName,
+        imageUrls: allImageUrls,
+        imageNames: allImageNames,
       });
     }
   };
@@ -530,11 +552,71 @@ export default function DailyPlanning() {
                   rows={2}
                   className="resize-none text-xs mb-2"
                 />
+                
+                {/* Image Upload */}
+                <div className="mb-2">
+                  <div className="flex space-x-2 mb-2">
+                    <input
+                      type="file"
+                      id="image-upload"
+                      accept="image/*"
+                      multiple
+                      onChange={handleImageSelect}
+                      className="hidden"
+                    />
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => document.getElementById('image-upload')?.click()}
+                      className="h-6 px-2 text-xs"
+                    >
+                      <Upload className="h-3 w-3 mr-1" />
+                      사진 선택
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleCameraCapture}
+                      className="h-6 px-2 text-xs"
+                    >
+                      <Camera className="h-3 w-3 mr-1" />
+                      카메라
+                    </Button>
+                  </div>
+                  
+                  {/* Image Previews */}
+                  {imagePreviews.length > 0 && (
+                    <div className="space-y-2">
+                      <div className="flex flex-wrap gap-2">
+                        {imagePreviews.map((preview, index) => (
+                          <div key={index} className="relative group">
+                            <img
+                              src={preview}
+                              alt={`Preview ${index + 1}`}
+                              className="w-16 h-16 object-cover rounded cursor-pointer"
+                              onClick={() => {
+                                setCurrentImageIndex(index);
+                                setShowImageViewer(true);
+                              }}
+                            />
+                            <button
+                              onClick={() => handleRemoveImage(index)}
+                              className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-4 h-4 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity"
+                            >
+                              ×
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+                
                 <Button 
                   onClick={handleSaveReflection} 
                   size="sm" 
                   className="h-7 text-xs"
-                  disabled={saveReflectionMutation.isPending || !reflection.trim()}
+                  disabled={saveReflectionMutation.isPending || (!reflection.trim() && imagePreviews.length === 0)}
                 >
                   {saveReflectionMutation.isPending ? '저장 중...' : '저장'}
                 </Button>
@@ -543,6 +625,53 @@ export default function DailyPlanning() {
           </Card>
         </div>
       </div>
+
+      {/* Image Viewer Dialog */}
+      {showImageViewer && imagePreviews.length > 0 && (
+        <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50" onClick={() => setShowImageViewer(false)}>
+          <div className="relative max-w-4xl max-h-full p-4" onClick={(e) => e.stopPropagation()}>
+            {/* Close Button */}
+            <button
+              onClick={() => setShowImageViewer(false)}
+              className="absolute top-2 right-2 text-white bg-black bg-opacity-50 rounded-full p-2 hover:bg-opacity-75 z-10"
+            >
+              <X className="h-5 w-5" />
+            </button>
+            
+            {/* Navigation Buttons */}
+            {imagePreviews.length > 1 && (
+              <>
+                <button
+                  onClick={() => setCurrentImageIndex((prev) => (prev - 1 + imagePreviews.length) % imagePreviews.length)}
+                  className="absolute left-2 top-1/2 transform -translate-y-1/2 text-white bg-black bg-opacity-50 rounded-full p-2 hover:bg-opacity-75 z-10"
+                >
+                  <ChevronLeft className="h-6 w-6" />
+                </button>
+                <button
+                  onClick={() => setCurrentImageIndex((prev) => (prev + 1) % imagePreviews.length)}
+                  className="absolute right-2 top-1/2 transform -translate-y-1/2 text-white bg-black bg-opacity-50 rounded-full p-2 hover:bg-opacity-75 z-10"
+                >
+                  <ChevronRight className="h-6 w-6" />
+                </button>
+              </>
+            )}
+            
+            {/* Current Image */}
+            <img
+              src={imagePreviews[currentImageIndex]}
+              alt={`Image ${currentImageIndex + 1}`}
+              className="max-w-full max-h-full object-contain"
+            />
+            
+            {/* Image Counter */}
+            {imagePreviews.length > 1 && (
+              <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 text-white bg-black bg-opacity-50 px-3 py-1 rounded">
+                {currentImageIndex + 1} / {imagePreviews.length}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
