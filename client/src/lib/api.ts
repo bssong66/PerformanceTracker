@@ -72,6 +72,12 @@ export const api = {
     get: (userId: number) => `/api/user-settings/${userId}`,
     update: () => `/api/user-settings`,
   },
+
+  // Task Carryover
+  taskCarryover: {
+    carryOver: () => `/api/tasks/carryover`,
+    getCarriedOver: (userId: number, date: string) => `/api/tasks/carried-over/${userId}/${date}`,
+  },
 };
 
 // Utility functions for API calls

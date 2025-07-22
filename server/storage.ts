@@ -77,6 +77,10 @@ export interface IStorage {
   // User settings methods
   getUserSettings(userId: number): Promise<UserSettings | undefined>;
   upsertUserSettings(settings: InsertUserSettings): Promise<UserSettings>;
+  
+  // Task carryover methods
+  carryOverIncompleteTasks(userId: number, fromDate: string, toDate: string): Promise<Task[]>;
+  getCarriedOverTasks(userId: number, date: string): Promise<Task[]>;
 }
 
 export class MemStorage implements IStorage {
@@ -270,6 +274,8 @@ export class MemStorage implements IStorage {
       coreValue: task.coreValue ?? null,
       annualGoal: task.annualGoal ?? null,
       imageUrls: task.imageUrls ?? null,
+      isCarriedOver: task.isCarriedOver ?? false,
+      originalScheduledDate: task.originalScheduledDate ?? null,
       completedAt: null,
       createdAt: new Date()
     };
@@ -559,6 +565,43 @@ export class MemStorage implements IStorage {
       this.userSettings.set(id, newSettings);
       return newSettings;
     }
+  }
+
+  // Task carryover methods
+  async carryOverIncompleteTasks(userId: number, fromDate: string, toDate: string): Promise<Task[]> {
+    const incompleteTasks = Array.from(this.tasks.values())
+      .filter(task => 
+        task.userId === userId && 
+        task.scheduledDate === fromDate && 
+        !task.completed
+      );
+
+    const carriedOverTasks: Task[] = [];
+    
+    for (const task of incompleteTasks) {
+      const carriedOverTask: Task = {
+        ...task,
+        id: this.currentId++,
+        scheduledDate: toDate,
+        isCarriedOver: true,
+        originalScheduledDate: task.originalScheduledDate || task.scheduledDate,
+        createdAt: new Date()
+      };
+      
+      this.tasks.set(carriedOverTask.id, carriedOverTask);
+      carriedOverTasks.push(carriedOverTask);
+    }
+    
+    return carriedOverTasks;
+  }
+
+  async getCarriedOverTasks(userId: number, date: string): Promise<Task[]> {
+    return Array.from(this.tasks.values())
+      .filter(task => 
+        task.userId === userId && 
+        task.scheduledDate === date && 
+        task.isCarriedOver === true
+      );
   }
 }
 
@@ -923,6 +966,46 @@ export class DatabaseStorage implements IStorage {
       const result = await db.insert(userSettings).values(settings).returning();
       return result[0];
     }
+  }
+
+  // Task carryover methods
+  async carryOverIncompleteTasks(userId: number, fromDate: string, toDate: string): Promise<Task[]> {
+    const incompleteTasks = await db
+      .select()
+      .from(tasks)
+      .where(and(
+        eq(tasks.userId, userId),
+        eq(tasks.scheduledDate, fromDate),
+        eq(tasks.completed, false)
+      ));
+
+    const carriedOverTasks: Task[] = [];
+    
+    for (const task of incompleteTasks) {
+      const carriedOverTask = {
+        ...task,
+        scheduledDate: toDate,
+        isCarriedOver: true,
+        originalScheduledDate: task.originalScheduledDate || task.scheduledDate,
+      };
+      
+      delete (carriedOverTask as any).id; // Remove id to let DB auto-generate
+      const result = await db.insert(tasks).values(carriedOverTask).returning();
+      carriedOverTasks.push(result[0]);
+    }
+    
+    return carriedOverTasks;
+  }
+
+  async getCarriedOverTasks(userId: number, date: string): Promise<Task[]> {
+    return await db
+      .select()
+      .from(tasks)
+      .where(and(
+        eq(tasks.userId, userId),
+        eq(tasks.scheduledDate, date),
+        eq(tasks.isCarriedOver, true)
+      ));
   }
 }
 

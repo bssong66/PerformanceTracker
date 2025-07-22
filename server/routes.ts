@@ -519,6 +519,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Task carryover routes
+  app.post("/api/tasks/carryover", async (req, res) => {
+    try {
+      const { userId, fromDate, toDate } = req.body;
+      const carriedOverTasks = await storage.carryOverIncompleteTasks(userId, fromDate, toDate);
+      res.json(carriedOverTasks);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to carry over tasks" });
+    }
+  });
+
+  app.get("/api/tasks/carried-over/:userId/:date", async (req, res) => {
+    try {
+      const userId = parseInt(req.params.userId);
+      const date = req.params.date;
+      const carriedOverTasks = await storage.getCarriedOverTasks(userId, date);
+      res.json(carriedOverTasks);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to get carried over tasks" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { PriorityBadge } from "./PriorityBadge";
-import { Trash2, Clock } from "lucide-react";
+import { Trash2, Clock, AlertTriangle } from "lucide-react";
 import { type Task } from "@shared/schema";
 import { type Priority } from "@/lib/types";
 
@@ -45,6 +45,9 @@ export function TaskItem({
       />
       
       <div className="flex-1 flex items-center space-x-1">
+        {task.isCarriedOver && (
+          <AlertTriangle className="h-3 w-3 text-orange-500" />
+        )}
         {project && (
           <div 
             className="w-2 h-2 rounded-full" 
@@ -68,6 +71,12 @@ export function TaskItem({
         {(task as any).annualGoal && (task as any).annualGoal !== 'none' && (
           <span className="px-1 py-0 bg-purple-100 text-purple-600 rounded text-xs">
             📅 {(task as any).annualGoal}
+          </span>
+        )}
+        {(task as any).isCarriedOver && (
+          <span className="px-1 py-0 bg-orange-100 text-orange-600 rounded text-xs flex items-center space-x-1">
+            <AlertTriangle className="h-2 w-2" />
+            <span>이월</span>
           </span>
         )}
       </div>

@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { TaskItem } from "@/components/TaskItem";
 import { PriorityBadge } from "@/components/PriorityBadge";
-import { Plus, Mic, CalendarDays, X, ChevronLeft, ChevronRight } from "lucide-react";
+import { Plus, Mic, CalendarDays, X, ChevronLeft, ChevronRight, AlertTriangle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { api, createTask, updateTask, saveDailyReflection, createTimeBlock } from "@/lib/api";
 import { queryClient } from "@/lib/queryClient";
@@ -71,6 +71,57 @@ export default function DailyPlanning() {
     queryKey: ['userSettings', MOCK_USER_ID],
     queryFn: () => fetch(api.userSettings.get(MOCK_USER_ID)).then(res => res.json()),
   });
+
+  // 오늘 이월된 할일들 가져오기
+  const { data: carriedOverTasks = [] } = useQuery({
+    queryKey: ['carriedOverTasks', MOCK_USER_ID, today],
+    queryFn: () => fetch(api.taskCarryover.getCarriedOver(MOCK_USER_ID, today)).then(res => res.json()),
+  });
+
+  // 자동 이월 함수
+  const carryOverMutation = useMutation({
+    mutationFn: async ({ fromDate, toDate }: { fromDate: string; toDate: string }) => {
+      const response = await fetch(api.taskCarryover.carryOver(), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userId: MOCK_USER_ID,
+          fromDate,
+          toDate,
+        }),
+      });
+      if (!response.ok) {
+        throw new Error('이월 처리에 실패했습니다');
+      }
+      return response.json();
+    },
+    onSuccess: (carriedOverTasks) => {
+      queryClient.invalidateQueries({ queryKey: ['carriedOverTasks', MOCK_USER_ID, today] });
+      queryClient.invalidateQueries({ queryKey: ['tasks', MOCK_USER_ID, today] });
+      
+      if (carriedOverTasks.length > 0) {
+        toast({
+          title: "할일 자동 이월",
+          description: `어제 미완료 할일 ${carriedOverTasks.length}개가 오늘로 이월되었습니다.`,
+        });
+      }
+    },
+    onError: () => {
+      toast({
+        title: "이월 실패",
+        description: "할일 이월 처리 중 오류가 발생했습니다.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // 페이지 로드 시 자동 이월 실행
+  useEffect(() => {
+    const yesterday = format(new Date(Date.now() - 24 * 60 * 60 * 1000), 'yyyy-MM-dd');
+    carryOverMutation.mutate({ fromDate: yesterday, toDate: today });
+  }, [today]);
 
   // 프로젝트 할일 중 오늘 날짜에 해당하는 것들을 자동으로 포함
   const todayProjectTasks = projectTasks.filter((task: any) => {
@@ -764,6 +815,27 @@ export default function DailyPlanning() {
                   {saveReflectionMutation.isPending ? '저장 중...' : '저장'}
                 </Button>
               </div>
+
+              {/* 이월된 할일 목록 */}
+              {carriedOverTasks.length > 0 && (
+                <div className="mt-4 pt-4 border-t border-gray-200">
+                  <h4 className="text-sm font-medium text-orange-600 mb-2 flex items-center space-x-1">
+                    <AlertTriangle className="h-3 w-3" />
+                    <span>어제에서 이월된 할일</span>
+                  </h4>
+                  <div className="space-y-1">
+                    {carriedOverTasks.map((task: any) => (
+                      <div key={task.id} className="flex items-center space-x-2 text-xs bg-orange-50 p-2 rounded">
+                        <PriorityBadge priority={task.priority as 'A' | 'B' | 'C'} />
+                        <span className="flex-1">{task.title}</span>
+                        <span className="text-orange-600 text-xs">
+                          {task.originalScheduledDate}부터
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>
