@@ -1320,20 +1320,94 @@ export default function ProjectManagement() {
 
       {/* Task Image Viewer Dialog */}
       {viewingTaskImage && (
-        <Dialog open={true} onOpenChange={() => setViewingTaskImage(null)}>
-          <DialogContent className="sm:max-w-2xl">
+        <Dialog open={true} onOpenChange={() => {
+          setViewingTaskImage(null);
+          setCurrentImageIndex(0);
+        }}>
+          <DialogContent className="sm:max-w-3xl">
             <DialogHeader>
               <DialogTitle>할일 이미지 보기</DialogTitle>
               <DialogDescription>
                 할일 이미지를 확인하세요.
               </DialogDescription>
             </DialogHeader>
-            <div className="flex justify-center">
-              <img
-                src={viewingTaskImage}
-                alt="할일 이미지"
-                className="max-w-full h-auto rounded-lg"
-              />
+            <div className="relative flex items-center justify-center">
+              {/* Find the task with this image and show navigation if multiple images */}
+              {(() => {
+                const currentTask = allTasks.find((task: any) => 
+                  task.imageUrls && task.imageUrls.includes(viewingTaskImage)
+                );
+                
+                if (!currentTask || !currentTask.imageUrls || currentTask.imageUrls.length <= 1) {
+                  return (
+                    <img
+                      src={viewingTaskImage}
+                      alt="할일 이미지"
+                      className="max-w-full h-auto rounded-lg max-h-96 object-contain"
+                    />
+                  );
+                }
+
+                const currentIndex = currentTask.imageUrls.indexOf(viewingTaskImage);
+                
+                return (
+                  <>
+                    {/* Previous Button */}
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        const newIndex = currentIndex > 0 ? currentIndex - 1 : currentTask.imageUrls.length - 1;
+                        setViewingTaskImage(currentTask.imageUrls[newIndex]);
+                      }}
+                      className="absolute left-2 z-10 h-10 w-10 p-0 bg-white/80 hover:bg-white"
+                      title="이전 이미지"
+                    >
+                      <ChevronLeft className="h-4 w-4" />
+                    </Button>
+
+                    {/* Image */}
+                    <div className="text-center">
+                      <img
+                        src={viewingTaskImage}
+                        alt={`할일 이미지 ${currentIndex + 1}`}
+                        className="max-w-full h-auto rounded-lg max-h-96 object-contain"
+                      />
+                      <p className="text-sm text-gray-500 mt-2">
+                        {currentIndex + 1} / {currentTask.imageUrls.length}
+                      </p>
+                    </div>
+
+                    {/* Next Button */}
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        const newIndex = currentIndex < currentTask.imageUrls.length - 1 ? currentIndex + 1 : 0;
+                        setViewingTaskImage(currentTask.imageUrls[newIndex]);
+                      }}
+                      className="absolute right-2 z-10 h-10 w-10 p-0 bg-white/80 hover:bg-white"
+                      title="다음 이미지"
+                    >
+                      <ChevronRight className="h-4 w-4" />
+                    </Button>
+
+                    {/* Image indicators */}
+                    <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-2">
+                      {currentTask.imageUrls.map((_: string, index: number) => (
+                        <button
+                          key={index}
+                          onClick={() => setViewingTaskImage(currentTask.imageUrls[index])}
+                          className={`w-2 h-2 rounded-full transition-colors ${
+                            index === currentIndex ? 'bg-blue-600' : 'bg-gray-300'
+                          }`}
+                          title={`이미지 ${index + 1}로 이동`}
+                        />
+                      ))}
+                    </div>
+                  </>
+                );
+              })()}
             </div>
           </DialogContent>
         </Dialog>
