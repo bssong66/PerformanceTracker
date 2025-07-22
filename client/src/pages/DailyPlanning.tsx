@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { TaskItem } from "@/components/TaskItem";
 import { PriorityBadge } from "@/components/PriorityBadge";
-import { Plus, Mic, CalendarDays, Camera, Upload, X, ChevronLeft, ChevronRight, Eye } from "lucide-react";
+import { Plus, Mic, CalendarDays, X, ChevronLeft, ChevronRight } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { api, createTask, updateTask, saveDailyReflection, createTimeBlock } from "@/lib/api";
 import { queryClient } from "@/lib/queryClient";
@@ -270,27 +270,7 @@ export default function DailyPlanning() {
     }
   };
 
-  const handleCameraCapture = () => {
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = 'image/*';
-    input.capture = 'environment';
-    input.onchange = (e) => {
-      const files = Array.from((e.target as HTMLInputElement).files || []);
-      if (files.length > 0) {
-        setSelectedImages(prev => [...prev, ...files]);
-        
-        files.forEach(file => {
-          const reader = new FileReader();
-          reader.onload = (e) => {
-            setImagePreviews(prev => [...prev, e.target?.result as string]);
-          };
-          reader.readAsDataURL(file);
-        });
-      }
-    };
-    input.click();
-  };
+
 
   const handleRemoveImage = (index: number) => {
     setSelectedImages(prev => prev.filter((_, i) => i !== index));
@@ -555,7 +535,7 @@ export default function DailyPlanning() {
                 
                 {/* Image Upload */}
                 <div className="mb-2">
-                  <div className="flex space-x-2 mb-2">
+                  <div className="mb-2">
                     <input
                       type="file"
                       id="image-upload"
@@ -570,17 +550,8 @@ export default function DailyPlanning() {
                       onClick={() => document.getElementById('image-upload')?.click()}
                       className="h-6 px-2 text-xs"
                     >
-                      <Upload className="h-3 w-3 mr-1" />
-                      사진 선택
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={handleCameraCapture}
-                      className="h-6 px-2 text-xs"
-                    >
-                      <Camera className="h-3 w-3 mr-1" />
-                      카메라
+                      <Plus className="h-3 w-3 mr-1" />
+                      이미지 추가
                     </Button>
                   </div>
                   
