@@ -43,8 +43,8 @@ export default function DailyPlanning() {
     title: string;
     type: "focus" | "meeting" | "break";
   }>({
-    startTime: "",
-    endTime: "",
+    startTime: ":",
+    endTime: ":",
     title: "",
     type: "focus",
   });
@@ -194,7 +194,7 @@ export default function DailyPlanning() {
   const addTimeBlockMutation = useMutation({
     mutationFn: createTimeBlock,
     onSuccess: () => {
-      setNewTimeBlock({ startTime: "", endTime: "", title: "", type: "focus" });
+      setNewTimeBlock({ startTime: ":", endTime: ":", title: "", type: "focus" });
       queryClient.invalidateQueries({ queryKey: ['timeBlocks', MOCK_USER_ID, today] });
       toast({
         title: "시간 블록 추가",
@@ -302,7 +302,10 @@ export default function DailyPlanning() {
   };
 
   const handleAddTimeBlock = () => {
-    if (newTimeBlock.startTime && newTimeBlock.endTime && newTimeBlock.title) {
+    const startValid = newTimeBlock.startTime && newTimeBlock.startTime.includes(':') && newTimeBlock.startTime !== ':';
+    const endValid = newTimeBlock.endTime && newTimeBlock.endTime.includes(':') && newTimeBlock.endTime !== ':';
+    
+    if (startValid && endValid && newTimeBlock.title.trim()) {
       addTimeBlockMutation.mutate({
         userId: MOCK_USER_ID,
         date: today,
@@ -460,31 +463,113 @@ export default function DailyPlanning() {
               <CardTitle>오늘의 기록</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              {/* Time Blocks - Simplified */}
+              {/* Time Blocks - MS Outlook Style */}
               <div>
                 <h4 className="text-sm font-medium text-gray-900 mb-2">시간 블록</h4>
-                <div className="flex space-x-1 mb-2">
-                  <Input
-                    type="time"
-                    value={newTimeBlock.startTime}
-                    onChange={(e) => setNewTimeBlock(prev => ({ ...prev, startTime: e.target.value }))}
-                    className="text-xs h-8"
-                  />
-                  <Input
-                    type="time"
-                    value={newTimeBlock.endTime}
-                    onChange={(e) => setNewTimeBlock(prev => ({ ...prev, endTime: e.target.value }))}
-                    className="text-xs h-8"
-                  />
-                  <Input
-                    placeholder="활동"
-                    value={newTimeBlock.title}
-                    onChange={(e) => setNewTimeBlock(prev => ({ ...prev, title: e.target.value }))}
-                    className="text-xs h-8 flex-1"
-                  />
-                  <Button onClick={handleAddTimeBlock} size="sm" className="h-8 w-8 p-0">
-                    <Plus className="h-3 w-3" />
-                  </Button>
+                <div className="grid grid-cols-12 gap-1 mb-2 items-end">
+                  {/* Start Time */}
+                  <div className="col-span-2">
+                    <Select
+                      value={newTimeBlock.startTime.split(':')[0] || ""}
+                      onValueChange={(value) => {
+                        const minutes = newTimeBlock.startTime.split(':')[1] || "00";
+                        setNewTimeBlock(prev => ({ ...prev, startTime: `${value}:${minutes}` }));
+                      }}
+                    >
+                      <SelectTrigger className="h-7 text-xs">
+                        <SelectValue placeholder="시" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {Array.from({ length: 24 }, (_, i) => (
+                          <SelectItem key={i} value={i.toString().padStart(2, '0')}>
+                            {i.toString().padStart(2, '0')}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="col-span-2">
+                    <Select
+                      value={newTimeBlock.startTime.split(':')[1] || ""}
+                      onValueChange={(value) => {
+                        const hours = newTimeBlock.startTime.split(':')[0] || "00";
+                        setNewTimeBlock(prev => ({ ...prev, startTime: `${hours}:${value}` }));
+                      }}
+                    >
+                      <SelectTrigger className="h-7 text-xs">
+                        <SelectValue placeholder="분" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {Array.from({ length: 12 }, (_, i) => (
+                          <SelectItem key={i} value={(i * 5).toString().padStart(2, '0')}>
+                            {(i * 5).toString().padStart(2, '0')}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  {/* Separator */}
+                  <div className="col-span-1 text-center text-xs text-gray-500">-</div>
+                  
+                  {/* End Time */}
+                  <div className="col-span-2">
+                    <Select
+                      value={newTimeBlock.endTime.split(':')[0] || ""}
+                      onValueChange={(value) => {
+                        const minutes = newTimeBlock.endTime.split(':')[1] || "00";
+                        setNewTimeBlock(prev => ({ ...prev, endTime: `${value}:${minutes}` }));
+                      }}
+                    >
+                      <SelectTrigger className="h-7 text-xs">
+                        <SelectValue placeholder="시" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {Array.from({ length: 24 }, (_, i) => (
+                          <SelectItem key={i} value={i.toString().padStart(2, '0')}>
+                            {i.toString().padStart(2, '0')}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="col-span-2">
+                    <Select
+                      value={newTimeBlock.endTime.split(':')[1] || ""}
+                      onValueChange={(value) => {
+                        const hours = newTimeBlock.endTime.split(':')[0] || "00";
+                        setNewTimeBlock(prev => ({ ...prev, endTime: `${hours}:${value}` }));
+                      }}
+                    >
+                      <SelectTrigger className="h-7 text-xs">
+                        <SelectValue placeholder="분" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {Array.from({ length: 12 }, (_, i) => (
+                          <SelectItem key={i} value={(i * 5).toString().padStart(2, '0')}>
+                            {(i * 5).toString().padStart(2, '0')}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  {/* Activity Input */}
+                  <div className="col-span-2">
+                    <Input
+                      placeholder="활동"
+                      value={newTimeBlock.title}
+                      onChange={(e) => setNewTimeBlock(prev => ({ ...prev, title: e.target.value }))}
+                      className="text-xs h-7"
+                    />
+                  </div>
+                  
+                  {/* Add Button */}
+                  <div className="col-span-1">
+                    <Button onClick={handleAddTimeBlock} size="sm" className="h-7 w-7 p-0">
+                      <Plus className="h-3 w-3" />
+                    </Button>
+                  </div>
                 </div>
                 <div className="space-y-1">
                   {(timeBlocks as any[]).slice(0, 3).map((block: any) => (
