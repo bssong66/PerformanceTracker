@@ -337,7 +337,21 @@ export default function ProjectManagement() {
 
   const openTaskDialog = (projectId: number) => {
     setSelectedProjectForTask(projectId);
-    resetTaskForm();
+    
+    // Find the project and set default priority based on project priority
+    const project = projects.find((p: Project) => p.id === projectId);
+    const defaultPriority = project?.priority === 'high' ? 'A' : 
+                           project?.priority === 'medium' ? 'B' : 'C';
+    
+    setTaskForm({
+      title: '',
+      priority: defaultPriority,
+      startDate: '',
+      endDate: '',
+      notes: '',
+      imageUrls: []
+    });
+    setEditingTask(null);
     setShowTaskDialog(true);
   };
 
@@ -1173,6 +1187,12 @@ export default function ProjectManagement() {
 
             <div>
               <Label>우선순위</Label>
+              {!editingTask && selectedProjectForTask && (
+                <p className="text-xs text-blue-600 mb-2">
+                  💡 프로젝트 중요도({projects.find((p: Project) => p.id === selectedProjectForTask)?.priority === 'high' ? '높음' : 
+                    projects.find((p: Project) => p.id === selectedProjectForTask)?.priority === 'medium' ? '보통' : '낮음'})를 기본값으로 설정했습니다
+                </p>
+              )}
               <Select
                 value={taskForm.priority}
                 onValueChange={(value: 'A' | 'B' | 'C') => 
