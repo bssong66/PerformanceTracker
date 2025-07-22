@@ -429,7 +429,8 @@ export default function WeeklyReview() {
                       <div className="space-y-1">
                         <div className="text-xs font-medium text-red-600 mb-2 flex items-center space-x-1">
                           <AlertTriangle className="h-3 w-3" />
-                          <span>이번주 미완료 (경고)</span>
+                          <span>이번주 미완료</span>
+                          <AlertTriangle className="h-3 w-3" />
                         </div>
                         {weekTasks.filter((task: any) => !task.completed).slice(0, 3).map((task: any) => (
                           <div key={`incomplete-${task.id}`} className="flex items-center space-x-2 p-2 bg-red-50 rounded border-l-2 border-red-200">
