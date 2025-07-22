@@ -335,25 +335,48 @@ export default function HabitManagement() {
               {habitForm.repeatType === 'monthly' && (
                 <div>
                   <Label>날짜 선택</Label>
-                  <div className="grid grid-cols-7 gap-2 mt-2">
-                    {Array.from({ length: 31 }, (_, i) => i + 1).map(date => (
-                      <div key={date} className="flex items-center space-x-1">
-                        <Checkbox
-                          id={`date-${date}`}
-                          checked={habitForm.repeatMonthDates.includes(date.toString())}
-                          onCheckedChange={(checked) => {
-                            const dateStr = date.toString();
-                            setHabitForm(prev => ({
-                              ...prev,
-                              repeatMonthDates: checked 
-                                ? [...prev.repeatMonthDates, dateStr]
-                                : prev.repeatMonthDates.filter(d => d !== dateStr)
-                            }));
-                          }}
-                        />
-                        <Label htmlFor={`date-${date}`} className="text-sm">{date}</Label>
+                  <div className="mt-2 p-4 border rounded-lg bg-gray-50">
+                    <div className="grid grid-cols-7 gap-1 mb-2">
+                      {['일', '월', '화', '수', '목', '금', '토'].map(day => (
+                        <div key={day} className="text-center text-xs font-medium text-gray-500 p-2">
+                          {day}
+                        </div>
+                      ))}
+                    </div>
+                    <div className="grid grid-cols-7 gap-1">
+                      {Array.from({ length: 31 }, (_, i) => i + 1).map(date => {
+                        const isSelected = habitForm.repeatMonthDates.includes(date.toString());
+                        return (
+                          <button
+                            key={date}
+                            type="button"
+                            onClick={() => {
+                              const dateStr = date.toString();
+                              setHabitForm(prev => ({
+                                ...prev,
+                                repeatMonthDates: isSelected 
+                                  ? prev.repeatMonthDates.filter(d => d !== dateStr)
+                                  : [...prev.repeatMonthDates, dateStr]
+                              }));
+                            }}
+                            className={`
+                              h-8 w-8 text-sm rounded-full transition-all duration-200
+                              ${isSelected 
+                                ? 'bg-blue-600 text-white shadow-md' 
+                                : 'bg-white text-gray-700 border border-gray-200 hover:bg-blue-50 hover:border-blue-300'
+                              }
+                            `}
+                          >
+                            {date}
+                          </button>
+                        );
+                      })}
+                    </div>
+                    {habitForm.repeatMonthDates.length > 0 && (
+                      <div className="mt-3 text-sm text-gray-600">
+                        선택된 날짜: {habitForm.repeatMonthDates.sort((a, b) => parseInt(a) - parseInt(b)).join(', ')}일
                       </div>
-                    ))}
+                    )}
                   </div>
                 </div>
               )}
