@@ -27,13 +27,19 @@ export default function FocusMode() {
 
   const timer = useTimer(25);
 
+  // Get all tasks for focus mode (not just today's)
   const { data: tasks = [], isLoading: tasksLoading } = useQuery({
-    queryKey: [api.tasks.list(MOCK_USER_ID, today)],
+    queryKey: ['tasks', 'all', MOCK_USER_ID],
+    queryFn: async () => {
+      const response = await fetch(api.tasks.list(MOCK_USER_ID));
+      return response.json();
+    },
   });
 
   const updateTaskMutation = useMutation({
     mutationFn: ({ id, updates }: { id: number; updates: any }) => updateTask(id, updates),
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['tasks', 'all', MOCK_USER_ID] });
       queryClient.invalidateQueries({ queryKey: [api.tasks.list(MOCK_USER_ID, today)] });
     },
   });
