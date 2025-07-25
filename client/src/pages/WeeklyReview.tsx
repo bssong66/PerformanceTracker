@@ -487,6 +487,13 @@ export default function WeeklyReview() {
                   <div className="h-96 overflow-y-auto space-y-3 pr-2">
                     {(weekTasks as any[])
                       .filter((task: any) => !task.completed)
+                      .sort((a: any, b: any) => {
+                        // Priority order: A > B > C (or null/undefined)
+                        const priorityOrder = { 'A': 1, 'B': 2, 'C': 3 };
+                        const aPriority = priorityOrder[a.priority as keyof typeof priorityOrder] || 4;
+                        const bPriority = priorityOrder[b.priority as keyof typeof priorityOrder] || 4;
+                        return aPriority - bPriority;
+                      })
                       .map((task: any, index: number) => (
                         <div key={task.id} className="flex items-center justify-between p-1.5 bg-red-50 rounded-lg border border-red-100">
                           <div className="flex items-center space-x-3 flex-1">
