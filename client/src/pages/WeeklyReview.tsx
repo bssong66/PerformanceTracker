@@ -419,12 +419,12 @@ export default function WeeklyReview() {
           {/* This Week's Performance */}
           <div className="space-y-6">
             <Card className="h-full flex flex-col">
-              <CardContent className="space-y-6 pt-6 flex-1 flex flex-col">
+              <CardContent className="space-y-4 pt-4 flex-1 flex flex-col">
                 {/* Task Completion Summary */}
                 <div>
-                  <h4 className="text-sm font-semibold text-gray-900 mb-4">완료된 할일</h4>
+                  <h4 className="text-sm font-semibold text-gray-900 mb-3">완료된 할일</h4>
                   
-                  <div className="space-y-4">
+                  <div className="space-y-3">
                     <div>
                       <div className="flex items-center justify-between mb-2">
                         <div className="flex items-center space-x-2">
@@ -484,7 +484,7 @@ export default function WeeklyReview() {
                     )}
                   </div>
                   
-                  <div className="h-96 overflow-y-auto space-y-3 pr-2">
+                  <div className="h-72 overflow-y-auto space-y-2 pr-2">
                     {(weekTasks as any[])
                       .filter((task: any) => !task.completed)
                       .sort((a: any, b: any) => {
