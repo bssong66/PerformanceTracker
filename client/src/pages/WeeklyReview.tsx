@@ -650,24 +650,24 @@ export default function WeeklyReview() {
                     <h4 className="text-sm font-semibold text-gray-900">일과 개인 시간 균형</h4>
                   </div>
                   <div className="grid grid-cols-2 gap-3">
-                    <div className="relative p-3 bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg border border-blue-200 shadow-sm">
+                    <div className="relative p-1.5 bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg border border-blue-200 shadow-sm">
                       <div className="text-center">
-                        <div className="text-lg text-blue-700 font-normal">
+                        <div className="text-sm text-blue-700 font-normal">
                           {workHours} 업무 시간
                         </div>
                       </div>
-                      <div className="absolute top-2 right-2">
-                        <div className="w-2 h-2 bg-blue-400 rounded-full"></div>
+                      <div className="absolute top-1 right-1">
+                        <div className="w-1.5 h-1.5 bg-blue-400 rounded-full"></div>
                       </div>
                     </div>
-                    <div className="relative p-3 bg-gradient-to-br from-green-50 to-green-100 rounded-lg border border-green-200 shadow-sm">
+                    <div className="relative p-1.5 bg-gradient-to-br from-green-50 to-green-100 rounded-lg border border-green-200 shadow-sm">
                       <div className="text-center">
-                        <div className="text-green-700 font-normal text-[15px]">
+                        <div className="text-green-700 font-normal text-sm">
                           {personalHours} 개인 시간
                         </div>
                       </div>
-                      <div className="absolute top-2 right-2">
-                        <div className="w-2 h-2 bg-green-400 rounded-full"></div>
+                      <div className="absolute top-1 right-1">
+                        <div className="w-1.5 h-1.5 bg-green-400 rounded-full"></div>
                       </div>
                     </div>
                   </div>
