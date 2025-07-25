@@ -377,7 +377,7 @@ export default function WeeklyReview() {
     if (task.projectId && projects.length > 0) {
       const project = (projects as any[]).find(p => p.id === task.projectId);
       if (project) {
-        return `${project.name} > ${task.title}`;
+        return `${project.title} > ${task.title}`;
       }
     }
     return task.title;
