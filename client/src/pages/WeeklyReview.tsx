@@ -9,7 +9,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { ProgressBar } from "@/components/ProgressBar";
 import { PriorityBadge } from "@/components/PriorityBadge";
-import { Save, TrendingUp, BarChart3, Target, Plus, X, ChevronLeft, ChevronRight, Siren, Calendar as CalendarIcon } from "lucide-react";
+import { Save, TrendingUp, BarChart3, Target, Plus, X, ChevronLeft, ChevronRight, Siren, Calendar as CalendarIcon, Activity, Heart, Dumbbell, Coffee, Book, Moon, Sunrise, Timer, Zap } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { api, saveWeeklyReview } from "@/lib/api";
 import { queryClient } from "@/lib/queryClient";
@@ -18,6 +18,29 @@ import { ko } from "date-fns/locale";
 
 // Mock user ID for demo
 const MOCK_USER_ID = 1;
+
+// Function to get appropriate icon for habit based on name
+const getHabitIcon = (habitName: string) => {
+  const name = habitName.toLowerCase();
+  
+  if (name.includes('운동') || name.includes('헬스') || name.includes('체육')) {
+    return <Dumbbell className="h-4 w-4 text-blue-500" />;
+  } else if (name.includes('독서') || name.includes('책') || name.includes('공부')) {
+    return <Book className="h-4 w-4 text-purple-500" />;
+  } else if (name.includes('명상') || name.includes('요가') || name.includes('스트레칭')) {
+    return <Heart className="h-4 w-4 text-pink-500" />;
+  } else if (name.includes('아침') || name.includes('기상')) {
+    return <Sunrise className="h-4 w-4 text-yellow-500" />;
+  } else if (name.includes('저녁') || name.includes('밤') || name.includes('수면')) {
+    return <Moon className="h-4 w-4 text-indigo-500" />;
+  } else if (name.includes('물') || name.includes('수분')) {
+    return <Coffee className="h-4 w-4 text-cyan-500" />;
+  } else if (name.includes('시간') || name.includes('루틴')) {
+    return <Timer className="h-4 w-4 text-orange-500" />;
+  } else {
+    return <Activity className="h-4 w-4 text-green-500" />;
+  }
+};
 
 export default function WeeklyReview() {
   const { toast } = useToast();
@@ -585,18 +608,38 @@ export default function WeeklyReview() {
               <CardContent className="space-y-6 pt-6">
                 {/* Habit Summary */}
                 <div>
-                  <h4 className="text-sm font-semibold text-gray-900 mb-4">습관 실행률</h4>
-                  <div className="space-y-2">
+                  <div className="flex items-center space-x-2 mb-4">
+                    <Zap className="h-4 w-4 text-amber-500" />
+                    <h4 className="text-sm font-semibold text-gray-900">습관 실행률</h4>
+                  </div>
+                  <div className="space-y-3">
                     {(habits as any[]).slice(0, 3).map((habit: any, index: number) => (
-                      <div key={habit.id} className="flex items-center justify-between">
-                        <span className="text-sm text-gray-600">{habit.name}</span>
-                        <span className="text-sm font-medium text-green-600">
-                          {Math.floor(Math.random() * 7) + 1}/7일
-                        </span>
+                      <div key={habit.id} className="flex items-center justify-between p-3 bg-gradient-to-r from-gray-50 to-gray-100 rounded-lg border border-gray-200 hover:shadow-sm transition-shadow">
+                        <div className="flex items-center space-x-3">
+                          {getHabitIcon(habit.name)}
+                          <span className="text-sm font-medium text-gray-700">{habit.name}</span>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <div className="text-right">
+                            <div className="text-sm font-bold text-emerald-600">
+                              {Math.floor(Math.random() * 7) + 1}/7일
+                            </div>
+                            <div className="text-xs text-gray-500">
+                              {Math.round((Math.floor(Math.random() * 7) + 1) / 7 * 100)}%
+                            </div>
+                          </div>
+                          <div className="w-8 h-8 bg-emerald-100 rounded-full flex items-center justify-center">
+                            <div className="w-2 h-2 bg-emerald-500 rounded-full"></div>
+                          </div>
+                        </div>
                       </div>
                     ))}
                     {(habits as any[]).length === 0 && (
-                      <p className="text-sm text-gray-500 italic">등록된 습관이 없습니다.</p>
+                      <div className="text-center p-4 bg-gray-50 rounded-lg border border-gray-200">
+                        <Activity className="h-8 w-8 text-gray-400 mx-auto mb-2" />
+                        <p className="text-sm text-gray-500">등록된 습관이 없습니다.</p>
+                        <p className="text-xs text-gray-400 mt-1">습관을 추가하여 성장을 추적해보세요.</p>
+                      </div>
                     )}
                   </div>
                 </div>
