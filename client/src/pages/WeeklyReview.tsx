@@ -38,6 +38,7 @@ export default function WeeklyReview() {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [showImageViewer, setShowImageViewer] = useState(false);
   const [taskRolloverDates, setTaskRolloverDates] = useState<{[taskId: number]: Date}>({});
+  const [openPopovers, setOpenPopovers] = useState<{[taskId: number]: boolean}>({});
 
   const { data: weeklyReview } = useQuery({
     queryKey: [api.weeklyReview.get(MOCK_USER_ID, weekStartDate)],
@@ -497,7 +498,15 @@ export default function WeeklyReview() {
                               )}
                               <div className="flex items-center space-x-2 mt-1">
                                 <span className="text-xs text-orange-600">→ 이월 날짜:</span>
-                                <Popover>
+                                <Popover 
+                                  open={openPopovers[task.id] || false}
+                                  onOpenChange={(open) => {
+                                    setOpenPopovers(prev => ({
+                                      ...prev,
+                                      [task.id]: open
+                                    }));
+                                  }}
+                                >
                                   <PopoverTrigger asChild>
                                     <Button 
                                       variant="outline" 
@@ -520,6 +529,11 @@ export default function WeeklyReview() {
                                           setTaskRolloverDates(prev => ({
                                             ...prev,
                                             [task.id]: date
+                                          }));
+                                          // Close the popover after date selection
+                                          setOpenPopovers(prev => ({
+                                            ...prev,
+                                            [task.id]: false
                                           }));
                                         }
                                       }}
