@@ -51,7 +51,7 @@ export default function WeeklyReview() {
   const weekEnd = endOfWeek(today, { weekStartsOn: 1 });
   const weekStartDate = format(weekStart, 'yyyy-MM-dd');
 
-  const [weeklyGoals, setWeeklyGoals] = useState(["", "", ""]);
+
   const [reflection, setReflection] = useState("");
   const [workHours, setWorkHours] = useState(0);
   const [personalHours, setPersonalHours] = useState(0);
@@ -279,11 +279,6 @@ export default function WeeklyReview() {
   // Set initial values when weekly review data loads
   useEffect(() => {
     if (weeklyReview) {
-      setWeeklyGoals([
-        (weeklyReview as any).weeklyGoal1 || "",
-        (weeklyReview as any).weeklyGoal2 || "",
-        (weeklyReview as any).weeklyGoal3 || "",
-      ]);
       setReflection((weeklyReview as any).reflection || "");
       // Only override calculated hours if they exist in saved review
       if ((weeklyReview as any).workHours !== undefined) {
@@ -297,6 +292,9 @@ export default function WeeklyReview() {
         (weeklyReview as any).valueAlignment2 || 0,
         (weeklyReview as any).valueAlignment3 || 0,
       ]);
+      if ((weeklyReview as any).imageUrls) {
+        setImagePreviews((weeklyReview as any).imageUrls);
+      }
     }
   }, [weeklyReview]);
 
@@ -386,15 +384,13 @@ export default function WeeklyReview() {
     saveReviewMutation.mutate({
       userId: MOCK_USER_ID,
       weekStartDate,
-      weeklyGoal1: weeklyGoals[0],
-      weeklyGoal2: weeklyGoals[1],
-      weeklyGoal3: weeklyGoals[2],
       workHours,
       personalHours,
       reflection,
       valueAlignment1: valueAlignments[0],
       valueAlignment2: valueAlignments[1],
       valueAlignment3: valueAlignments[2],
+      imageUrls: imagePreviews,
     });
   };
 
@@ -402,11 +398,7 @@ export default function WeeklyReview() {
     rolloverTasksMutation.mutate();
   };
 
-  const handleGoalChange = (index: number, value: string) => {
-    const newGoals = [...weeklyGoals];
-    newGoals[index] = value;
-    setWeeklyGoals(newGoals);
-  };
+
 
   const handleValueAlignmentChange = (index: number, value: number) => {
     const newAlignments = [...valueAlignments];

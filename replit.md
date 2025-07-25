@@ -147,6 +147,12 @@ Preferred communication style: Simple, everyday language.
 ```
 
 ### Recent Changes (July 25, 2025)
+- **Database Schema Cleanup: Removed Weekly Goal Fields**
+- Removed unused weekly_goal_1, weekly_goal_2, weekly_goal_3 fields from weekly_reviews table
+- Updated database schema and removed corresponding frontend state and UI components
+- Cleaned up WeeklyReview component by removing goal-related code and functions
+- Database migration completed successfully without data loss warnings
+
 - **Enhanced Individual Task Rollover Functionality**
 - Added individual date selection for each incomplete task using calendar pickers
 - Each task now has its own rollover date instead of a universal next Monday

@@ -471,9 +471,6 @@ export class MemStorage implements IStorage {
       const newReview: WeeklyReview = { 
         ...review, 
         id,
-        weeklyGoal1: review.weeklyGoal1 ?? null,
-        weeklyGoal2: review.weeklyGoal2 ?? null,
-        weeklyGoal3: review.weeklyGoal3 ?? null,
         workHours: review.workHours ?? null,
         personalHours: review.personalHours ?? null,
         valueAlignment1: review.valueAlignment1 ?? null,
