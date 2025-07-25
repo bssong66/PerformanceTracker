@@ -52,7 +52,7 @@ export default function MonthlyReview() {
   const currentYear = today.getFullYear();
   const currentMonth = today.getMonth() + 1;
 
-  const [monthlyGoals, setMonthlyGoals] = useState(["", "", ""]);
+
   const [reflection, setReflection] = useState("");
   const [workHours, setWorkHours] = useState(0);
   const [personalHours, setPersonalHours] = useState(0);
@@ -284,11 +284,6 @@ export default function MonthlyReview() {
   // Set initial values when monthly review data loads
   useEffect(() => {
     if (monthlyReview) {
-      setMonthlyGoals([
-        (monthlyReview as any).monthlyGoal1 || "",
-        (monthlyReview as any).monthlyGoal2 || "",
-        (monthlyReview as any).monthlyGoal3 || "",
-      ]);
       setReflection((monthlyReview as any).reflection || "");
       // Only override calculated hours if they exist in saved review
       if ((monthlyReview as any).workHours !== undefined) {
@@ -302,6 +297,9 @@ export default function MonthlyReview() {
         (monthlyReview as any).valueAlignment2 || 0,
         (monthlyReview as any).valueAlignment3 || 0,
       ]);
+      if ((monthlyReview as any).imageUrls) {
+        setImagePreviews((monthlyReview as any).imageUrls);
+      }
     }
   }, [monthlyReview]);
 
@@ -392,15 +390,13 @@ export default function MonthlyReview() {
       userId: MOCK_USER_ID,
       year: currentYear,
       month: currentMonth,
-      monthlyGoal1: monthlyGoals[0],
-      monthlyGoal2: monthlyGoals[1],
-      monthlyGoal3: monthlyGoals[2],
       workHours,
       personalHours,
       reflection,
       valueAlignment1: valueAlignments[0],
       valueAlignment2: valueAlignments[1],
       valueAlignment3: valueAlignments[2],
+      imageUrls: imagePreviews,
     });
   };
 
@@ -408,11 +404,7 @@ export default function MonthlyReview() {
     rolloverTasksMutation.mutate();
   };
 
-  const handleGoalChange = (index: number, value: string) => {
-    const newGoals = [...monthlyGoals];
-    newGoals[index] = value;
-    setMonthlyGoals(newGoals);
-  };
+
 
   const handleValueAlignmentChange = (index: number, value: number) => {
     const newAlignments = [...valueAlignments];
@@ -740,24 +732,6 @@ export default function MonthlyReview() {
                           키워드 매칭 및 연결된 가치 기반 자동 계산
                         </div>
                       </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Monthly Goals */}
-                <div>
-                  <Label className="text-sm font-semibold text-gray-900 mb-3 block">
-                    다음 달 목표
-                  </Label>
-                  <div className="space-y-2">
-                    {monthlyGoals.map((goal, index) => (
-                      <Input
-                        key={index}
-                        placeholder={`목표 ${index + 1}`}
-                        value={goal}
-                        onChange={(e) => handleGoalChange(index, e.target.value)}
-                        className="text-sm"
-                      />
                     ))}
                   </div>
                 </div>

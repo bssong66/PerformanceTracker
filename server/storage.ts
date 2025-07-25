@@ -480,6 +480,7 @@ export class MemStorage implements IStorage {
         valueAlignment2: review.valueAlignment2 ?? null,
         valueAlignment3: review.valueAlignment3 ?? null,
         reflection: review.reflection ?? null,
+        imageUrls: review.imageUrls ?? null,
         createdAt: new Date()
       };
       this.weeklyReviews.set(id, newReview);
@@ -509,9 +510,6 @@ export class MemStorage implements IStorage {
       const newReview: MonthlyReview = { 
         ...review, 
         id,
-        monthlyGoal1: review.monthlyGoal1 ?? null,
-        monthlyGoal2: review.monthlyGoal2 ?? null,
-        monthlyGoal3: review.monthlyGoal3 ?? null,
         workHours: review.workHours ?? null,
         personalHours: review.personalHours ?? null,
         valueAlignment1: review.valueAlignment1 ?? null,
@@ -1052,6 +1050,43 @@ export class DatabaseStorage implements IStorage {
         eq(tasks.scheduledDate, date),
         eq(tasks.isCarriedOver, true)
       ));
+  }
+
+  // Monthly review methods
+  async getMonthlyReviews(userId: number): Promise<MonthlyReview[]> {
+    return await db
+      .select()
+      .from(monthlyReviews)
+      .where(eq(monthlyReviews.userId, userId));
+  }
+
+  async getMonthlyReview(userId: number, year: number, month: number): Promise<MonthlyReview | undefined> {
+    const result = await db
+      .select()
+      .from(monthlyReviews)
+      .where(and(
+        eq(monthlyReviews.userId, userId),
+        eq(monthlyReviews.year, year),
+        eq(monthlyReviews.month, month)
+      ))
+      .limit(1);
+    return result[0];
+  }
+
+  async upsertMonthlyReview(review: InsertMonthlyReview): Promise<MonthlyReview> {
+    const existing = await this.getMonthlyReview(review.userId, review.year, review.month);
+    
+    if (existing) {
+      const result = await db
+        .update(monthlyReviews)
+        .set(review)
+        .where(eq(monthlyReviews.id, existing.id))
+        .returning();
+      return result[0];
+    } else {
+      const result = await db.insert(monthlyReviews).values(review).returning();
+      return result[0];
+    }
   }
 }
 

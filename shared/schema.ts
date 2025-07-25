@@ -123,6 +123,7 @@ export const weeklyReviews = pgTable("weekly_reviews", {
   valueAlignment1: integer("value_alignment_1").default(0), // 0-100
   valueAlignment2: integer("value_alignment_2").default(0), // 0-100
   valueAlignment3: integer("value_alignment_3").default(0), // 0-100
+  imageUrls: text("image_urls").array(),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -131,9 +132,6 @@ export const monthlyReviews = pgTable("monthly_reviews", {
   userId: integer("user_id").notNull(),
   year: integer("year").notNull(),
   month: integer("month").notNull(),
-  monthlyGoal1: text("monthly_goal_1"),
-  monthlyGoal2: text("monthly_goal_2"),
-  monthlyGoal3: text("monthly_goal_3"),
   workHours: integer("work_hours").default(0),
   personalHours: integer("personal_hours").default(0),
   reflection: text("reflection"),
