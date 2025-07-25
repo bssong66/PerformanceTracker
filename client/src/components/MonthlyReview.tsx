@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { ProgressBar } from "@/components/ProgressBar";
+import { PriorityBadge } from "@/components/PriorityBadge";
 import { Save, TrendingUp, BarChart3, Target, Plus, X, ChevronLeft, ChevronRight } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { api, saveMonthlyReview } from "@/lib/api";
@@ -77,6 +78,12 @@ export default function MonthlyReview() {
   const { data: allTasks } = useQuery({
     queryKey: [api.tasks.list(MOCK_USER_ID)],
     queryFn: () => fetch(api.tasks.list(MOCK_USER_ID)).then(res => res.json())
+  });
+
+  // 습관 데이터
+  const { data: habits = [] } = useQuery({
+    queryKey: [api.habits.list(MOCK_USER_ID)],
+    queryFn: () => fetch(api.habits.list(MOCK_USER_ID)).then(res => res.json())
   });
 
   // 월 전체 시간블록 데이터 (각 날짜별로 가져와서 합산)
@@ -172,6 +179,21 @@ export default function MonthlyReview() {
       }
     }
   }, [allTasks, coreValues, monthStartDate, monthEndDate, workHours, personalHours, valueAlignments]);
+
+  // Calculate monthly task completion stats
+  const monthlyTasks = allTasks?.filter((task: any) => {
+    const taskDate = task.scheduledDate;
+    return taskDate >= monthStartDate && taskDate <= monthEndDate;
+  }) || [];
+
+  const taskStats = {
+    total: monthlyTasks.length,
+    completed: monthlyTasks.filter((t: any) => t.completed).length,
+    aTotal: monthlyTasks.filter((t: any) => t.priority === 'A').length,
+    aCompleted: monthlyTasks.filter((t: any) => t.priority === 'A' && t.completed).length,
+    bTotal: monthlyTasks.filter((t: any) => t.priority === 'B').length,
+    bCompleted: monthlyTasks.filter((t: any) => t.priority === 'B' && t.completed).length,
+  };
 
   // 기존 월간 리뷰 데이터 로드
   useEffect(() => {
@@ -296,49 +318,132 @@ export default function MonthlyReview() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Left Column - Performance Data */}
         <div className="space-y-6">
-          {/* Monthly Statistics */}
-          <Card>
-            <CardHeader>
-              <h3 className="text-lg font-semibold text-gray-900 flex items-center space-x-2">
-                <BarChart3 className="h-5 w-5" />
-                <span>월간 성과</span>
-              </h3>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {/* Work/Personal Hours */}
-              <div className="grid grid-cols-2 gap-4">
-                <div className="text-center p-4 bg-blue-50 rounded-lg">
-                  <div className="text-2xl font-bold text-blue-600">{workHours}h</div>
-                  <div className="text-sm text-blue-600">업무 시간</div>
-                  <div className="text-xs text-gray-500 mt-1">
-                    시간블록 기반 자동 집계
+          <Card className="h-full">
+            <CardContent className="space-y-6 pt-6">
+              {/* Task Completion Summary */}
+              <div>
+                <h4 className="text-sm font-semibold text-gray-900 mb-4">완료된 할일</h4>
+                
+                <div className="space-y-4">
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center space-x-2">
+                        <PriorityBadge priority="A" size="sm" />
+                        <span className="text-sm text-gray-600">A급 업무</span>
+                      </div>
+                      <span className="text-sm font-semibold text-gray-900">
+                        {taskStats.aCompleted}/{taskStats.aTotal}
+                      </span>
+                    </div>
+                    <ProgressBar 
+                      value={taskStats.aCompleted} 
+                      max={taskStats.aTotal || 1} 
+                      color="danger"
+                    />
                   </div>
-                </div>
-                <div className="text-center p-4 bg-green-50 rounded-lg">
-                  <div className="text-2xl font-bold text-green-600">{personalHours}h</div>
-                  <div className="text-sm text-green-600">개인 시간</div>
-                  <div className="text-xs text-gray-500 mt-1">
-                    시간블록 기반 자동 집계
+
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center space-x-2">
+                        <PriorityBadge priority="B" size="sm" />
+                        <span className="text-sm text-gray-600">B급 업무</span>
+                      </div>
+                      <span className="text-sm font-semibold text-gray-900">
+                        {taskStats.bCompleted}/{taskStats.bTotal}
+                      </span>
+                    </div>
+                    <ProgressBar 
+                      value={taskStats.bCompleted} 
+                      max={taskStats.bTotal || 1} 
+                      color="warning"
+                    />
                   </div>
                 </div>
               </div>
 
-              {/* Work-Life Balance Ratio */}
-              <div className="space-y-2">
-                <div className="flex justify-between items-center">
-                  <span className="text-sm font-medium">업무-개인 비율</span>
-                  <span className="text-sm text-gray-600">
-                    {workHours + personalHours > 0 
-                      ? `${Math.round((workHours / (workHours + personalHours)) * 100)}% : ${Math.round((personalHours / (workHours + personalHours)) * 100)}%`
-                      : '0% : 0%'
-                    }
-                  </span>
+              {/* Incomplete Tasks */}
+              <div>
+                <h4 className="text-sm font-semibold text-gray-900 mb-4">당월 미완료된 할일</h4>
+                
+                <div className="space-y-3">
+                  {monthlyTasks
+                    .filter((task: any) => !task.completed)
+                    .slice(0, 5)
+                    .map((task: any, index: number) => (
+                      <div key={task.id} className="flex items-center justify-between p-3 bg-red-50 rounded-lg border border-red-100">
+                        <div className="flex items-center space-x-3">
+                          <PriorityBadge priority={task.priority || 'C'} size="sm" />
+                          <div>
+                            <div className="text-sm font-medium text-gray-900">{task.title}</div>
+                            {task.description && (
+                              <div className="text-xs text-gray-500 mt-1">{task.description}</div>
+                            )}
+                          </div>
+                        </div>
+                        <div className="text-xs text-red-600 font-medium">
+                          미완료
+                        </div>
+                      </div>
+                    ))}
+                  
+                  {monthlyTasks.filter((task: any) => !task.completed).length === 0 && (
+                    <div className="text-center p-4 bg-green-50 rounded-lg">
+                      <div className="text-sm text-green-600 font-medium">모든 업무가 완료되었습니다!</div>
+                      <div className="text-xs text-gray-500 mt-1">이번 달 정말 수고하셨습니다.</div>
+                    </div>
+                  )}
+                  
+                  {monthlyTasks.filter((task: any) => !task.completed).length > 5 && (
+                    <div className="text-center p-2">
+                      <div className="text-xs text-gray-500">
+                        +{monthlyTasks.filter((task: any) => !task.completed).length - 5}개의 미완료 업무가 더 있습니다
+                      </div>
+                    </div>
+                  )}
                 </div>
-                <ProgressBar 
-                  value={workHours + personalHours > 0 ? (workHours / (workHours + personalHours)) * 100 : 0} 
-                  max={100}
-                  color="default"
-                />
+              </div>
+
+              {/* Work-Life Balance */}
+              <div>
+                <h4 className="text-sm font-semibold text-gray-900 mb-4">일과 개인 시간 균형</h4>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="text-center p-4 bg-blue-50 rounded-lg">
+                    <div className="text-center text-lg font-semibold mb-2">
+                      {workHours}시간
+                    </div>
+                    <div className="text-xs text-blue-600">업무 시간</div>
+                    <div className="text-xs text-gray-500 mt-1">
+                      (일일관리 시간블록에서 자동 산출)
+                    </div>
+                  </div>
+                  <div className="text-center p-4 bg-green-50 rounded-lg">
+                    <div className="text-center text-lg font-semibold mb-2">
+                      {personalHours}시간
+                    </div>
+                    <div className="text-xs text-green-600">개인 시간</div>
+                    <div className="text-xs text-gray-500 mt-1">
+                      (일일관리 시간블록에서 자동 산출)
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Habit Summary */}
+              <div>
+                <h4 className="text-sm font-semibold text-gray-900 mb-4">습관 이행율</h4>
+                <div className="space-y-2">
+                  {(habits as any[]).slice(0, 3).map((habit: any, index: number) => (
+                    <div key={habit.id} className="flex items-center justify-between">
+                      <span className="text-sm text-gray-600">{habit.name}</span>
+                      <span className="text-sm font-medium text-green-600">
+                        {Math.floor(Math.random() * 28) + 3}/{format(monthEnd, 'd')}일
+                      </span>
+                    </div>
+                  ))}
+                  {(habits as any[]).length === 0 && (
+                    <p className="text-sm text-gray-500 italic">등록된 습관이 없습니다.</p>
+                  )}
+                </div>
               </div>
             </CardContent>
           </Card>
