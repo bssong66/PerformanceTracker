@@ -662,7 +662,7 @@ export default function WeeklyReview() {
                     </div>
                     <div className="relative p-3 bg-gradient-to-br from-green-50 to-green-100 rounded-lg border border-green-200 shadow-sm">
                       <div className="text-center">
-                        <div className="text-lg font-bold text-green-700">
+                        <div className="text-green-700 font-normal text-[15px]">
                           {personalHours} 개인 시간
                         </div>
                       </div>
