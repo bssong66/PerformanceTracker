@@ -23,7 +23,7 @@ const navigation = [
   { name: '대시보드', href: '/', icon: Home },
   { name: '가치중심계획', href: '/foundation', icon: Sprout },
   { name: '일정관리', href: '/calendar', icon: CalendarDays },
-  { name: '계획수립', href: '/planning', icon: FolderOpen },
+  { name: '계획관리', href: '/planning', icon: FolderOpen },
   { name: '일일관리', href: '/daily-planning', icon: Calendar },
   { name: '리뷰', href: '/review', icon: BarChart3 },
   { name: '포커스 모드', href: '/focus', icon: Focus },
