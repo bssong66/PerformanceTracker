@@ -274,6 +274,51 @@ export default function WeeklyReview() {
     },
   });
 
+  // Rollover tasks mutation
+  const rolloverTasksMutation = useMutation({
+    mutationFn: async () => {
+      const incompleteTasks = (weekTasks as any[]).filter((task: any) => !task.completed);
+      const nextWeekStart = addDays(weekStart, 7);
+      const nextWeekStartDate = format(nextWeekStart, 'yyyy-MM-dd');
+      
+      // Update each incomplete task to next week
+      const updatePromises = incompleteTasks.map(async (task: any) => {
+        const updatedTask = {
+          ...task,
+          scheduledDate: nextWeekStartDate,
+          startDate: nextWeekStartDate,
+          endDate: task.endDate ? format(addDays(new Date(task.endDate), 7), 'yyyy-MM-dd') : nextWeekStartDate
+        };
+        
+        return fetch(api.tasks.update(task.id), {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(updatedTask)
+        });
+      });
+      
+      await Promise.all(updatePromises);
+      return incompleteTasks.length;
+    },
+    onSuccess: (count) => {
+      toast({
+        title: "업무 이월 완료",
+        description: `${count}개의 미완료 업무가 다음주로 이월되었습니다.`,
+      });
+      // Invalidate queries to refresh the data
+      queryClient.invalidateQueries({ 
+        queryKey: [`/api/tasks/${MOCK_USER_ID}?startDate=${format(subDays(weekStart, 7), 'yyyy-MM-dd')}&endDate=${format(weekEnd, 'yyyy-MM-dd')}`] 
+      });
+    },
+    onError: () => {
+      toast({
+        title: "이월 실패",
+        description: "업무 이월 중 오류가 발생했습니다.",
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleSaveReview = () => {
     saveReviewMutation.mutate({
       userId: MOCK_USER_ID,
@@ -288,6 +333,10 @@ export default function WeeklyReview() {
       valueAlignment2: valueAlignments[1],
       valueAlignment3: valueAlignments[2],
     });
+  };
+
+  const handleRolloverTasks = () => {
+    rolloverTasksMutation.mutate();
   };
 
   const handleGoalChange = (index: number, value: string) => {
@@ -378,11 +427,24 @@ export default function WeeklyReview() {
                 {/* Incomplete Tasks */}
                 <div>
                   <h4 className="text-sm font-semibold text-gray-900 mb-2">금주 미완료된 업무</h4>
-                  <div className="flex items-center space-x-1 text-xs text-gray-500 bg-blue-50 px-2 py-1 rounded-full mb-4">
-                    <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 9l3 3m0 0l-3 3m3-3H8m13 0a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    <span className="text-xs">미완료된 업무는 다음주 업무로 자동 이월됩니다</span>
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center space-x-1 text-xs text-gray-500 bg-blue-50 px-2 py-1 rounded-full">
+                      <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 9l3 3m0 0l-3 3m3-3H8m13 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      <span className="text-xs">미완료된 업무를 다음주로 이월할 수 있습니다</span>
+                    </div>
+                    {(weekTasks as any[]).filter((task: any) => !task.completed).length > 0 && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleRolloverTasks}
+                        disabled={rolloverTasksMutation.isPending}
+                        className="h-6 px-2 text-xs"
+                      >
+                        {rolloverTasksMutation.isPending ? '처리중...' : '다음주로 이월'}
+                      </Button>
+                    )}
                   </div>
                   
                   <div className="space-y-3">
@@ -398,6 +460,9 @@ export default function WeeklyReview() {
                               {task.description && (
                                 <div className="text-xs text-gray-500 mt-1">{task.description}</div>
                               )}
+                              <div className="text-xs text-orange-600 mt-1">
+                                → {format(addDays(weekStart, 7), 'M월 d일', { locale: ko })} 이월 예정
+                              </div>
                             </div>
                           </div>
                           <div className="text-xs text-red-600 font-medium">
