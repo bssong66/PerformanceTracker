@@ -507,7 +507,7 @@ export default function WeeklyReview() {
                     )}
                   </div>
                   
-                  <div className="h-[30rem] overflow-y-auto space-y-3 pr-2">
+                  <div className="h-[35rem] overflow-y-auto space-y-3 pr-2">
                     {(weekTasks as any[])
                       .filter((task: any) => !task.completed)
                       .sort((a: any, b: any) => {
