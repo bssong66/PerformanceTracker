@@ -568,6 +568,14 @@ export default function WeeklyReview() {
                   )}
                 </div>
 
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Next Week Preparation */}
+          <div className="space-y-6">
+            <Card>
+              <CardContent className="space-y-6 pt-6">
                 {/* Habit Summary */}
                 <div>
                   <h4 className="text-sm font-semibold text-gray-900 mb-4">습관 실행률</h4>
@@ -586,15 +594,6 @@ export default function WeeklyReview() {
                   </div>
                 </div>
 
-
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Next Week Preparation */}
-          <div className="space-y-6">
-            <Card>
-              <CardContent className="space-y-6 pt-6">
                 {/* Work-Life Balance */}
                 <div>
                   <div className="flex items-center justify-between mb-4">
