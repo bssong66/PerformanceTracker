@@ -650,7 +650,7 @@ export default function WeeklyReview() {
                     <h4 className="text-sm font-semibold text-gray-900">일과 개인 시간 균형</h4>
                   </div>
                   <div className="grid grid-cols-2 gap-3">
-                    <div className="relative p-4 bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg border border-blue-200 shadow-sm">
+                    <div className="relative p-3 bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg border border-blue-200 shadow-sm">
                       <div className="text-center">
                         <div className="text-xl font-bold text-blue-700 mb-1">
                           {workHours}
@@ -663,7 +663,7 @@ export default function WeeklyReview() {
                         <div className="w-2 h-2 bg-blue-400 rounded-full"></div>
                       </div>
                     </div>
-                    <div className="relative p-4 bg-gradient-to-br from-green-50 to-green-100 rounded-lg border border-green-200 shadow-sm">
+                    <div className="relative p-3 bg-gradient-to-br from-green-50 to-green-100 rounded-lg border border-green-200 shadow-sm">
                       <div className="text-center">
                         <div className="text-xl font-bold text-green-700 mb-1">
                           {personalHours}
