@@ -652,25 +652,23 @@ export default function MonthlyReview() {
                         <div className="flex items-center space-x-2">
                           <div className="text-right">
                             {(() => {
-                              // Get all logs for this habit (completed and not completed)
-                              const allLogsForHabit = (monthHabitLogs as any[]).filter((log: any) => log.habitId === habit.id);
-                              const completedLogsForHabit = allLogsForHabit.filter((log: any) => log.completed);
+                              // Get completed logs for this habit
+                              const completedLogsForHabit = (monthHabitLogs as any[]).filter((log: any) => log.habitId === habit.id && log.completed);
                               const completedDays = completedLogsForHabit.length;
                               
-                              // Use actual logged days instead of total days in month
-                              const totalLoggedDays = allLogsForHabit.length;
+                              // Total days in current month
                               const totalDaysInMonth = new Date(currentYear, currentMonth, 0).getDate();
                               
-                              // Calculate completion rate based on logged days, but show total days in month for reference
-                              const completionRate = totalLoggedDays > 0 ? Math.round((completedDays / totalLoggedDays) * 100) : 0;
+                              // Calculate completion rate based on total days in month
+                              const completionRate = Math.round((completedDays / totalDaysInMonth) * 100);
                               
                               return (
                                 <>
                                   <div className="text-sm font-bold text-emerald-600">
-                                    {completedDays}/{totalLoggedDays}일
+                                    {completedDays}/{totalDaysInMonth}일
                                   </div>
                                   <div className="text-xs text-gray-500">
-                                    {completionRate}% ({totalDaysInMonth}일 중 {totalLoggedDays}일 기록)
+                                    {completionRate}%
                                   </div>
                                 </>
                               );
