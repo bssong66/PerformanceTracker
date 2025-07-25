@@ -375,6 +375,48 @@ export default function WeeklyReview() {
                   </div>
                 </div>
 
+                {/* Incomplete Tasks */}
+                <div>
+                  <h4 className="text-sm font-semibold text-gray-900 mb-4">금주 미완료된 업무</h4>
+                  
+                  <div className="space-y-3">
+                    {(weekTasks as any[])
+                      .filter((task: any) => !task.completed)
+                      .slice(0, 5)
+                      .map((task: any, index: number) => (
+                        <div key={task.id} className="flex items-center justify-between p-3 bg-red-50 rounded-lg border border-red-100">
+                          <div className="flex items-center space-x-3">
+                            <PriorityBadge priority={task.priority || 'C'} size="sm" />
+                            <div>
+                              <div className="text-sm font-medium text-gray-900">{task.title}</div>
+                              {task.description && (
+                                <div className="text-xs text-gray-500 mt-1">{task.description}</div>
+                              )}
+                            </div>
+                          </div>
+                          <div className="text-xs text-red-600 font-medium">
+                            미완료
+                          </div>
+                        </div>
+                      ))}
+                    
+                    {(weekTasks as any[]).filter((task: any) => !task.completed).length === 0 && (
+                      <div className="text-center p-4 bg-green-50 rounded-lg">
+                        <div className="text-sm text-green-600 font-medium">모든 업무가 완료되었습니다!</div>
+                        <div className="text-xs text-gray-500 mt-1">이번 주 정말 수고하셨습니다.</div>
+                      </div>
+                    )}
+                    
+                    {(weekTasks as any[]).filter((task: any) => !task.completed).length > 5 && (
+                      <div className="text-center p-2">
+                        <div className="text-xs text-gray-500">
+                          +{(weekTasks as any[]).filter((task: any) => !task.completed).length - 5}개의 미완료 업무가 더 있습니다
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
                 {/* Work-Life Balance */}
                 <div>
                   <h4 className="text-sm font-semibold text-gray-900 mb-4">일과 개인 시간 균형</h4>
