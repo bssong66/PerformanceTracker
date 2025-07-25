@@ -771,20 +771,22 @@ export default function WeeklyReview() {
                       </div>
                     )}
                   </div>
+                  
+                  {/* Save Button */}
+                  <div className="mt-4">
+                    <Button
+                      onClick={handleSaveReview}
+                      disabled={saveReviewMutation.isPending}
+                      size="lg"
+                      className="w-full"
+                    >
+                      <Save className="h-4 w-4 mr-2" />
+                      {saveReviewMutation.isPending ? '저장 중...' : '주간 리뷰 저장'}
+                    </Button>
+                  </div>
                 </div>
               </CardContent>
             </Card>
-
-            {/* Save Button */}
-            <Button
-              onClick={handleSaveReview}
-              disabled={saveReviewMutation.isPending}
-              size="lg"
-              className="w-full"
-            >
-              <Save className="h-4 w-4 mr-2" />
-              {saveReviewMutation.isPending ? '저장 중...' : '주간 리뷰 저장'}
-            </Button>
           </div>
         </div>
       </div>
