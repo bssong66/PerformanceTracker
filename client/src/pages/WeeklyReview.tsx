@@ -111,6 +111,20 @@ export default function WeeklyReview() {
     },
   });
 
+  // Get habit logs for the past week to calculate completion rates
+  const { data: weekHabitLogs = [] } = useQuery({
+    queryKey: ['habitLogs', 'week', MOCK_USER_ID, weekStartDate],
+    queryFn: async () => {
+      const logs = [];
+      for (let i = 0; i < 7; i++) {
+        const date = format(subDays(weekStart, 7 - i), 'yyyy-MM-dd');
+        const dayLogs = await fetch(api.habitLogs.list(MOCK_USER_ID, date)).then(res => res.json());
+        logs.push(...dayLogs);
+      }
+      return logs;
+    },
+  });
+
   // Calculate work and personal hours from time blocks
   useEffect(() => {
     if (weekTimeBlocks && weekTimeBlocks.length > 0) {
@@ -626,12 +640,22 @@ export default function WeeklyReview() {
                         </div>
                         <div className="flex items-center space-x-2">
                           <div className="text-right">
-                            <div className="text-sm font-bold text-emerald-600">
-                              {Math.floor(Math.random() * 7) + 1}/7일
-                            </div>
-                            <div className="text-xs text-gray-500">
-                              {Math.round((Math.floor(Math.random() * 7) + 1) / 7 * 100)}%
-                            </div>
+                            {(() => {
+                              const habitLogsForHabit = (weekHabitLogs as any[]).filter((log: any) => log.habitId === habit.id && log.completed);
+                              const completedDays = habitLogsForHabit.length;
+                              const completionRate = Math.round((completedDays / 7) * 100);
+                              
+                              return (
+                                <>
+                                  <div className="text-sm font-bold text-emerald-600">
+                                    {completedDays}/7일
+                                  </div>
+                                  <div className="text-xs text-gray-500">
+                                    {completionRate}%
+                                  </div>
+                                </>
+                              );
+                            })()}
                           </div>
                           <div className="w-8 h-8 bg-emerald-100 rounded-full flex items-center justify-center">
                             <div className="w-2 h-2 bg-emerald-500 rounded-full"></div>
