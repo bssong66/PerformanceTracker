@@ -377,14 +377,12 @@ export default function WeeklyReview() {
 
                 {/* Incomplete Tasks */}
                 <div>
-                  <div className="flex items-center justify-between mb-4">
-                    <h4 className="text-sm font-semibold text-gray-900">금주 미완료된 업무</h4>
-                    <div className="flex items-center space-x-1 text-xs text-gray-500 bg-blue-50 px-2 py-1 rounded-full">
-                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 9l3 3m0 0l-3 3m3-3H8m13 0a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                      <span>미완료된 업무는 다음주 업무로 자동 이월됩니다</span>
-                    </div>
+                  <h4 className="text-sm font-semibold text-gray-900 mb-2">금주 미완료된 업무</h4>
+                  <div className="flex items-center space-x-1 text-xs text-gray-500 bg-blue-50 px-2 py-1 rounded-full mb-4">
+                    <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 9l3 3m0 0l-3 3m3-3H8m13 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <span className="text-xs">미완료된 업무는 다음주 업무로 자동 이월됩니다</span>
                   </div>
                   
                   <div className="space-y-3">
