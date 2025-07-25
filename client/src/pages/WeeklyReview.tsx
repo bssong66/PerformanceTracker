@@ -384,7 +384,7 @@ export default function WeeklyReview() {
                       .filter((task: any) => !task.completed)
                       .slice(0, 5)
                       .map((task: any, index: number) => (
-                        <div key={task.id} className="flex items-center justify-between p-3 bg-red-50 rounded-lg border border-red-100">
+                        <div key={task.id} className="flex items-center justify-between p-1.5 bg-red-50 rounded-lg border border-red-100">
                           <div className="flex items-center space-x-3">
                             <PriorityBadge priority={task.priority || 'C'} size="sm" />
                             <div>
