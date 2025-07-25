@@ -484,7 +484,7 @@ export default function WeeklyReview() {
                     )}
                   </div>
                   
-                  <div className="h-80 overflow-y-auto space-y-3 pr-2">
+                  <div className="h-96 overflow-y-auto space-y-3 pr-2">
                     {(weekTasks as any[])
                       .filter((task: any) => !task.completed)
                       .map((task: any, index: number) => (
