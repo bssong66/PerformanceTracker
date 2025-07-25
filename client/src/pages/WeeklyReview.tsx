@@ -395,7 +395,7 @@ export default function WeeklyReview() {
 
   // Helper function to get task display name with project name
   const getTaskDisplayName = (task: any) => {
-    if (task.projectId && projects.length > 0) {
+    if (task.projectId && (projects as any[]).length > 0) {
       const project = (projects as any[]).find(p => p.id === task.projectId);
       if (project) {
         return `${project.title} > ${task.title}`;
@@ -562,7 +562,7 @@ export default function WeeklyReview() {
                   {(weekTasks as any[]).filter((task: any) => !task.completed).length > 0 && (
                     <div className="mt-3 text-center">
                       <div className="text-xs text-gray-500 bg-gray-50 px-2 py-1 rounded">
-                        총 {(weekTasks as any[]).filter((task: any) => !task.completed).length}개의 미완료 할일</div>
+                        총 {(weekTasks as any[]).filter((task: any) => !task.completed).length}개의 미완료 할일
                       </div>
                     </div>
                   )}
