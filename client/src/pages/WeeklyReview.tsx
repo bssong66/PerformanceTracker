@@ -463,10 +463,9 @@ export default function WeeklyReview() {
                     )}
                   </div>
                   
-                  <div className="space-y-3">
+                  <div className="max-h-64 overflow-y-auto space-y-3 pr-2">
                     {(weekTasks as any[])
                       .filter((task: any) => !task.completed)
-                      .slice(0, 5)
                       .map((task: any, index: number) => (
                         <div key={task.id} className="flex items-center justify-between p-1.5 bg-red-50 rounded-lg border border-red-100">
                           <div className="flex items-center space-x-3">
@@ -493,15 +492,15 @@ export default function WeeklyReview() {
                         <div className="text-xs text-gray-500 mt-1">이번 주 정말 수고하셨습니다.</div>
                       </div>
                     )}
-                    
-                    {(weekTasks as any[]).filter((task: any) => !task.completed).length > 5 && (
-                      <div className="text-center p-2">
-                        <div className="text-xs text-gray-500">
-                          +{(weekTasks as any[]).filter((task: any) => !task.completed).length - 5}개의 미완료 업무가 더 있습니다
-                        </div>
-                      </div>
-                    )}
                   </div>
+                  
+                  {(weekTasks as any[]).filter((task: any) => !task.completed).length > 0 && (
+                    <div className="mt-3 text-center">
+                      <div className="text-xs text-gray-500 bg-gray-50 px-2 py-1 rounded">
+                        총 {(weekTasks as any[]).filter((task: any) => !task.completed).length}개의 미완료 업무
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {/* Work-Life Balance and Habits - Side by Side */}
