@@ -453,23 +453,6 @@ export default function MonthlyReview() {
         <div className="space-y-6">
           <Card>
             <CardContent className="space-y-6 pt-6">
-              {/* Monthly Big 3 */}
-              <div>
-                <Label className="text-sm font-semibold text-gray-900 mb-3 block">
-                  월간 Big 3
-                </Label>
-                <div className="space-y-3">
-                  {monthlyGoals.map((goal, index) => (
-                    <Input
-                      key={index}
-                      placeholder={`이번 달 가장 중요한 목표 ${index + 1}`}
-                      value={goal}
-                      onChange={(e) => handleGoalChange(index, e.target.value)}
-                    />
-                  ))}
-                </div>
-              </div>
-
               {/* Value Alignment Check */}
               <div>
                 <Label className="text-sm font-semibold text-gray-900 mb-3 block">
