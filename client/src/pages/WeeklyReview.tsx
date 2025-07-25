@@ -652,7 +652,7 @@ export default function WeeklyReview() {
                   <div className="grid grid-cols-2 gap-3">
                     <div className="relative p-3 bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg border border-blue-200 shadow-sm">
                       <div className="text-center">
-                        <div className="text-lg font-bold text-blue-700">
+                        <div className="text-lg text-blue-700 font-normal">
                           {workHours} 업무 시간
                         </div>
                       </div>
@@ -788,7 +788,6 @@ export default function WeeklyReview() {
           </div>
         </div>
       </div>
-
       {/* Image Viewer Dialog */}
       {showImageViewer && imagePreviews.length > 0 && (
         <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50" onClick={() => setShowImageViewer(false)}>
