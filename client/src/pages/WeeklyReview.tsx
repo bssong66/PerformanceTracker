@@ -425,62 +425,65 @@ export default function WeeklyReview() {
                   </div>
                 </div>
 
-                {/* Work-Life Balance */}
-                <div>
-                  <div className="flex items-center justify-between mb-4">
-                    <h4 className="text-sm font-semibold text-gray-900">일과 개인 시간 균형</h4>
-                    <div className="flex items-center space-x-1 text-xs text-gray-500 bg-gray-50 px-2 py-1 rounded-full">
-                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                      <span>일일관리 시간블록에 기초해서 자동 산출됩니다.</span>
+                {/* Work-Life Balance and Habits - Side by Side */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  {/* Work-Life Balance */}
+                  <div>
+                    <div className="flex items-center justify-between mb-4">
+                      <h4 className="text-sm font-semibold text-gray-900">일과 개인 시간 균형</h4>
+                      <div className="flex items-center space-x-1 text-xs text-gray-500 bg-gray-50 px-2 py-1 rounded-full">
+                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <span>자동 산출</span>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="relative p-4 bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg border border-blue-200 shadow-sm">
+                        <div className="text-center">
+                          <div className="text-xl font-bold text-blue-700 mb-1">
+                            {workHours}
+                          </div>
+                          <div className="text-xs font-medium text-blue-600 uppercase tracking-wider">
+                            업무 시간
+                          </div>
+                        </div>
+                        <div className="absolute top-2 right-2">
+                          <div className="w-2 h-2 bg-blue-400 rounded-full"></div>
+                        </div>
+                      </div>
+                      <div className="relative p-4 bg-gradient-to-br from-green-50 to-green-100 rounded-lg border border-green-200 shadow-sm">
+                        <div className="text-center">
+                          <div className="text-xl font-bold text-green-700 mb-1">
+                            {personalHours}
+                          </div>
+                          <div className="text-xs font-medium text-green-600 uppercase tracking-wider">
+                            개인 시간
+                          </div>
+                        </div>
+                        <div className="absolute top-2 right-2">
+                          <div className="w-2 h-2 bg-green-400 rounded-full"></div>
+                        </div>
+                      </div>
                     </div>
                   </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="relative p-5 bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl border border-blue-200 shadow-sm">
-                      <div className="text-center">
-                        <div className="text-2xl font-bold text-blue-700 mb-1">
-                          {workHours}
-                        </div>
-                        <div className="text-xs font-medium text-blue-600 uppercase tracking-wider">
-                          업무 시간
-                        </div>
-                      </div>
-                      <div className="absolute top-2 right-2">
-                        <div className="w-2 h-2 bg-blue-400 rounded-full"></div>
-                      </div>
-                    </div>
-                    <div className="relative p-5 bg-gradient-to-br from-green-50 to-green-100 rounded-xl border border-green-200 shadow-sm">
-                      <div className="text-center">
-                        <div className="text-2xl font-bold text-green-700 mb-1">
-                          {personalHours}
-                        </div>
-                        <div className="text-xs font-medium text-green-600 uppercase tracking-wider">
-                          개인 시간
-                        </div>
-                      </div>
-                      <div className="absolute top-2 right-2">
-                        <div className="w-2 h-2 bg-green-400 rounded-full"></div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
 
-                {/* Habit Summary */}
-                <div>
-                  <h4 className="text-sm font-semibold text-gray-900 mb-4">습관 실행률</h4>
-                  <div className="space-y-2">
-                    {(habits as any[]).slice(0, 3).map((habit: any, index: number) => (
-                      <div key={habit.id} className="flex items-center justify-between">
-                        <span className="text-sm text-gray-600">{habit.name}</span>
-                        <span className="text-sm font-medium text-green-600">
-                          {Math.floor(Math.random() * 7) + 1}/7일
-                        </span>
-                      </div>
-                    ))}
-                    {(habits as any[]).length === 0 && (
-                      <p className="text-sm text-gray-500 italic">등록된 습관이 없습니다.</p>
-                    )}
+                  {/* Habit Summary */}
+                  <div>
+                    <h4 className="text-sm font-semibold text-gray-900 mb-4">습관 실행률</h4>
+                    <div className="space-y-2">
+                      {(habits as any[]).slice(0, 3).map((habit: any, index: number) => (
+                        <div key={habit.id} className="flex items-center justify-between">
+                          <span className="text-sm text-gray-600">{habit.name}</span>
+                          <span className="text-sm font-medium text-green-600">
+                            {Math.floor(Math.random() * 7) + 1}/7일
+                          </span>
+                        </div>
+                      ))}
+                      {(habits as any[]).length === 0 && (
+                        <p className="text-sm text-gray-500 italic">등록된 습관이 없습니다.</p>
+                      )}
+                    </div>
                   </div>
                 </div>
 
