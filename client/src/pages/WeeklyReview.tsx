@@ -652,11 +652,8 @@ export default function WeeklyReview() {
                   <div className="grid grid-cols-2 gap-3">
                     <div className="relative p-3 bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg border border-blue-200 shadow-sm">
                       <div className="text-center">
-                        <div className="text-xl font-bold text-blue-700 mb-1">
-                          {workHours}
-                        </div>
-                        <div className="text-xs font-medium text-blue-600 uppercase tracking-wider">
-                          업무 시간
+                        <div className="text-lg font-bold text-blue-700">
+                          {workHours} 업무 시간
                         </div>
                       </div>
                       <div className="absolute top-2 right-2">
@@ -665,11 +662,8 @@ export default function WeeklyReview() {
                     </div>
                     <div className="relative p-3 bg-gradient-to-br from-green-50 to-green-100 rounded-lg border border-green-200 shadow-sm">
                       <div className="text-center">
-                        <div className="text-xl font-bold text-green-700 mb-1">
-                          {personalHours}
-                        </div>
-                        <div className="text-xs font-medium text-green-600 uppercase tracking-wider">
-                          개인 시간
+                        <div className="text-lg font-bold text-green-700">
+                          {personalHours} 개인 시간
                         </div>
                       </div>
                       <div className="absolute top-2 right-2">
