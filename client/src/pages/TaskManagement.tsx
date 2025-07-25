@@ -298,7 +298,6 @@ function TaskManagement() {
           </Button>
         </div>
       </div>
-
       <Dialog open={showTaskDialog} onOpenChange={setShowTaskDialog}>
           <DialogContent className="sm:max-w-md">
             <DialogHeader>
@@ -514,14 +513,13 @@ function TaskManagement() {
             </form>
           </DialogContent>
         </Dialog>
-
       {/* Tasks by Priority */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {(['A', 'B', 'C'] as const).map((priority) => (
           <Card key={priority} className={`${priorityColors[priority].border} border-2`}>
             <CardHeader className={`${priorityColors[priority].bg} ${priorityColors[priority].text}`}>
               <CardTitle className="flex items-center justify-between">
-                <span>{priority}급 우선순위</span>
+                <span className="text-[16px]">{priority}급 우선순위</span>
                 <div className="flex items-center space-x-2">
                   <Badge variant="secondary">{tasksByPriority[priority].length}</Badge>
                   <Button
@@ -661,7 +659,6 @@ function TaskManagement() {
           </Card>
         ))}
       </div>
-
       {/* Image Viewer Dialog */}
       {viewingImage && viewingTask && (
         <Dialog open={true} onOpenChange={() => {
@@ -728,7 +725,6 @@ function TaskManagement() {
           </DialogContent>
         </Dialog>
       )}
-
       {filteredTasks.length === 0 && (
         <div className="text-center py-12">
           <ListTodo className="h-12 w-12 text-gray-400 mx-auto mb-4" />
