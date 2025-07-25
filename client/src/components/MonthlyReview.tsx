@@ -173,7 +173,7 @@ export default function MonthlyReview() {
 
   // Calculate value alignment based on tasks, events, and time blocks
   useEffect(() => {
-    if (foundation && ((weekTasks as any[]).length > 0 || weekEvents.length > 0 || weekTimeBlocks.length > 0)) {
+    if (foundation && ((monthTasks as any[]).length > 0 || monthEvents.length > 0 || monthTimeBlocks.length > 0)) {
       const coreValues = (foundation as any).coreValues ? (foundation as any).coreValues.split(',').map((v: string) => v.trim()) : [];
       
       if (coreValues.length > 0) {
@@ -182,7 +182,7 @@ export default function MonthlyReview() {
           let alignedActivities = 0;
 
           // Check tasks
-          (weekTasks as any[]).forEach((task: any) => {
+          (monthTasks as any[]).forEach((task: any) => {
             if (task.coreValue === value) {
               totalActivities++;
               alignedActivities++;
@@ -192,7 +192,7 @@ export default function MonthlyReview() {
           });
 
           // Check time blocks
-          weekTimeBlocks.forEach((block: any) => {
+          monthTimeBlocks.forEach((block: any) => {
             totalActivities++;
             // Simple keyword matching for value alignment
             const blockText = `${block.title || ''} ${block.activity || ''}`.toLowerCase();
@@ -204,7 +204,7 @@ export default function MonthlyReview() {
           });
 
           // Check events
-          weekEvents.forEach((event: any) => {
+          monthEvents.forEach((event: any) => {
             totalActivities++;
             const eventText = `${event.title || ''} ${event.description || ''}`.toLowerCase();
             const valueKeywords = getValueKeywords(value);
@@ -225,7 +225,7 @@ export default function MonthlyReview() {
         setValueAlignments(alignmentScores);
       }
     }
-  }, [foundation, weekTasks, weekEvents, weekTimeBlocks]);
+  }, [foundation, monthTasks, monthEvents, monthTimeBlocks]);
 
   // Helper function to get keywords for each core value
   const getValueKeywords = (value: string): string[] => {
@@ -281,45 +281,45 @@ export default function MonthlyReview() {
     textarea.style.height = `${Math.max(120, textarea.scrollHeight)}px`;
   };
 
-  // Set initial values when weekly review data loads
+  // Set initial values when monthly review data loads
   useEffect(() => {
-    if (weeklyReview) {
-      setWeeklyGoals([
-        (weeklyReview as any).weeklyGoal1 || "",
-        (weeklyReview as any).weeklyGoal2 || "",
-        (weeklyReview as any).weeklyGoal3 || "",
+    if (monthlyReview) {
+      setMonthlyGoals([
+        (monthlyReview as any).monthlyGoal1 || "",
+        (monthlyReview as any).monthlyGoal2 || "",
+        (monthlyReview as any).monthlyGoal3 || "",
       ]);
-      setReflection((weeklyReview as any).reflection || "");
+      setReflection((monthlyReview as any).reflection || "");
       // Only override calculated hours if they exist in saved review
-      if ((weeklyReview as any).workHours !== undefined) {
-        setWorkHours((weeklyReview as any).workHours);
+      if ((monthlyReview as any).workHours !== undefined) {
+        setWorkHours((monthlyReview as any).workHours);
       }
-      if ((weeklyReview as any).personalHours !== undefined) {
-        setPersonalHours((weeklyReview as any).personalHours);
+      if ((monthlyReview as any).personalHours !== undefined) {
+        setPersonalHours((monthlyReview as any).personalHours);
       }
       setValueAlignments([
-        (weeklyReview as any).valueAlignment1 || 0,
-        (weeklyReview as any).valueAlignment2 || 0,
-        (weeklyReview as any).valueAlignment3 || 0,
+        (monthlyReview as any).valueAlignment1 || 0,
+        (monthlyReview as any).valueAlignment2 || 0,
+        (monthlyReview as any).valueAlignment3 || 0,
       ]);
     }
-  }, [weeklyReview]);
+  }, [monthlyReview]);
 
   const saveReviewMutation = useMutation({
-    mutationFn: saveWeeklyReview,
+    mutationFn: saveMonthlyReview,
     onSuccess: () => {
       toast({
-        title: "주간 리뷰 저장",
-        description: "주간 리뷰가 성공적으로 저장되었습니다.",
+        title: "월간 리뷰 저장",
+        description: "월간 리뷰가 성공적으로 저장되었습니다.",
       });
       queryClient.invalidateQueries({ 
-        queryKey: [api.weeklyReview.get(MOCK_USER_ID, weekStartDate)] 
+        queryKey: [api.monthlyReview.get(MOCK_USER_ID, currentYear, currentMonth)] 
       });
     },
     onError: () => {
       toast({
         title: "저장 실패",
-        description: "주간 리뷰를 저장하는데 실패했습니다.",
+        description: "월간 리뷰를 저장하는데 실패했습니다.",
         variant: "destructive",
       });
     },
@@ -327,28 +327,28 @@ export default function MonthlyReview() {
 
   // Initialize rollover dates for incomplete tasks
   useEffect(() => {
-    const incompleteTasks = (weekTasks as any[]).filter((task: any) => !task.completed);
+    const incompleteTasks = (monthTasks as any[]).filter((task: any) => !task.completed);
     const newRolloverDates: {[taskId: number]: Date} = {};
     
     incompleteTasks.forEach((task: any) => {
       if (!taskRolloverDates[task.id]) {
-        newRolloverDates[task.id] = addDays(weekStart, 7); // Default to next Monday
+        newRolloverDates[task.id] = addDays(monthEnd, 1); // Default to next month start
       }
     });
     
     if (Object.keys(newRolloverDates).length > 0) {
       setTaskRolloverDates(prev => ({...prev, ...newRolloverDates}));
     }
-  }, [weekTasks, weekStart]);
+  }, [monthTasks, monthEnd]);
 
   // Rollover tasks mutation
   const rolloverTasksMutation = useMutation({
     mutationFn: async () => {
-      const incompleteTasks = (weekTasks as any[]).filter((task: any) => !task.completed);
+      const incompleteTasks = (monthTasks as any[]).filter((task: any) => !task.completed);
       
       // Update each incomplete task to its individual rollover date
       const updatePromises = incompleteTasks.map(async (task: any) => {
-        const rolloverDate = taskRolloverDates[task.id] || addDays(weekStart, 7);
+        const rolloverDate = taskRolloverDates[task.id] || addDays(monthEnd, 1);
         const rolloverDateStr = format(rolloverDate, 'yyyy-MM-dd');
         
         const updatedTask = {
@@ -375,7 +375,7 @@ export default function MonthlyReview() {
       });
       // Invalidate queries to refresh the data
       queryClient.invalidateQueries({ 
-        queryKey: [`/api/tasks/${MOCK_USER_ID}?startDate=${format(subDays(weekStart, 7), 'yyyy-MM-dd')}&endDate=${format(weekEnd, 'yyyy-MM-dd')}`] 
+        queryKey: [`/api/tasks/${MOCK_USER_ID}?startDate=${format(monthStart, 'yyyy-MM-dd')}&endDate=${format(monthEnd, 'yyyy-MM-dd')}`] 
       });
     },
     onError: () => {
@@ -390,10 +390,11 @@ export default function MonthlyReview() {
   const handleSaveReview = () => {
     saveReviewMutation.mutate({
       userId: MOCK_USER_ID,
-      weekStartDate,
-      weeklyGoal1: weeklyGoals[0],
-      weeklyGoal2: weeklyGoals[1],
-      weeklyGoal3: weeklyGoals[2],
+      year: currentYear,
+      month: currentMonth,
+      monthlyGoal1: monthlyGoals[0],
+      monthlyGoal2: monthlyGoals[1],
+      monthlyGoal3: monthlyGoals[2],
       workHours,
       personalHours,
       reflection,
@@ -408,9 +409,9 @@ export default function MonthlyReview() {
   };
 
   const handleGoalChange = (index: number, value: string) => {
-    const newGoals = [...weeklyGoals];
+    const newGoals = [...monthlyGoals];
     newGoals[index] = value;
-    setWeeklyGoals(newGoals);
+    setMonthlyGoals(newGoals);
   };
 
   const handleValueAlignmentChange = (index: number, value: number) => {
@@ -421,12 +422,12 @@ export default function MonthlyReview() {
 
   // Calculate task completion stats
   const taskStats = {
-    total: (weekTasks as any[]).length,
-    completed: (weekTasks as any[]).filter((t: any) => t.completed).length,
-    aTotal: (weekTasks as any[]).filter((t: any) => t.priority === 'A').length,
-    aCompleted: (weekTasks as any[]).filter((t: any) => t.priority === 'A' && t.completed).length,
-    bTotal: (weekTasks as any[]).filter((t: any) => t.priority === 'B').length,
-    bCompleted: (weekTasks as any[]).filter((t: any) => t.priority === 'B' && t.completed).length,
+    total: (monthTasks as any[]).length,
+    completed: (monthTasks as any[]).filter((t: any) => t.completed).length,
+    aTotal: (monthTasks as any[]).filter((t: any) => t.priority === 'A').length,
+    aCompleted: (monthTasks as any[]).filter((t: any) => t.priority === 'A' && t.completed).length,
+    bTotal: (monthTasks as any[]).filter((t: any) => t.priority === 'B').length,
+    bCompleted: (monthTasks as any[]).filter((t: any) => t.priority === 'B' && t.completed).length,
   };
 
   const coreValues = [
@@ -451,14 +452,14 @@ export default function MonthlyReview() {
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-2xl font-bold text-gray-900">주간 리뷰</h1>
+          <h1 className="text-2xl font-bold text-gray-900">월간 리뷰</h1>
           <p className="text-sm text-gray-600">
-            {format(weekStart, 'M월 d일', { locale: ko })} - {format(weekEnd, 'M월 d일', { locale: ko })} 주간 성과 및 다음 주 계획
+            {format(monthStart, 'yyyy년 M월', { locale: ko })} 월간 성과 및 다음 달 계획
           </p>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* This Week's Performance */}
+          {/* This Month's Performance */}
           <div className="space-y-6">
             <Card className="flex flex-col">
               <CardContent className="space-y-6 pt-6 pb-8 flex flex-col">
@@ -506,8 +507,8 @@ export default function MonthlyReview() {
                 {/* Incomplete Tasks */}
                 <div className="flex-1 flex flex-col">
                   <div className="flex items-center justify-between mb-2">
-                    <h4 className="text-sm font-semibold text-gray-900">금주 미완료된 할일</h4>
-                    {(weekTasks as any[]).filter((task: any) => !task.completed).length > 0 && (
+                    <h4 className="text-sm font-semibold text-gray-900">이번달 미완료된 할일</h4>
+                    {(monthTasks as any[]).filter((task: any) => !task.completed).length > 0 && (
                       <Button
                         variant="default"
                         size="sm"
@@ -518,7 +519,7 @@ export default function MonthlyReview() {
                         <svg className="w-3 h-3 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 9l3 3m0 0l-3 3m3-3H8m13 0a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
-                        {rolloverTasksMutation.isPending ? '처리중...' : '다음주로 일괄 이월'}
+                        {rolloverTasksMutation.isPending ? '처리중...' : '다음달로 일괄 이월'}
                       </Button>
                     )}
                   </div>
@@ -532,7 +533,7 @@ export default function MonthlyReview() {
                   </div>
                   
                   <div className="h-[35rem] overflow-y-auto space-y-3 pr-2">
-                    {(weekTasks as any[])
+                    {(monthTasks as any[])
                       .filter((task: any) => !task.completed)
                       .sort((a: any, b: any) => {
                         // Priority order: A > B > C (or null/undefined)
@@ -570,14 +571,14 @@ export default function MonthlyReview() {
                                       <CalendarIcon className="h-3 w-3 mr-1" />
                                       {taskRolloverDates[task.id] ? 
                                         format(taskRolloverDates[task.id], 'M월 d일', { locale: ko }) : 
-                                        format(addDays(weekStart, 7), 'M월 d일', { locale: ko })
+                                        format(addDays(monthEnd, 1), 'M월 d일', { locale: ko })
                                       }
                                     </Button>
                                   </PopoverTrigger>
                                   <PopoverContent className="w-auto p-0" align="start">
                                     <Calendar
                                       mode="single"
-                                      selected={taskRolloverDates[task.id] || addDays(weekStart, 7)}
+                                      selected={taskRolloverDates[task.id] || addDays(monthEnd, 1)}
                                       onSelect={(date) => {
                                         if (date) {
                                           setTaskRolloverDates(prev => ({
@@ -605,18 +606,18 @@ export default function MonthlyReview() {
                         </div>
                       ))}
                     
-                    {(weekTasks as any[]).filter((task: any) => !task.completed).length === 0 && (
+                    {(monthTasks as any[]).filter((task: any) => !task.completed).length === 0 && (
                       <div className="text-center p-4 bg-green-50 rounded-lg">
                         <div className="text-sm text-green-600 font-medium">모든 할일이 완료되었습니다!</div>
-                        <div className="text-xs text-gray-500 mt-1">이번 주 정말 수고하셨습니다.</div>
+                        <div className="text-xs text-gray-500 mt-1">이번 달 정말 수고하셨습니다.</div>
                       </div>
                     )}
                   </div>
                   
-                  {(weekTasks as any[]).filter((task: any) => !task.completed).length > 0 && (
+                  {(monthTasks as any[]).filter((task: any) => !task.completed).length > 0 && (
                     <div className="mt-3 text-center">
                       <div className="text-xs text-gray-500 bg-gray-50 px-2 py-1 rounded">
-                        총 {(weekTasks as any[]).filter((task: any) => !task.completed).length}개의 미완료 할일
+                        총 {(monthTasks as any[]).filter((task: any) => !task.completed).length}개의 미완료 할일
                       </div>
                     </div>
                   )}
@@ -626,7 +627,7 @@ export default function MonthlyReview() {
             </Card>
           </div>
 
-          {/* Next Week Preparation */}
+          {/* Next Month Preparation */}
           <div className="space-y-6">
             <Card className="h-full flex flex-col">
               <CardContent className="space-y-6 pt-6">
@@ -646,14 +647,15 @@ export default function MonthlyReview() {
                         <div className="flex items-center space-x-2">
                           <div className="text-right">
                             {(() => {
-                              const habitLogsForHabit = (weekHabitLogs as any[]).filter((log: any) => log.habitId === habit.id && log.completed);
+                              const habitLogsForHabit = (monthHabitLogs as any[]).filter((log: any) => log.habitId === habit.id && log.completed);
                               const completedDays = habitLogsForHabit.length;
-                              const completionRate = Math.round((completedDays / 7) * 100);
+                              const totalDaysInMonth = new Date(currentYear, currentMonth, 0).getDate();
+                              const completionRate = Math.round((completedDays / totalDaysInMonth) * 100);
                               
                               return (
                                 <>
                                   <div className="text-sm font-bold text-emerald-600">
-                                    {completedDays}/7일
+                                    {completedDays}/{totalDaysInMonth}일
                                   </div>
                                   <div className="text-xs text-gray-500">
                                     {completionRate}%
@@ -742,14 +744,32 @@ export default function MonthlyReview() {
                   </div>
                 </div>
 
-                {/* Weekly Reflection */}
+                {/* Monthly Goals */}
+                <div>
+                  <Label className="text-sm font-semibold text-gray-900 mb-3 block">
+                    다음 달 목표
+                  </Label>
+                  <div className="space-y-2">
+                    {monthlyGoals.map((goal, index) => (
+                      <Input
+                        key={index}
+                        placeholder={`목표 ${index + 1}`}
+                        value={goal}
+                        onChange={(e) => handleGoalChange(index, e.target.value)}
+                        className="text-sm"
+                      />
+                    ))}
+                  </div>
+                </div>
+
+                {/* Monthly Reflection */}
                 <div>
                   <Label htmlFor="reflection" className="text-sm font-semibold text-gray-900 mb-3 block">
-                    주간 성찰
+                    월간 성찰
                   </Label>
                   <Textarea
                     id="reflection"
-                    placeholder="이번 주를 돌아보며 배운 점, 개선할 점을 기록하세요..."
+                    placeholder="이번 달을 돌아보며 배운 점, 개선할 점을 기록하세요..."
                     value={reflection}
                     onChange={handleReflectionChange}
                     className="resize-none min-h-[120px]"
@@ -761,7 +781,7 @@ export default function MonthlyReview() {
                     <div className="mb-2">
                       <input
                         type="file"
-                        id="weekly-image-upload"
+                        id="monthly-image-upload"
                         accept="image/*"
                         multiple
                         onChange={handleImageSelect}
@@ -770,7 +790,7 @@ export default function MonthlyReview() {
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => document.getElementById('weekly-image-upload')?.click()}
+                        onClick={() => document.getElementById('monthly-image-upload')?.click()}
                         className="h-8 px-3 text-sm"
                       >
                         <Plus className="h-4 w-4 mr-1" />
@@ -815,7 +835,7 @@ export default function MonthlyReview() {
                       className="w-full"
                     >
                       <Save className="h-4 w-4 mr-2" />
-                      {saveReviewMutation.isPending ? '저장 중...' : '주간 리뷰 저장'}
+                      {saveReviewMutation.isPending ? '저장 중...' : '월간 리뷰 저장'}
                     </Button>
                   </div>
                 </div>
