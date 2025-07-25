@@ -5,9 +5,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { ProgressBar } from "@/components/ProgressBar";
 import { PriorityBadge } from "@/components/PriorityBadge";
-import { Save, TrendingUp, BarChart3, Target, Plus, X, ChevronLeft, ChevronRight, Siren } from "lucide-react";
+import { Save, TrendingUp, BarChart3, Target, Plus, X, ChevronLeft, ChevronRight, Siren, Calendar as CalendarIcon } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { api, saveWeeklyReview } from "@/lib/api";
 import { queryClient } from "@/lib/queryClient";
@@ -35,6 +37,7 @@ export default function WeeklyReview() {
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [showImageViewer, setShowImageViewer] = useState(false);
+  const [taskRolloverDates, setTaskRolloverDates] = useState<{[taskId: number]: Date}>({});
 
   const { data: weeklyReview } = useQuery({
     queryKey: [api.weeklyReview.get(MOCK_USER_ID, weekStartDate)],
@@ -279,20 +282,37 @@ export default function WeeklyReview() {
     },
   });
 
+  // Initialize rollover dates for incomplete tasks
+  useEffect(() => {
+    const incompleteTasks = (weekTasks as any[]).filter((task: any) => !task.completed);
+    const newRolloverDates: {[taskId: number]: Date} = {};
+    
+    incompleteTasks.forEach((task: any) => {
+      if (!taskRolloverDates[task.id]) {
+        newRolloverDates[task.id] = addDays(weekStart, 7); // Default to next Monday
+      }
+    });
+    
+    if (Object.keys(newRolloverDates).length > 0) {
+      setTaskRolloverDates(prev => ({...prev, ...newRolloverDates}));
+    }
+  }, [weekTasks, weekStart]);
+
   // Rollover tasks mutation
   const rolloverTasksMutation = useMutation({
     mutationFn: async () => {
       const incompleteTasks = (weekTasks as any[]).filter((task: any) => !task.completed);
-      const nextWeekStart = addDays(weekStart, 7);
-      const nextWeekStartDate = format(nextWeekStart, 'yyyy-MM-dd');
       
-      // Update each incomplete task to next week
+      // Update each incomplete task to its individual rollover date
       const updatePromises = incompleteTasks.map(async (task: any) => {
+        const rolloverDate = taskRolloverDates[task.id] || addDays(weekStart, 7);
+        const rolloverDateStr = format(rolloverDate, 'yyyy-MM-dd');
+        
         const updatedTask = {
           ...task,
-          scheduledDate: nextWeekStartDate,
-          startDate: nextWeekStartDate,
-          endDate: task.endDate ? format(addDays(new Date(task.endDate), 7), 'yyyy-MM-dd') : nextWeekStartDate
+          scheduledDate: rolloverDateStr,
+          startDate: rolloverDateStr,
+          endDate: task.endDate ? rolloverDateStr : rolloverDateStr
         };
         
         return fetch(api.tasks.update(task.id), {
@@ -308,7 +328,7 @@ export default function WeeklyReview() {
     onSuccess: (count) => {
       toast({
         title: "업무 이월 완료",
-        description: `${count}개의 미완료 업무가 다음주로 이월되었습니다.`,
+        description: `${count}개의 미완료 업무가 선택한 날짜로 이월되었습니다.`,
       });
       // Invalidate queries to refresh the data
       queryClient.invalidateQueries({ 
@@ -448,7 +468,7 @@ export default function WeeklyReview() {
                       <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 9l3 3m0 0l-3 3m3-3H8m13 0a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
-                      <span className="text-xs">미완료된 업무를 다음주로 이월할 수 있습니다</span>
+                      <span className="text-xs">미완료된 업무를 선택한 날짜로 이월할 수 있습니다</span>
                     </div>
                     {(weekTasks as any[]).filter((task: any) => !task.completed).length > 0 && (
                       <Button
@@ -468,15 +488,46 @@ export default function WeeklyReview() {
                       .filter((task: any) => !task.completed)
                       .map((task: any, index: number) => (
                         <div key={task.id} className="flex items-center justify-between p-1.5 bg-red-50 rounded-lg border border-red-100">
-                          <div className="flex items-center space-x-3">
+                          <div className="flex items-center space-x-3 flex-1">
                             <PriorityBadge priority={task.priority || 'C'} size="sm" />
-                            <div>
+                            <div className="flex-1">
                               <div className="text-sm font-medium text-gray-900">{getTaskDisplayName(task)}</div>
                               {task.description && (
                                 <div className="text-xs text-gray-500 mt-1">{task.description}</div>
                               )}
-                              <div className="text-xs text-orange-600 mt-1">
-                                → {format(addDays(weekStart, 7), 'M월 d일', { locale: ko })} 이월 예정
+                              <div className="flex items-center space-x-2 mt-1">
+                                <span className="text-xs text-orange-600">→ 이월 날짜:</span>
+                                <Popover>
+                                  <PopoverTrigger asChild>
+                                    <Button 
+                                      variant="outline" 
+                                      size="sm"
+                                      className="h-6 px-2 text-xs font-normal"
+                                    >
+                                      <CalendarIcon className="h-3 w-3 mr-1" />
+                                      {taskRolloverDates[task.id] ? 
+                                        format(taskRolloverDates[task.id], 'M월 d일', { locale: ko }) : 
+                                        format(addDays(weekStart, 7), 'M월 d일', { locale: ko })
+                                      }
+                                    </Button>
+                                  </PopoverTrigger>
+                                  <PopoverContent className="w-auto p-0" align="start">
+                                    <Calendar
+                                      mode="single"
+                                      selected={taskRolloverDates[task.id] || addDays(weekStart, 7)}
+                                      onSelect={(date) => {
+                                        if (date) {
+                                          setTaskRolloverDates(prev => ({
+                                            ...prev,
+                                            [task.id]: date
+                                          }));
+                                        }
+                                      }}
+                                      disabled={(date) => date < new Date()}
+                                      initialFocus
+                                    />
+                                  </PopoverContent>
+                                </Popover>
                               </div>
                             </div>
                           </div>

@@ -146,7 +146,17 @@ Preferred communication style: Simple, everyday language.
 └── attached_assets/ # Project documentation and requirements
 ```
 
-### Recent Changes (July 21, 2025)
+### Recent Changes (July 25, 2025)
+- **Enhanced Individual Task Rollover Functionality**
+- Added individual date selection for each incomplete task using calendar pickers
+- Each task now has its own rollover date instead of a universal next Monday
+- Implemented Calendar component with Popover for date selection interface
+- Tasks can be rolled over to any future date chosen by user
+- Updated rollover logic to handle individual task dates in backend mutation
+- Fixed project name display issue: changed project.name to project.title in task display
+- Improved UI with better spacing and visual indicators for rollover dates
+
+### Previous Changes (July 21, 2025)
 - **TaskManagement page completely separated from ProjectManagement**
 - TaskManagement now only displays standalone tasks (projectId: null)
 - Removed project selection from task creation form in TaskManagement
