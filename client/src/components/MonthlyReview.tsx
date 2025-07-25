@@ -152,13 +152,16 @@ export default function MonthlyReview() {
         const workActivities = ['회의', '업무', '학습', '프로젝트', '작업', '개발'];
         const personalActivities = ['휴식', '운동', '식사', '이동', '개인시간', '취미', '가족시간'];
 
-        if (workActivities.some(activity => block.activity?.includes(activity))) {
+        // Check both title and description for keywords
+        const blockText = `${block.title || ''} ${block.description || ''}`.toLowerCase();
+        
+        if (workActivities.some(activity => blockText.includes(activity)) || block.type === 'work' || block.type === 'focus') {
           workHoursTotal += durationHours;
-        } else if (personalActivities.some(activity => block.activity?.includes(activity)) || block.type === 'personal') {
+        } else if (personalActivities.some(activity => blockText.includes(activity)) || block.type === 'personal') {
           personalHoursTotal += durationHours;
         } else {
-          // Default categorization based on type
-          if (block.type === 'work' || block.type === 'focus') {
+          // Default categorization - if unclear, check title for work-related keywords
+          if (blockText.includes('업무') || blockText.includes('회의') || blockText.includes('작업') || blockText.includes('프로젝트')) {
             workHoursTotal += durationHours;
           } else {
             personalHoursTotal += durationHours;
@@ -174,7 +177,12 @@ export default function MonthlyReview() {
   // Calculate value alignment based on tasks, events, and time blocks
   useEffect(() => {
     if (foundation && ((monthTasks as any[]).length > 0 || monthEvents.length > 0 || monthTimeBlocks.length > 0)) {
-      const coreValues = (foundation as any).coreValues ? (foundation as any).coreValues.split(',').map((v: string) => v.trim()) : [];
+      // Get core values from foundation (using the correct structure)
+      const coreValues = [
+        (foundation as any)?.coreValue1,
+        (foundation as any)?.coreValue2,
+        (foundation as any)?.coreValue3
+      ].filter(Boolean);
       
       if (coreValues.length > 0) {
         const alignmentScores = coreValues.map((value: string) => {
@@ -183,11 +191,16 @@ export default function MonthlyReview() {
 
           // Check tasks
           (monthTasks as any[]).forEach((task: any) => {
+            totalActivities++;
             if (task.coreValue === value) {
-              totalActivities++;
               alignedActivities++;
-            } else if (task.coreValue && task.coreValue !== 'none') {
-              totalActivities++;
+            }
+            
+            // Also check task title/description for value keywords
+            const taskText = `${task.title || ''} ${task.description || ''}`.toLowerCase();
+            const valueKeywords = getValueKeywords(value);
+            if (valueKeywords.some(keyword => taskText.includes(keyword.toLowerCase()))) {
+              alignedActivities += 0.5; // Partial credit for keyword match
             }
           });
 
@@ -195,7 +208,7 @@ export default function MonthlyReview() {
           monthTimeBlocks.forEach((block: any) => {
             totalActivities++;
             // Simple keyword matching for value alignment
-            const blockText = `${block.title || ''} ${block.activity || ''}`.toLowerCase();
+            const blockText = `${block.title || ''} ${block.description || ''}`.toLowerCase();
             const valueKeywords = getValueKeywords(value);
             
             if (valueKeywords.some(keyword => blockText.includes(keyword.toLowerCase()))) {
@@ -216,8 +229,8 @@ export default function MonthlyReview() {
 
           // Calculate percentage with minimum baseline
           const percentage = totalActivities > 0 
-            ? Math.max(30, Math.min(100, Math.round((alignedActivities / totalActivities) * 100)))
-            : 50; // Default if no activities
+            ? Math.max(20, Math.min(100, Math.round((alignedActivities / totalActivities) * 100)))
+            : 30; // Default if no activities
 
           return percentage;
         });
@@ -639,18 +652,25 @@ export default function MonthlyReview() {
                         <div className="flex items-center space-x-2">
                           <div className="text-right">
                             {(() => {
-                              const habitLogsForHabit = (monthHabitLogs as any[]).filter((log: any) => log.habitId === habit.id && log.completed);
-                              const completedDays = habitLogsForHabit.length;
+                              // Get all logs for this habit (completed and not completed)
+                              const allLogsForHabit = (monthHabitLogs as any[]).filter((log: any) => log.habitId === habit.id);
+                              const completedLogsForHabit = allLogsForHabit.filter((log: any) => log.completed);
+                              const completedDays = completedLogsForHabit.length;
+                              
+                              // Use actual logged days instead of total days in month
+                              const totalLoggedDays = allLogsForHabit.length;
                               const totalDaysInMonth = new Date(currentYear, currentMonth, 0).getDate();
-                              const completionRate = Math.round((completedDays / totalDaysInMonth) * 100);
+                              
+                              // Calculate completion rate based on logged days, but show total days in month for reference
+                              const completionRate = totalLoggedDays > 0 ? Math.round((completedDays / totalLoggedDays) * 100) : 0;
                               
                               return (
                                 <>
                                   <div className="text-sm font-bold text-emerald-600">
-                                    {completedDays}/{totalDaysInMonth}일
+                                    {completedDays}/{totalLoggedDays}일
                                   </div>
                                   <div className="text-xs text-gray-500">
-                                    {completionRate}%
+                                    {completionRate}% ({totalDaysInMonth}일 중 {totalLoggedDays}일 기록)
                                   </div>
                                 </>
                               );
