@@ -405,7 +405,7 @@ export default function WeeklyReview() {
   };
 
   return (
-    <div className="py-6">
+    <div className="py-5">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-8">
