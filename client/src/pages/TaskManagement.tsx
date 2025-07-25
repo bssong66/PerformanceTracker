@@ -47,7 +47,7 @@ function TaskManagement() {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
-  
+
   const [taskForm, setTaskForm] = useState({
     title: '',
     priority: 'B' as 'A' | 'B' | 'C',
@@ -213,7 +213,7 @@ function TaskManagement() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!taskForm.title.trim()) {
       toast({ title: "오류", description: "할일 제목을 입력해주세요.", variant: "destructive" });
       return;
@@ -285,7 +285,7 @@ function TaskManagement() {
           <h1 className="text-2xl font-bold text-gray-900">할일 관리</h1>
           <p className="text-gray-600">A-B-C 우선순위로 할일을 관리하세요</p>
         </div>
-        
+
         <div className="flex items-center space-x-3">
           <Button
             variant="outline"
@@ -309,7 +309,7 @@ function TaskManagement() {
                 {editingTask ? '할일 정보를 수정하세요.' : '새로운 독립 할일을 생성하세요.'}
               </p>
             </DialogHeader>
-            
+
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
                 <Label htmlFor="title">할일 제목</Label>
@@ -444,7 +444,7 @@ function TaskManagement() {
                       {taskForm.imageUrls.length}개의 이미지
                     </span>
                   </div>
-                  
+
                   {taskForm.imageUrls.length > 0 && (
                     <div className="grid grid-cols-4 gap-2">
                       {taskForm.imageUrls.map((imageUrl, index) => (
@@ -558,7 +558,7 @@ function TaskManagement() {
                         {task.title}
                       </span>
                     </div>
-                    
+
                     <div className="flex items-center space-x-1">
                       {task.imageUrls && task.imageUrls.length > 0 && (
                         <Button
@@ -638,10 +638,10 @@ function TaskManagement() {
                     )}
                   </div>
 
-                  
+
                 </div>
               ))}
-              
+
               {tasksByPriority[priority].length === 0 && (
                 <div className="text-center py-8 text-gray-500">
                   <ListTodo className="h-8 w-8 mx-auto mb-2" />
@@ -687,14 +687,14 @@ function TaskManagement() {
                   <ArrowLeft className="h-4 w-4" />
                 </Button>
               )}
-              
+
               {/* Image */}
               <img
                 src={viewingImage}
                 alt={`할일 이미지 ${currentImageIndex + 1}`}
                 className="max-w-full max-h-[70vh] h-auto rounded-lg"
               />
-              
+
               {/* Next Button */}
               {viewingTask.imageUrls && viewingTask.imageUrls.length > 1 && currentImageIndex < viewingTask.imageUrls.length - 1 && (
                 <Button
@@ -707,7 +707,7 @@ function TaskManagement() {
                 </Button>
               )}
             </div>
-            
+
             {/* Image Navigation Dots */}
             {viewingTask.imageUrls && viewingTask.imageUrls.length > 1 && (
               <div className="flex justify-center space-x-2 mt-4">
