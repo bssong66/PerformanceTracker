@@ -486,25 +486,30 @@ export default function WeeklyReview() {
 
                 {/* Incomplete Tasks */}
                 <div className="flex-1 flex flex-col">
-                  <h4 className="text-sm font-semibold text-gray-900 mb-2">금주 미완료된 할일</h4>
-                  <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <h4 className="text-sm font-semibold text-gray-900">금주 미완료된 할일</h4>
+                    {(weekTasks as any[]).filter((task: any) => !task.completed).length > 0 && (
+                      <Button
+                        variant="default"
+                        size="sm"
+                        onClick={handleRolloverTasks}
+                        disabled={rolloverTasksMutation.isPending}
+                        className="h-8 px-4 text-xs font-medium bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white border-0 shadow-md hover:shadow-lg transition-all duration-200"
+                      >
+                        <svg className="w-3 h-3 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 9l3 3m0 0l-3 3m3-3H8m13 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        {rolloverTasksMutation.isPending ? '처리중...' : '다음주로 일괄 이월'}
+                      </Button>
+                    )}
+                  </div>
+                  <div className="flex items-center mb-4">
                     <div className="flex items-center space-x-1 text-xs text-gray-500 bg-blue-50 px-2 py-1 rounded-full">
                       <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 9l3 3m0 0l-3 3m3-3H8m13 0a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
                       <span className="text-xs">미완료된 할일을 선택한 날짜로 이월할 수 있습니다</span>
                     </div>
-                    {(weekTasks as any[]).filter((task: any) => !task.completed).length > 0 && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={handleRolloverTasks}
-                        disabled={rolloverTasksMutation.isPending}
-                        className="h-6 px-2 text-xs"
-                      >
-                        {rolloverTasksMutation.isPending ? '처리중...' : '다음주로 이월'}
-                      </Button>
-                    )}
                   </div>
                   
                   <div className="h-[35rem] overflow-y-auto space-y-3 pr-2">
