@@ -554,7 +554,7 @@ function TaskManagement() {
                           <Circle className="h-5 w-5 text-gray-400" />
                         )}
                       </button>
-                      <span className={`font-medium ${task.completed ? 'line-through text-gray-500' : 'text-gray-900'}`}>
+                      <span className={`font-medium text-gray-900 ${task.completed ? 'line-through text-gray-500' : 'text-gray-900'}`}>
                         {task.title}
                       </span>
                     </div>
