@@ -328,8 +328,8 @@ export default function WeeklyReview() {
     },
     onSuccess: (count) => {
       toast({
-        title: "업무 이월 완료",
-        description: `${count}개의 미완료 업무가 선택한 날짜로 이월되었습니다.`,
+        title: "할일 이월 완료",
+        description: `${count}개의 미완료 할일이 선택한 날짜로 이월되었습니다.`,
       });
       // Invalidate queries to refresh the data
       queryClient.invalidateQueries({ 
@@ -339,7 +339,7 @@ export default function WeeklyReview() {
     onError: () => {
       toast({
         title: "이월 실패",
-        description: "업무 이월 중 오류가 발생했습니다.",
+        description: "할일 이월 중 오류가 발생했습니다.",
         variant: "destructive",
       });
     },
@@ -422,14 +422,14 @@ export default function WeeklyReview() {
               <CardContent className="space-y-6 pt-6">
                 {/* Task Completion Summary */}
                 <div>
-                  <h4 className="text-sm font-semibold text-gray-900 mb-4">완료된 업무</h4>
+                  <h4 className="text-sm font-semibold text-gray-900 mb-4">완료된 할일</h4>
                   
                   <div className="space-y-4">
                     <div>
                       <div className="flex items-center justify-between mb-2">
                         <div className="flex items-center space-x-2">
                           <PriorityBadge priority="A" size="sm" />
-                          <span className="text-sm text-gray-600">A급 업무</span>
+                          <span className="text-sm text-gray-600">A급 할일</span>
                         </div>
                         <span className="text-sm font-semibold text-gray-900">
                           {taskStats.aCompleted}/{taskStats.aTotal}
@@ -446,7 +446,7 @@ export default function WeeklyReview() {
                       <div className="flex items-center justify-between mb-2">
                         <div className="flex items-center space-x-2">
                           <PriorityBadge priority="B" size="sm" />
-                          <span className="text-sm text-gray-600">B급 업무</span>
+                          <span className="text-sm text-gray-600">B급 할일</span>
                         </div>
                         <span className="text-sm font-semibold text-gray-900">
                           {taskStats.bCompleted}/{taskStats.bTotal}
@@ -463,13 +463,13 @@ export default function WeeklyReview() {
 
                 {/* Incomplete Tasks */}
                 <div>
-                  <h4 className="text-sm font-semibold text-gray-900 mb-2">금주 미완료된 업무</h4>
+                  <h4 className="text-sm font-semibold text-gray-900 mb-2">금주 미완료된 할일</h4>
                   <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center space-x-1 text-xs text-gray-500 bg-blue-50 px-2 py-1 rounded-full">
                       <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 9l3 3m0 0l-3 3m3-3H8m13 0a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
-                      <span className="text-xs">미완료된 업무를 선택한 날짜로 이월할 수 있습니다</span>
+                      <span className="text-xs">미완료된 할일을 선택한 날짜로 이월할 수 있습니다</span>
                     </div>
                     {(weekTasks as any[]).filter((task: any) => !task.completed).length > 0 && (
                       <Button
@@ -553,7 +553,7 @@ export default function WeeklyReview() {
                     
                     {(weekTasks as any[]).filter((task: any) => !task.completed).length === 0 && (
                       <div className="text-center p-4 bg-green-50 rounded-lg">
-                        <div className="text-sm text-green-600 font-medium">모든 업무가 완료되었습니다!</div>
+                        <div className="text-sm text-green-600 font-medium">모든 할일이 완료되었습니다!</div>
                         <div className="text-xs text-gray-500 mt-1">이번 주 정말 수고하셨습니다.</div>
                       </div>
                     )}
@@ -562,7 +562,7 @@ export default function WeeklyReview() {
                   {(weekTasks as any[]).filter((task: any) => !task.completed).length > 0 && (
                     <div className="mt-3 text-center">
                       <div className="text-xs text-gray-500 bg-gray-50 px-2 py-1 rounded">
-                        총 {(weekTasks as any[]).filter((task: any) => !task.completed).length}개의 미완료 업무
+                        총 {(weekTasks as any[]).filter((task: any) => !task.completed).length}개의 미완료 할일</div>
                       </div>
                     </div>
                   )}
