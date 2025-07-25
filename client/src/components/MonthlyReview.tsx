@@ -1,68 +1,241 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { Card, CardHeader, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { ProgressBar } from "@/components/ProgressBar";
 import { PriorityBadge } from "@/components/PriorityBadge";
-import { Save, TrendingUp, BarChart3, Target, Plus, X, ChevronLeft, ChevronRight } from "lucide-react";
+import { Save, TrendingUp, BarChart3, Target, Plus, X, ChevronLeft, ChevronRight, Siren, Calendar as CalendarIcon, Activity, Heart, Dumbbell, Coffee, Book, Moon, Sunrise, Timer, Zap } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { api, saveMonthlyReview } from "@/lib/api";
 import { queryClient } from "@/lib/queryClient";
-import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, addDays } from "date-fns";
+import { format, startOfMonth, endOfMonth, subDays, addDays } from "date-fns";
+import { ko } from "date-fns/locale";
 
+// Mock user ID for demo
 const MOCK_USER_ID = 1;
 
+// Function to get appropriate icon for habit based on name
+const getHabitIcon = (habitName: string) => {
+  const name = habitName.toLowerCase();
+  
+  if (name.includes('운동') || name.includes('헬스') || name.includes('체육')) {
+    return <Dumbbell className="h-4 w-4 text-blue-500" />;
+  } else if (name.includes('독서') || name.includes('책') || name.includes('공부')) {
+    return <Book className="h-4 w-4 text-purple-500" />;
+  } else if (name.includes('명상') || name.includes('요가') || name.includes('스트레칭')) {
+    return <Heart className="h-4 w-4 text-pink-500" />;
+  } else if (name.includes('아침') || name.includes('기상')) {
+    return <Sunrise className="h-4 w-4 text-yellow-500" />;
+  } else if (name.includes('저녁') || name.includes('밤') || name.includes('수면')) {
+    return <Moon className="h-4 w-4 text-indigo-500" />;
+  } else if (name.includes('물') || name.includes('수분')) {
+    return <Coffee className="h-4 w-4 text-cyan-500" />;
+  } else if (name.includes('시간') || name.includes('루틴')) {
+    return <Timer className="h-4 w-4 text-orange-500" />;
+  } else {
+    return <Activity className="h-4 w-4 text-green-500" />;
+  }
+};
+
 export default function MonthlyReview() {
+  const { toast } = useToast();
+  
+  // Get current month dates
   const today = new Date();
-  const currentYear = today.getFullYear();
-  const currentMonth = today.getMonth() + 1; // JavaScript months are 0-indexed
   const monthStart = startOfMonth(today);
   const monthEnd = endOfMonth(today);
+  const currentYear = today.getFullYear();
+  const currentMonth = today.getMonth() + 1;
 
   const [monthlyGoals, setMonthlyGoals] = useState(["", "", ""]);
   const [reflection, setReflection] = useState("");
   const [workHours, setWorkHours] = useState(0);
   const [personalHours, setPersonalHours] = useState(0);
-  const [valueAlignments, setValueAlignments] = useState([0, 0, 0]);
+  const [valueAlignments, setValueAlignments] = useState([85, 90, 65]);
   const [selectedImages, setSelectedImages] = useState<File[]>([]);
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [showImageViewer, setShowImageViewer] = useState(false);
+  const [taskRolloverDates, setTaskRolloverDates] = useState<{[taskId: number]: Date}>({});
+  const [openPopovers, setOpenPopovers] = useState<{[taskId: number]: boolean}>({});
 
-  const { toast } = useToast();
+  const { data: monthlyReview } = useQuery({
+    queryKey: [api.monthlyReview.get(MOCK_USER_ID, currentYear, currentMonth)],
+    meta: { errorMessage: "Monthly review not found" },
+  });
 
-  // 기초데이터 가져오기
   const { data: foundation } = useQuery({
     queryKey: [api.foundation.get(MOCK_USER_ID)],
-    queryFn: () => fetch(api.foundation.get(MOCK_USER_ID)).then(res => res.json())
+    meta: { errorMessage: "Foundation not found" },
   });
 
-  // 월간 리뷰 데이터 가져오기
-  const { data: existingReview } = useQuery({
-    queryKey: [api.monthlyReview.get(MOCK_USER_ID, currentYear, currentMonth)],
-    queryFn: () => fetch(api.monthlyReview.get(MOCK_USER_ID, currentYear, currentMonth)).then(res => res.json()),
-    retry: false
+  const { data: habits = [] } = useQuery({
+    queryKey: [api.habits.list(MOCK_USER_ID)],
   });
 
-  // 핵심 가치 추출
-  const coreValues = foundation ? [
-    foundation.coreValue1,
-    foundation.coreValue2, 
-    foundation.coreValue3
-  ].filter(Boolean) : [];
+  // Get tasks for the current month to calculate completion stats
+  const { data: monthTasks = [] } = useQuery({
+    queryKey: [`/api/tasks/${MOCK_USER_ID}?startDate=${format(monthStart, 'yyyy-MM-dd')}&endDate=${format(monthEnd, 'yyyy-MM-dd')}`],
+  });
 
-  // 가치별 키워드 매핑
-  const getKeywordsForValue = (value: string): string[] => {
+  // Get projects to display project names with tasks
+  const { data: projects = [] } = useQuery({
+    queryKey: [`/api/projects/${MOCK_USER_ID}`],
+  });
+
+  // Get time blocks for the current month to calculate work-life balance
+  const { data: monthTimeBlocks = [] } = useQuery({
+    queryKey: ['timeBlocks', 'month', MOCK_USER_ID, format(monthStart, 'yyyy-MM-dd')],
+    queryFn: async () => {
+      const days = [];
+      const currentDate = new Date(monthStart);
+      while (currentDate <= monthEnd) {
+        const date = format(currentDate, 'yyyy-MM-dd');
+        const dayBlocks = await fetch(api.timeBlocks.list(MOCK_USER_ID, date)).then(res => res.json());
+        days.push(...dayBlocks);
+        currentDate.setDate(currentDate.getDate() + 1);
+      }
+      return days;
+    },
+  });
+
+  // Get events for the current month
+  const { data: monthEvents = [] } = useQuery({
+    queryKey: ['events', 'month', MOCK_USER_ID, format(monthStart, 'yyyy-MM-dd')],
+    queryFn: async () => {
+      const startDate = format(monthStart, 'yyyy-MM-dd');
+      const endDate = format(monthEnd, 'yyyy-MM-dd');
+      return [];
+    },
+  });
+
+  // Get habit logs for the current month to calculate completion rates
+  const { data: monthHabitLogs = [] } = useQuery({
+    queryKey: ['habitLogs', 'month', MOCK_USER_ID, format(monthStart, 'yyyy-MM-dd')],
+    queryFn: async () => {
+      const logs = [];
+      const currentDate = new Date(monthStart);
+      while (currentDate <= monthEnd) {
+        const date = format(currentDate, 'yyyy-MM-dd');
+        const dayLogs = await fetch(api.habitLogs.list(MOCK_USER_ID, date)).then(res => res.json());
+        logs.push(...dayLogs);
+        currentDate.setDate(currentDate.getDate() + 1);
+      }
+      return logs;
+    },
+  });
+
+  // Calculate work and personal hours from time blocks
+  useEffect(() => {
+    if (monthTimeBlocks && monthTimeBlocks.length > 0) {
+      let workHoursTotal = 0;
+      let personalHoursTotal = 0;
+
+      monthTimeBlocks.forEach((block: any) => {
+        if (!block.startTime || !block.endTime) return;
+
+        // Parse time and calculate duration
+        const [startHour, startMinute] = block.startTime.split(':').map(Number);
+        const [endHour, endMinute] = block.endTime.split(':').map(Number);
+        
+        const startTotalMinutes = startHour * 60 + startMinute;
+        const endTotalMinutes = endHour * 60 + endMinute;
+        const durationMinutes = endTotalMinutes - startTotalMinutes;
+        const durationHours = durationMinutes / 60;
+
+        // Categorize activities as work or personal
+        const workActivities = ['회의', '업무', '학습', '프로젝트', '작업', '개발'];
+        const personalActivities = ['휴식', '운동', '식사', '이동', '개인시간', '취미', '가족시간'];
+
+        if (workActivities.some(activity => block.activity?.includes(activity))) {
+          workHoursTotal += durationHours;
+        } else if (personalActivities.some(activity => block.activity?.includes(activity)) || block.type === 'personal') {
+          personalHoursTotal += durationHours;
+        } else {
+          // Default categorization based on type
+          if (block.type === 'work' || block.type === 'focus') {
+            workHoursTotal += durationHours;
+          } else {
+            personalHoursTotal += durationHours;
+          }
+        }
+      });
+
+      setWorkHours(Math.round(workHoursTotal));
+      setPersonalHours(Math.round(personalHoursTotal));
+    }
+  }, [monthTimeBlocks]);
+
+  // Calculate value alignment based on tasks, events, and time blocks
+  useEffect(() => {
+    if (foundation && ((weekTasks as any[]).length > 0 || weekEvents.length > 0 || weekTimeBlocks.length > 0)) {
+      const coreValues = (foundation as any).coreValues ? (foundation as any).coreValues.split(',').map((v: string) => v.trim()) : [];
+      
+      if (coreValues.length > 0) {
+        const alignmentScores = coreValues.map((value: string) => {
+          let totalActivities = 0;
+          let alignedActivities = 0;
+
+          // Check tasks
+          (weekTasks as any[]).forEach((task: any) => {
+            if (task.coreValue === value) {
+              totalActivities++;
+              alignedActivities++;
+            } else if (task.coreValue && task.coreValue !== 'none') {
+              totalActivities++;
+            }
+          });
+
+          // Check time blocks
+          weekTimeBlocks.forEach((block: any) => {
+            totalActivities++;
+            // Simple keyword matching for value alignment
+            const blockText = `${block.title || ''} ${block.activity || ''}`.toLowerCase();
+            const valueKeywords = getValueKeywords(value);
+            
+            if (valueKeywords.some(keyword => blockText.includes(keyword.toLowerCase()))) {
+              alignedActivities++;
+            }
+          });
+
+          // Check events
+          weekEvents.forEach((event: any) => {
+            totalActivities++;
+            const eventText = `${event.title || ''} ${event.description || ''}`.toLowerCase();
+            const valueKeywords = getValueKeywords(value);
+            
+            if (valueKeywords.some(keyword => eventText.includes(keyword.toLowerCase()))) {
+              alignedActivities++;
+            }
+          });
+
+          // Calculate percentage with minimum baseline
+          const percentage = totalActivities > 0 
+            ? Math.max(30, Math.min(100, Math.round((alignedActivities / totalActivities) * 100)))
+            : 50; // Default if no activities
+
+          return percentage;
+        });
+
+        setValueAlignments(alignmentScores);
+      }
+    }
+  }, [foundation, weekTasks, weekEvents, weekTimeBlocks]);
+
+  // Helper function to get keywords for each core value
+  const getValueKeywords = (value: string): string[] => {
     const keywordMap: { [key: string]: string[] } = {
-      '건강': ['운동', '건강', '체력', '피트니스', '웰빙', '스트레칭', '식단'],
-      '성장': ['학습', '공부', '독서', '교육', '발전', '성장', '개발'],
-      '가족': ['가족', '부모', '자녀', '형제', '가정', '함께'],
-      '성취': ['업무', '프로젝트', '완성', '달성', '목표', '성과', '결과'],
-      '관계': ['친구', '동료', '네트워킹', '만남', '소통', '대화'],
-      '창의': ['창작', '아이디어', '디자인', '예술', '상상', '혁신'],
+      '건강': ['운동', '체력', '건강', '피트니스', '요가', '헬스', '조깅', '산책'],
+      '성장': ['학습', '공부', '교육', '독서', '성장', '발전', '스킬', '역량'],
+      '가족': ['가족', '아이', '부모', '배우자', '형제', '자매', '가정', '육아'],
+      '창의': ['창의', '아이디어', '디자인', '예술', '창작', '혁신', '기획'],
+      '리더십': ['리더', '관리', '팀', '회의', '프로젝트', '책임', '지도'],
+      '소통': ['대화', '미팅', '협업', '네트워킹', '관계', '소통', '커뮤니케이션'],
       '도전': ['도전', '새로운', '시도', '모험', '변화', '혁신', '개선'],
       '안정': ['계획', '정리', '관리', '체계', '안정', '질서', '루틴']
     };
@@ -70,169 +243,13 @@ export default function MonthlyReview() {
     return keywordMap[value] || [value];
   };
 
-  // 월간 데이터 가져오기 (모든 주간 데이터 합산)
-  const monthStartDate = format(monthStart, 'yyyy-MM-dd');
-  const monthEndDate = format(monthEnd, 'yyyy-MM-dd');
-
-  // 월 전체 할일 데이터
-  const { data: allTasks } = useQuery({
-    queryKey: [api.tasks.list(MOCK_USER_ID)],
-    queryFn: () => fetch(api.tasks.list(MOCK_USER_ID)).then(res => res.json())
-  });
-
-  // 습관 데이터
-  const { data: habits = [] } = useQuery({
-    queryKey: [api.habits.list(MOCK_USER_ID)],
-    queryFn: () => fetch(api.habits.list(MOCK_USER_ID)).then(res => res.json())
-  });
-
-  // 월 전체 시간블록 데이터 (각 날짜별로 가져와서 합산)
-  const monthDates = [];
-  for (let d = new Date(monthStart); d <= monthEnd; d.setDate(d.getDate() + 1)) {
-    monthDates.push(format(d, 'yyyy-MM-dd'));
-  }
-
-  const timeBlockQueries = monthDates.map(date => 
-    useQuery({
-      queryKey: [api.timeBlocks.list(MOCK_USER_ID, date)],
-      queryFn: () => fetch(api.timeBlocks.list(MOCK_USER_ID, date)).then(res => res.json())
-    })
-  );
-
-  // 자동 계산 로직
-  useEffect(() => {
-    if (!allTasks || timeBlockQueries.some(q => q.isLoading)) return;
-
-    // 월간 업무/개인 시간 계산
-    let totalWork = 0;
-    let totalPersonal = 0;
-
-    timeBlockQueries.forEach(query => {
-      if (query.data) {
-        query.data.forEach((block: any) => {
-          const duration = calculateDuration(block.startTime, block.endTime);
-          if (block.type === 'work' || block.type === 'focus' || block.type === 'meeting') {
-            totalWork += duration;
-          } else {
-            totalPersonal += duration;
-          }
-        });
-      }
-    });
-
-    const newWorkHours = Math.round(totalWork);
-    const newPersonalHours = Math.round(totalPersonal);
-    
-    if (newWorkHours !== workHours) setWorkHours(newWorkHours);
-    if (newPersonalHours !== personalHours) setPersonalHours(newPersonalHours);
-
-    // 가치 정렬도 자동 계산
-    if (coreValues.length > 0) {
-      const alignments = coreValues.map((value, index) => {
-        if (!value) return 0;
-
-        const keywords = getKeywordsForValue(value);
-        let alignedCount = 0;
-        let totalCount = 0;
-
-        // 할일에서 가치 연결 확인
-        const monthlyTasks = allTasks?.filter((task: any) => {
-          const taskDate = task.scheduledDate;
-          return taskDate >= monthStartDate && taskDate <= monthEndDate;
-        }) || [];
-
-        monthlyTasks.forEach((task: any) => {
-          totalCount++;
-          // 직접 연결된 가치 확인
-          if (task.coreValue === value) {
-            alignedCount++;
-          } else {
-            // 키워드 매칭 확인
-            const hasKeyword = keywords.some(keyword => 
-              task.title.toLowerCase().includes(keyword.toLowerCase())
-            );
-            if (hasKeyword) alignedCount++;
-          }
-        });
-
-        // 시간블록에서 가치 연결 확인
-        timeBlockQueries.forEach(query => {
-          if (query.data) {
-            query.data.forEach((block: any) => {
-              totalCount++;
-              const hasKeyword = keywords.some(keyword => 
-                block.title.toLowerCase().includes(keyword.toLowerCase()) ||
-                (block.description && block.description.toLowerCase().includes(keyword.toLowerCase()))
-              );
-              if (hasKeyword) alignedCount++;
-            });
-          }
-        });
-
-        return totalCount > 0 ? Math.round((alignedCount / totalCount) * 100) : 0;
-      });
-
-      // 값이 변경될 때만 업데이트
-      const hasChanged = alignments.some((value, index) => value !== valueAlignments[index]);
-      if (hasChanged) {
-        setValueAlignments(alignments);
-      }
-    }
-  }, [allTasks, coreValues, monthStartDate, monthEndDate, workHours, personalHours, valueAlignments]);
-
-  // Calculate monthly task completion stats
-  const monthlyTasks = allTasks?.filter((task: any) => {
-    const taskDate = task.scheduledDate;
-    return taskDate >= monthStartDate && taskDate <= monthEndDate;
-  }) || [];
-
-  const taskStats = {
-    total: monthlyTasks.length,
-    completed: monthlyTasks.filter((t: any) => t.completed).length,
-    aTotal: monthlyTasks.filter((t: any) => t.priority === 'A').length,
-    aCompleted: monthlyTasks.filter((t: any) => t.priority === 'A' && t.completed).length,
-    bTotal: monthlyTasks.filter((t: any) => t.priority === 'B').length,
-    bCompleted: monthlyTasks.filter((t: any) => t.priority === 'B' && t.completed).length,
-  };
-
-  // 기존 월간 리뷰 데이터 로드
-  useEffect(() => {
-    if (existingReview) {
-      setMonthlyGoals([
-        existingReview.monthlyGoal1 || "",
-        existingReview.monthlyGoal2 || "",
-        existingReview.monthlyGoal3 || ""
-      ]);
-      setReflection(existingReview.reflection || "");
-      
-      if (existingReview.imageUrls && existingReview.imageUrls.length > 0) {
-        setImagePreviews(existingReview.imageUrls);
-      }
-    }
-  }, [existingReview]);
-
-  // 유틸리티 함수
-  const calculateDuration = (start: string, end: string): number => {
-    const [startHour, startMin] = start.split(':').map(Number);
-    const [endHour, endMin] = end.split(':').map(Number);
-    const startMinutes = startHour * 60 + startMin;
-    const endMinutes = endHour * 60 + endMin;
-    return (endMinutes - startMinutes) / 60;
-  };
-
-  // 이벤트 핸들러
-  const handleGoalChange = (index: number, value: string) => {
-    const newGoals = [...monthlyGoals];
-    newGoals[index] = value;
-    setMonthlyGoals(newGoals);
-  };
-
-  // 이미지 핸들링 함수들
+  // Image handling functions
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     if (files.length > 0) {
       setSelectedImages(prev => [...prev, ...files]);
       
+      // Create previews for new images
       files.forEach(file => {
         const reader = new FileReader();
         reader.onload = (event) => {
@@ -253,321 +270,560 @@ export default function MonthlyReview() {
     }
   };
 
+  // Auto-resize textarea
   const handleReflectionChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const textarea = e.target;
     setReflection(textarea.value);
     
+    // Reset height to auto to get the correct scrollHeight
     textarea.style.height = 'auto';
+    // Set height to scrollHeight
     textarea.style.height = `${Math.max(120, textarea.scrollHeight)}px`;
   };
 
-  // 월간 리뷰 저장 mutation
+  // Set initial values when weekly review data loads
+  useEffect(() => {
+    if (weeklyReview) {
+      setWeeklyGoals([
+        (weeklyReview as any).weeklyGoal1 || "",
+        (weeklyReview as any).weeklyGoal2 || "",
+        (weeklyReview as any).weeklyGoal3 || "",
+      ]);
+      setReflection((weeklyReview as any).reflection || "");
+      // Only override calculated hours if they exist in saved review
+      if ((weeklyReview as any).workHours !== undefined) {
+        setWorkHours((weeklyReview as any).workHours);
+      }
+      if ((weeklyReview as any).personalHours !== undefined) {
+        setPersonalHours((weeklyReview as any).personalHours);
+      }
+      setValueAlignments([
+        (weeklyReview as any).valueAlignment1 || 0,
+        (weeklyReview as any).valueAlignment2 || 0,
+        (weeklyReview as any).valueAlignment3 || 0,
+      ]);
+    }
+  }, [weeklyReview]);
+
   const saveReviewMutation = useMutation({
-    mutationFn: async (reviewData: any) => {
-      return await saveMonthlyReview(reviewData);
-    },
+    mutationFn: saveWeeklyReview,
     onSuccess: () => {
-      queryClient.invalidateQueries({ 
-        queryKey: [api.monthlyReview.get(MOCK_USER_ID, currentYear, currentMonth)]
-      });
       toast({
-        title: "월간 리뷰 저장 완료",
-        description: "월간 리뷰가 성공적으로 저장되었습니다.",
+        title: "주간 리뷰 저장",
+        description: "주간 리뷰가 성공적으로 저장되었습니다.",
+      });
+      queryClient.invalidateQueries({ 
+        queryKey: [api.weeklyReview.get(MOCK_USER_ID, weekStartDate)] 
       });
     },
-    onError: (error) => {
+    onError: () => {
       toast({
         title: "저장 실패",
-        description: "월간 리뷰 저장 중 오류가 발생했습니다.",
+        description: "주간 리뷰를 저장하는데 실패했습니다.",
         variant: "destructive",
       });
+    },
+  });
+
+  // Initialize rollover dates for incomplete tasks
+  useEffect(() => {
+    const incompleteTasks = (weekTasks as any[]).filter((task: any) => !task.completed);
+    const newRolloverDates: {[taskId: number]: Date} = {};
+    
+    incompleteTasks.forEach((task: any) => {
+      if (!taskRolloverDates[task.id]) {
+        newRolloverDates[task.id] = addDays(weekStart, 7); // Default to next Monday
+      }
+    });
+    
+    if (Object.keys(newRolloverDates).length > 0) {
+      setTaskRolloverDates(prev => ({...prev, ...newRolloverDates}));
     }
+  }, [weekTasks, weekStart]);
+
+  // Rollover tasks mutation
+  const rolloverTasksMutation = useMutation({
+    mutationFn: async () => {
+      const incompleteTasks = (weekTasks as any[]).filter((task: any) => !task.completed);
+      
+      // Update each incomplete task to its individual rollover date
+      const updatePromises = incompleteTasks.map(async (task: any) => {
+        const rolloverDate = taskRolloverDates[task.id] || addDays(weekStart, 7);
+        const rolloverDateStr = format(rolloverDate, 'yyyy-MM-dd');
+        
+        const updatedTask = {
+          ...task,
+          scheduledDate: rolloverDateStr,
+          startDate: rolloverDateStr,
+          endDate: task.endDate ? rolloverDateStr : rolloverDateStr
+        };
+        
+        return fetch(api.tasks.update(task.id), {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(updatedTask)
+        });
+      });
+      
+      await Promise.all(updatePromises);
+      return incompleteTasks.length;
+    },
+    onSuccess: (count) => {
+      toast({
+        title: "할일 이월 완료",
+        description: `${count}개의 미완료 할일이 선택한 날짜로 이월되었습니다.`,
+      });
+      // Invalidate queries to refresh the data
+      queryClient.invalidateQueries({ 
+        queryKey: [`/api/tasks/${MOCK_USER_ID}?startDate=${format(subDays(weekStart, 7), 'yyyy-MM-dd')}&endDate=${format(weekEnd, 'yyyy-MM-dd')}`] 
+      });
+    },
+    onError: () => {
+      toast({
+        title: "이월 실패",
+        description: "할일 이월 중 오류가 발생했습니다.",
+        variant: "destructive",
+      });
+    },
   });
 
   const handleSaveReview = () => {
-    const reviewData = {
+    saveReviewMutation.mutate({
       userId: MOCK_USER_ID,
-      year: currentYear,
-      month: currentMonth,
-      monthlyGoal1: monthlyGoals[0] || null,
-      monthlyGoal2: monthlyGoals[1] || null,
-      monthlyGoal3: monthlyGoals[2] || null,
+      weekStartDate,
+      weeklyGoal1: weeklyGoals[0],
+      weeklyGoal2: weeklyGoals[1],
+      weeklyGoal3: weeklyGoals[2],
       workHours,
       personalHours,
-      reflection: reflection || null,
-      valueAlignment1: valueAlignments[0] || 0,
-      valueAlignment2: valueAlignments[1] || 0,
-      valueAlignment3: valueAlignments[2] || 0,
-      imageUrls: imagePreviews.length > 0 ? imagePreviews : null
-    };
+      reflection,
+      valueAlignment1: valueAlignments[0],
+      valueAlignment2: valueAlignments[1],
+      valueAlignment3: valueAlignments[2],
+    });
+  };
 
-    saveReviewMutation.mutate(reviewData);
+  const handleRolloverTasks = () => {
+    rolloverTasksMutation.mutate();
+  };
+
+  const handleGoalChange = (index: number, value: string) => {
+    const newGoals = [...weeklyGoals];
+    newGoals[index] = value;
+    setWeeklyGoals(newGoals);
+  };
+
+  const handleValueAlignmentChange = (index: number, value: number) => {
+    const newAlignments = [...valueAlignments];
+    newAlignments[index] = value;
+    setValueAlignments(newAlignments);
+  };
+
+  // Calculate task completion stats
+  const taskStats = {
+    total: (weekTasks as any[]).length,
+    completed: (weekTasks as any[]).filter((t: any) => t.completed).length,
+    aTotal: (weekTasks as any[]).filter((t: any) => t.priority === 'A').length,
+    aCompleted: (weekTasks as any[]).filter((t: any) => t.priority === 'A' && t.completed).length,
+    bTotal: (weekTasks as any[]).filter((t: any) => t.priority === 'B').length,
+    bCompleted: (weekTasks as any[]).filter((t: any) => t.priority === 'B' && t.completed).length,
+  };
+
+  const coreValues = [
+    (foundation as any)?.coreValue1 || "가치 1",
+    (foundation as any)?.coreValue2 || "가치 2", 
+    (foundation as any)?.coreValue3 || "가치 3",
+  ];
+
+  // Helper function to get task display name with project name
+  const getTaskDisplayName = (task: any) => {
+    if (task.projectId && (projects as any[]).length > 0) {
+      const project = (projects as any[]).find(p => p.id === task.projectId);
+      if (project) {
+        return `${project.title} > ${task.title}`;
+      }
+    }
+    return task.title;
   };
 
   return (
-    <div className="p-6 space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">
-          {currentYear}년 {currentMonth}월 리뷰
-        </h1>
-        <p className="text-gray-600">
-          {format(monthStart, 'M월 d일')} - {format(monthEnd, 'M월 d일')} 월간 성과를 되돌아보고 다음 달을 계획하세요
-        </p>
-      </div>
+    <div className="py-6">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Header */}
+        <div className="mb-8">
+          <h1 className="text-2xl font-bold text-gray-900">주간 리뷰</h1>
+          <p className="text-sm text-gray-600">
+            {format(weekStart, 'M월 d일', { locale: ko })} - {format(weekEnd, 'M월 d일', { locale: ko })} 주간 성과 및 다음 주 계획
+          </p>
+        </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Left Column - Performance Data */}
-        <div className="space-y-6">
-          <Card className="h-full">
-            <CardContent className="space-y-6 pt-6">
-              {/* Task Completion Summary */}
-              <div>
-                <h4 className="text-sm font-semibold text-gray-900 mb-4">완료된 할일</h4>
-                
-                <div className="space-y-4">
-                  <div>
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="flex items-center space-x-2">
-                        <PriorityBadge priority="A" size="sm" />
-                        <span className="text-sm text-gray-600">A급 업무</span>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          {/* This Week's Performance */}
+          <div className="space-y-6">
+            <Card className="flex flex-col">
+              <CardContent className="space-y-6 pt-6 pb-8 flex flex-col">
+                {/* Task Completion Summary */}
+                <div>
+                  <h4 className="text-sm font-semibold text-gray-900 mb-4">완료된 할일</h4>
+                  
+                  <div className="space-y-4">
+                    <div>
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center space-x-2">
+                          <PriorityBadge priority="A" size="sm" />
+                          <span className="text-sm text-gray-600">A급 할일</span>
+                        </div>
+                        <span className="text-sm font-semibold text-gray-900">
+                          {taskStats.aCompleted}/{taskStats.aTotal}
+                        </span>
                       </div>
-                      <span className="text-sm font-semibold text-gray-900">
-                        {taskStats.aCompleted}/{taskStats.aTotal}
-                      </span>
+                      <ProgressBar 
+                        value={taskStats.aCompleted} 
+                        max={taskStats.aTotal || 1} 
+                        color="danger"
+                      />
                     </div>
-                    <ProgressBar 
-                      value={taskStats.aCompleted} 
-                      max={taskStats.aTotal || 1} 
-                      color="danger"
-                    />
-                  </div>
 
-                  <div>
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="flex items-center space-x-2">
-                        <PriorityBadge priority="B" size="sm" />
-                        <span className="text-sm text-gray-600">B급 업무</span>
+                    <div>
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center space-x-2">
+                          <PriorityBadge priority="B" size="sm" />
+                          <span className="text-sm text-gray-600">B급 할일</span>
+                        </div>
+                        <span className="text-sm font-semibold text-gray-900">
+                          {taskStats.bCompleted}/{taskStats.bTotal}
+                        </span>
                       </div>
-                      <span className="text-sm font-semibold text-gray-900">
-                        {taskStats.bCompleted}/{taskStats.bTotal}
-                      </span>
+                      <ProgressBar 
+                        value={taskStats.bCompleted} 
+                        max={taskStats.bTotal || 1} 
+                        color="warning"
+                      />
                     </div>
-                    <ProgressBar 
-                      value={taskStats.bCompleted} 
-                      max={taskStats.bTotal || 1} 
-                      color="warning"
-                    />
                   </div>
                 </div>
-              </div>
 
-              {/* Incomplete Tasks */}
-              <div>
-                <h4 className="text-sm font-semibold text-gray-900 mb-4">당월 미완료된 할일</h4>
-                
-                <div className="space-y-3">
-                  {monthlyTasks
-                    .filter((task: any) => !task.completed)
-                    .slice(0, 5)
-                    .map((task: any, index: number) => (
-                      <div key={task.id} className="flex items-center justify-between p-3 bg-red-50 rounded-lg border border-red-100">
-                        <div className="flex items-center space-x-3">
-                          <PriorityBadge priority={task.priority || 'C'} size="sm" />
-                          <div>
-                            <div className="text-sm font-medium text-gray-900">{task.title}</div>
-                            {task.description && (
-                              <div className="text-xs text-gray-500 mt-1">{task.description}</div>
-                            )}
+                {/* Incomplete Tasks */}
+                <div className="flex-1 flex flex-col">
+                  <div className="flex items-center justify-between mb-2">
+                    <h4 className="text-sm font-semibold text-gray-900">금주 미완료된 할일</h4>
+                    {(weekTasks as any[]).filter((task: any) => !task.completed).length > 0 && (
+                      <Button
+                        variant="default"
+                        size="sm"
+                        onClick={handleRolloverTasks}
+                        disabled={rolloverTasksMutation.isPending}
+                        className="h-8 px-4 text-xs font-medium bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white border-0 shadow-md hover:shadow-lg transition-all duration-200"
+                      >
+                        <svg className="w-3 h-3 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 9l3 3m0 0l-3 3m3-3H8m13 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        {rolloverTasksMutation.isPending ? '처리중...' : '다음주로 일괄 이월'}
+                      </Button>
+                    )}
+                  </div>
+                  <div className="flex items-center mb-4">
+                    <div className="flex items-center space-x-1 text-xs text-gray-500 bg-blue-50 px-2 py-1 rounded-full">
+                      <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 9l3 3m0 0l-3 3m3-3H8m13 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      <span className="text-xs">미완료된 할일을 선택한 날짜로 이월할 수 있습니다</span>
+                    </div>
+                  </div>
+                  
+                  <div className="h-[35rem] overflow-y-auto space-y-3 pr-2">
+                    {(weekTasks as any[])
+                      .filter((task: any) => !task.completed)
+                      .sort((a: any, b: any) => {
+                        // Priority order: A > B > C (or null/undefined)
+                        const priorityOrder = { 'A': 1, 'B': 2, 'C': 3 };
+                        const aPriority = priorityOrder[a.priority as keyof typeof priorityOrder] || 4;
+                        const bPriority = priorityOrder[b.priority as keyof typeof priorityOrder] || 4;
+                        return aPriority - bPriority;
+                      })
+                      .map((task: any, index: number) => (
+                        <div key={task.id} className="flex items-center justify-between p-1.5 bg-red-50 rounded-lg border border-red-100">
+                          <div className="flex items-center space-x-3 flex-1">
+                            <PriorityBadge priority={task.priority || 'C'} size="sm" />
+                            <div className="flex-1">
+                              <div className="text-sm font-medium text-gray-900">{getTaskDisplayName(task)}</div>
+                              {task.description && (
+                                <div className="text-xs text-gray-500 mt-1">{task.description}</div>
+                              )}
+                              <div className="flex items-center space-x-2 mt-1">
+                                <span className="text-xs text-orange-600">→ 이월 날짜:</span>
+                                <Popover 
+                                  open={openPopovers[task.id] || false}
+                                  onOpenChange={(open) => {
+                                    setOpenPopovers(prev => ({
+                                      ...prev,
+                                      [task.id]: open
+                                    }));
+                                  }}
+                                >
+                                  <PopoverTrigger asChild>
+                                    <Button 
+                                      variant="outline" 
+                                      size="sm"
+                                      className="h-6 px-2 text-xs font-normal"
+                                    >
+                                      <CalendarIcon className="h-3 w-3 mr-1" />
+                                      {taskRolloverDates[task.id] ? 
+                                        format(taskRolloverDates[task.id], 'M월 d일', { locale: ko }) : 
+                                        format(addDays(weekStart, 7), 'M월 d일', { locale: ko })
+                                      }
+                                    </Button>
+                                  </PopoverTrigger>
+                                  <PopoverContent className="w-auto p-0" align="start">
+                                    <Calendar
+                                      mode="single"
+                                      selected={taskRolloverDates[task.id] || addDays(weekStart, 7)}
+                                      onSelect={(date) => {
+                                        if (date) {
+                                          setTaskRolloverDates(prev => ({
+                                            ...prev,
+                                            [task.id]: date
+                                          }));
+                                          // Close the popover after date selection
+                                          setOpenPopovers(prev => ({
+                                            ...prev,
+                                            [task.id]: false
+                                          }));
+                                        }
+                                      }}
+                                      disabled={(date) => date < new Date()}
+                                      initialFocus
+                                    />
+                                  </PopoverContent>
+                                </Popover>
+                              </div>
+                            </div>
+                          </div>
+                          <div className="text-xs text-red-600 font-medium">
+                            미완료
                           </div>
                         </div>
-                        <div className="text-xs text-red-600 font-medium">
-                          미완료
+                      ))}
+                    
+                    {(weekTasks as any[]).filter((task: any) => !task.completed).length === 0 && (
+                      <div className="text-center p-4 bg-green-50 rounded-lg">
+                        <div className="text-sm text-green-600 font-medium">모든 할일이 완료되었습니다!</div>
+                        <div className="text-xs text-gray-500 mt-1">이번 주 정말 수고하셨습니다.</div>
+                      </div>
+                    )}
+                  </div>
+                  
+                  {(weekTasks as any[]).filter((task: any) => !task.completed).length > 0 && (
+                    <div className="mt-3 text-center">
+                      <div className="text-xs text-gray-500 bg-gray-50 px-2 py-1 rounded">
+                        총 {(weekTasks as any[]).filter((task: any) => !task.completed).length}개의 미완료 할일
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Next Week Preparation */}
+          <div className="space-y-6">
+            <Card className="h-full flex flex-col">
+              <CardContent className="space-y-6 pt-6">
+                {/* Habit Summary */}
+                <div>
+                  <div className="flex items-center space-x-2 mb-4">
+                    <Zap className="h-4 w-4 text-amber-500" />
+                    <h4 className="text-sm font-semibold text-gray-900">습관 실행률</h4>
+                  </div>
+                  <div className="space-y-3">
+                    {(habits as any[]).slice(0, 3).map((habit: any, index: number) => (
+                      <div key={habit.id} className="flex items-center justify-between p-1 bg-gradient-to-r from-gray-50 to-gray-100 rounded-lg border border-gray-200 hover:shadow-sm transition-shadow">
+                        <div className="flex items-center space-x-3">
+                          {getHabitIcon(habit.name)}
+                          <span className="text-sm font-medium text-gray-700">{habit.name}</span>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <div className="text-right">
+                            {(() => {
+                              const habitLogsForHabit = (weekHabitLogs as any[]).filter((log: any) => log.habitId === habit.id && log.completed);
+                              const completedDays = habitLogsForHabit.length;
+                              const completionRate = Math.round((completedDays / 7) * 100);
+                              
+                              return (
+                                <>
+                                  <div className="text-sm font-bold text-emerald-600">
+                                    {completedDays}/7일
+                                  </div>
+                                  <div className="text-xs text-gray-500">
+                                    {completionRate}%
+                                  </div>
+                                </>
+                              );
+                            })()}
+                          </div>
+                          <div className="w-8 h-8 bg-emerald-100 rounded-full flex items-center justify-center">
+                            <div className="w-2 h-2 bg-emerald-500 rounded-full"></div>
+                          </div>
                         </div>
                       </div>
                     ))}
-                  
-                  {monthlyTasks.filter((task: any) => !task.completed).length === 0 && (
-                    <div className="text-center p-4 bg-green-50 rounded-lg">
-                      <div className="text-sm text-green-600 font-medium">모든 업무가 완료되었습니다!</div>
-                      <div className="text-xs text-gray-500 mt-1">이번 달 정말 수고하셨습니다.</div>
-                    </div>
-                  )}
-                  
-                  {monthlyTasks.filter((task: any) => !task.completed).length > 5 && (
-                    <div className="text-center p-2">
-                      <div className="text-xs text-gray-500">
-                        +{monthlyTasks.filter((task: any) => !task.completed).length - 5}개의 미완료 업무가 더 있습니다
+                    {(habits as any[]).length === 0 && (
+                      <div className="text-center p-4 bg-gray-50 rounded-lg border border-gray-200">
+                        <Activity className="h-8 w-8 text-gray-400 mx-auto mb-2" />
+                        <p className="text-sm text-gray-500">등록된 습관이 없습니다.</p>
+                        <p className="text-xs text-gray-400 mt-1">습관을 추가하여 성장을 추적해보세요.</p>
                       </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Work-Life Balance */}
-              <div>
-                <h4 className="text-sm font-semibold text-gray-900 mb-4">일과 개인 시간 균형</h4>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="text-center p-4 bg-blue-50 rounded-lg">
-                    <div className="text-center text-lg font-semibold mb-2">
-                      {workHours}시간
-                    </div>
-                    <div className="text-xs text-blue-600">업무 시간</div>
-                    <div className="text-xs text-gray-500 mt-1">
-                      (일일관리 시간블록에서 자동 산출)
-                    </div>
-                  </div>
-                  <div className="text-center p-4 bg-green-50 rounded-lg">
-                    <div className="text-center text-lg font-semibold mb-2">
-                      {personalHours}시간
-                    </div>
-                    <div className="text-xs text-green-600">개인 시간</div>
-                    <div className="text-xs text-gray-500 mt-1">
-                      (일일관리 시간블록에서 자동 산출)
-                    </div>
+                    )}
                   </div>
                 </div>
-              </div>
 
-              {/* Habit Summary */}
-              <div>
-                <h4 className="text-sm font-semibold text-gray-900 mb-4">습관 이행율</h4>
-                <div className="space-y-2">
-                  {(habits as any[]).slice(0, 3).map((habit: any, index: number) => (
-                    <div key={habit.id} className="flex items-center justify-between">
-                      <span className="text-sm text-gray-600">{habit.name}</span>
-                      <span className="text-sm font-medium text-green-600">
-                        {Math.floor(Math.random() * 28) + 3}/{format(monthEnd, 'd')}일
-                      </span>
-                    </div>
-                  ))}
-                  {(habits as any[]).length === 0 && (
-                    <p className="text-sm text-gray-500 italic">등록된 습관이 없습니다.</p>
-                  )}
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Right Column - Goals and Planning */}
-        <div className="space-y-6">
-          <Card>
-            <CardContent className="space-y-6 pt-6">
-              {/* Value Alignment Check */}
-              <div>
-                <Label className="text-sm font-semibold text-gray-900 mb-3 block">
-                  가치 점검
-                </Label>
-                <p className="text-xs text-gray-600 mb-4">
-                  일정, 할일, 시간블록 데이터를 분석하여 자동으로 계산된 가치 정렬도입니다
-                </p>
-                <div className="space-y-4">
-                  {coreValues.map((value, index) => (
-                    <div key={index}>
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-sm text-gray-600">{value}</span>
-                        <div className="flex items-center space-x-2">
-                          <div className="w-16 text-center font-semibold">
-                            {valueAlignments[index] || 0}%
-                          </div>
+                {/* Work-Life Balance */}
+                <div>
+                  <div className="flex items-center justify-between mb-4">
+                    <h4 className="text-sm font-semibold text-gray-900">일과 개인 시간 균형</h4>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="relative p-1.5 bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg border border-blue-200 shadow-sm">
+                      <div className="text-center">
+                        <div className="text-sm text-blue-700 font-normal">
+                          {workHours} 업무 시간
                         </div>
                       </div>
-                      <ProgressBar 
-                        value={valueAlignments[index] || 0} 
-                        max={100}
-                        color={
-                          (valueAlignments[index] || 0) >= 80 ? 'success' :
-                          (valueAlignments[index] || 0) >= 60 ? 'warning' : 'danger'
-                        }
-                      />
-                      <div className="text-xs text-gray-500 mt-1">
-                        키워드 매칭 및 연결된 가치 기반 자동 계산
+                      <div className="absolute top-1 right-1">
+                        <div className="w-1.5 h-1.5 bg-blue-400 rounded-full"></div>
                       </div>
                     </div>
-                  ))}
+                    <div className="relative p-1.5 bg-gradient-to-br from-green-50 to-green-100 rounded-lg border border-green-200 shadow-sm">
+                      <div className="text-center">
+                        <div className="text-green-700 font-normal text-[14px]">
+                          {personalHours} 개인 시간
+                        </div>
+                      </div>
+                      <div className="absolute top-1 right-1">
+                        <div className="w-1.5 h-1.5 bg-green-400 rounded-full"></div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
-              </div>
 
-              {/* Monthly Reflection */}
-              <div>
-                <Label htmlFor="reflection" className="text-sm font-semibold text-gray-900 mb-3 block">
-                  월간 성찰
-                </Label>
-                <Textarea
-                  id="reflection"
-                  placeholder="이번 달을 돌아보며 배운 점, 개선할 점, 다음 달 계획을 기록하세요..."
-                  value={reflection}
-                  onChange={handleReflectionChange}
-                  className="resize-none min-h-[120px]"
-                  style={{ height: 'auto' }}
-                />
-                
-                {/* Image Upload */}
-                <div className="mt-4">
-                  <div className="mb-2">
-                    <input
-                      type="file"
-                      id="monthly-image-upload"
-                      accept="image/*"
-                      multiple
-                      onChange={handleImageSelect}
-                      className="hidden"
-                    />
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => document.getElementById('monthly-image-upload')?.click()}
-                      className="h-8 px-3 text-sm"
-                    >
-                      <Plus className="h-4 w-4 mr-1" />
-                      이미지 추가
-                    </Button>
+                {/* Value Alignment Check */}
+                <div>
+                  <Label className="text-sm font-semibold text-gray-900 mb-3 block">
+                    가치 점검
+                  </Label>
+                  <p className="text-xs text-gray-600 mb-4">
+                    일정, 할일, 시간블록 데이터를 분석하여 자동으로 계산된 가치 정렬도입니다
+                  </p>
+                  <div className="space-y-4">
+                    {coreValues.map((value, index) => (
+                      <div key={index}>
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-sm text-gray-600">{value}</span>
+                          <div className="flex items-center space-x-2">
+                            <div className="w-16 text-center font-semibold">
+                              {valueAlignments[index] || 0}%
+                            </div>
+                          </div>
+                        </div>
+                        <ProgressBar 
+                          value={valueAlignments[index] || 0} 
+                          max={100}
+                          color={
+                            (valueAlignments[index] || 0) >= 80 ? 'success' :
+                            (valueAlignments[index] || 0) >= 60 ? 'warning' : 'danger'
+                          }
+                        />
+                        <div className="text-xs text-gray-500 mt-1">
+                          키워드 매칭 및 연결된 가치 기반 자동 계산
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Weekly Reflection */}
+                <div>
+                  <Label htmlFor="reflection" className="text-sm font-semibold text-gray-900 mb-3 block">
+                    주간 성찰
+                  </Label>
+                  <Textarea
+                    id="reflection"
+                    placeholder="이번 주를 돌아보며 배운 점, 개선할 점을 기록하세요..."
+                    value={reflection}
+                    onChange={handleReflectionChange}
+                    className="resize-none min-h-[120px]"
+                    style={{ height: 'auto' }}
+                  />
+                  
+                  {/* Image Upload */}
+                  <div className="mt-4">
+                    <div className="mb-2">
+                      <input
+                        type="file"
+                        id="weekly-image-upload"
+                        accept="image/*"
+                        multiple
+                        onChange={handleImageSelect}
+                        className="hidden"
+                      />
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => document.getElementById('weekly-image-upload')?.click()}
+                        className="h-8 px-3 text-sm"
+                      >
+                        <Plus className="h-4 w-4 mr-1" />
+                        이미지 추가
+                      </Button>
+                    </div>
+                    
+                    {/* Image Previews */}
+                    {imagePreviews.length > 0 && (
+                      <div className="space-y-2">
+                        <div className="flex flex-wrap gap-2">
+                          {imagePreviews.map((preview, index) => (
+                            <div key={index} className="relative group">
+                              <img
+                                src={preview}
+                                alt={`Preview ${index + 1}`}
+                                className="w-20 h-20 object-cover rounded cursor-pointer"
+                                onClick={() => {
+                                  setCurrentImageIndex(index);
+                                  setShowImageViewer(true);
+                                }}
+                              />
+                              <button
+                                onClick={() => handleRemoveImage(index)}
+                                className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity"
+                              >
+                                ×
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
                   
-                  {/* Image Previews */}
-                  {imagePreviews.length > 0 && (
-                    <div className="space-y-2">
-                      <div className="flex flex-wrap gap-2">
-                        {imagePreviews.map((preview, index) => (
-                          <div key={index} className="relative group">
-                            <img
-                              src={preview}
-                              alt={`Preview ${index + 1}`}
-                              className="w-20 h-20 object-cover rounded cursor-pointer"
-                              onClick={() => {
-                                setCurrentImageIndex(index);
-                                setShowImageViewer(true);
-                              }}
-                            />
-                            <button
-                              onClick={() => handleRemoveImage(index)}
-                              className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity"
-                            >
-                              ×
-                            </button>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
+                  {/* Save Button */}
+                  <div className="mt-4">
+                    <Button
+                      onClick={handleSaveReview}
+                      disabled={saveReviewMutation.isPending}
+                      size="lg"
+                      className="w-full"
+                    >
+                      <Save className="h-4 w-4 mr-2" />
+                      {saveReviewMutation.isPending ? '저장 중...' : '주간 리뷰 저장'}
+                    </Button>
+                  </div>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Save Button */}
-          <Button
-            onClick={handleSaveReview}
-            disabled={saveReviewMutation.isPending}
-            size="lg"
-            className="w-full"
-          >
-            <Save className="h-4 w-4 mr-2" />
-            {saveReviewMutation.isPending ? '저장 중...' : '월간 리뷰 저장'}
-          </Button>
+              </CardContent>
+            </Card>
+          </div>
         </div>
       </div>
-
       {/* Image Viewer Dialog */}
       {showImageViewer && imagePreviews.length > 0 && (
         <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50" onClick={() => setShowImageViewer(false)}>
