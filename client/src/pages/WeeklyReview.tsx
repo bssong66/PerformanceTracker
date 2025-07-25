@@ -442,7 +442,7 @@ export default function WeeklyReview() {
           {/* This Week's Performance */}
           <div className="space-y-6">
             <Card className="flex flex-col">
-              <CardContent className="space-y-6 pt-6 flex flex-col">
+              <CardContent className="space-y-6 pt-6 pb-8 flex flex-col">
                 {/* Task Completion Summary */}
                 <div>
                   <h4 className="text-sm font-semibold text-gray-900 mb-4">완료된 할일</h4>
