@@ -418,8 +418,8 @@ export default function WeeklyReview() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* This Week's Performance */}
           <div className="space-y-6">
-            <Card className="h-full">
-              <CardContent className="space-y-6 pt-6">
+            <Card className="h-full flex flex-col">
+              <CardContent className="space-y-6 pt-6 flex-1 flex flex-col">
                 {/* Task Completion Summary */}
                 <div>
                   <h4 className="text-sm font-semibold text-gray-900 mb-4">완료된 할일</h4>
@@ -462,7 +462,7 @@ export default function WeeklyReview() {
                 </div>
 
                 {/* Incomplete Tasks */}
-                <div>
+                <div className="flex-1 flex flex-col">
                   <h4 className="text-sm font-semibold text-gray-900 mb-2">금주 미완료된 할일</h4>
                   <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center space-x-1 text-xs text-gray-500 bg-blue-50 px-2 py-1 rounded-full">
@@ -484,7 +484,7 @@ export default function WeeklyReview() {
                     )}
                   </div>
                   
-                  <div className="max-h-64 overflow-y-auto space-y-3 pr-2">
+                  <div className="flex-1 overflow-y-auto space-y-3 pr-2">
                     {(weekTasks as any[])
                       .filter((task: any) => !task.completed)
                       .map((task: any, index: number) => (
@@ -574,7 +574,7 @@ export default function WeeklyReview() {
 
           {/* Next Week Preparation */}
           <div className="space-y-6">
-            <Card>
+            <Card className="h-full flex flex-col">
               <CardContent className="space-y-6 pt-6">
                 {/* Habit Summary */}
                 <div>
