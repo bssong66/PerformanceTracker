@@ -431,12 +431,6 @@ export default function WeeklyReview() {
                   <div>
                     <div className="flex items-center justify-between mb-4">
                       <h4 className="text-sm font-semibold text-gray-900">일과 개인 시간 균형</h4>
-                      <div className="flex items-center space-x-1 text-xs text-gray-500 bg-gray-50 px-2 py-1 rounded-full">
-                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                        <span>자동 산출</span>
-                      </div>
                     </div>
                     <div className="grid grid-cols-2 gap-3">
                       <div className="relative p-4 bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg border border-blue-200 shadow-sm">
