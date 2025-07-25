@@ -454,6 +454,14 @@ export default function DailyPlanning() {
             <CardContent className="space-y-3">
               {/* Quick Add Task */}
               <div className="space-y-2">
+                {/* Section Title */}
+                <div className="flex items-center space-x-2 mb-3">
+                  <div className="flex items-center space-x-2">
+                    <div className="w-1 h-4 bg-gradient-to-b from-blue-500 to-blue-600 rounded-full"></div>
+                    <h4 className="text-sm font-semibold text-gray-800">빠른 할일 입력</h4>
+                  </div>
+                  <div className="flex-1 h-px bg-gradient-to-r from-gray-200 to-transparent"></div>
+                </div>
                 <div className="flex space-x-2">
                   <Input
                     placeholder="할일을 입력하세요..."
