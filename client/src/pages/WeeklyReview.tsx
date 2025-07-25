@@ -55,6 +55,11 @@ export default function WeeklyReview() {
     queryKey: [`/api/tasks/${MOCK_USER_ID}?startDate=${format(subDays(weekStart, 7), 'yyyy-MM-dd')}&endDate=${format(weekEnd, 'yyyy-MM-dd')}`],
   });
 
+  // Get projects to display project names with tasks
+  const { data: projects = [] } = useQuery({
+    queryKey: [`/api/projects/${MOCK_USER_ID}`],
+  });
+
   // Get time blocks for the past week to calculate work-life balance
   const { data: weekTimeBlocks = [] } = useQuery({
     queryKey: ['timeBlocks', 'week', MOCK_USER_ID, weekStartDate],
@@ -367,6 +372,17 @@ export default function WeeklyReview() {
     (foundation as any)?.coreValue3 || "가치 3",
   ];
 
+  // Helper function to get task display name with project name
+  const getTaskDisplayName = (task: any) => {
+    if (task.projectId && projects.length > 0) {
+      const project = (projects as any[]).find(p => p.id === task.projectId);
+      if (project) {
+        return `${project.name} > ${task.title}`;
+      }
+    }
+    return task.title;
+  };
+
   return (
     <div className="py-6">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -456,7 +472,7 @@ export default function WeeklyReview() {
                           <div className="flex items-center space-x-3">
                             <PriorityBadge priority={task.priority || 'C'} size="sm" />
                             <div>
-                              <div className="text-sm font-medium text-gray-900">{task.title}</div>
+                              <div className="text-sm font-medium text-gray-900">{getTaskDisplayName(task)}</div>
                               {task.description && (
                                 <div className="text-xs text-gray-500 mt-1">{task.description}</div>
                               )}
