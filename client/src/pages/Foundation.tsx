@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Progress } from "@/components/ui/progress";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Trash2, Plus, Save, RefreshCw, Database, TrendingUp, Edit2, Check, X, Calendar, ChevronLeft, ChevronRight, ChevronDown, FileEdit } from "lucide-react";
+import { Trash2, Plus, Save, RefreshCw, Database, TrendingUp, Edit2, Check, X, Calendar, ChevronLeft, ChevronRight, ChevronDown, FileEdit, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { api, saveFoundation, createAnnualGoal, deleteAnnualGoal } from "@/lib/api";
 import { queryClient } from "@/lib/queryClient";
