@@ -35,6 +35,7 @@ export default function Foundation() {
   // Temporary storage for annual goals (before saving to DB)
   const [tempGoals, setTempGoals] = useState<any[]>([]);
   const [newGoalCoreValue, setNewGoalCoreValue] = useState("");
+  const [savingGoals, setSavingGoals] = useState(false);
   
 
   
@@ -400,6 +401,49 @@ export default function Foundation() {
 
   const handleDeleteTempGoal = (tempId: number) => {
     setTempGoals(tempGoals.filter(goal => goal.id !== tempId));
+  };
+
+  const handleSaveGoals = async () => {
+    if (tempGoals.length === 0) {
+      setEditingGoals(false);
+      return;
+    }
+
+    setSavingGoals(true);
+    
+    try {
+      // Save all temporary goals to database
+      for (const tempGoal of tempGoals) {
+        await createAnnualGoal({
+          userId: MOCK_USER_ID,
+          year: selectedYear,
+          title: tempGoal.title,
+          coreValue: tempGoal.coreValue || null,
+        });
+      }
+      
+      // Refresh goals data
+      await refetchGoals();
+      
+      // Clear temporary data and exit edit mode
+      setTempGoals([]);
+      setNewGoal("");
+      setNewGoalCoreValue("none");
+      setEditingGoals(false);
+      
+      toast({
+        title: "목표 저장 완료",
+        description: `${tempGoals.length}개의 목표가 저장되었습니다.`,
+      });
+    } catch (error) {
+      toast({
+        title: "저장 실패",
+        description: "목표 저장에 실패했습니다.",
+        variant: "destructive",
+      });
+    } finally {
+      setSavingGoals(false);
+    }
   };
 
 
@@ -870,6 +914,41 @@ export default function Foundation() {
                     <Edit2 className="h-4 w-4 mr-2" />
                     <span>편집</span>
                   </Button>
+                ) : editingGoals ? (
+                  <div className="flex space-x-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setEditingGoals(false);
+                        setTempGoals([]);
+                        setNewGoal("");
+                        setNewGoalCoreValue("none");
+                      }}
+                      className="border-slate-300 text-slate-700 hover:bg-slate-50 hover:text-slate-900 shadow-sm"
+                    >
+                      <X className="h-4 w-4 mr-2" />
+                      <span>취소</span>
+                    </Button>
+                    <Button
+                      size="sm"
+                      onClick={handleSaveGoals}
+                      disabled={savingGoals}
+                      className="bg-blue-600 hover:bg-blue-700 text-white shadow-sm"
+                    >
+                      {savingGoals ? (
+                        <>
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          <span>저장 중...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Save className="h-4 w-4 mr-2" />
+                          <span>저장</span>
+                        </>
+                      )}
+                    </Button>
+                  </div>
                 ) : null}
               </div>
             </CardHeader>
