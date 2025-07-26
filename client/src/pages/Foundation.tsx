@@ -6,9 +6,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Progress } from "@/components/ui/progress";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Trash2, Plus, Save, RefreshCw, Database, TrendingUp, Edit2, Check, X, Calendar, ChevronLeft, ChevronRight } from "lucide-react";
+import { Trash2, Plus, Save, RefreshCw, Database, TrendingUp, Edit2, Check, X, Calendar, ChevronLeft, ChevronRight, ChevronDown, FileEdit } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { api, saveFoundation, createAnnualGoal, deleteAnnualGoal } from "@/lib/api";
 import { queryClient } from "@/lib/queryClient";
@@ -411,39 +412,52 @@ export default function Foundation() {
 
           {/* Action Buttons Row */}
           <div className="flex items-center space-x-3">
-            {/* New Plan Button */}
-            <Button
-              variant="outline"
-              onClick={() => {
-                setMission("");
-                setValues(["", "", ""]);
-                setNewGoal("");
-                setEditingMission(false);
-                setEditingValues(false);
-                setEditingGoals(false);
-                toast({
-                  title: "신규 계획 생성",
-                  description: `${selectedYear}년의 새로운 가치 중심 계획을 시작합니다.`,
-                });
-              }}
-              className="flex items-center space-x-2"
-            >
-              <Plus className="h-4 w-4" />
-              <span>신규 계획</span>
-            </Button>
-            
-            <Dialog open={showSelectDialog} onOpenChange={setShowSelectDialog}>
-              <DialogTrigger asChild>
+            {/* New Plan Dropdown */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
                 <Button
                   variant="outline"
-                  onClick={handleLoadData}
+                  className="flex items-center space-x-2"
+                >
+                  <Plus className="h-4 w-4" />
+                  <span>신규 계획</span>
+                  <ChevronDown className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start">
+                <DropdownMenuItem
+                  onClick={() => {
+                    setMission("");
+                    setValues(["", "", ""]);
+                    setNewGoal("");
+                    setEditingMission(false);
+                    setEditingValues(false);
+                    setEditingGoals(false);
+                    toast({
+                      title: "신규 계획 생성",
+                      description: `${selectedYear}년의 새로운 가치 중심 계획을 시작합니다.`,
+                    });
+                  }}
+                  className="flex items-center space-x-2"
+                >
+                  <FileEdit className="h-4 w-4" />
+                  <span>신규 작성</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => {
+                    handleLoadData();
+                    setShowSelectDialog(true);
+                  }}
                   disabled={foundationLoading || goalsLoading}
                   className="flex items-center space-x-2"
                 >
                   <Database className="h-4 w-4" />
                   <span>데이터 불러오기</span>
-                </Button>
-              </DialogTrigger>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+            
+            <Dialog open={showSelectDialog} onOpenChange={setShowSelectDialog}>
               <DialogContent className="sm:max-w-[600px]">
                 <DialogHeader>
                   <DialogTitle>가치 중심 계획 선택</DialogTitle>
