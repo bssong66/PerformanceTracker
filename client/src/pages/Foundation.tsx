@@ -823,28 +823,23 @@ export default function Foundation() {
                       const progress = calculateGoalProgress(goal.title);
                       
                       return (
-                        <div key={goal.id} className="space-y-1 p-4 bg-gradient-to-r from-emerald-50/50 to-teal-50/50 rounded-xl border border-emerald-200/50">
+                        <div key={goal.id} className="p-4 bg-gradient-to-r from-emerald-50/50 to-teal-50/50 rounded-xl border border-emerald-200/50">
                           <div className="flex items-start space-x-4">
                             <div className="w-[65%] flex-shrink-0 p-4 bg-white/80 rounded-xl border border-slate-200/50 shadow-sm">
                               <p className="text-slate-800 whitespace-pre-wrap leading-relaxed font-medium">
                                 {goal.title}
                               </p>
                             </div>
-                            <div className="flex-1 flex items-center space-x-3 mt-2">
-                              <Progress 
-                                value={progress.percentage} 
-                                className="flex-1 h-2.5"
-                              />
-                              <span className="text-sm font-semibold text-slate-700 min-w-fit">
-                                {progress.completed}/{progress.total} ({progress.percentage}%)
-                              </span>
-                            </div>
-                          </div>
-                          
-                          {/* Detailed breakdown */}
-                          <div className="flex items-center justify-between">
-                            <div className="w-[65%]"></div>
-                            <div className="flex-1 pl-4">
+                            <div className="flex-1 space-y-1 mt-2">
+                              <div className="flex items-center space-x-3">
+                                <Progress 
+                                  value={progress.percentage} 
+                                  className="flex-1 h-2.5"
+                                />
+                                <span className="text-sm font-semibold text-slate-700 min-w-fit">
+                                  {progress.completed}/{progress.total} ({progress.percentage}%)
+                                </span>
+                              </div>
                               {progress.total > 0 ? (
                                 <div className="flex gap-4 text-xs text-slate-600 font-medium">
                                   <span>프로젝트: {progress.projects.completed}/{progress.projects.total}</span>
@@ -867,7 +862,7 @@ export default function Foundation() {
                       const progress = calculateGoalProgress(tempGoal.title);
                       
                       return (
-                        <div key={`temp-${tempGoal.id}`} className="space-y-1 p-4 bg-gradient-to-r from-yellow-50/70 to-amber-50/70 rounded-xl border border-yellow-200/60 relative">
+                        <div key={`temp-${tempGoal.id}`} className="p-4 bg-gradient-to-r from-yellow-50/70 to-amber-50/70 rounded-xl border border-yellow-200/60 relative">
                           <div className="absolute top-2 right-2">
                             <span className="text-xs px-2 py-1 bg-yellow-100 text-yellow-700 rounded-full font-medium">
                               임시 저장
@@ -879,21 +874,16 @@ export default function Foundation() {
                                 {tempGoal.title}
                               </p>
                             </div>
-                            <div className="flex-1 flex items-center space-x-3 mt-2">
-                              <Progress 
-                                value={progress.percentage} 
-                                className="flex-1 h-2.5"
-                              />
-                              <span className="text-sm font-semibold text-slate-700 min-w-fit">
-                                {progress.completed}/{progress.total} ({progress.percentage}%)
-                              </span>
-                            </div>
-                          </div>
-                          
-                          {/* Detailed breakdown */}
-                          <div className="flex items-center justify-between">
-                            <div className="w-[65%]"></div>
-                            <div className="flex-1 pl-4">
+                            <div className="flex-1 space-y-1 mt-2">
+                              <div className="flex items-center space-x-3">
+                                <Progress 
+                                  value={progress.percentage} 
+                                  className="flex-1 h-2.5"
+                                />
+                                <span className="text-sm font-semibold text-slate-700 min-w-fit">
+                                  {progress.completed}/{progress.total} ({progress.percentage}%)
+                                </span>
+                              </div>
                               {progress.total > 0 ? (
                                 <div className="flex gap-4 text-xs text-slate-600 font-medium">
                                   <span>프로젝트: {progress.projects.completed}/{progress.projects.total}</span>
@@ -923,36 +913,31 @@ export default function Foundation() {
                         const progress = calculateGoalProgress(goal.title);
                         
                         return (
-                          <div key={goal.id} className="space-y-1 p-4 bg-gradient-to-r from-amber-50/50 to-orange-50/50 rounded-xl border border-amber-200/50">
+                          <div key={goal.id} className="p-4 bg-gradient-to-r from-amber-50/50 to-orange-50/50 rounded-xl border border-amber-200/50">
                             <div className="flex items-start space-x-4">
                               <div className="w-[65%] flex-shrink-0 p-4 bg-white/80 rounded-xl border border-slate-200/50 shadow-sm">
                                 <p className="text-slate-800 whitespace-pre-wrap leading-relaxed font-medium">
                                   {goal.title}
                                 </p>
                               </div>
-                              <div className="flex-1 flex items-center space-x-3 mt-2">
-                                <Progress 
-                                  value={progress.percentage} 
-                                  className="flex-1 h-2.5"
-                                />
-                                <span className="text-sm font-semibold text-slate-700 min-w-fit">
-                                  {progress.completed}/{progress.total} ({progress.percentage}%)
-                                </span>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => handleDeleteGoal(goal.id)}
-                                  className="text-slate-400 hover:text-red-600 hover:bg-red-50 flex-shrink-0 rounded-xl"
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
-                              </div>
-                            </div>
-                            
-                            {/* Detailed breakdown */}
-                            <div className="flex items-center justify-between">
-                              <div className="w-[65%]"></div>
-                              <div className="flex-1 pl-4">
+                              <div className="flex-1 space-y-1 mt-2">
+                                <div className="flex items-center space-x-3">
+                                  <Progress 
+                                    value={progress.percentage} 
+                                    className="flex-1 h-2.5"
+                                  />
+                                  <span className="text-sm font-semibold text-slate-700 min-w-fit">
+                                    {progress.completed}/{progress.total} ({progress.percentage}%)
+                                  </span>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => handleDeleteGoal(goal.id)}
+                                    className="text-slate-400 hover:text-red-600 hover:bg-red-50 flex-shrink-0 rounded-xl"
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                </div>
                                 {progress.total > 0 ? (
                                   <div className="flex gap-4 text-xs text-slate-600 font-medium">
                                     <span>프로젝트: {progress.projects.completed}/{progress.projects.total}</span>
@@ -975,7 +960,7 @@ export default function Foundation() {
                         const progress = calculateGoalProgress(tempGoal.title);
                         
                         return (
-                          <div key={`temp-edit-${tempGoal.id}`} className="space-y-1 p-4 bg-gradient-to-r from-yellow-50/70 to-amber-50/70 rounded-xl border border-yellow-200/60 relative">
+                          <div key={`temp-edit-${tempGoal.id}`} className="p-4 bg-gradient-to-r from-yellow-50/70 to-amber-50/70 rounded-xl border border-yellow-200/60 relative">
                             <div className="absolute top-2 right-2">
                               <span className="text-xs px-2 py-1 bg-yellow-100 text-yellow-700 rounded-full font-medium">
                                 임시 저장
@@ -988,29 +973,24 @@ export default function Foundation() {
                                 className="w-[65%] flex-shrink-0 min-h-[2.5rem] resize-none border-slate-300 bg-white/80 rounded-xl shadow-sm"
                                 rows={Math.max(1, Math.ceil(tempGoal.title.length / 40))}
                               />
-                              <div className="flex-1 flex items-center space-x-3 mt-2">
-                                <Progress 
-                                  value={progress.percentage} 
-                                  className="flex-1 h-2.5"
-                                />
-                                <span className="text-sm font-semibold text-slate-700 min-w-fit">
-                                  {progress.completed}/{progress.total} ({progress.percentage}%)
-                                </span>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => handleDeleteTempGoal(tempGoal.id)}
-                                  className="text-slate-400 hover:text-red-600 hover:bg-red-50 flex-shrink-0 rounded-xl"
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
-                              </div>
-                            </div>
-                            
-                            {/* Detailed breakdown */}
-                            <div className="flex items-center justify-between">
-                              <div className="w-[65%]"></div>
-                              <div className="flex-1 pl-4">
+                              <div className="flex-1 space-y-1 mt-2">
+                                <div className="flex items-center space-x-3">
+                                  <Progress 
+                                    value={progress.percentage} 
+                                    className="flex-1 h-2.5"
+                                  />
+                                  <span className="text-sm font-semibold text-slate-700 min-w-fit">
+                                    {progress.completed}/{progress.total} ({progress.percentage}%)
+                                  </span>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => handleDeleteTempGoal(tempGoal.id)}
+                                    className="text-slate-400 hover:text-red-600 hover:bg-red-50 flex-shrink-0 rounded-xl"
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                </div>
                                 {progress.total > 0 ? (
                                   <div className="flex gap-4 text-xs text-slate-600 font-medium">
                                     <span>프로젝트: {progress.projects.completed}/{progress.projects.total}</span>
