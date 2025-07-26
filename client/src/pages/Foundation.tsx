@@ -977,36 +977,7 @@ export default function Foundation() {
             </CardContent>
           </Card>
 
-          {/* Data Status */}
-          {foundation && (
-            <Card className="bg-green-50 border-green-200">
-              <CardContent className="p-4">
-                <div className="flex items-center space-x-2">
-                  <div className="flex-shrink-0 w-2 h-2 bg-green-500 rounded-full"></div>
-                  <div className="text-sm text-green-700">
-                    <strong>저장된 데이터:</strong> 미션과 핵심가치가 데이터베이스에 저장되어 있습니다.
-                  </div>
-                </div>
-                <div className="text-xs text-green-600 mt-2">
-                  마지막 업데이트: {new Date((foundation as any).updatedAt).toLocaleString('ko-KR')}
-                </div>
-              </CardContent>
-            </Card>
-          )}
-          
-          {!foundation && (
-            <Card className="bg-blue-50 border-blue-200">
-              <CardContent className="p-4">
-                <div className="flex items-center space-x-2">
-                  <div className="flex-shrink-0 w-2 h-2 bg-blue-500 rounded-full"></div>
-                  <div className="text-sm text-blue-700">
-                    아직 저장된 가치 중심 계획이 없습니다. 위에서 내용을 입력하고 저장 버튼을 클릭하세요.
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-        </div>
+          </div>
       </div>
     </div>
   );
