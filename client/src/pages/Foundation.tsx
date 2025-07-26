@@ -823,9 +823,9 @@ export default function Foundation() {
                       const progress = calculateGoalProgress(goal.title);
                       
                       return (
-                        <div key={goal.id} className="space-y-3 p-4 bg-gradient-to-r from-emerald-50/50 to-teal-50/50 rounded-xl border border-emerald-200/50">
+                        <div key={goal.id} className="space-y-1 p-4 bg-gradient-to-r from-emerald-50/50 to-teal-50/50 rounded-xl border border-emerald-200/50">
                           <div className="flex items-start space-x-4">
-                            <div className="w-1/2 flex-shrink-0 p-4 bg-white/80 rounded-xl border border-slate-200/50 shadow-sm">
+                            <div className="w-[65%] flex-shrink-0 p-4 bg-white/80 rounded-xl border border-slate-200/50 shadow-sm">
                               <p className="text-slate-800 whitespace-pre-wrap leading-relaxed font-medium">
                                 {goal.title}
                               </p>
@@ -864,7 +864,7 @@ export default function Foundation() {
                       const progress = calculateGoalProgress(tempGoal.title);
                       
                       return (
-                        <div key={`temp-${tempGoal.id}`} className="space-y-3 p-4 bg-gradient-to-r from-yellow-50/70 to-amber-50/70 rounded-xl border border-yellow-200/60 relative">
+                        <div key={`temp-${tempGoal.id}`} className="space-y-1 p-4 bg-gradient-to-r from-yellow-50/70 to-amber-50/70 rounded-xl border border-yellow-200/60 relative">
                           <div className="absolute top-2 right-2">
                             <span className="text-xs px-2 py-1 bg-yellow-100 text-yellow-700 rounded-full font-medium">
                               임시 저장
@@ -917,9 +917,9 @@ export default function Foundation() {
                         const progress = calculateGoalProgress(goal.title);
                         
                         return (
-                          <div key={goal.id} className="space-y-3 p-4 bg-gradient-to-r from-amber-50/50 to-orange-50/50 rounded-xl border border-amber-200/50">
+                          <div key={goal.id} className="space-y-1 p-4 bg-gradient-to-r from-amber-50/50 to-orange-50/50 rounded-xl border border-amber-200/50">
                             <div className="flex items-start space-x-4">
-                              <div className="w-1/2 flex-shrink-0 p-4 bg-white/80 rounded-xl border border-slate-200/50 shadow-sm">
+                              <div className="w-[65%] flex-shrink-0 p-4 bg-white/80 rounded-xl border border-slate-200/50 shadow-sm">
                                 <p className="text-slate-800 whitespace-pre-wrap leading-relaxed font-medium">
                                   {goal.title}
                                 </p>
@@ -966,7 +966,7 @@ export default function Foundation() {
                         const progress = calculateGoalProgress(tempGoal.title);
                         
                         return (
-                          <div key={`temp-edit-${tempGoal.id}`} className="space-y-3 p-4 bg-gradient-to-r from-yellow-50/70 to-amber-50/70 rounded-xl border border-yellow-200/60 relative">
+                          <div key={`temp-edit-${tempGoal.id}`} className="space-y-1 p-4 bg-gradient-to-r from-yellow-50/70 to-amber-50/70 rounded-xl border border-yellow-200/60 relative">
                             <div className="absolute top-2 right-2">
                               <span className="text-xs px-2 py-1 bg-yellow-100 text-yellow-700 rounded-full font-medium">
                                 임시 저장
@@ -976,7 +976,7 @@ export default function Foundation() {
                               <Textarea
                                 value={tempGoal.title}
                                 readOnly
-                                className="w-1/2 flex-shrink-0 min-h-[2.5rem] resize-none border-slate-300 bg-white/80 rounded-xl shadow-sm"
+                                className="w-[65%] flex-shrink-0 min-h-[2.5rem] resize-none border-slate-300 bg-white/80 rounded-xl shadow-sm"
                                 rows={Math.max(1, Math.ceil(tempGoal.title.length / 40))}
                               />
                               <div className="flex-1 flex items-center space-x-3 mt-2">
