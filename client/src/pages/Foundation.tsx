@@ -1065,7 +1065,7 @@ export default function Foundation() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {!editingGoals && ((goals as any[]).length > 0 || tempGoals.length > 0) && !isFutureYear ? (
+                {!editingGoals && ((goals as any[]).length > 0 || tempGoals.length > 0) ? (
                   <div className="space-y-3">
                     {/* Display saved goals */}
                     {(goals as any[]).map((goal: any) => {
