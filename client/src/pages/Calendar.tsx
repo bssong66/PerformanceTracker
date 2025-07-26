@@ -111,8 +111,14 @@ export default function Calendar() {
       const response = await fetch('/api/events', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...eventData, userId: MOCK_USER_ID })
+        body: JSON.stringify(eventData)
       });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to create event');
+      }
+      
       return response.json();
     },
     onSuccess: () => {
@@ -120,6 +126,13 @@ export default function Calendar() {
       setShowEventDialog(false);
       resetEventForm();
       toast({ title: "일정 생성", description: "새 일정이 생성되었습니다." });
+    },
+    onError: (error: any) => {
+      toast({ 
+        title: "일정 생성 실패", 
+        description: error.message || "일정을 생성하는데 실패했습니다.", 
+        variant: "destructive" 
+      });
     }
   });
 
@@ -421,16 +434,33 @@ export default function Calendar() {
       return;
     }
 
+    if (!eventForm.startDate) {
+      toast({ title: "오류", description: "시작일을 선택해주세요.", variant: "destructive" });
+      return;
+    }
+
     const eventData = {
-      ...eventForm,
+      userId: MOCK_USER_ID,
+      title: eventForm.title,
+      description: eventForm.description || null,
+      startDate: eventForm.startDate,
+      endDate: eventForm.endDate || eventForm.startDate,
+      startTime: eventForm.isAllDay ? null : (eventForm.startTime || null),
+      endTime: eventForm.isAllDay ? null : (eventForm.endTime || null),
+      priority: eventForm.priority,
       color: priorityColors[eventForm.priority],
+      isAllDay: eventForm.isAllDay,
+      repeatType: eventForm.repeatType === 'none' ? null : eventForm.repeatType,
+      repeatInterval: eventForm.repeatType === 'none' ? null : eventForm.repeatInterval,
+      repeatEndDate: eventForm.repeatEndDate || null,
       repeatWeekdays: eventForm.repeatWeekdays.length > 0 ? JSON.stringify(eventForm.repeatWeekdays) : null,
       coreValue: eventForm.coreValue === 'none' ? null : eventForm.coreValue || null,
       annualGoal: eventForm.annualGoal === 'none' ? null : eventForm.annualGoal || null
     };
 
+    // For updates, include the ID
     if (isEditing && eventForm.id) {
-      updateEventMutation.mutate(eventData);
+      updateEventMutation.mutate({ ...eventData, id: eventForm.id });
     } else {
       createEventMutation.mutate(eventData);
     }
