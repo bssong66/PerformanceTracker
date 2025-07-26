@@ -842,19 +842,22 @@ export default function Foundation() {
                           </div>
                           
                           {/* Detailed breakdown */}
-                          {progress.total > 0 && (
-                            <div className="flex gap-4 text-xs text-slate-600 font-medium" style={{marginLeft: "calc(50% + 16px)"}}>
-                              <span>프로젝트: {progress.projects.completed}/{progress.projects.total}</span>
-                              <span>할일: {progress.tasks.completed}/{progress.tasks.total}</span>
-                              <span>일정: {progress.events.completed}/{progress.events.total}</span>
+                          <div className="flex items-center justify-between">
+                            <div className="w-[65%]"></div>
+                            <div className="flex-1 pl-4">
+                              {progress.total > 0 ? (
+                                <div className="flex gap-4 text-xs text-slate-600 font-medium">
+                                  <span>프로젝트: {progress.projects.completed}/{progress.projects.total}</span>
+                                  <span>할일: {progress.tasks.completed}/{progress.tasks.total}</span>
+                                  <span>일정: {progress.events.completed}/{progress.events.total}</span>
+                                </div>
+                              ) : (
+                                <p className="text-xs text-slate-500 italic">
+                                  연결된 항목이 없습니다
+                                </p>
+                              )}
                             </div>
-                          )}
-                          
-                          {progress.total === 0 && (
-                            <p className="text-xs text-slate-500 italic" style={{marginLeft: "calc(50% + 16px)"}}>
-                              연결된 항목이 없습니다
-                            </p>
-                          )}
+                          </div>
                         </div>
                       );
                     })}
@@ -871,7 +874,7 @@ export default function Foundation() {
                             </span>
                           </div>
                           <div className="flex items-start space-x-4">
-                            <div className="w-1/2 flex-shrink-0 p-4 bg-white/80 rounded-xl border border-slate-200/50 shadow-sm">
+                            <div className="w-[65%] flex-shrink-0 p-4 bg-white/80 rounded-xl border border-slate-200/50 shadow-sm">
                               <p className="text-slate-800 whitespace-pre-wrap leading-relaxed font-medium">
                                 {tempGoal.title}
                               </p>
@@ -888,19 +891,22 @@ export default function Foundation() {
                           </div>
                           
                           {/* Detailed breakdown */}
-                          {progress.total > 0 && (
-                            <div className="flex gap-4 text-xs text-slate-600 font-medium" style={{marginLeft: "calc(50% + 16px)"}}>
-                              <span>프로젝트: {progress.projects.completed}/{progress.projects.total}</span>
-                              <span>할일: {progress.tasks.completed}/{progress.tasks.total}</span>
-                              <span>일정: {progress.events.completed}/{progress.events.total}</span>
+                          <div className="flex items-center justify-between">
+                            <div className="w-[65%]"></div>
+                            <div className="flex-1 pl-4">
+                              {progress.total > 0 ? (
+                                <div className="flex gap-4 text-xs text-slate-600 font-medium">
+                                  <span>프로젝트: {progress.projects.completed}/{progress.projects.total}</span>
+                                  <span>할일: {progress.tasks.completed}/{progress.tasks.total}</span>
+                                  <span>일정: {progress.events.completed}/{progress.events.total}</span>
+                                </div>
+                              ) : (
+                                <p className="text-xs text-slate-500 italic">
+                                  연결된 항목이 없습니다
+                                </p>
+                              )}
                             </div>
-                          )}
-                          
-                          {progress.total === 0 && (
-                            <p className="text-xs text-slate-500 italic" style={{marginLeft: "calc(50% + 16px)"}}>
-                              연결된 항목이 없습니다
-                            </p>
-                          )}
+                          </div>
                         </div>
                       );
                     })}
@@ -944,19 +950,22 @@ export default function Foundation() {
                             </div>
                             
                             {/* Detailed breakdown */}
-                            {progress.total > 0 && (
-                              <div className="flex gap-4 text-xs text-slate-600 font-medium" style={{marginLeft: "calc(50% + 16px)"}}>
-                                <span>프로젝트: {progress.projects.completed}/{progress.projects.total}</span>
-                                <span>할일: {progress.tasks.completed}/{progress.tasks.total}</span>
-                                <span>일정: {progress.events.completed}/{progress.events.total}</span>
+                            <div className="flex items-center justify-between">
+                              <div className="w-[65%]"></div>
+                              <div className="flex-1 pl-4">
+                                {progress.total > 0 ? (
+                                  <div className="flex gap-4 text-xs text-slate-600 font-medium">
+                                    <span>프로젝트: {progress.projects.completed}/{progress.projects.total}</span>
+                                    <span>할일: {progress.tasks.completed}/{progress.tasks.total}</span>
+                                    <span>일정: {progress.events.completed}/{progress.events.total}</span>
+                                  </div>
+                                ) : (
+                                  <p className="text-xs text-slate-500 italic">
+                                    연결된 항목이 없습니다
+                                  </p>
+                                )}
                               </div>
-                            )}
-                            
-                            {progress.total === 0 && (
-                              <p className="text-xs text-slate-500 italic" style={{marginLeft: "calc(50% + 16px)"}}>
-                                연결된 항목이 없습니다
-                              </p>
-                            )}
+                            </div>
                           </div>
                         );
                       })}
@@ -999,19 +1008,22 @@ export default function Foundation() {
                             </div>
                             
                             {/* Detailed breakdown */}
-                            {progress.total > 0 && (
-                              <div className="flex gap-4 text-xs text-slate-600 font-medium" style={{marginLeft: "calc(50% + 16px)"}}>
-                                <span>프로젝트: {progress.projects.completed}/{progress.projects.total}</span>
-                                <span>할일: {progress.tasks.completed}/{progress.tasks.total}</span>
-                                <span>일정: {progress.events.completed}/{progress.events.total}</span>
+                            <div className="flex items-center justify-between">
+                              <div className="w-[65%]"></div>
+                              <div className="flex-1 pl-4">
+                                {progress.total > 0 ? (
+                                  <div className="flex gap-4 text-xs text-slate-600 font-medium">
+                                    <span>프로젝트: {progress.projects.completed}/{progress.projects.total}</span>
+                                    <span>할일: {progress.tasks.completed}/{progress.tasks.total}</span>
+                                    <span>일정: {progress.events.completed}/{progress.events.total}</span>
+                                  </div>
+                                ) : (
+                                  <p className="text-xs text-slate-500 italic">
+                                    연결된 항목이 없습니다
+                                  </p>
+                                )}
                               </div>
-                            )}
-                            
-                            {progress.total === 0 && (
-                              <p className="text-xs text-slate-500 italic" style={{marginLeft: "calc(50% + 16px)"}}>
-                                연결된 항목이 없습니다
-                              </p>
-                            )}
+                            </div>
                           </div>
                         );
                       })}
