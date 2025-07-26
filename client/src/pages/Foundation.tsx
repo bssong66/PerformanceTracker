@@ -353,6 +353,16 @@ export default function Foundation() {
 
   const handleGoalCoreValueChange = async (goalId: number, coreValue: string) => {
     const actualValue = coreValue === "none" ? null : coreValue;
+    
+    // Optimistic update - immediately update UI before API call
+    const currentGoals = goals as any[];
+    const optimisticGoals = currentGoals.map(goal => 
+      goal.id === goalId ? { ...goal, coreValue: actualValue } : goal
+    );
+    
+    // Update cache with optimistic data
+    queryClient.setQueryData([api.goals.list(MOCK_USER_ID, selectedYear)], optimisticGoals);
+    
     try {
       const response = await fetch(`/api/goals/${goalId}`, {
         method: 'PATCH',
@@ -363,14 +373,24 @@ export default function Foundation() {
       });
       
       if (response.ok) {
-        // Invalidate goals cache to refresh data
+        // Only invalidate cache if the API call succeeds
         queryClient.invalidateQueries({ queryKey: [api.goals.list(MOCK_USER_ID, selectedYear)] });
         toast({
           title: "핵심가치 변경",
           description: "목표의 핵심가치가 변경되었습니다.",
         });
+      } else {
+        // Revert optimistic update on failure
+        queryClient.setQueryData([api.goals.list(MOCK_USER_ID, selectedYear)], currentGoals);
+        toast({
+          title: "변경 실패",
+          description: "핵심가치 변경에 실패했습니다.",
+          variant: "destructive",
+        });
       }
     } catch (error) {
+      // Revert optimistic update on error
+      queryClient.setQueryData([api.goals.list(MOCK_USER_ID, selectedYear)], currentGoals);
       toast({
         title: "변경 실패",
         description: "핵심가치 변경에 실패했습니다.",
