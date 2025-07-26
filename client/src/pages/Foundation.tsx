@@ -330,22 +330,24 @@ export default function Foundation() {
 
   const handleAddGoalToTemp = () => {
     if (newGoal.trim()) {
+      const actualCoreValue = newGoalCoreValue === "none" ? "" : newGoalCoreValue;
       const tempGoal = {
         id: Date.now(), // Temporary ID
         title: newGoal.trim(),
         year: selectedYear,
-        coreValue: newGoalCoreValue || "", // Use selected core value
+        coreValue: actualCoreValue || "", // Use selected core value
         isTemp: true
       };
       setTempGoals([...tempGoals, tempGoal]);
       setNewGoal("");
-      setNewGoalCoreValue(""); // Reset core value selection
+      setNewGoalCoreValue("none"); // Reset core value selection
     }
   };
 
   const handleTempGoalCoreValueChange = (tempId: number, coreValue: string) => {
+    const actualValue = coreValue === "none" ? "" : coreValue;
     setTempGoals(tempGoals.map(goal => 
-      goal.id === tempId ? { ...goal, coreValue } : goal
+      goal.id === tempId ? { ...goal, coreValue: actualValue } : goal
     ));
   };
 
@@ -837,7 +839,7 @@ export default function Foundation() {
                           <div className="flex items-start space-x-4">
                             <div className="w-[65%] flex-shrink-0 space-y-3">
                               <div className="w-full">
-                                <Select value={goal.coreValue || ""} disabled>
+                                <Select value={goal.coreValue || "none"} disabled>
                                   <SelectTrigger className="w-full h-8 text-xs border-slate-200 bg-slate-50">
                                     <SelectValue placeholder="핵심가치">
                                       {goal.coreValue || "해당 없음"}
@@ -892,12 +894,12 @@ export default function Foundation() {
                           <div className="flex items-start space-x-4">
                             <div className="w-[65%] flex-shrink-0 space-y-3">
                               <div className="w-full">
-                                <Select value={tempGoal.coreValue || ""} onValueChange={(value) => handleTempGoalCoreValueChange(tempGoal.id, value)}>
+                                <Select value={tempGoal.coreValue || "none"} onValueChange={(value) => handleTempGoalCoreValueChange(tempGoal.id, value)}>
                                   <SelectTrigger className="w-full h-8 text-xs border-slate-200 bg-white/80">
                                     <SelectValue placeholder="핵심가치 선택" />
                                   </SelectTrigger>
                                   <SelectContent>
-                                    <SelectItem value="">해당 없음</SelectItem>
+                                    <SelectItem value="none">해당 없음</SelectItem>
                                     {values.filter(v => v.trim()).map((value, index) => (
                                       <SelectItem key={index} value={value}>{value}</SelectItem>
                                     ))}
@@ -953,7 +955,7 @@ export default function Foundation() {
                             <div className="flex items-start space-x-4">
                               <div className="w-[65%] flex-shrink-0 space-y-3">
                                 <div className="w-full">
-                                  <Select value={goal.coreValue || ""} disabled>
+                                  <Select value={goal.coreValue || "none"} disabled>
                                     <SelectTrigger className="w-full h-8 text-xs border-slate-200 bg-slate-50">
                                       <SelectValue placeholder="핵심가치">
                                         {goal.coreValue || "해당 없음"}
@@ -1016,12 +1018,12 @@ export default function Foundation() {
                             <div className="flex items-start space-x-4">
                               <div className="w-[65%] flex-shrink-0 space-y-3">
                                 <div className="w-full">
-                                  <Select value={tempGoal.coreValue || ""} onValueChange={(value) => handleTempGoalCoreValueChange(tempGoal.id, value)}>
+                                  <Select value={tempGoal.coreValue || "none"} onValueChange={(value) => handleTempGoalCoreValueChange(tempGoal.id, value)}>
                                     <SelectTrigger className="w-full h-8 text-xs border-slate-200 bg-white/80">
                                       <SelectValue placeholder="핵심가치 선택" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                      <SelectItem value="">해당 없음</SelectItem>
+                                      <SelectItem value="none">해당 없음</SelectItem>
                                       {values.filter(v => v.trim()).map((value, index) => (
                                         <SelectItem key={index} value={value}>{value}</SelectItem>
                                       ))}
@@ -1074,12 +1076,12 @@ export default function Foundation() {
                       <div className="p-4 bg-gradient-to-r from-slate-50/50 to-gray-50/50 rounded-xl border border-slate-200/50">
                         <div className="space-y-3">
                           <div className="w-full">
-                            <Select value={newGoalCoreValue} onValueChange={setNewGoalCoreValue}>
+                            <Select value={newGoalCoreValue || "none"} onValueChange={setNewGoalCoreValue}>
                               <SelectTrigger className="w-full h-8 text-xs border-slate-200 bg-white/80">
                                 <SelectValue placeholder="핵심가치 선택 (선택사항)" />
                               </SelectTrigger>
                               <SelectContent>
-                                <SelectItem value="">해당 없음</SelectItem>
+                                <SelectItem value="none">해당 없음</SelectItem>
                                 {values.filter(v => v.trim()).map((value, index) => (
                                   <SelectItem key={index} value={value}>{value}</SelectItem>
                                 ))}
