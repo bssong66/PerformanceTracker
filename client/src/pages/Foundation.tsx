@@ -91,9 +91,9 @@ export default function Foundation() {
     queryFn: () => fetch(`/api/habit-logs/${MOCK_USER_ID}/${currentYear}-01-01?endDate=${currentYear}-12-31`).then(res => res.json()),
   });
 
-  // Set initial values when foundation data loads
+  // Set initial values when foundation data loads (but not when editing)
   useEffect(() => {
-    if (foundation) {
+    if (foundation && !editingValues && !editingMission) {
       setMission((foundation as any).personalMission || "");
       setValues([
         (foundation as any).coreValue1 || "",
@@ -101,7 +101,7 @@ export default function Foundation() {
         (foundation as any).coreValue3 || "",
       ]);
     }
-  }, [foundation]);
+  }, [foundation, editingValues, editingMission]);
 
   // Effect to clear edit modes and refresh data when year changes
   useEffect(() => {
@@ -404,6 +404,12 @@ export default function Foundation() {
           description: `Foundation과 ${tempGoals.length}개의 목표가 모두 저장되었습니다.`,
         });
       }
+      
+      // Exit edit modes after successful save
+      setEditingMission(false);
+      setEditingValues(false);
+      setEditingGoals(false);
+      
     } catch (error) {
       toast({
         title: "저장 실패",
