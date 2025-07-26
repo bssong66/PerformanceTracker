@@ -441,19 +441,15 @@ export default function Foundation() {
                         {/* Progress bar for this core value */}
                         {progress && value.trim() && (
                           <div className="space-y-2 p-3 bg-gray-50 rounded-lg border">
-                            <div className="flex items-center justify-between text-sm">
-                              <span className="font-medium text-gray-700">
-                                {currentYear}년 완성도
-                              </span>
-                              <span className="text-gray-600">
+                            <div className="flex items-center gap-3">
+                              <Progress 
+                                value={progress.percentage} 
+                                className="flex-1 h-2"
+                              />
+                              <span className="text-sm font-medium text-gray-700 min-w-fit">
                                 {progress.completed}/{progress.total} ({progress.percentage}%)
                               </span>
                             </div>
-                            
-                            <Progress 
-                              value={progress.percentage} 
-                              className="h-2"
-                            />
                             
                             {progress.total > 0 && (
                               <div className="flex flex-col gap-1 text-xs text-gray-500">
