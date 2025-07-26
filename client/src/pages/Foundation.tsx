@@ -549,27 +549,30 @@ export default function Foundation() {
                     
                     return (
                       <div key={goal.id} className="space-y-2">
-                        <div className="flex items-center space-x-3">
-                          <Input
+                        <div className="flex items-start space-x-3">
+                          <Textarea
                             value={goal.title}
                             readOnly
-                            className="w-1/2 flex-shrink-0"
+                            className="w-1/2 flex-shrink-0 min-h-[2.5rem] resize-none"
+                            rows={Math.max(1, Math.ceil(goal.title.length / 40))}
                           />
-                          <Progress 
-                            value={progress.percentage} 
-                            className="flex-1 h-2"
-                          />
-                          <span className="text-sm font-medium text-gray-700 min-w-fit">
-                            {progress.completed}/{progress.total} ({progress.percentage}%)
-                          </span>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleDeleteGoal(goal.id)}
-                            className="text-gray-400 hover:text-red-500 flex-shrink-0"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
+                          <div className="flex-1 flex items-center space-x-3 mt-2">
+                            <Progress 
+                              value={progress.percentage} 
+                              className="flex-1 h-2"
+                            />
+                            <span className="text-sm font-medium text-gray-700 min-w-fit">
+                              {progress.completed}/{progress.total} ({progress.percentage}%)
+                            </span>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleDeleteGoal(goal.id)}
+                              className="text-gray-400 hover:text-red-500 flex-shrink-0"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
                         </div>
                         
                         {/* Detailed breakdown */}
@@ -591,20 +594,26 @@ export default function Foundation() {
                   })}
                   
                   {/* Add New Goal */}
-                  <div className="flex items-center space-x-3">
-                    <Input
+                  <div className="flex items-start space-x-3">
+                    <Textarea
                       placeholder="새로운 목표를 입력하세요..."
                       value={newGoal}
                       onChange={(e) => setNewGoal(e.target.value)}
-                      onKeyPress={(e) => e.key === 'Enter' && handleAddGoal()}
-                      className="w-1/2 flex-shrink-0"
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' && !e.shiftKey) {
+                          e.preventDefault();
+                          handleAddGoal();
+                        }
+                      }}
+                      className="w-1/2 flex-shrink-0 min-h-[2.5rem] resize-none"
+                      rows={Math.max(1, Math.ceil(newGoal.length / 40))}
                     />
                     <div className="flex-1"></div>
                     <Button
                       onClick={handleAddGoal}
                       disabled={!newGoal.trim() || addGoalMutation.isPending}
                       size="sm"
-                      className="flex-shrink-0"
+                      className="flex-shrink-0 mt-2"
                     >
                       <Plus className="h-4 w-4" />
                     </Button>
