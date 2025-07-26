@@ -363,10 +363,11 @@ export default function Foundation() {
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-8">
-          <div className="flex items-center justify-between">
-            <div className="flex-1">
+          {/* Title and Description Row */}
+          <div className="flex items-start justify-between mb-6">
+            <div className="flex-1 flex items-center space-x-6">
               <h1 className="text-2xl font-bold text-gray-900">가치 중심 계획</h1>
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-gray-600 mt-1">
                 개인 미션과 핵심 가치를 설정하여 목표 달성의 기반을 만드세요
               </p>
             </div>
@@ -415,123 +416,125 @@ export default function Foundation() {
                 </div>
               )}
             </div>
-            <div className="flex items-center space-x-3">
-              {/* New Plan Button */}
-              <Button
-                variant="outline"
-                onClick={() => {
-                  setMission("");
-                  setValues(["", "", ""]);
-                  setNewGoal("");
-                  setEditingMission(false);
-                  setEditingValues(false);
-                  setEditingGoals(false);
-                  toast({
-                    title: "신규 계획 생성",
-                    description: `${selectedYear}년의 새로운 가치 중심 계획을 시작합니다.`,
-                  });
-                }}
-                className="flex items-center space-x-2"
-              >
-                <Plus className="h-4 w-4" />
-                <span>신규 계획</span>
-              </Button>
-              
-              <Dialog open={showSelectDialog} onOpenChange={setShowSelectDialog}>
-                <DialogTrigger asChild>
-                  <Button
-                    variant="outline"
-                    onClick={handleLoadData}
-                    disabled={foundationLoading || goalsLoading}
-                    className="flex items-center space-x-2"
-                  >
-                    <Database className="h-4 w-4" />
-                    <span>데이터 불러오기</span>
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="sm:max-w-[600px]">
-                  <DialogHeader>
-                    <DialogTitle>가치 중심 계획 선택</DialogTitle>
-                  </DialogHeader>
-                  <div className="py-4">
-                    <p className="text-sm text-gray-600 mb-4">
-                      저장된 여러 개의 가치 중심 계획 중에서 불러올 데이터를 선택하세요.
-                    </p>
-                    <div className="space-y-3 max-h-96 overflow-y-auto">
-                      {Array.isArray(allFoundations) && allFoundations.map((foundation: any, index: number) => (
-                        <Card 
-                          key={foundation.id} 
-                          className="cursor-pointer hover:bg-gray-50 transition-colors"
-                          onClick={() => handleSelectFoundation(foundation)}
-                        >
-                          <CardContent className="p-4">
-                            <div className="flex items-start justify-between">
-                              <div className="flex-1">
-                                <div className="flex items-center space-x-2 mb-2">
-                                  <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                                  <span className="text-sm font-medium text-gray-700">
-                                    계획 #{index + 1}
-                                  </span>
-                                  <span className="text-xs text-gray-500">
-                                    {new Date(foundation.createdAt).toLocaleDateString('ko-KR')}
-                                  </span>
-                                </div>
-                                <div className="space-y-2">
-                                  <div>
-                                    <span className="text-xs text-gray-500">개인 미션:</span>
-                                    <p className="text-sm text-gray-800 truncate">
-                                      {foundation.personalMission || "미션 없음"}
-                                    </p>
-                                  </div>
-                                  <div>
-                                    <span className="text-xs text-gray-500">핵심 가치:</span>
-                                    <p className="text-sm text-gray-800">
-                                      {[foundation.coreValue1, foundation.coreValue2, foundation.coreValue3]
-                                        .filter(Boolean)
-                                        .join(", ") || "가치 없음"}
-                                    </p>
-                                  </div>
-                                </div>
-                              </div>
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleSelectFoundation(foundation);
-                                }}
-                                className="ml-2"
-                              >
-                                선택
-                              </Button>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      ))}
-                      
-                      {(!Array.isArray(allFoundations) || allFoundations.length === 0) && (
-                        <div className="text-center py-8">
-                          <div className="text-gray-500 text-sm">
-                            저장된 가치 중심 계획이 없습니다.
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </DialogContent>
-              </Dialog>
-              
-              {(!foundation || editingMission || editingValues || !foundation) && (
+          </div>
+
+          {/* Action Buttons Row */}
+          <div className="flex items-center space-x-3">
+            {/* New Plan Button */}
+            <Button
+              variant="outline"
+              onClick={() => {
+                setMission("");
+                setValues(["", "", ""]);
+                setNewGoal("");
+                setEditingMission(false);
+                setEditingValues(false);
+                setEditingGoals(false);
+                toast({
+                  title: "신규 계획 생성",
+                  description: `${selectedYear}년의 새로운 가치 중심 계획을 시작합니다.`,
+                });
+              }}
+              className="flex items-center space-x-2"
+            >
+              <Plus className="h-4 w-4" />
+              <span>신규 계획</span>
+            </Button>
+            
+            <Dialog open={showSelectDialog} onOpenChange={setShowSelectDialog}>
+              <DialogTrigger asChild>
                 <Button
-                  onClick={handleSaveFoundation}
-                  disabled={saveFoundationMutation.isPending}
+                  variant="outline"
+                  onClick={handleLoadData}
+                  disabled={foundationLoading || goalsLoading}
                   className="flex items-center space-x-2"
                 >
-                  <Save className="h-4 w-4" />
-                  <span>{selectedYear}년 저장</span>
+                  <Database className="h-4 w-4" />
+                  <span>데이터 불러오기</span>
                 </Button>
-              )}
-            </div>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-[600px]">
+                <DialogHeader>
+                  <DialogTitle>가치 중심 계획 선택</DialogTitle>
+                  <p className="text-sm text-gray-600">
+                    저장된 여러 개의 가치 중심 계획 중에서 불러올 데이터를 선택하세요.
+                  </p>
+                </DialogHeader>
+                <div className="py-4">
+                  <div className="space-y-3 max-h-96 overflow-y-auto">
+                    {Array.isArray(allFoundations) && allFoundations.map((foundation: any, index: number) => (
+                      <Card 
+                        key={foundation.id} 
+                        className="cursor-pointer hover:bg-gray-50 transition-colors"
+                        onClick={() => handleSelectFoundation(foundation)}
+                      >
+                        <CardContent className="p-4">
+                          <div className="flex items-start justify-between">
+                            <div className="flex-1">
+                              <div className="flex items-center space-x-2 mb-2">
+                                <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                                <span className="text-sm font-medium text-gray-700">
+                                  계획 #{index + 1}
+                                </span>
+                                <span className="text-xs text-gray-500">
+                                  {new Date(foundation.createdAt).toLocaleDateString('ko-KR')}
+                                </span>
+                              </div>
+                              <div className="space-y-2">
+                                <div>
+                                  <span className="text-xs text-gray-500">개인 미션:</span>
+                                  <p className="text-sm text-gray-800 truncate">
+                                    {foundation.personalMission || "미션 없음"}
+                                  </p>
+                                </div>
+                                <div>
+                                  <span className="text-xs text-gray-500">핵심 가치:</span>
+                                  <p className="text-sm text-gray-800">
+                                    {[foundation.coreValue1, foundation.coreValue2, foundation.coreValue3]
+                                      .filter(Boolean)
+                                      .join(", ") || "가치 없음"}
+                                  </p>
+                                </div>
+                              </div>
+                            </div>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleSelectFoundation(foundation);
+                              }}
+                              className="ml-2"
+                            >
+                              선택
+                            </Button>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                    
+                    {(!Array.isArray(allFoundations) || allFoundations.length === 0) && (
+                      <div className="text-center py-8">
+                        <div className="text-gray-500 text-sm">
+                          저장된 가치 중심 계획이 없습니다.
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </DialogContent>
+            </Dialog>
+            
+            {(!foundation || editingMission || editingValues || !foundation) && (
+              <Button
+                onClick={handleSaveFoundation}
+                disabled={saveFoundationMutation.isPending}
+                className="flex items-center space-x-2"
+              >
+                <Save className="h-4 w-4" />
+                <span>{selectedYear}년 저장</span>
+              </Button>
+            )}
           </div>
         </div>
 

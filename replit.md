@@ -146,7 +146,22 @@ Preferred communication style: Simple, everyday language.
 └── attached_assets/ # Project documentation and requirements
 ```
 
-### Recent Changes (July 25, 2025)
+### Recent Changes (July 26, 2025)
+- **Year-based Foundation Management System Implementation**
+- Updated database schema to add year column to foundations table with NOT NULL constraint
+- Modified DatabaseStorage and MemStorage classes to support year-based Foundation queries
+- Updated API endpoints to accept year parameter for Foundation operations
+- Implemented year selector UI with navigation controls (previous/next buttons and dropdown)
+- Added current/future/past plan indicators for different years
+- Implemented "신규 계획 생성" (New Plan Creation) functionality for independent annual planning
+- Added automatic data refresh when year changes with proper cache invalidation
+- **Refined Header Layout Design**
+- Moved description text to the right of the title in a clean, horizontal layout
+- Repositioned action buttons (New Plan, Data Load, Save) below the title for better organization
+- Improved Dialog component with proper description text to resolve accessibility warnings
+- Enhanced visual hierarchy with proper spacing and alignment
+
+### Previous Changes (July 25, 2025)
 - **Database Schema Cleanup: Removed Weekly Goal Fields**
 - Removed unused weekly_goal_1, weekly_goal_2, weekly_goal_3 fields from weekly_reviews table
 - Updated database schema and removed corresponding frontend state and UI components
