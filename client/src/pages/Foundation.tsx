@@ -373,8 +373,7 @@ export default function Foundation() {
       });
       
       if (response.ok) {
-        // Only invalidate cache if the API call succeeds
-        queryClient.invalidateQueries({ queryKey: [api.goals.list(MOCK_USER_ID, selectedYear)] });
+        // Don't invalidate cache - keep optimistic update
         toast({
           title: "핵심가치 변경",
           description: "목표의 핵심가치가 변경되었습니다.",
