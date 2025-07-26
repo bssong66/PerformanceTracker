@@ -518,8 +518,8 @@ export default function Calendar() {
                 <DnDCalendar
                   localizer={localizer}
                   events={calendarEvents}
-                  startAccessor="start"
-                  endAccessor="end"
+                  startAccessor={(event: any) => event.start}
+                  endAccessor={(event: any) => event.end}
                   views={[Views.MONTH, Views.WEEK, Views.DAY]}
                   view={view}
                   onView={setView}
@@ -531,8 +531,8 @@ export default function Calendar() {
                   onEventDrop={handleEventDrop}
                   selectable
                   resizable
-                  resizableAccessor="resizable"
-                  draggableAccessor="draggable"
+                  resizableAccessor={(event: any) => event.resizable}
+                  draggableAccessor={(event: any) => event.draggable}
                   eventPropGetter={eventStyleGetter}
                   culture="ko"
                   messages={{
@@ -564,8 +564,10 @@ export default function Calendar() {
               <DialogTitle>
                 {isEditing ? '일정 수정' : '새 일정 생성'}
               </DialogTitle>
+              <div id="event-dialog-description" className="sr-only">
+                일정의 제목, 날짜, 시간, 우선순위 등을 설정할 수 있습니다.
+              </div>
             </DialogHeader>
-            <div id="event-dialog-description" className="sr-only">일정을 생성하거나 수정하는 양식입니다.</div>
             
             <div className="space-y-4">
               {/* 제목 */}
