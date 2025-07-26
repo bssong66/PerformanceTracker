@@ -85,6 +85,7 @@ export const events = pgTable("events", {
   repeatWeekdays: text("repeat_weekdays"), // JSON array for weekly: ["1","3","5"] (Mon, Wed, Fri)
   coreValue: text("core_value"), // Connected core value from foundation
   annualGoal: text("annual_goal"), // Connected annual goal
+  completed: boolean("completed").default(false), // Event completion status
   createdAt: timestamp("created_at").defaultNow(),
 });
 

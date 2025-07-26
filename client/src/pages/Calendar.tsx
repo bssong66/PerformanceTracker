@@ -68,7 +68,8 @@ export default function Calendar() {
     repeatEndDate: '',
     repeatWeekdays: [] as string[],
     coreValue: '',
-    annualGoal: ''
+    annualGoal: '',
+    completed: false
   });
 
   // Fetch events
@@ -199,7 +200,8 @@ export default function Calendar() {
       repeatEndDate: '',
       repeatWeekdays: [],
       coreValue: 'none',
-      annualGoal: 'none'
+      annualGoal: 'none',
+      completed: false
     });
     setIsEditing(false);
     setSelectedEvent(null);
@@ -216,7 +218,7 @@ export default function Calendar() {
     // Add the original event
     events.push({
       id: event.id,
-      title: event.title,
+      title: event.completed ? `✅ ${event.title}` : event.title,
       start: baseStart,
       end: baseEnd,
       resizable: true,
@@ -279,7 +281,7 @@ export default function Calendar() {
           const nextEnd = new Date(nextDate.getTime() + duration);
           events.push({
             id: `${event.id}-repeat-${instanceCount}`,
-            title: `🔄 ${event.title}`,
+            title: event.completed ? `🔄 ✅ ${event.title}` : `🔄 ${event.title}`,
             start: nextDate,
             end: nextEnd,
             resizable: false, // Recurring instances can't be resized individually
@@ -344,12 +346,15 @@ export default function Calendar() {
   }, [eventForm]);
 
   // Handle event resize
-  const handleEventResize = useCallback(({ event, start, end }: { event: any; start: Date; end: Date }) => {
+  const handleEventResize = useCallback((args: any) => {
+    const { event, start, end } = args;
     // Only allow resizing of events, not tasks or recurring instances
     if (event.resource.type !== 'event' || event.resource.data.isRecurring) return;
     
     const eventData = event.resource.data;
-    const isAllDay = format(start, 'HH:mm') === '00:00' && format(end, 'HH:mm') === '00:00';
+    const startDate = new Date(start);
+    const endDate = new Date(end);
+    const isAllDay = format(startDate, 'HH:mm') === '00:00' && format(endDate, 'HH:mm') === '00:00';
     
     const updatedEvent = {
       id: eventData.id,
@@ -376,7 +381,8 @@ export default function Calendar() {
   }, [updateEventMutation]);
 
   // Handle event drag and drop
-  const handleEventDrop = useCallback(({ event, start, end }: { event: any; start: Date; end: Date }) => {
+  const handleEventDrop = useCallback((args: any) => {
+    const { event, start, end } = args;
     // Only allow dragging of events, not tasks or recurring instances
     if (event.resource.type !== 'event' || event.resource.data.isRecurring) return;
     
@@ -437,7 +443,8 @@ export default function Calendar() {
         repeatEndDate: eventData.repeatEndDate || '',
         repeatWeekdays: eventData.repeatWeekdays ? JSON.parse(eventData.repeatWeekdays) : [],
         coreValue: eventData.coreValue || 'none',
-        annualGoal: eventData.annualGoal || 'none'
+        annualGoal: eventData.annualGoal || 'none',
+        completed: eventData.completed || false
       });
       setIsEditing(true);
       setShowEventDialog(true);
@@ -455,16 +462,18 @@ export default function Calendar() {
     const backgroundColor = event.resource?.color || '#3174ad';
     const isTask = event.resource?.type === 'task';
     const isRecurring = event.resource?.data?.isRecurring;
+    const isCompleted = event.resource?.data?.completed;
     
     return {
       style: {
-        backgroundColor,
+        backgroundColor: isCompleted ? '#6b7280' : backgroundColor, // Gray for completed events
         borderRadius: '4px',
-        opacity: isTask ? 0.7 : (isRecurring ? 0.8 : 1),
+        opacity: isTask ? 0.7 : (isRecurring ? 0.8 : (isCompleted ? 0.6 : 1)),
         border: isTask ? '2px dashed rgba(255,255,255,0.8)' : (isRecurring ? '2px solid rgba(255,255,255,0.8)' : 'none'),
         fontSize: '12px',
         fontWeight: isTask ? 'normal' : '500',
-        fontStyle: isRecurring ? 'italic' : 'normal'
+        fontStyle: isRecurring ? 'italic' : 'normal',
+        textDecoration: isCompleted ? 'line-through' : 'none' // Strikethrough for completed events
       }
     };
   };
@@ -496,7 +505,8 @@ export default function Calendar() {
       repeatEndDate: eventForm.repeatEndDate || null,
       repeatWeekdays: eventForm.repeatWeekdays.length > 0 ? JSON.stringify(eventForm.repeatWeekdays) : null,
       coreValue: eventForm.coreValue === 'none' ? null : eventForm.coreValue || null,
-      annualGoal: eventForm.annualGoal === 'none' ? null : eventForm.annualGoal || null
+      annualGoal: eventForm.annualGoal === 'none' ? null : eventForm.annualGoal || null,
+      completed: eventForm.completed
     };
 
     // For updates, include the ID
@@ -654,16 +664,28 @@ export default function Calendar() {
                 </Select>
               </div>
 
-              {/* 종일 체크박스 */}
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="all-day"
-                  checked={eventForm.isAllDay}
-                  onCheckedChange={(checked) => 
-                    setEventForm(prev => ({ ...prev, isAllDay: checked as boolean }))
-                  }
-                />
-                <Label htmlFor="all-day">종일 일정</Label>
+              {/* 체크박스들 */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="all-day"
+                    checked={eventForm.isAllDay}
+                    onCheckedChange={(checked) => 
+                      setEventForm(prev => ({ ...prev, isAllDay: checked as boolean }))
+                    }
+                  />
+                  <Label htmlFor="all-day">종일 일정</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="completed"
+                    checked={eventForm.completed}
+                    onCheckedChange={(checked) => 
+                      setEventForm(prev => ({ ...prev, completed: checked as boolean }))
+                    }
+                  />
+                  <Label htmlFor="completed">완료됨</Label>
+                </div>
               </div>
 
               {/* 날짜 */}
