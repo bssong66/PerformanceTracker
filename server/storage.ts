@@ -17,7 +17,7 @@ export interface IStorage {
   createUser(user: InsertUser): Promise<User>;
   
   // Foundation methods
-  getFoundation(userId: number): Promise<Foundation | undefined>;
+  getFoundation(userId: number, year?: number): Promise<Foundation | undefined>;
   getAllFoundations(userId: number): Promise<Foundation[]>;
   upsertFoundation(foundation: InsertFoundation): Promise<Foundation>;
   
@@ -138,8 +138,11 @@ export class MemStorage implements IStorage {
   }
 
   // Foundation methods
-  async getFoundation(userId: number): Promise<Foundation | undefined> {
-    return Array.from(this.foundations.values()).find(f => f.userId === userId);
+  async getFoundation(userId: number, year?: number): Promise<Foundation | undefined> {
+    const currentYear = year || new Date().getFullYear();
+    return Array.from(this.foundations.values()).find(f => 
+      f.userId === userId && f.year === currentYear
+    );
   }
 
   async getAllFoundations(userId: number): Promise<Foundation[]> {
@@ -672,8 +675,13 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Foundation methods
-  async getFoundation(userId: number): Promise<Foundation | undefined> {
-    const result = await db.select().from(foundations).where(eq(foundations.userId, userId)).limit(1);
+  async getFoundation(userId: number, year?: number): Promise<Foundation | undefined> {
+    const currentYear = year || new Date().getFullYear();
+    const result = await db
+      .select()
+      .from(foundations)
+      .where(and(eq(foundations.userId, userId), eq(foundations.year, currentYear)))
+      .limit(1);
     return result[0];
   }
 
@@ -682,7 +690,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async upsertFoundation(foundation: InsertFoundation): Promise<Foundation> {
-    const existing = await this.getFoundation(foundation.userId);
+    const existing = await this.getFoundation(foundation.userId, foundation.year);
     
     if (existing) {
       const result = await db

@@ -3,7 +3,8 @@ import { apiRequest } from "./queryClient";
 export const api = {
   // Foundation
   foundation: {
-    get: (userId: number) => `/api/foundation/${userId}`,
+    get: (userId: number, year?: number) => 
+      `/api/foundation/${userId}${year ? `?year=${year}` : ''}`,
     getAll: (userId: number) => `/api/foundations/${userId}`,
     create: () => `/api/foundation`,
   },

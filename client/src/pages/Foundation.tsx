@@ -7,7 +7,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Progress } from "@/components/ui/progress";
-import { Trash2, Plus, Save, RefreshCw, Database, TrendingUp, Edit2, Check, X } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Trash2, Plus, Save, RefreshCw, Database, TrendingUp, Edit2, Check, X, Calendar, ChevronLeft, ChevronRight } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { api, saveFoundation, createAnnualGoal, deleteAnnualGoal } from "@/lib/api";
 import { queryClient } from "@/lib/queryClient";
@@ -18,6 +19,7 @@ const MOCK_USER_ID = 1;
 export default function Foundation() {
   const { toast } = useToast();
   const currentYear = new Date().getFullYear();
+  const [selectedYear, setSelectedYear] = useState(currentYear);
 
   const [mission, setMission] = useState("");
   const [values, setValues] = useState(["", "", ""]);
@@ -29,13 +31,16 @@ export default function Foundation() {
   const [editingValues, setEditingValues] = useState(false);
   const [editingGoals, setEditingGoals] = useState(false);
 
+  // Generate year options (current year and +/- 5 years)
+  const yearOptions = Array.from({ length: 11 }, (_, i) => currentYear - 5 + i);
+
   const { data: foundation, isLoading: foundationLoading, refetch: refetchFoundation } = useQuery({
-    queryKey: [api.foundation.get(MOCK_USER_ID)],
+    queryKey: [api.foundation.get(MOCK_USER_ID, selectedYear)],
     meta: { errorMessage: "Foundation not found" },
   });
 
   const { data: goals = [], isLoading: goalsLoading, refetch: refetchGoals } = useQuery({
-    queryKey: [api.goals.list(MOCK_USER_ID, currentYear)],
+    queryKey: [api.goals.list(MOCK_USER_ID, selectedYear)],
   });
 
   const { data: allFoundations = [], refetch: refetchAllFoundations } = useQuery({
@@ -73,12 +78,23 @@ export default function Foundation() {
     }
   }, [foundation]);
 
+  // Effect to clear edit modes and refresh data when year changes
+  useEffect(() => {
+    setEditingMission(false);
+    setEditingValues(false);
+    setEditingGoals(false);
+    
+    // Refresh foundation data for the selected year
+    refetchFoundation();
+    refetchGoals();
+  }, [selectedYear, refetchFoundation, refetchGoals]);
+
   // Calculate annual progress for each core value
   const calculateAnnualProgress = (coreValue: string) => {
     if (!coreValue || coreValue.trim() === "") return { completed: 0, total: 0, percentage: 0 };
 
     const today = new Date();
-    const thisYear = currentYear;
+    const thisYear = selectedYear;
     
     // Filter items by core value and year
     const valueTasks = (allTasks as any[]).filter((task: any) => 
@@ -135,7 +151,7 @@ export default function Foundation() {
     if (!annualGoal || annualGoal.trim() === "") return { completed: 0, total: 0, percentage: 0 };
 
     const today = new Date();
-    const thisYear = currentYear;
+    const thisYear = selectedYear;
     
     // Filter items by annual goal and year
     const goalTasks = (allTasks as any[]).filter((task: any) => 
@@ -191,11 +207,11 @@ export default function Foundation() {
     mutationFn: saveFoundation,
     onSuccess: () => {
       // Invalidate foundation queries across all pages
-      queryClient.invalidateQueries({ queryKey: [api.foundation.get(MOCK_USER_ID)] });
-      queryClient.invalidateQueries({ queryKey: ['foundation', MOCK_USER_ID] });
+      queryClient.invalidateQueries({ queryKey: [api.foundation.get(MOCK_USER_ID, selectedYear)] });
+      queryClient.invalidateQueries({ queryKey: ['foundation', MOCK_USER_ID, selectedYear] });
       toast({
         title: "저장 완료",
-        description: "가치 중심 계획이 저장되었습니다.",
+        description: `${selectedYear}년 가치 중심 계획이 저장되었습니다.`,
       });
     },
     onError: () => {
@@ -212,8 +228,8 @@ export default function Foundation() {
     onSuccess: () => {
       setNewGoal("");
       // Invalidate goals queries across all pages
-      queryClient.invalidateQueries({ queryKey: [api.goals.list(MOCK_USER_ID, currentYear)] });
-      queryClient.invalidateQueries({ queryKey: ['goals', MOCK_USER_ID, currentYear] });
+      queryClient.invalidateQueries({ queryKey: [api.goals.list(MOCK_USER_ID, selectedYear)] });
+      queryClient.invalidateQueries({ queryKey: ['goals', MOCK_USER_ID, selectedYear] });
       toast({
         title: "목표 추가",
         description: "새로운 연간 목표가 추가되었습니다.",
@@ -232,8 +248,8 @@ export default function Foundation() {
     mutationFn: deleteAnnualGoal,
     onSuccess: () => {
       // Invalidate goals queries across all pages
-      queryClient.invalidateQueries({ queryKey: [api.goals.list(MOCK_USER_ID, currentYear)] });
-      queryClient.invalidateQueries({ queryKey: ['goals', MOCK_USER_ID, currentYear] });
+      queryClient.invalidateQueries({ queryKey: [api.goals.list(MOCK_USER_ID, selectedYear)] });
+      queryClient.invalidateQueries({ queryKey: ['goals', MOCK_USER_ID, selectedYear] });
       toast({
         title: "목표 삭제",
         description: "연간 목표가 삭제되었습니다.",
@@ -251,6 +267,7 @@ export default function Foundation() {
   const handleSaveFoundation = () => {
     saveFoundationMutation.mutate({
       userId: MOCK_USER_ID,
+      year: selectedYear,
       personalMission: mission,
       coreValue1: values[0],
       coreValue2: values[1],
@@ -263,7 +280,7 @@ export default function Foundation() {
       addGoalMutation.mutate({
         userId: MOCK_USER_ID,
         title: newGoal.trim(),
-        year: currentYear,
+        year: selectedYear,
       });
     }
   };
@@ -347,13 +364,79 @@ export default function Foundation() {
         {/* Header */}
         <div className="mb-8">
           <div className="flex items-center justify-between">
-            <div>
+            <div className="flex-1">
               <h1 className="text-2xl font-bold text-gray-900">가치 중심 계획</h1>
               <p className="text-sm text-gray-600">
                 개인 미션과 핵심 가치를 설정하여 목표 달성의 기반을 만드세요
               </p>
             </div>
+            
+            {/* Year Selector */}
             <div className="flex items-center space-x-3">
+              <div className="flex items-center space-x-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setSelectedYear(selectedYear - 1)}
+                  className="h-8 w-8 p-0"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                
+                <Select value={selectedYear.toString()} onValueChange={(value) => setSelectedYear(parseInt(value))}>
+                  <SelectTrigger className="w-20 h-8">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {yearOptions.map((year) => (
+                      <SelectItem key={year} value={year.toString()}>
+                        {year}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setSelectedYear(selectedYear + 1)}
+                  className="h-8 w-8 p-0"
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+              
+              {selectedYear !== currentYear && (
+                <div className="flex items-center space-x-1 px-2 py-1 bg-blue-50 rounded-lg border border-blue-200">
+                  <Calendar className="h-3 w-3 text-blue-600" />
+                  <span className="text-xs text-blue-700 font-medium">
+                    {selectedYear > currentYear ? '미래 계획' : '과거 계획'}
+                  </span>
+                </div>
+              )}
+            </div>
+            <div className="flex items-center space-x-3">
+              {/* New Plan Button */}
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setMission("");
+                  setValues(["", "", ""]);
+                  setNewGoal("");
+                  setEditingMission(false);
+                  setEditingValues(false);
+                  setEditingGoals(false);
+                  toast({
+                    title: "신규 계획 생성",
+                    description: `${selectedYear}년의 새로운 가치 중심 계획을 시작합니다.`,
+                  });
+                }}
+                className="flex items-center space-x-2"
+              >
+                <Plus className="h-4 w-4" />
+                <span>신규 계획</span>
+              </Button>
+              
               <Dialog open={showSelectDialog} onOpenChange={setShowSelectDialog}>
                 <DialogTrigger asChild>
                   <Button
@@ -438,14 +521,14 @@ export default function Foundation() {
                 </DialogContent>
               </Dialog>
               
-              {(!foundation || editingMission || editingValues) && (
+              {(!foundation || editingMission || editingValues || !foundation) && (
                 <Button
                   onClick={handleSaveFoundation}
                   disabled={saveFoundationMutation.isPending}
                   className="flex items-center space-x-2"
                 >
                   <Save className="h-4 w-4" />
-                  <span>저장</span>
+                  <span>{selectedYear}년 저장</span>
                 </Button>
               )}
             </div>
@@ -692,7 +775,7 @@ export default function Foundation() {
           <Card>
             <CardHeader>
               <div className="flex items-center justify-between">
-                <CardTitle>{currentYear}년 연간 목표</CardTitle>
+                <CardTitle>{selectedYear}년 연간 목표</CardTitle>
                 {!editingGoals && goals && goals.length > 0 ? (
                   <Button
                     variant="outline"
@@ -765,7 +848,7 @@ export default function Foundation() {
                 ) : (
                   <>
                     <p className="text-sm text-gray-600">
-                      미션과 연결된 올해의 핵심 목표를 설정하세요
+                      미션과 연결된 {selectedYear}년의 핵심 목표를 설정하세요
                     </p>
                     
                     {/* Existing Goals */}

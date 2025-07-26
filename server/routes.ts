@@ -13,7 +13,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/foundation/:userId", async (req, res) => {
     try {
       const userId = parseInt(req.params.userId);
-      const foundation = await storage.getFoundation(userId);
+      const year = req.query.year ? parseInt(req.query.year as string) : undefined;
+      const foundation = await storage.getFoundation(userId, year);
       
       if (!foundation) {
         return res.status(404).json({ message: "Foundation not found" });

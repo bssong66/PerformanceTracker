@@ -11,6 +11,7 @@ export const users = pgTable("users", {
 export const foundations = pgTable("foundations", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").notNull(),
+  year: integer("year").notNull(),
   personalMission: text("personal_mission"),
   coreValue1: text("core_value_1"),
   coreValue2: text("core_value_2"),
