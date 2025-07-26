@@ -79,6 +79,18 @@ export default function Foundation() {
     queryFn: () => fetch(`/api/events/${MOCK_USER_ID}?startDate=${currentYear}-01-01&endDate=${currentYear}-12-31`).then(res => res.json()),
   });
 
+  // Get all habits for annual progress calculation
+  const { data: allHabits = [] } = useQuery({
+    queryKey: ['habits', MOCK_USER_ID],
+    queryFn: () => fetch(`/api/habits/${MOCK_USER_ID}`).then(res => res.json()),
+  });
+
+  // Get habit logs for this year
+  const { data: allHabitLogs = [] } = useQuery({
+    queryKey: ['habit-logs-year', MOCK_USER_ID, currentYear],
+    queryFn: () => fetch(`/api/habit-logs/${MOCK_USER_ID}/${currentYear}-01-01?endDate=${currentYear}-12-31`).then(res => res.json()),
+  });
+
   // Set initial values when foundation data loads
   useEffect(() => {
     if (foundation) {
@@ -115,7 +127,7 @@ export default function Foundation() {
 
   // Calculate annual progress for each core value
   const calculateAnnualProgress = (coreValue: string) => {
-    if (!coreValue || coreValue.trim() === "") return { completed: 0, total: 0, percentage: 0 };
+    if (!coreValue || coreValue.trim() === "") return { completed: 0, total: 0, percentage: 0, tasks: { completed: 0, total: 0 }, projects: { completed: 0, total: 0 }, events: { completed: 0, total: 0 }, habits: { completed: 0, total: 0 } };
 
     const today = new Date();
     const thisYear = selectedYear;
@@ -139,6 +151,14 @@ export default function Foundation() {
       new Date(event.createdAt).getFullYear() === thisYear
     );
 
+    // Filter habits by core value
+    const valueHabits = (allHabits as any[]).filter((habit: any) => 
+      habit.coreValue === coreValue && 
+      habit.isActive && 
+      habit.createdAt && 
+      new Date(habit.createdAt).getFullYear() === thisYear
+    );
+
     // Count completed items (up to today)
     const completedTasks = valueTasks.filter((task: any) => 
       task.completed && 
@@ -156,8 +176,35 @@ export default function Foundation() {
       new Date(event.startDate) <= today
     ).length;
 
-    const totalCompleted = completedTasks + completedProjects + completedEvents;
-    const totalItems = valueTasks.length + valueProjects.length + valueEvents.length;
+    // Calculate habit completion rate based on logs
+    let completedHabitDays = 0;
+    let totalExpectedHabitDays = 0;
+
+    valueHabits.forEach((habit: any) => {
+      const habitStartDate = new Date(habit.createdAt);
+      const habitEndDate = new Date(Math.min(today.getTime(), new Date(thisYear, 11, 31).getTime()));
+      
+      // Calculate expected days (excluding weekends if needed)
+      for (let d = new Date(habitStartDate); d <= habitEndDate; d.setDate(d.getDate() + 1)) {
+        const dayOfWeek = d.getDay();
+        if (habit.excludeWeekends && (dayOfWeek === 0 || dayOfWeek === 6)) {
+          continue; // Skip weekends if excluded
+        }
+        totalExpectedHabitDays++;
+      }
+
+      // Count completed days from habit logs
+      const habitLogs = (allHabitLogs as any[]).filter((log: any) => 
+        log.habitId === habit.id && 
+        log.completed && 
+        new Date(log.date) >= habitStartDate && 
+        new Date(log.date) <= habitEndDate
+      );
+      completedHabitDays += habitLogs.length;
+    });
+
+    const totalCompleted = completedTasks + completedProjects + completedEvents + completedHabitDays;
+    const totalItems = valueTasks.length + valueProjects.length + valueEvents.length + totalExpectedHabitDays;
     const percentage = totalItems > 0 ? Math.round((totalCompleted / totalItems) * 100) : 0;
 
     return {
@@ -166,13 +213,14 @@ export default function Foundation() {
       percentage: percentage,
       tasks: { completed: completedTasks, total: valueTasks.length },
       projects: { completed: completedProjects, total: valueProjects.length },
-      events: { completed: completedEvents, total: valueEvents.length }
+      events: { completed: completedEvents, total: valueEvents.length },
+      habits: { completed: completedHabitDays, total: totalExpectedHabitDays }
     };
   };
 
   // Calculate annual progress for each annual goal
   const calculateGoalProgress = (annualGoal: string) => {
-    if (!annualGoal || annualGoal.trim() === "") return { completed: 0, total: 0, percentage: 0 };
+    if (!annualGoal || annualGoal.trim() === "") return { completed: 0, total: 0, percentage: 0, tasks: { completed: 0, total: 0 }, projects: { completed: 0, total: 0 }, events: { completed: 0, total: 0 }, habits: { completed: 0, total: 0 } };
 
     const today = new Date();
     const thisYear = selectedYear;
@@ -196,6 +244,14 @@ export default function Foundation() {
       new Date(event.createdAt).getFullYear() === thisYear
     );
 
+    // Filter habits by annual goal
+    const goalHabits = (allHabits as any[]).filter((habit: any) => 
+      habit.annualGoal === annualGoal && 
+      habit.isActive && 
+      habit.createdAt && 
+      new Date(habit.createdAt).getFullYear() === thisYear
+    );
+
     // Count completed items (up to today)
     const completedTasks = goalTasks.filter((task: any) => 
       task.completed && 
@@ -213,8 +269,35 @@ export default function Foundation() {
       new Date(event.startDate) <= today
     ).length;
 
-    const totalCompleted = completedTasks + completedProjects + completedEvents;
-    const totalItems = goalTasks.length + goalProjects.length + goalEvents.length;
+    // Calculate habit completion rate based on logs
+    let completedHabitDays = 0;
+    let totalExpectedHabitDays = 0;
+
+    goalHabits.forEach((habit: any) => {
+      const habitStartDate = new Date(habit.createdAt);
+      const habitEndDate = new Date(Math.min(today.getTime(), new Date(thisYear, 11, 31).getTime()));
+      
+      // Calculate expected days (excluding weekends if needed)
+      for (let d = new Date(habitStartDate); d <= habitEndDate; d.setDate(d.getDate() + 1)) {
+        const dayOfWeek = d.getDay();
+        if (habit.excludeWeekends && (dayOfWeek === 0 || dayOfWeek === 6)) {
+          continue; // Skip weekends if excluded
+        }
+        totalExpectedHabitDays++;
+      }
+
+      // Count completed days from habit logs
+      const habitLogs = (allHabitLogs as any[]).filter((log: any) => 
+        log.habitId === habit.id && 
+        log.completed && 
+        new Date(log.date) >= habitStartDate && 
+        new Date(log.date) <= habitEndDate
+      );
+      completedHabitDays += habitLogs.length;
+    });
+
+    const totalCompleted = completedTasks + completedProjects + completedEvents + completedHabitDays;
+    const totalItems = goalTasks.length + goalProjects.length + goalEvents.length + totalExpectedHabitDays;
     const percentage = totalItems > 0 ? Math.round((totalCompleted / totalItems) * 100) : 0;
 
     return {
@@ -223,7 +306,8 @@ export default function Foundation() {
       percentage: percentage,
       tasks: { completed: completedTasks, total: goalTasks.length },
       projects: { completed: completedProjects, total: goalProjects.length },
-      events: { completed: completedEvents, total: goalEvents.length }
+      events: { completed: completedEvents, total: goalEvents.length },
+      habits: { completed: completedHabitDays, total: totalExpectedHabitDays }
     };
   };
 
@@ -877,6 +961,7 @@ export default function Foundation() {
                                   <span>프로젝트: {progress.projects.completed}/{progress.projects.total}</span>
                                   <span>할일: {progress.tasks.completed}/{progress.tasks.total}</span>
                                   <span>일정: {progress.events.completed}/{progress.events.total}</span>
+                                  <span>습관: {progress.habits.completed}/{progress.habits.total}</span>
                                 </div>
                               )}
                               
@@ -933,6 +1018,7 @@ export default function Foundation() {
                                     <span>프로젝트: {progress.projects.completed}/{progress.projects.total}</span>
                                     <span>할일: {progress.tasks.completed}/{progress.tasks.total}</span>
                                     <span>일정: {progress.events.completed}/{progress.events.total}</span>
+                                    <span>습관: {progress.habits.completed}/{progress.habits.total}</span>
                                   </div>
                                 )}
                                 
@@ -1010,6 +1096,7 @@ export default function Foundation() {
                                   <span>프로젝트: {progress.projects.completed}/{progress.projects.total}</span>
                                   <span>할일: {progress.tasks.completed}/{progress.tasks.total}</span>
                                   <span>일정: {progress.events.completed}/{progress.events.total}</span>
+                                  <span>습관: {progress.habits.completed}/{progress.habits.total}</span>
                                 </div>
                               ) : (
                                 <p className="text-xs text-slate-500 italic">
@@ -1072,6 +1159,7 @@ export default function Foundation() {
                                   <span>프로젝트: {progress.projects.completed}/{progress.projects.total}</span>
                                   <span>할일: {progress.tasks.completed}/{progress.tasks.total}</span>
                                   <span>일정: {progress.events.completed}/{progress.events.total}</span>
+                                  <span>습관: {progress.habits.completed}/{progress.habits.total}</span>
                                 </div>
                               ) : (
                                 <p className="text-xs text-slate-500 italic">
@@ -1147,6 +1235,7 @@ export default function Foundation() {
                                     <span>프로젝트: {progress.projects.completed}/{progress.projects.total}</span>
                                     <span>할일: {progress.tasks.completed}/{progress.tasks.total}</span>
                                     <span>일정: {progress.events.completed}/{progress.events.total}</span>
+                                    <span>습관: {progress.habits.completed}/{progress.habits.total}</span>
                                   </div>
                                 ) : (
                                   <p className="text-xs text-slate-500 italic">
@@ -1220,6 +1309,7 @@ export default function Foundation() {
                                     <span>프로젝트: {progress.projects.completed}/{progress.projects.total}</span>
                                     <span>할일: {progress.tasks.completed}/{progress.tasks.total}</span>
                                     <span>일정: {progress.events.completed}/{progress.events.total}</span>
+                                    <span>습관: {progress.habits.completed}/{progress.habits.total}</span>
                                   </div>
                                 ) : (
                                   <p className="text-xs text-slate-500 italic">
