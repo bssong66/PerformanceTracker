@@ -553,7 +553,7 @@ export default function Foundation() {
                           <Input
                             value={goal.title}
                             readOnly
-                            className="w-48 flex-shrink-0"
+                            className="w-1/2 flex-shrink-0"
                           />
                           <Progress 
                             value={progress.percentage} 
@@ -574,7 +574,7 @@ export default function Foundation() {
                         
                         {/* Detailed breakdown */}
                         {progress.total > 0 && (
-                          <div className="flex gap-4 text-xs text-gray-500 ml-52">
+                          <div className="flex gap-4 text-xs text-gray-500" style={{marginLeft: "calc(50% + 12px)"}}>
                             <span>프로젝트: {progress.projects.completed}/{progress.projects.total}</span>
                             <span>할일: {progress.tasks.completed}/{progress.tasks.total}</span>
                             <span>일정: {progress.events.completed}/{progress.events.total}</span>
@@ -582,7 +582,7 @@ export default function Foundation() {
                         )}
                         
                         {progress.total === 0 && (
-                          <p className="text-xs text-gray-400 italic ml-52">
+                          <p className="text-xs text-gray-400 italic" style={{marginLeft: "calc(50% + 12px)"}}>
                             연결된 항목이 없습니다
                           </p>
                         )}
@@ -597,12 +597,14 @@ export default function Foundation() {
                       value={newGoal}
                       onChange={(e) => setNewGoal(e.target.value)}
                       onKeyPress={(e) => e.key === 'Enter' && handleAddGoal()}
-                      className="flex-1"
+                      className="w-1/2 flex-shrink-0"
                     />
+                    <div className="flex-1"></div>
                     <Button
                       onClick={handleAddGoal}
                       disabled={!newGoal.trim() || addGoalMutation.isPending}
                       size="sm"
+                      className="flex-shrink-0"
                     >
                       <Plus className="h-4 w-4" />
                     </Button>
