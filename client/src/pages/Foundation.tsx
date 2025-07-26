@@ -717,6 +717,27 @@ export default function Foundation() {
                 <span>저장</span>
               </Button>
             )}
+
+            {/* Goals Save Button - Only visible when editing goals */}
+            {editingGoals && !isPastYear && (
+              <Button
+                onClick={handleSaveGoals}
+                disabled={savingGoals}
+                className="bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm border-0 px-4 py-2 h-auto font-medium"
+              >
+                {savingGoals ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    <span>저장 중...</span>
+                  </>
+                ) : (
+                  <>
+                    <Save className="h-4 w-4 mr-2" />
+                    <span>목표 저장</span>
+                  </>
+                )}
+              </Button>
+            )}
           </div>
         </div>
 
@@ -915,40 +936,20 @@ export default function Foundation() {
                     <span>편집</span>
                   </Button>
                 ) : editingGoals ? (
-                  <div className="flex space-x-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        setEditingGoals(false);
-                        setTempGoals([]);
-                        setNewGoal("");
-                        setNewGoalCoreValue("none");
-                      }}
-                      className="border-slate-300 text-slate-700 hover:bg-slate-50 hover:text-slate-900 shadow-sm"
-                    >
-                      <X className="h-4 w-4 mr-2" />
-                      <span>취소</span>
-                    </Button>
-                    <Button
-                      size="sm"
-                      onClick={handleSaveGoals}
-                      disabled={savingGoals}
-                      className="bg-blue-600 hover:bg-blue-700 text-white shadow-sm"
-                    >
-                      {savingGoals ? (
-                        <>
-                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                          <span>저장 중...</span>
-                        </>
-                      ) : (
-                        <>
-                          <Save className="h-4 w-4 mr-2" />
-                          <span>저장</span>
-                        </>
-                      )}
-                    </Button>
-                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setEditingGoals(false);
+                      setTempGoals([]);
+                      setNewGoal("");
+                      setNewGoalCoreValue("none");
+                    }}
+                    className="border-slate-300 text-slate-700 hover:bg-slate-50 hover:text-slate-900 shadow-sm"
+                  >
+                    <X className="h-4 w-4 mr-2" />
+                    <span>취소</span>
+                  </Button>
                 ) : null}
               </div>
             </CardHeader>
