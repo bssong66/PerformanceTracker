@@ -534,7 +534,7 @@ export default function Foundation() {
                 className="flex items-center space-x-2"
               >
                 <Save className="h-4 w-4" />
-                <span>{selectedYear}년 저장</span>
+                <span>저장</span>
               </Button>
             )}
           </div>
