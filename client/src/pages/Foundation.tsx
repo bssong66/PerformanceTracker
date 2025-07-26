@@ -932,8 +932,14 @@ export default function Foundation() {
                                 <span className="text-sm font-semibold text-slate-700 min-w-fit">
                                   {progress.completed}/{progress.total} ({progress.percentage}%)
                                 </span>
-                                
-
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => handleDeleteGoal(goal.id)}
+                                  className="text-slate-400 hover:text-red-600 hover:bg-red-50 flex-shrink-0 rounded-xl"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
                               </div>
                             </div>
                             
