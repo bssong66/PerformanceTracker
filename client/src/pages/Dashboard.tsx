@@ -4,7 +4,7 @@ import { Progress } from "@/components/ui/progress";
 import { 
   TrendingUp, Calendar, Target, BarChart3, Brain, CheckCircle2, 
   Clock, Star, Flame, Award, Activity, Users, Heart,
-  Zap, Trophy, Rocket, CircularProgress
+  Zap, Trophy, Rocket
 } from "lucide-react";
 import { api } from "@/lib/api";
 import { format, startOfWeek, endOfWeek, eachDayOfInterval, isToday } from "date-fns";
@@ -206,7 +206,7 @@ export default function Dashboard() {
             fill="transparent"
             strokeDasharray={circumference}
             strokeDashoffset={offset}
-            className={colorClasses[color] || colorClasses.blue}
+            className={colorClasses[color as keyof typeof colorClasses] || colorClasses.blue}
             strokeLinecap="round"
           />
         </svg>
