@@ -860,7 +860,7 @@ export default function Foundation() {
             <CardHeader className="pb-4">
               <div className="flex items-center justify-between">
                 <CardTitle className="text-xl font-semibold text-slate-900">{selectedYear}년 연간 목표</CardTitle>
-                {!editingGoals && goals && goals.length > 0 && !isPastYear ? (
+                {!editingGoals && goals && (goals as any[]).length > 0 && !isPastYear ? (
                   <Button
                     variant="outline"
                     size="sm"
@@ -875,7 +875,7 @@ export default function Foundation() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {!editingGoals && (goals.length > 0 || tempGoals.length > 0) ? (
+                {!editingGoals && ((goals as any[]).length > 0 || tempGoals.length > 0) ? (
                   <div className="space-y-3">
                     {/* Display saved goals */}
                     {(goals as any[]).map((goal: any) => {
