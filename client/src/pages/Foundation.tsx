@@ -351,6 +351,34 @@ export default function Foundation() {
     ));
   };
 
+  const handleGoalCoreValueChange = async (goalId: number, coreValue: string) => {
+    const actualValue = coreValue === "none" ? null : coreValue;
+    try {
+      const response = await fetch(`/api/goals/${goalId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ coreValue: actualValue }),
+      });
+      
+      if (response.ok) {
+        // Invalidate goals cache to refresh data
+        queryClient.invalidateQueries({ queryKey: [api.goals.list(MOCK_USER_ID, selectedYear)] });
+        toast({
+          title: "핵심가치 변경",
+          description: "목표의 핵심가치가 변경되었습니다.",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "변경 실패",
+        description: "핵심가치 변경에 실패했습니다.",
+        variant: "destructive",
+      });
+    }
+  };
+
   const handleDeleteTempGoal = (tempId: number) => {
     setTempGoals(tempGoals.filter(goal => goal.id !== tempId));
   };
@@ -837,21 +865,18 @@ export default function Foundation() {
                       return (
                         <div key={goal.id} className="p-4 bg-gradient-to-r from-emerald-50/50 to-teal-50/50 rounded-xl border border-emerald-200/50">
                           <div className="flex items-start space-x-4">
-                            <div className="w-[65%] flex-shrink-0 space-y-3">
-                              <div className="w-full">
-                                <Select value={goal.coreValue || "none"} disabled>
-                                  <SelectTrigger className="w-full h-8 text-xs border-slate-200 bg-slate-50">
-                                    <SelectValue placeholder="핵심가치">
-                                      {goal.coreValue || "해당 없음"}
-                                    </SelectValue>
-                                  </SelectTrigger>
-                                </Select>
+                            <div className="flex-shrink-0 w-32">
+                              <div className="p-2 bg-white/80 rounded-lg border border-slate-200/50 shadow-sm text-center">
+                                <div className="text-xs text-slate-500 mb-1">핵심가치</div>
+                                <div className="text-xs font-medium text-slate-700">
+                                  {goal.coreValue || "해당 없음"}
+                                </div>
                               </div>
-                              <div className="p-4 bg-white/80 rounded-xl border border-slate-200/50 shadow-sm">
-                                <p className="text-slate-800 whitespace-pre-wrap leading-relaxed font-medium">
-                                  {goal.title}
-                                </p>
-                              </div>
+                            </div>
+                            <div className="flex-1 p-4 bg-white/80 rounded-xl border border-slate-200/50 shadow-sm">
+                              <p className="text-slate-800 whitespace-pre-wrap leading-relaxed font-medium">
+                                {goal.title}
+                              </p>
                             </div>
                             <div className="flex-1 space-y-1 mt-2">
                               <div className="flex items-center space-x-3">
@@ -892,11 +917,12 @@ export default function Foundation() {
                             </span>
                           </div>
                           <div className="flex items-start space-x-4">
-                            <div className="w-[65%] flex-shrink-0 space-y-3">
-                              <div className="w-full">
+                            <div className="flex-shrink-0 w-32">
+                              <div className="p-2 bg-white/80 rounded-lg border border-slate-200/50 shadow-sm">
+                                <div className="text-xs text-slate-500 mb-1">핵심가치</div>
                                 <Select value={tempGoal.coreValue || "none"} onValueChange={(value) => handleTempGoalCoreValueChange(tempGoal.id, value)}>
-                                  <SelectTrigger className="w-full h-8 text-xs border-slate-200 bg-white/80">
-                                    <SelectValue placeholder="핵심가치 선택" />
+                                  <SelectTrigger className="w-full h-6 text-xs border-slate-200 bg-white/80">
+                                    <SelectValue placeholder="선택" />
                                   </SelectTrigger>
                                   <SelectContent>
                                     <SelectItem value="none">해당 없음</SelectItem>
@@ -906,11 +932,11 @@ export default function Foundation() {
                                   </SelectContent>
                                 </Select>
                               </div>
-                              <div className="p-4 bg-white/80 rounded-xl border border-slate-200/50 shadow-sm">
-                                <p className="text-slate-800 whitespace-pre-wrap leading-relaxed font-medium">
-                                  {tempGoal.title}
-                                </p>
-                              </div>
+                            </div>
+                            <div className="flex-1 p-4 bg-white/80 rounded-xl border border-slate-200/50 shadow-sm">
+                              <p className="text-slate-800 whitespace-pre-wrap leading-relaxed font-medium">
+                                {tempGoal.title}
+                              </p>
                             </div>
                             <div className="flex-1 space-y-1 mt-2">
                               <div className="flex items-center space-x-3">
@@ -953,21 +979,26 @@ export default function Foundation() {
                         return (
                           <div key={goal.id} className="p-4 bg-gradient-to-r from-amber-50/50 to-orange-50/50 rounded-xl border border-amber-200/50">
                             <div className="flex items-start space-x-4">
-                              <div className="w-[65%] flex-shrink-0 space-y-3">
-                                <div className="w-full">
-                                  <Select value={goal.coreValue || "none"} disabled>
-                                    <SelectTrigger className="w-full h-8 text-xs border-slate-200 bg-slate-50">
-                                      <SelectValue placeholder="핵심가치">
-                                        {goal.coreValue || "해당 없음"}
-                                      </SelectValue>
+                              <div className="flex-shrink-0 w-32">
+                                <div className="p-2 bg-white/80 rounded-lg border border-slate-200/50 shadow-sm">
+                                  <div className="text-xs text-slate-500 mb-1">핵심가치</div>
+                                  <Select value={goal.coreValue || "none"} onValueChange={(value) => handleGoalCoreValueChange(goal.id, value)}>
+                                    <SelectTrigger className="w-full h-6 text-xs border-slate-200 bg-white/80">
+                                      <SelectValue placeholder="선택" />
                                     </SelectTrigger>
+                                    <SelectContent>
+                                      <SelectItem value="none">해당 없음</SelectItem>
+                                      {values.filter(v => v.trim()).map((value, index) => (
+                                        <SelectItem key={index} value={value}>{value}</SelectItem>
+                                      ))}
+                                    </SelectContent>
                                   </Select>
                                 </div>
-                                <div className="p-4 bg-white/80 rounded-xl border border-slate-200/50 shadow-sm">
-                                  <p className="text-slate-800 whitespace-pre-wrap leading-relaxed font-medium">
-                                    {goal.title}
-                                  </p>
-                                </div>
+                              </div>
+                              <div className="flex-1 p-4 bg-white/80 rounded-xl border border-slate-200/50 shadow-sm">
+                                <p className="text-slate-800 whitespace-pre-wrap leading-relaxed font-medium">
+                                  {goal.title}
+                                </p>
                               </div>
                               <div className="flex-1 space-y-1 mt-2">
                                 <div className="flex items-center space-x-3">
@@ -1016,11 +1047,12 @@ export default function Foundation() {
                               </span>
                             </div>
                             <div className="flex items-start space-x-4">
-                              <div className="w-[65%] flex-shrink-0 space-y-3">
-                                <div className="w-full">
+                              <div className="flex-shrink-0 w-32">
+                                <div className="p-2 bg-white/80 rounded-lg border border-slate-200/50 shadow-sm">
+                                  <div className="text-xs text-slate-500 mb-1">핵심가치</div>
                                   <Select value={tempGoal.coreValue || "none"} onValueChange={(value) => handleTempGoalCoreValueChange(tempGoal.id, value)}>
-                                    <SelectTrigger className="w-full h-8 text-xs border-slate-200 bg-white/80">
-                                      <SelectValue placeholder="핵심가치 선택" />
+                                    <SelectTrigger className="w-full h-6 text-xs border-slate-200 bg-white/80">
+                                      <SelectValue placeholder="선택" />
                                     </SelectTrigger>
                                     <SelectContent>
                                       <SelectItem value="none">해당 없음</SelectItem>
@@ -1030,10 +1062,12 @@ export default function Foundation() {
                                     </SelectContent>
                                   </Select>
                                 </div>
+                              </div>
+                              <div className="flex-1">
                                 <Textarea
                                   value={tempGoal.title}
                                   readOnly
-                                  className="w-full min-h-[2.5rem] resize-none border-slate-300 bg-white/80 rounded-xl shadow-sm"
+                                  className="w-full min-h-[2.5rem] resize-none border-slate-300 bg-white/80 rounded-xl shadow-sm p-4"
                                   rows={Math.max(1, Math.ceil(tempGoal.title.length / 40))}
                                 />
                               </div>
@@ -1074,33 +1108,38 @@ export default function Foundation() {
                       
                       {/* Add New Goal Input */}
                       <div className="p-4 bg-gradient-to-r from-slate-50/50 to-gray-50/50 rounded-xl border border-slate-200/50">
-                        <div className="space-y-3">
-                          <div className="w-full">
-                            <Select value={newGoalCoreValue || "none"} onValueChange={setNewGoalCoreValue}>
-                              <SelectTrigger className="w-full h-8 text-xs border-slate-200 bg-white/80">
-                                <SelectValue placeholder="핵심가치 선택 (선택사항)" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="none">해당 없음</SelectItem>
-                                {values.filter(v => v.trim()).map((value, index) => (
-                                  <SelectItem key={index} value={value}>{value}</SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
+                        <div className="flex items-start space-x-4">
+                          <div className="flex-shrink-0 w-32">
+                            <div className="p-2 bg-white/80 rounded-lg border border-slate-200/50 shadow-sm">
+                              <div className="text-xs text-slate-500 mb-1">핵심가치</div>
+                              <Select value={newGoalCoreValue || "none"} onValueChange={setNewGoalCoreValue}>
+                                <SelectTrigger className="w-full h-6 text-xs border-slate-200 bg-white/80">
+                                  <SelectValue placeholder="선택" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="none">해당 없음</SelectItem>
+                                  {values.filter(v => v.trim()).map((value, index) => (
+                                    <SelectItem key={index} value={value}>{value}</SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </div>
                           </div>
-                          <Textarea
-                            placeholder="새로운 목표를 입력하세요... (Enter로 추가)"
-                            value={newGoal}
-                            onChange={(e) => setNewGoal(e.target.value)}
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter' && !e.shiftKey) {
-                                e.preventDefault();
-                                handleAddGoalToTemp();
-                              }
-                            }}
-                            className="w-full min-h-[2.5rem] resize-none border-slate-300 focus:border-blue-500 focus:ring-blue-500/20 rounded-xl shadow-sm"
-                            rows={Math.max(1, Math.ceil(newGoal.length / 80))}
-                          />
+                          <div className="flex-1">
+                            <Textarea
+                              placeholder="새로운 목표를 입력하세요... (Enter로 추가)"
+                              value={newGoal}
+                              onChange={(e) => setNewGoal(e.target.value)}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter' && !e.shiftKey) {
+                                  e.preventDefault();
+                                  handleAddGoalToTemp();
+                                }
+                              }}
+                              className="w-full min-h-[2.5rem] resize-none border-slate-300 focus:border-blue-500 focus:ring-blue-500/20 rounded-xl shadow-sm p-4"
+                              rows={Math.max(1, Math.ceil(newGoal.length / 80))}
+                            />
+                          </div>
                         </div>
                       </div>
                     </div>
