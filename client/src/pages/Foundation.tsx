@@ -125,6 +125,63 @@ export default function Foundation() {
     };
   };
 
+  // Calculate annual progress for each annual goal
+  const calculateGoalProgress = (annualGoal: string) => {
+    if (!annualGoal || annualGoal.trim() === "") return { completed: 0, total: 0, percentage: 0 };
+
+    const today = new Date();
+    const thisYear = currentYear;
+    
+    // Filter items by annual goal and year
+    const goalTasks = (allTasks as any[]).filter((task: any) => 
+      task.annualGoal === annualGoal && 
+      task.createdAt && 
+      new Date(task.createdAt).getFullYear() === thisYear
+    );
+    
+    const goalProjects = (allProjects as any[]).filter((project: any) => 
+      project.annualGoal === annualGoal && 
+      project.createdAt && 
+      new Date(project.createdAt).getFullYear() === thisYear
+    );
+    
+    const goalEvents = (allEvents as any[]).filter((event: any) => 
+      event.annualGoal === annualGoal && 
+      event.createdAt && 
+      new Date(event.createdAt).getFullYear() === thisYear
+    );
+
+    // Count completed items (up to today)
+    const completedTasks = goalTasks.filter((task: any) => 
+      task.completed && 
+      task.completedAt && 
+      new Date(task.completedAt) <= today
+    ).length;
+    
+    const completedProjects = goalProjects.filter((project: any) => 
+      project.status === 'completed' && 
+      project.updatedAt && 
+      new Date(project.updatedAt) <= today
+    ).length;
+    
+    const completedEvents = goalEvents.filter((event: any) => 
+      new Date(event.startDate) <= today
+    ).length;
+
+    const totalCompleted = completedTasks + completedProjects + completedEvents;
+    const totalItems = goalTasks.length + goalProjects.length + goalEvents.length;
+    const percentage = totalItems > 0 ? Math.round((totalCompleted / totalItems) * 100) : 0;
+
+    return {
+      completed: totalCompleted,
+      total: totalItems,
+      percentage: percentage,
+      tasks: { completed: completedTasks, total: goalTasks.length },
+      projects: { completed: completedProjects, total: goalProjects.length },
+      events: { completed: completedEvents, total: goalEvents.length }
+    };
+  };
+
   const saveFoundationMutation = useMutation({
     mutationFn: saveFoundation,
     onSuccess: () => {
@@ -486,24 +543,57 @@ export default function Foundation() {
                 </p>
                 
                 {/* Existing Goals */}
-                <div className="space-y-3">
-                  {(goals as any[]).map((goal: any) => (
-                    <div key={goal.id} className="flex items-center space-x-3">
-                      <Input
-                        value={goal.title}
-                        readOnly
-                        className="flex-1"
-                      />
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleDeleteGoal(goal.id)}
-                        className="text-gray-400 hover:text-red-500"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  ))}
+                <div className="space-y-4">
+                  {(goals as any[]).map((goal: any) => {
+                    const progress = calculateGoalProgress(goal.title);
+                    
+                    return (
+                      <div key={goal.id} className="space-y-3">
+                        <div className="flex items-center space-x-3">
+                          <Input
+                            value={goal.title}
+                            readOnly
+                            className="flex-1"
+                          />
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleDeleteGoal(goal.id)}
+                            className="text-gray-400 hover:text-red-500"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                        
+                        {/* Progress bar for this annual goal */}
+                        <div className="space-y-2 p-3 bg-gray-50 rounded-lg border">
+                          <div className="flex items-center gap-3">
+                            <Progress 
+                              value={progress.percentage} 
+                              className="flex-1 h-2"
+                            />
+                            <span className="text-sm font-medium text-gray-700 min-w-fit">
+                              {progress.completed}/{progress.total} ({progress.percentage}%)
+                            </span>
+                          </div>
+                          
+                          {progress.total > 0 && (
+                            <div className="flex flex-col gap-1 text-xs text-gray-500">
+                              <span>프로젝트: {progress.projects.completed}/{progress.projects.total}</span>
+                              <span>할일: {progress.tasks.completed}/{progress.tasks.total}</span>
+                              <span>일정: {progress.events.completed}/{progress.events.total}</span>
+                            </div>
+                          )}
+                          
+                          {progress.total === 0 && (
+                            <p className="text-xs text-gray-400 italic">
+                              연결된 항목이 없습니다
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
                   
                   {/* Add New Goal */}
                   <div className="flex items-center space-x-3">
