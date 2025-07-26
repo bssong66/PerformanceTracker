@@ -109,21 +109,28 @@ export default function Foundation() {
     setTempGoals([]);
     setNewGoal("");
     
-    // For future years without foundation data, automatically set to new creation mode
+    // Clear edit modes when year changes
+    setEditingMission(false);
+    setEditingValues(false);
+    setEditingGoals(false);
+    
+    // Invalidate and refetch queries for the new year
+    queryClient.invalidateQueries({ 
+      queryKey: [api.foundation.get(MOCK_USER_ID, selectedYear)] 
+    });
+    queryClient.invalidateQueries({ 
+      queryKey: [api.goals.list(MOCK_USER_ID, selectedYear)] 
+    });
+  }, [selectedYear]);
+
+  // Effect to automatically enter edit modes for future years
+  useEffect(() => {
     if (isFutureYear && !foundation) {
       setEditingMission(true);
       setEditingValues(true);
       setEditingGoals(true);
-    } else {
-      setEditingMission(false);
-      setEditingValues(false);
-      setEditingGoals(false);
     }
-    
-    // Refresh foundation data for the selected year
-    refetchFoundation();
-    refetchGoals();
-  }, [selectedYear, isFutureYear, foundation, refetchFoundation, refetchGoals]);
+  }, [isFutureYear, foundation]);
 
   // Calculate annual progress for each core value
   const calculateAnnualProgress = (coreValue: string) => {
