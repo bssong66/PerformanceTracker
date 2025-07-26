@@ -404,26 +404,34 @@ export default function Foundation() {
   };
 
   const handleSaveGoals = async () => {
-    if (tempGoals.length === 0) {
-      setEditingGoals(false);
-      return;
-    }
-
     setSavingGoals(true);
     
     try {
-      // Save all temporary goals to database
-      for (const tempGoal of tempGoals) {
-        await createAnnualGoal({
-          userId: MOCK_USER_ID,
-          year: selectedYear,
-          title: tempGoal.title,
-          coreValue: tempGoal.coreValue || null,
+      // Save all temporary goals to database if any exist
+      if (tempGoals.length > 0) {
+        for (const tempGoal of tempGoals) {
+          await createAnnualGoal({
+            userId: MOCK_USER_ID,
+            year: selectedYear,
+            title: tempGoal.title,
+            coreValue: tempGoal.coreValue || null,
+          });
+        }
+        
+        // Refresh goals data
+        await refetchGoals();
+        
+        toast({
+          title: "목표 저장 완료",
+          description: `${tempGoals.length}개의 목표가 저장되었습니다.`,
+        });
+      } else {
+        // No temp goals, just save core value changes for existing goals
+        toast({
+          title: "저장 완료",
+          description: "연간 목표의 변경사항이 저장되었습니다.",
         });
       }
-      
-      // Refresh goals data
-      await refetchGoals();
       
       // Clear temporary data and exit edit mode
       setTempGoals([]);
@@ -431,10 +439,6 @@ export default function Foundation() {
       setNewGoalCoreValue("none");
       setEditingGoals(false);
       
-      toast({
-        title: "목표 저장 완료",
-        description: `${tempGoals.length}개의 목표가 저장되었습니다.`,
-      });
     } catch (error) {
       toast({
         title: "저장 실패",
@@ -706,26 +710,14 @@ export default function Foundation() {
               </DialogContent>
             </Dialog>
             
-            {/* Save Button - Only available for current and future years */}
-            {!isPastYear && (!foundation || editingMission || editingValues || !foundation) && (
+            {/* Unified Save Button - Only available for current and future years */}
+            {!isPastYear && (!foundation || editingMission || editingValues || editingGoals) && (
               <Button
-                onClick={handleSaveFoundation}
-                disabled={saveFoundationMutation.isPending}
+                onClick={editingGoals ? handleSaveGoals : handleSaveFoundation}
+                disabled={editingGoals ? savingGoals : saveFoundationMutation.isPending}
                 className="bg-blue-600 hover:bg-blue-700 text-white shadow-sm border-0 px-4 py-2 h-auto font-medium"
               >
-                <Save className="h-4 w-4 mr-2" />
-                <span>저장</span>
-              </Button>
-            )}
-
-            {/* Goals Save Button - Only visible when editing goals */}
-            {editingGoals && !isPastYear && (
-              <Button
-                onClick={handleSaveGoals}
-                disabled={savingGoals}
-                className="bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm border-0 px-4 py-2 h-auto font-medium"
-              >
-                {savingGoals ? (
+                {(editingGoals ? savingGoals : saveFoundationMutation.isPending) ? (
                   <>
                     <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                     <span>저장 중...</span>
@@ -733,7 +725,7 @@ export default function Foundation() {
                 ) : (
                   <>
                     <Save className="h-4 w-4 mr-2" />
-                    <span>목표 저장</span>
+                    <span>저장</span>
                   </>
                 )}
               </Button>
@@ -934,21 +926,6 @@ export default function Foundation() {
                   >
                     <Edit2 className="h-4 w-4 mr-2" />
                     <span>편집</span>
-                  </Button>
-                ) : editingGoals ? (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      setEditingGoals(false);
-                      setTempGoals([]);
-                      setNewGoal("");
-                      setNewGoalCoreValue("none");
-                    }}
-                    className="border-slate-300 text-slate-700 hover:bg-slate-50 hover:text-slate-900 shadow-sm"
-                  >
-                    <X className="h-4 w-4 mr-2" />
-                    <span>취소</span>
                   </Button>
                 ) : null}
               </div>
