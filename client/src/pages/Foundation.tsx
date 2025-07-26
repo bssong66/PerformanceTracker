@@ -894,7 +894,6 @@ export default function Foundation() {
               <div className="space-y-4">
                 {!editingMission && foundation ? (
                   <div className="space-y-3">
-                    <Label className="text-slate-700 font-medium">개인 미션</Label>
                     <div className="p-4 bg-slate-50/50 rounded-xl border border-slate-200">
                       <p className="text-slate-800 whitespace-pre-wrap leading-relaxed">
                         {mission || "설정된 개인 미션이 없습니다."}
