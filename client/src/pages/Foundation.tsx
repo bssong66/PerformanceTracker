@@ -372,30 +372,30 @@ export default function Foundation() {
   }
 
   return (
-    <div className="py-6">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-slate-50/30">
+      <div className="max-w-5xl mx-auto px-6 py-8">
         {/* Header */}
-        <div className="mb-8">
+        <div className="mb-10">
           {/* Title and Description Row */}
-          <div className="flex items-start justify-between mb-6">
-            <div className="flex-1 flex items-center space-x-6">
-              <h1 className="text-2xl font-bold text-gray-900">가치 중심 계획</h1>
-              <p className="text-sm text-gray-600 mt-1">
+          <div className="flex items-start justify-between mb-8">
+            <div className="flex-1 flex items-center space-x-8">
+              <h1 className="text-3xl font-semibold text-slate-900 tracking-tight">가치 중심 계획</h1>
+              <p className="text-slate-600 mt-1 text-base leading-relaxed">
                 개인 미션과 핵심 가치를 설정하여 목표 달성의 기반을 만드세요
               </p>
               {/* Year Status Indicator */}
               {isPastYear && (
-                <div className="px-3 py-1 bg-gray-100 text-gray-600 text-xs rounded-full border">
+                <div className="px-4 py-2 bg-slate-100 text-slate-700 text-sm font-medium rounded-full border border-slate-200 shadow-sm">
                   과거 계획 (읽기 전용)
                 </div>
               )}
               {isFutureYear && (
-                <div className="px-3 py-1 bg-blue-100 text-blue-600 text-xs rounded-full border border-blue-200">
+                <div className="px-4 py-2 bg-blue-50 text-blue-700 text-sm font-medium rounded-full border border-blue-200 shadow-sm">
                   미래 계획
                 </div>
               )}
               {isCurrentYear && (
-                <div className="px-3 py-1 bg-green-100 text-green-600 text-xs rounded-full border border-green-200">
+                <div className="px-4 py-2 bg-emerald-50 text-emerald-700 text-sm font-medium rounded-full border border-emerald-200 shadow-sm">
                   현재 계획
                 </div>
               )}
@@ -403,20 +403,20 @@ export default function Foundation() {
           </div>
 
           {/* Action Buttons Row */}
-          <div className="flex items-center space-x-3">
+          <div className="flex items-center space-x-4">
             {/* Year Selector */}
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center space-x-2 bg-white rounded-lg border border-slate-200 shadow-sm p-1">
               <Button
-                variant="outline"
+                variant="ghost"
                 size="sm"
                 onClick={() => setSelectedYear(selectedYear - 1)}
-                className="h-8 w-8 p-0"
+                className="h-8 w-8 p-0 hover:bg-slate-100"
               >
-                <ChevronLeft className="h-4 w-4" />
+                <ChevronLeft className="h-4 w-4 text-slate-600" />
               </Button>
               
               <Select value={selectedYear.toString()} onValueChange={(value) => setSelectedYear(parseInt(value))}>
-                <SelectTrigger className="w-20 h-8">
+                <SelectTrigger className="w-20 h-8 border-0 shadow-none font-medium text-slate-700">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -429,12 +429,12 @@ export default function Foundation() {
               </Select>
               
               <Button
-                variant="outline"
+                variant="ghost"
                 size="sm"
                 onClick={() => setSelectedYear(selectedYear + 1)}
-                className="h-8 w-8 p-0"
+                className="h-8 w-8 p-0 hover:bg-slate-100"
               >
-                <ChevronRight className="h-4 w-4" />
+                <ChevronRight className="h-4 w-4 text-slate-600" />
               </Button>
             </div>
             {/* New Plan Dropdown - Only available for current and future years */}
@@ -442,12 +442,11 @@ export default function Foundation() {
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button
-                    variant="outline"
-                    className="flex items-center space-x-2"
+                    className="bg-slate-900 hover:bg-slate-800 text-white shadow-sm border-0 px-4 py-2 h-auto font-medium"
                   >
-                    <Plus className="h-4 w-4" />
+                    <Plus className="h-4 w-4 mr-2" />
                     <span>신규 계획</span>
-                    <ChevronDown className="h-4 w-4" />
+                    <ChevronDown className="h-4 w-4 ml-2" />
                   </Button>
                 </DropdownMenuTrigger>
               <DropdownMenuContent align="start">
@@ -562,9 +561,9 @@ export default function Foundation() {
               <Button
                 onClick={handleSaveFoundation}
                 disabled={saveFoundationMutation.isPending}
-                className="flex items-center space-x-2"
+                className="bg-blue-600 hover:bg-blue-700 text-white shadow-sm border-0 px-4 py-2 h-auto font-medium"
               >
-                <Save className="h-4 w-4" />
+                <Save className="h-4 w-4 mr-2" />
                 <span>저장</span>
               </Button>
             )}
@@ -573,18 +572,18 @@ export default function Foundation() {
 
         <div className="space-y-8">
           {/* Personal Mission */}
-          <Card>
-            <CardHeader>
+          <Card className="border-0 shadow-sm bg-white/70 backdrop-blur-sm">
+            <CardHeader className="pb-4">
               <div className="flex items-center justify-between">
-                <CardTitle>개인 미션</CardTitle>
+                <CardTitle className="text-xl font-semibold text-slate-900">개인 미션</CardTitle>
                 {!editingMission && foundation && !isPastYear ? (
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() => setEditingMission(true)}
-                    className="flex items-center space-x-2"
+                    className="border-slate-300 text-slate-700 hover:bg-slate-50 hover:text-slate-900 shadow-sm"
                   >
-                    <Edit2 className="h-4 w-4" />
+                    <Edit2 className="h-4 w-4 mr-2" />
                     <span>편집</span>
                   </Button>
                 ) : (editingMission && !isPastYear) ? (
@@ -596,9 +595,9 @@ export default function Foundation() {
                         handleSaveFoundation();
                         setEditingMission(false);
                       }}
-                      className="flex items-center space-x-2"
+                      className="border-emerald-300 text-emerald-700 hover:bg-emerald-50 shadow-sm"
                     >
-                      <Check className="h-4 w-4" />
+                      <Check className="h-4 w-4 mr-2" />
                       <span>저장</span>
                     </Button>
                     <Button
@@ -608,9 +607,9 @@ export default function Foundation() {
                         setMission((foundation as any)?.personalMission || "");
                         setEditingMission(false);
                       }}
-                      className="flex items-center space-x-2"
+                      className="text-slate-600 hover:bg-slate-100 hover:text-slate-800"
                     >
-                      <X className="h-4 w-4" />
+                      <X className="h-4 w-4 mr-2" />
                       <span>취소</span>
                     </Button>
                   </div>
@@ -620,17 +619,17 @@ export default function Foundation() {
             <CardContent>
               <div className="space-y-4">
                 {!editingMission && foundation ? (
-                  <div className="space-y-2">
-                    <Label>개인 미션</Label>
-                    <div className="p-3 bg-gray-50 rounded-lg border">
-                      <p className="text-sm text-gray-800 whitespace-pre-wrap">
+                  <div className="space-y-3">
+                    <Label className="text-slate-700 font-medium">개인 미션</Label>
+                    <div className="p-4 bg-slate-50/50 rounded-xl border border-slate-200">
+                      <p className="text-slate-800 whitespace-pre-wrap leading-relaxed">
                         {mission || "설정된 개인 미션이 없습니다."}
                       </p>
                     </div>
                   </div>
                 ) : (
                   <>
-                    <Label htmlFor="mission">
+                    <Label htmlFor="mission" className="text-slate-700 font-medium">
                       한 문장으로 당신의 인생 목적을 표현해보세요
                     </Label>
                     <Textarea
@@ -639,6 +638,7 @@ export default function Foundation() {
                       value={mission}
                       onChange={(e) => setMission(e.target.value)}
                       rows={3}
+                      className="border-slate-300 focus:border-blue-500 focus:ring-blue-500/20 rounded-xl"
                     />
                   </>
                 )}
@@ -647,18 +647,18 @@ export default function Foundation() {
           </Card>
 
           {/* Core Values */}
-          <Card>
-            <CardHeader>
+          <Card className="border-0 shadow-sm bg-white/70 backdrop-blur-sm">
+            <CardHeader className="pb-4">
               <div className="flex items-center justify-between">
-                <CardTitle>핵심 가치 (3가지)</CardTitle>
+                <CardTitle className="text-xl font-semibold text-slate-900">핵심 가치 (3가지)</CardTitle>
                 {!editingValues && foundation && !isPastYear ? (
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() => setEditingValues(true)}
-                    className="flex items-center space-x-2"
+                    className="border-slate-300 text-slate-700 hover:bg-slate-50 hover:text-slate-900 shadow-sm"
                   >
-                    <Edit2 className="h-4 w-4" />
+                    <Edit2 className="h-4 w-4 mr-2" />
                     <span>편집</span>
                   </Button>
                 ) : (editingValues && !isPastYear) ? (
@@ -670,9 +670,9 @@ export default function Foundation() {
                         handleSaveFoundation();
                         setEditingValues(false);
                       }}
-                      className="flex items-center space-x-2"
+                      className="border-emerald-300 text-emerald-700 hover:bg-emerald-50 shadow-sm"
                     >
-                      <Check className="h-4 w-4" />
+                      <Check className="h-4 w-4 mr-2" />
                       <span>저장</span>
                     </Button>
                     <Button
@@ -687,9 +687,9 @@ export default function Foundation() {
                         ]);
                         setEditingValues(false);
                       }}
-                      className="flex items-center space-x-2"
+                      className="text-slate-600 hover:bg-slate-100 hover:text-slate-800"
                     >
-                      <X className="h-4 w-4" />
+                      <X className="h-4 w-4 mr-2" />
                       <span>취소</span>
                     </Button>
                   </div>
@@ -706,9 +706,9 @@ export default function Foundation() {
                       return (
                         <div key={index} className="space-y-3">
                           <div>
-                            <Label>가치 {index + 1}</Label>
-                            <div className="p-3 bg-gray-50 rounded-lg border">
-                              <p className="text-sm text-gray-800">
+                            <Label className="text-slate-700 font-medium">가치 {index + 1}</Label>
+                            <div className="p-4 bg-slate-50/50 rounded-xl border border-slate-200">
+                              <p className="text-slate-800 leading-relaxed">
                                 {value || "설정되지 않음"}
                               </p>
                             </div>
@@ -716,19 +716,19 @@ export default function Foundation() {
                           
                           {/* Progress bar for this core value */}
                           {progress && value.trim() && (
-                            <div className="space-y-2 p-3 bg-gray-50 rounded-lg border">
+                            <div className="space-y-3 p-4 bg-gradient-to-r from-blue-50/50 to-indigo-50/50 rounded-xl border border-blue-200/50">
                               <div className="flex items-center gap-3">
                                 <Progress 
                                   value={progress.percentage} 
-                                  className="flex-1 h-2"
+                                  className="flex-1 h-2.5"
                                 />
-                                <span className="text-sm font-medium text-gray-700 min-w-fit">
+                                <span className="text-sm font-semibold text-slate-700 min-w-fit">
                                   {progress.completed}/{progress.total} ({progress.percentage}%)
                                 </span>
                               </div>
                               
                               {progress.total > 0 && (
-                                <div className="flex flex-col gap-1 text-xs text-gray-500">
+                                <div className="flex flex-col gap-1 text-xs text-slate-600">
                                   <span>프로젝트: {progress.projects.completed}/{progress.projects.total}</span>
                                   <span>할일: {progress.tasks.completed}/{progress.tasks.total}</span>
                                   <span>일정: {progress.events.completed}/{progress.events.total}</span>
@@ -736,7 +736,7 @@ export default function Foundation() {
                               )}
                               
                               {progress.total === 0 && (
-                                <p className="text-xs text-gray-400 italic">
+                                <p className="text-xs text-slate-500 italic">
                                   연결된 항목이 없습니다
                                 </p>
                               )}
@@ -748,7 +748,7 @@ export default function Foundation() {
                   </div>
                 ) : (
                   <>
-                    <p className="text-sm text-gray-600">
+                    <p className="text-slate-600 leading-relaxed">
                       의사결정의 기준이 되는 개인 가치를 설정하세요
                     </p>
                     <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
@@ -758,7 +758,7 @@ export default function Foundation() {
                         return (
                           <div key={index} className="space-y-3">
                             <div>
-                              <Label htmlFor={`value-${index}`}>가치 {index + 1}</Label>
+                              <Label htmlFor={`value-${index}`} className="text-slate-700 font-medium">가치 {index + 1}</Label>
                               <Input
                                 id={`value-${index}`}
                                 placeholder={`예: ${
@@ -766,6 +766,7 @@ export default function Foundation() {
                                 }`}
                                 value={value}
                                 onChange={(e) => handleValueChange(index, e.target.value)}
+                                className="border-slate-300 focus:border-blue-500 focus:ring-blue-500/20 rounded-xl"
                               />
                             </div>
                             
@@ -808,18 +809,18 @@ export default function Foundation() {
           </Card>
 
           {/* Annual Goals */}
-          <Card>
-            <CardHeader>
+          <Card className="border-0 shadow-sm bg-white/70 backdrop-blur-sm">
+            <CardHeader className="pb-4">
               <div className="flex items-center justify-between">
-                <CardTitle>{selectedYear}년 연간 목표</CardTitle>
+                <CardTitle className="text-xl font-semibold text-slate-900">{selectedYear}년 연간 목표</CardTitle>
                 {!editingGoals && goals && goals.length > 0 && !isPastYear ? (
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() => setEditingGoals(true)}
-                    className="flex items-center space-x-2"
+                    className="border-slate-300 text-slate-700 hover:bg-slate-50 hover:text-slate-900 shadow-sm"
                   >
-                    <Edit2 className="h-4 w-4" />
+                    <Edit2 className="h-4 w-4 mr-2" />
                     <span>편집</span>
                   </Button>
                 ) : (editingGoals && !isPastYear) ? (
@@ -828,9 +829,9 @@ export default function Foundation() {
                       variant="outline"
                       size="sm"
                       onClick={() => setEditingGoals(false)}
-                      className="flex items-center space-x-2"
+                      className="border-emerald-300 text-emerald-700 hover:bg-emerald-50 shadow-sm"
                     >
-                      <Check className="h-4 w-4" />
+                      <Check className="h-4 w-4 mr-2" />
                       <span>완료</span>
                     </Button>
                   </div>
@@ -845,19 +846,19 @@ export default function Foundation() {
                       const progress = calculateGoalProgress(goal.title);
                       
                       return (
-                        <div key={goal.id} className="space-y-2">
-                          <div className="flex items-start space-x-3">
-                            <div className="w-1/2 flex-shrink-0 p-3 bg-gray-50 rounded-lg border">
-                              <p className="text-sm text-gray-800 whitespace-pre-wrap">
+                        <div key={goal.id} className="space-y-3 p-4 bg-gradient-to-r from-emerald-50/50 to-teal-50/50 rounded-xl border border-emerald-200/50">
+                          <div className="flex items-start space-x-4">
+                            <div className="w-1/2 flex-shrink-0 p-4 bg-white/80 rounded-xl border border-slate-200/50 shadow-sm">
+                              <p className="text-slate-800 whitespace-pre-wrap leading-relaxed font-medium">
                                 {goal.title}
                               </p>
                             </div>
                             <div className="flex-1 flex items-center space-x-3 mt-2">
                               <Progress 
                                 value={progress.percentage} 
-                                className="flex-1 h-2"
+                                className="flex-1 h-2.5"
                               />
-                              <span className="text-sm font-medium text-gray-700 min-w-fit">
+                              <span className="text-sm font-semibold text-slate-700 min-w-fit">
                                 {progress.completed}/{progress.total} ({progress.percentage}%)
                               </span>
                             </div>
@@ -865,7 +866,7 @@ export default function Foundation() {
                           
                           {/* Detailed breakdown */}
                           {progress.total > 0 && (
-                            <div className="flex gap-4 text-xs text-gray-500" style={{marginLeft: "calc(50% + 12px)"}}>
+                            <div className="flex gap-4 text-xs text-slate-600 font-medium" style={{marginLeft: "calc(50% + 16px)"}}>
                               <span>프로젝트: {progress.projects.completed}/{progress.projects.total}</span>
                               <span>할일: {progress.tasks.completed}/{progress.tasks.total}</span>
                               <span>일정: {progress.events.completed}/{progress.events.total}</span>
@@ -873,7 +874,7 @@ export default function Foundation() {
                           )}
                           
                           {progress.total === 0 && (
-                            <p className="text-xs text-gray-400 italic" style={{marginLeft: "calc(50% + 12px)"}}>
+                            <p className="text-xs text-slate-500 italic" style={{marginLeft: "calc(50% + 16px)"}}>
                               연결된 항목이 없습니다
                             </p>
                           )}
@@ -883,7 +884,7 @@ export default function Foundation() {
                   </div>
                 ) : (
                   <>
-                    <p className="text-sm text-gray-600">
+                    <p className="text-slate-600 leading-relaxed">
                       미션과 연결된 {selectedYear}년의 핵심 목표를 설정하세요
                     </p>
                     
@@ -893,27 +894,27 @@ export default function Foundation() {
                         const progress = calculateGoalProgress(goal.title);
                         
                         return (
-                          <div key={goal.id} className="space-y-2">
-                            <div className="flex items-start space-x-3">
+                          <div key={goal.id} className="space-y-3 p-4 bg-gradient-to-r from-amber-50/50 to-orange-50/50 rounded-xl border border-amber-200/50">
+                            <div className="flex items-start space-x-4">
                               <Textarea
                                 value={goal.title}
                                 readOnly
-                                className="w-1/2 flex-shrink-0 min-h-[2.5rem] resize-none"
+                                className="w-1/2 flex-shrink-0 min-h-[2.5rem] resize-none border-slate-300 bg-white/80 rounded-xl shadow-sm"
                                 rows={Math.max(1, Math.ceil(goal.title.length / 40))}
                               />
                               <div className="flex-1 flex items-center space-x-3 mt-2">
                                 <Progress 
                                   value={progress.percentage} 
-                                  className="flex-1 h-2"
+                                  className="flex-1 h-2.5"
                                 />
-                                <span className="text-sm font-medium text-gray-700 min-w-fit">
+                                <span className="text-sm font-semibold text-slate-700 min-w-fit">
                                   {progress.completed}/{progress.total} ({progress.percentage}%)
                                 </span>
                                 <Button
                                   variant="ghost"
                                   size="sm"
                                   onClick={() => handleDeleteGoal(goal.id)}
-                                  className="text-gray-400 hover:text-red-500 flex-shrink-0"
+                                  className="text-slate-400 hover:text-red-600 hover:bg-red-50 flex-shrink-0 rounded-xl"
                                 >
                                   <Trash2 className="h-4 w-4" />
                                 </Button>
@@ -922,7 +923,7 @@ export default function Foundation() {
                             
                             {/* Detailed breakdown */}
                             {progress.total > 0 && (
-                              <div className="flex gap-4 text-xs text-gray-500" style={{marginLeft: "calc(50% + 12px)"}}>
+                              <div className="flex gap-4 text-xs text-slate-600 font-medium" style={{marginLeft: "calc(50% + 16px)"}}>
                                 <span>프로젝트: {progress.projects.completed}/{progress.projects.total}</span>
                                 <span>할일: {progress.tasks.completed}/{progress.tasks.total}</span>
                                 <span>일정: {progress.events.completed}/{progress.events.total}</span>
@@ -930,7 +931,7 @@ export default function Foundation() {
                             )}
                             
                             {progress.total === 0 && (
-                              <p className="text-xs text-gray-400 italic" style={{marginLeft: "calc(50% + 12px)"}}>
+                              <p className="text-xs text-slate-500 italic" style={{marginLeft: "calc(50% + 16px)"}}>
                                 연결된 항목이 없습니다
                               </p>
                             )}
@@ -939,7 +940,7 @@ export default function Foundation() {
                       })}
                       
                       {/* Add New Goal */}
-                      <div className="flex items-start space-x-3">
+                      <div className="flex items-start space-x-4 p-4 bg-gradient-to-r from-slate-50/50 to-gray-50/50 rounded-xl border border-slate-200/50">
                         <Textarea
                           placeholder="새로운 목표를 입력하세요..."
                           value={newGoal}
@@ -950,7 +951,7 @@ export default function Foundation() {
                               handleAddGoal();
                             }
                           }}
-                          className="w-1/2 flex-shrink-0 min-h-[2.5rem] resize-none"
+                          className="w-1/2 flex-shrink-0 min-h-[2.5rem] resize-none border-slate-300 focus:border-blue-500 focus:ring-blue-500/20 rounded-xl shadow-sm"
                           rows={Math.max(1, Math.ceil(newGoal.length / 40))}
                         />
                         <div className="flex-1"></div>
@@ -958,7 +959,7 @@ export default function Foundation() {
                           onClick={handleAddGoal}
                           disabled={!newGoal.trim() || addGoalMutation.isPending}
                           size="sm"
-                          className="flex-shrink-0 mt-2"
+                          className="flex-shrink-0 mt-2 bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm border-0 rounded-xl"
                         >
                           <Plus className="h-4 w-4" />
                         </Button>
@@ -966,9 +967,9 @@ export default function Foundation() {
                     </div>
 
                     {(goals as any[]).length === 0 && (
-                      <div className="text-center text-gray-500 py-8">
-                        <div className="text-sm">아직 설정된 연간 목표가 없습니다.</div>
-                        <div className="text-sm">위에서 첫 번째 목표를 추가해보세요.</div>
+                      <div className="text-center text-slate-500 py-12 bg-slate-50/30 rounded-xl border border-slate-200">
+                        <div className="text-base font-medium">아직 설정된 연간 목표가 없습니다.</div>
+                        <div className="text-sm mt-1">위에서 첫 번째 목표를 추가해보세요.</div>
                       </div>
                     )}
                   </>
