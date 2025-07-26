@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Progress } from "@/components/ui/progress";
-import { Trash2, Plus, Save, RefreshCw, Database, TrendingUp } from "lucide-react";
+import { Trash2, Plus, Save, RefreshCw, Database, TrendingUp, Edit2, Check, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { api, saveFoundation, createAnnualGoal, deleteAnnualGoal } from "@/lib/api";
 import { queryClient } from "@/lib/queryClient";
@@ -23,6 +23,11 @@ export default function Foundation() {
   const [values, setValues] = useState(["", "", ""]);
   const [newGoal, setNewGoal] = useState("");
   const [showSelectDialog, setShowSelectDialog] = useState(false);
+  
+  // Edit mode states for each section
+  const [editingMission, setEditingMission] = useState(false);
+  const [editingValues, setEditingValues] = useState(false);
+  const [editingGoals, setEditingGoals] = useState(false);
 
   const { data: foundation, isLoading: foundationLoading, refetch: refetchFoundation } = useQuery({
     queryKey: [api.foundation.get(MOCK_USER_ID)],
@@ -433,14 +438,16 @@ export default function Foundation() {
                 </DialogContent>
               </Dialog>
               
-              <Button
-                onClick={handleSaveFoundation}
-                disabled={saveFoundationMutation.isPending}
-                className="flex items-center space-x-2"
-              >
-                <Save className="h-4 w-4" />
-                <span>저장</span>
-              </Button>
+              {(!foundation || editingMission || editingValues) && (
+                <Button
+                  onClick={handleSaveFoundation}
+                  disabled={saveFoundationMutation.isPending}
+                  className="flex items-center space-x-2"
+                >
+                  <Save className="h-4 w-4" />
+                  <span>저장</span>
+                </Button>
+              )}
             </div>
           </div>
         </div>
@@ -449,20 +456,73 @@ export default function Foundation() {
           {/* Personal Mission */}
           <Card>
             <CardHeader>
-              <CardTitle>개인 미션</CardTitle>
+              <div className="flex items-center justify-between">
+                <CardTitle>개인 미션</CardTitle>
+                {!editingMission && foundation ? (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setEditingMission(true)}
+                    className="flex items-center space-x-2"
+                  >
+                    <Edit2 className="h-4 w-4" />
+                    <span>편집</span>
+                  </Button>
+                ) : editingMission ? (
+                  <div className="flex items-center space-x-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        handleSaveFoundation();
+                        setEditingMission(false);
+                      }}
+                      className="flex items-center space-x-2"
+                    >
+                      <Check className="h-4 w-4" />
+                      <span>저장</span>
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        setMission((foundation as any)?.personalMission || "");
+                        setEditingMission(false);
+                      }}
+                      className="flex items-center space-x-2"
+                    >
+                      <X className="h-4 w-4" />
+                      <span>취소</span>
+                    </Button>
+                  </div>
+                ) : null}
+              </div>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                <Label htmlFor="mission">
-                  한 문장으로 당신의 인생 목적을 표현해보세요
-                </Label>
-                <Textarea
-                  id="mission"
-                  placeholder="예: 기술을 통해 사람들의 삶을 더 편리하고 풍요롭게 만드는 개발자가 되겠다."
-                  value={mission}
-                  onChange={(e) => setMission(e.target.value)}
-                  rows={3}
-                />
+                {!editingMission && foundation ? (
+                  <div className="space-y-2">
+                    <Label>개인 미션</Label>
+                    <div className="p-3 bg-gray-50 rounded-lg border">
+                      <p className="text-sm text-gray-800 whitespace-pre-wrap">
+                        {mission || "설정된 개인 미션이 없습니다."}
+                      </p>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    <Label htmlFor="mission">
+                      한 문장으로 당신의 인생 목적을 표현해보세요
+                    </Label>
+                    <Textarea
+                      id="mission"
+                      placeholder="예: 기술을 통해 사람들의 삶을 더 편리하고 풍요롭게 만드는 개발자가 되겠다."
+                      value={mission}
+                      onChange={(e) => setMission(e.target.value)}
+                      rows={3}
+                    />
+                  </>
+                )}
               </div>
             </CardContent>
           </Card>
@@ -470,35 +530,210 @@ export default function Foundation() {
           {/* Core Values */}
           <Card>
             <CardHeader>
-              <CardTitle>핵심 가치 (3가지)</CardTitle>
+              <div className="flex items-center justify-between">
+                <CardTitle>핵심 가치 (3가지)</CardTitle>
+                {!editingValues && foundation ? (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setEditingValues(true)}
+                    className="flex items-center space-x-2"
+                  >
+                    <Edit2 className="h-4 w-4" />
+                    <span>편집</span>
+                  </Button>
+                ) : editingValues ? (
+                  <div className="flex items-center space-x-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        handleSaveFoundation();
+                        setEditingValues(false);
+                      }}
+                      className="flex items-center space-x-2"
+                    >
+                      <Check className="h-4 w-4" />
+                      <span>저장</span>
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        const foundationData = foundation as any;
+                        setValues([
+                          foundationData?.coreValue1 || "",
+                          foundationData?.coreValue2 || "",
+                          foundationData?.coreValue3 || ""
+                        ]);
+                        setEditingValues(false);
+                      }}
+                      className="flex items-center space-x-2"
+                    >
+                      <X className="h-4 w-4" />
+                      <span>취소</span>
+                    </Button>
+                  </div>
+                ) : null}
+              </div>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                <p className="text-sm text-gray-600">
-                  의사결정의 기준이 되는 개인 가치를 설정하세요
-                </p>
-                <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
-                  {values.map((value, index) => {
-                    const progress = value.trim() ? calculateAnnualProgress(value) : null;
-                    
-                    return (
-                      <div key={index} className="space-y-3">
-                        <div>
-                          <Label htmlFor={`value-${index}`}>가치 {index + 1}</Label>
-                          <Input
-                            id={`value-${index}`}
-                            placeholder={`예: ${
-                              index === 0 ? '성장' : index === 1 ? '정직' : '배려'
-                            }`}
-                            value={value}
-                            onChange={(e) => handleValueChange(index, e.target.value)}
-                          />
+                {!editingValues && foundation ? (
+                  <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
+                    {values.map((value, index) => {
+                      const progress = value.trim() ? calculateAnnualProgress(value) : null;
+                      
+                      return (
+                        <div key={index} className="space-y-3">
+                          <div>
+                            <Label>가치 {index + 1}</Label>
+                            <div className="p-3 bg-gray-50 rounded-lg border">
+                              <p className="text-sm text-gray-800">
+                                {value || "설정되지 않음"}
+                              </p>
+                            </div>
+                          </div>
+                          
+                          {/* Progress bar for this core value */}
+                          {progress && value.trim() && (
+                            <div className="space-y-2 p-3 bg-gray-50 rounded-lg border">
+                              <div className="flex items-center gap-3">
+                                <Progress 
+                                  value={progress.percentage} 
+                                  className="flex-1 h-2"
+                                />
+                                <span className="text-sm font-medium text-gray-700 min-w-fit">
+                                  {progress.completed}/{progress.total} ({progress.percentage}%)
+                                </span>
+                              </div>
+                              
+                              {progress.total > 0 && (
+                                <div className="flex flex-col gap-1 text-xs text-gray-500">
+                                  <span>프로젝트: {progress.projects.completed}/{progress.projects.total}</span>
+                                  <span>할일: {progress.tasks.completed}/{progress.tasks.total}</span>
+                                  <span>일정: {progress.events.completed}/{progress.events.total}</span>
+                                </div>
+                              )}
+                              
+                              {progress.total === 0 && (
+                                <p className="text-xs text-gray-400 italic">
+                                  연결된 항목이 없습니다
+                                </p>
+                              )}
+                            </div>
+                          )}
                         </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <>
+                    <p className="text-sm text-gray-600">
+                      의사결정의 기준이 되는 개인 가치를 설정하세요
+                    </p>
+                    <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
+                      {values.map((value, index) => {
+                        const progress = value.trim() ? calculateAnnualProgress(value) : null;
                         
-                        {/* Progress bar for this core value */}
-                        {progress && value.trim() && (
-                          <div className="space-y-2 p-3 bg-gray-50 rounded-lg border">
-                            <div className="flex items-center gap-3">
+                        return (
+                          <div key={index} className="space-y-3">
+                            <div>
+                              <Label htmlFor={`value-${index}`}>가치 {index + 1}</Label>
+                              <Input
+                                id={`value-${index}`}
+                                placeholder={`예: ${
+                                  index === 0 ? '성장' : index === 1 ? '정직' : '배려'
+                                }`}
+                                value={value}
+                                onChange={(e) => handleValueChange(index, e.target.value)}
+                              />
+                            </div>
+                            
+                            {/* Progress bar for this core value */}
+                            {progress && value.trim() && (
+                              <div className="space-y-2 p-3 bg-gray-50 rounded-lg border">
+                                <div className="flex items-center gap-3">
+                                  <Progress 
+                                    value={progress.percentage} 
+                                    className="flex-1 h-2"
+                                  />
+                                  <span className="text-sm font-medium text-gray-700 min-w-fit">
+                                    {progress.completed}/{progress.total} ({progress.percentage}%)
+                                  </span>
+                                </div>
+                                
+                                {progress.total > 0 && (
+                                  <div className="flex flex-col gap-1 text-xs text-gray-500">
+                                    <span>프로젝트: {progress.projects.completed}/{progress.projects.total}</span>
+                                    <span>할일: {progress.tasks.completed}/{progress.tasks.total}</span>
+                                    <span>일정: {progress.events.completed}/{progress.events.total}</span>
+                                  </div>
+                                )}
+                                
+                                {progress.total === 0 && (
+                                  <p className="text-xs text-gray-400 italic">
+                                    연결된 항목이 없습니다
+                                  </p>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Annual Goals */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <CardTitle>{currentYear}년 연간 목표</CardTitle>
+                {!editingGoals && goals && goals.length > 0 ? (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setEditingGoals(true)}
+                    className="flex items-center space-x-2"
+                  >
+                    <Edit2 className="h-4 w-4" />
+                    <span>편집</span>
+                  </Button>
+                ) : editingGoals ? (
+                  <div className="flex items-center space-x-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setEditingGoals(false)}
+                      className="flex items-center space-x-2"
+                    >
+                      <Check className="h-4 w-4" />
+                      <span>완료</span>
+                    </Button>
+                  </div>
+                ) : null}
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {!editingGoals && goals && goals.length > 0 ? (
+                  <div className="space-y-3">
+                    {(goals as any[]).map((goal: any) => {
+                      const progress = calculateGoalProgress(goal.title);
+                      
+                      return (
+                        <div key={goal.id} className="space-y-2">
+                          <div className="flex items-start space-x-3">
+                            <div className="w-1/2 flex-shrink-0 p-3 bg-gray-50 rounded-lg border">
+                              <p className="text-sm text-gray-800 whitespace-pre-wrap">
+                                {goal.title}
+                              </p>
+                            </div>
+                            <div className="flex-1 flex items-center space-x-3 mt-2">
                               <Progress 
                                 value={progress.percentage} 
                                 className="flex-1 h-2"
@@ -507,9 +742,68 @@ export default function Foundation() {
                                 {progress.completed}/{progress.total} ({progress.percentage}%)
                               </span>
                             </div>
+                          </div>
+                          
+                          {/* Detailed breakdown */}
+                          {progress.total > 0 && (
+                            <div className="flex gap-4 text-xs text-gray-500" style={{marginLeft: "calc(50% + 12px)"}}>
+                              <span>프로젝트: {progress.projects.completed}/{progress.projects.total}</span>
+                              <span>할일: {progress.tasks.completed}/{progress.tasks.total}</span>
+                              <span>일정: {progress.events.completed}/{progress.events.total}</span>
+                            </div>
+                          )}
+                          
+                          {progress.total === 0 && (
+                            <p className="text-xs text-gray-400 italic" style={{marginLeft: "calc(50% + 12px)"}}>
+                              연결된 항목이 없습니다
+                            </p>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <>
+                    <p className="text-sm text-gray-600">
+                      미션과 연결된 올해의 핵심 목표를 설정하세요
+                    </p>
+                    
+                    {/* Existing Goals */}
+                    <div className="space-y-3">
+                      {(goals as any[]).map((goal: any) => {
+                        const progress = calculateGoalProgress(goal.title);
+                        
+                        return (
+                          <div key={goal.id} className="space-y-2">
+                            <div className="flex items-start space-x-3">
+                              <Textarea
+                                value={goal.title}
+                                readOnly
+                                className="w-1/2 flex-shrink-0 min-h-[2.5rem] resize-none"
+                                rows={Math.max(1, Math.ceil(goal.title.length / 40))}
+                              />
+                              <div className="flex-1 flex items-center space-x-3 mt-2">
+                                <Progress 
+                                  value={progress.percentage} 
+                                  className="flex-1 h-2"
+                                />
+                                <span className="text-sm font-medium text-gray-700 min-w-fit">
+                                  {progress.completed}/{progress.total} ({progress.percentage}%)
+                                </span>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => handleDeleteGoal(goal.id)}
+                                  className="text-gray-400 hover:text-red-500 flex-shrink-0"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            </div>
                             
+                            {/* Detailed breakdown */}
                             {progress.total > 0 && (
-                              <div className="flex flex-col gap-1 text-xs text-gray-500">
+                              <div className="flex gap-4 text-xs text-gray-500" style={{marginLeft: "calc(50% + 12px)"}}>
                                 <span>프로젝트: {progress.projects.completed}/{progress.projects.total}</span>
                                 <span>할일: {progress.tasks.completed}/{progress.tasks.total}</span>
                                 <span>일정: {progress.events.completed}/{progress.events.total}</span>
@@ -517,114 +811,48 @@ export default function Foundation() {
                             )}
                             
                             {progress.total === 0 && (
-                              <p className="text-xs text-gray-400 italic">
+                              <p className="text-xs text-gray-400 italic" style={{marginLeft: "calc(50% + 12px)"}}>
                                 연결된 항목이 없습니다
                               </p>
                             )}
                           </div>
-                        )}
+                        );
+                      })}
+                      
+                      {/* Add New Goal */}
+                      <div className="flex items-start space-x-3">
+                        <Textarea
+                          placeholder="새로운 목표를 입력하세요..."
+                          value={newGoal}
+                          onChange={(e) => setNewGoal(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' && !e.shiftKey) {
+                              e.preventDefault();
+                              handleAddGoal();
+                            }
+                          }}
+                          className="w-1/2 flex-shrink-0 min-h-[2.5rem] resize-none"
+                          rows={Math.max(1, Math.ceil(newGoal.length / 40))}
+                        />
+                        <div className="flex-1"></div>
+                        <Button
+                          onClick={handleAddGoal}
+                          disabled={!newGoal.trim() || addGoalMutation.isPending}
+                          size="sm"
+                          className="flex-shrink-0 mt-2"
+                        >
+                          <Plus className="h-4 w-4" />
+                        </Button>
                       </div>
-                    );
-                  })}
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+                    </div>
 
-          {/* Annual Goals */}
-          <Card>
-            <CardHeader>
-              <CardTitle>{currentYear}년 연간 목표</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <p className="text-sm text-gray-600">
-                  미션과 연결된 올해의 핵심 목표를 설정하세요
-                </p>
-                
-                {/* Existing Goals */}
-                <div className="space-y-3">
-                  {(goals as any[]).map((goal: any) => {
-                    const progress = calculateGoalProgress(goal.title);
-                    
-                    return (
-                      <div key={goal.id} className="space-y-2">
-                        <div className="flex items-start space-x-3">
-                          <Textarea
-                            value={goal.title}
-                            readOnly
-                            className="w-1/2 flex-shrink-0 min-h-[2.5rem] resize-none"
-                            rows={Math.max(1, Math.ceil(goal.title.length / 40))}
-                          />
-                          <div className="flex-1 flex items-center space-x-3 mt-2">
-                            <Progress 
-                              value={progress.percentage} 
-                              className="flex-1 h-2"
-                            />
-                            <span className="text-sm font-medium text-gray-700 min-w-fit">
-                              {progress.completed}/{progress.total} ({progress.percentage}%)
-                            </span>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleDeleteGoal(goal.id)}
-                              className="text-gray-400 hover:text-red-500 flex-shrink-0"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </div>
-                        
-                        {/* Detailed breakdown */}
-                        {progress.total > 0 && (
-                          <div className="flex gap-4 text-xs text-gray-500" style={{marginLeft: "calc(50% + 12px)"}}>
-                            <span>프로젝트: {progress.projects.completed}/{progress.projects.total}</span>
-                            <span>할일: {progress.tasks.completed}/{progress.tasks.total}</span>
-                            <span>일정: {progress.events.completed}/{progress.events.total}</span>
-                          </div>
-                        )}
-                        
-                        {progress.total === 0 && (
-                          <p className="text-xs text-gray-400 italic" style={{marginLeft: "calc(50% + 12px)"}}>
-                            연결된 항목이 없습니다
-                          </p>
-                        )}
+                    {(goals as any[]).length === 0 && (
+                      <div className="text-center text-gray-500 py-8">
+                        <div className="text-sm">아직 설정된 연간 목표가 없습니다.</div>
+                        <div className="text-sm">위에서 첫 번째 목표를 추가해보세요.</div>
                       </div>
-                    );
-                  })}
-                  
-                  {/* Add New Goal */}
-                  <div className="flex items-start space-x-3">
-                    <Textarea
-                      placeholder="새로운 목표를 입력하세요..."
-                      value={newGoal}
-                      onChange={(e) => setNewGoal(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter' && !e.shiftKey) {
-                          e.preventDefault();
-                          handleAddGoal();
-                        }
-                      }}
-                      className="w-1/2 flex-shrink-0 min-h-[2.5rem] resize-none"
-                      rows={Math.max(1, Math.ceil(newGoal.length / 40))}
-                    />
-                    <div className="flex-1"></div>
-                    <Button
-                      onClick={handleAddGoal}
-                      disabled={!newGoal.trim() || addGoalMutation.isPending}
-                      size="sm"
-                      className="flex-shrink-0 mt-2"
-                    >
-                      <Plus className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-
-                {(goals as any[]).length === 0 && (
-                  <div className="text-center text-gray-500 py-8">
-                    <div className="text-sm">아직 설정된 연간 목표가 없습니다.</div>
-                    <div className="text-sm">위에서 첫 번째 목표를 추가해보세요.</div>
-                  </div>
+                    )}
+                  </>
                 )}
               </div>
             </CardContent>
