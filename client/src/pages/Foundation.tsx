@@ -1065,7 +1065,7 @@ export default function Foundation() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {!editingGoals && ((goals as any[]).length > 0 || tempGoals.length > 0) ? (
+                {!editingGoals && ((goals as any[]).length > 0 || tempGoals.length > 0) && !isFutureYear ? (
                   <div className="space-y-3">
                     {/* Display saved goals */}
                     {(goals as any[]).map((goal: any) => {
@@ -1181,7 +1181,7 @@ export default function Foundation() {
                 ) : (
                   <>
                     <p className="text-slate-600 leading-relaxed">
-                      미션과 연결된 {selectedYear}년의 핵심 목표를 설정하세요
+                      {isFutureYear ? `${selectedYear}년의 핵심 목표를 미리 설정해보세요` : `미션과 연결된 ${selectedYear}년의 핵심 목표를 설정하세요`}
                     </p>
                     
                     {/* Existing Goals */}
