@@ -352,6 +352,12 @@ export default function Foundation() {
     ));
   };
 
+  const handleTempGoalTitleChange = (tempId: number, title: string) => {
+    setTempGoals(tempGoals.map(goal => 
+      goal.id === tempId ? { ...goal, title } : goal
+    ));
+  };
+
   const handleGoalCoreValueChange = async (goalId: number, coreValue: string) => {
     const actualValue = coreValue === "none" ? null : coreValue;
     
@@ -401,6 +407,41 @@ export default function Foundation() {
 
   const handleDeleteTempGoal = (tempId: number) => {
     setTempGoals(tempGoals.filter(goal => goal.id !== tempId));
+  };
+
+  const handleGoalTitleChange = async (goalId: number, title: string) => {
+    // Optimistic update - immediately update UI before API call
+    const currentGoals = goals as any[];
+    const optimisticGoals = currentGoals.map(goal => 
+      goal.id === goalId ? { ...goal, title } : goal
+    );
+    
+    // Update cache with optimistic data
+    queryClient.setQueryData([api.goals.list(MOCK_USER_ID, selectedYear)], optimisticGoals);
+    
+    try {
+      const response = await fetch(`/api/goals/${goalId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ title }),
+      });
+      
+      if (!response.ok) {
+        // Revert optimistic update on failure
+        queryClient.setQueryData([api.goals.list(MOCK_USER_ID, selectedYear)], currentGoals);
+        toast({
+          title: "변경 실패",
+          description: "목표 내용 변경에 실패했습니다.",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      // Revert optimistic update on error
+      queryClient.setQueryData([api.goals.list(MOCK_USER_ID, selectedYear)], currentGoals);
+      console.error("목표 제목 업데이트 실패:", error);
+    }
   };
 
   const handleSaveGoals = async () => {
@@ -1071,10 +1112,13 @@ export default function Foundation() {
                                   </Select>
                                 </div>
                               </div>
-                              <div className="flex-1 p-4 bg-white/80 rounded-xl border border-slate-200/50 shadow-sm">
-                                <p className="text-slate-800 whitespace-pre-wrap leading-relaxed font-medium">
-                                  {goal.title}
-                                </p>
+                              <div className="flex-1">
+                                <Textarea
+                                  value={goal.title}
+                                  onChange={(e) => handleGoalTitleChange(goal.id, e.target.value)}
+                                  className="w-full min-h-[2.5rem] resize-none border-slate-300 bg-white/80 rounded-xl shadow-sm p-4 font-medium"
+                                  rows={Math.max(1, Math.ceil(goal.title.length / 40))}
+                                />
                               </div>
                               <div className="flex-1 space-y-1 mt-2">
                                 <div className="flex items-center space-x-3">
@@ -1142,7 +1186,7 @@ export default function Foundation() {
                               <div className="flex-1">
                                 <Textarea
                                   value={tempGoal.title}
-                                  readOnly
+                                  onChange={(e) => handleTempGoalTitleChange(tempGoal.id, e.target.value)}
                                   className="w-full min-h-[2.5rem] resize-none border-slate-300 bg-white/80 rounded-xl shadow-sm p-4"
                                   rows={Math.max(1, Math.ceil(tempGoal.title.length / 40))}
                                 />
