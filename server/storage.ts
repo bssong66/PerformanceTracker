@@ -653,7 +653,7 @@ export class MemStorage implements IStorage {
 
 import { drizzle } from 'drizzle-orm/neon-http';
 import { neon } from '@neondatabase/serverless';
-import { eq, and, inArray } from 'drizzle-orm';
+import { eq, and, inArray, desc } from 'drizzle-orm';
 
 // Initialize database connection
 const sql = neon(process.env.DATABASE_URL!);
@@ -683,6 +683,7 @@ export class DatabaseStorage implements IStorage {
       .select()
       .from(foundations)
       .where(and(eq(foundations.userId, userId), eq(foundations.year, currentYear)))
+      .orderBy(desc(foundations.updatedAt))
       .limit(1);
     return result[0];
   }
