@@ -32,6 +32,9 @@ export default function Foundation() {
   const [editingValues, setEditingValues] = useState(false);
   const [editingGoals, setEditingGoals] = useState(false);
   
+  // Temporary storage for annual goals (before saving to DB)
+  const [tempGoals, setTempGoals] = useState<any[]>([]);
+  
   // Time-based access control
   const isPastYear = selectedYear < currentYear;
   const isFutureYear = selectedYear > currentYear;
@@ -86,6 +89,10 @@ export default function Foundation() {
 
   // Effect to clear edit modes and refresh data when year changes
   useEffect(() => {
+    // Clear temporary goals when year changes (unsaved data is lost)
+    setTempGoals([]);
+    setNewGoal("");
+    
     // For future years without foundation data, automatically set to new creation mode
     if (isFutureYear && !foundation) {
       setEditingMission(true);
@@ -277,25 +284,61 @@ export default function Foundation() {
     },
   });
 
-  const handleSaveFoundation = () => {
-    saveFoundationMutation.mutate({
-      userId: MOCK_USER_ID,
-      year: selectedYear,
-      personalMission: mission,
-      coreValue1: values[0],
-      coreValue2: values[1],
-      coreValue3: values[2],
-    });
-  };
-
-  const handleAddGoal = () => {
-    if (newGoal.trim()) {
-      addGoalMutation.mutate({
+  const handleSaveFoundation = async () => {
+    try {
+      // Save Foundation data
+      await saveFoundationMutation.mutateAsync({
         userId: MOCK_USER_ID,
-        title: newGoal.trim(),
         year: selectedYear,
+        personalMission: mission,
+        coreValue1: values[0],
+        coreValue2: values[1],
+        coreValue3: values[2],
+      });
+
+      // Save all temporary goals to database
+      if (tempGoals.length > 0) {
+        const goalPromises = tempGoals.map(tempGoal => 
+          addGoalMutation.mutateAsync({
+            userId: MOCK_USER_ID,
+            title: tempGoal.title,
+            year: selectedYear,
+          })
+        );
+        await Promise.all(goalPromises);
+        
+        // Clear temporary goals after successful save
+        setTempGoals([]);
+        
+        toast({
+          title: "저장 완료",
+          description: `Foundation과 ${tempGoals.length}개의 목표가 모두 저장되었습니다.`,
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "저장 실패",
+        description: "데이터를 저장하는데 실패했습니다.",
+        variant: "destructive",
       });
     }
+  };
+
+  const handleAddGoalToTemp = () => {
+    if (newGoal.trim()) {
+      const tempGoal = {
+        id: Date.now(), // Temporary ID
+        title: newGoal.trim(),
+        year: selectedYear,
+        isTemp: true
+      };
+      setTempGoals([...tempGoals, tempGoal]);
+      setNewGoal("");
+    }
+  };
+
+  const handleDeleteTempGoal = (tempId: number) => {
+    setTempGoals(tempGoals.filter(goal => goal.id !== tempId));
   };
 
   const handleDeleteGoal = (goalId: number) => {
@@ -586,33 +629,6 @@ export default function Foundation() {
                     <Edit2 className="h-4 w-4 mr-2" />
                     <span>편집</span>
                   </Button>
-                ) : (editingMission && !isPastYear) ? (
-                  <div className="flex items-center space-x-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        handleSaveFoundation();
-                        setEditingMission(false);
-                      }}
-                      className="border-emerald-300 text-emerald-700 hover:bg-emerald-50 shadow-sm"
-                    >
-                      <Check className="h-4 w-4 mr-2" />
-                      <span>저장</span>
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => {
-                        setMission((foundation as any)?.personalMission || "");
-                        setEditingMission(false);
-                      }}
-                      className="text-slate-600 hover:bg-slate-100 hover:text-slate-800"
-                    >
-                      <X className="h-4 w-4 mr-2" />
-                      <span>취소</span>
-                    </Button>
-                  </div>
                 ) : null}
               </div>
             </CardHeader>
@@ -661,38 +677,6 @@ export default function Foundation() {
                     <Edit2 className="h-4 w-4 mr-2" />
                     <span>편집</span>
                   </Button>
-                ) : (editingValues && !isPastYear) ? (
-                  <div className="flex items-center space-x-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        handleSaveFoundation();
-                        setEditingValues(false);
-                      }}
-                      className="border-emerald-300 text-emerald-700 hover:bg-emerald-50 shadow-sm"
-                    >
-                      <Check className="h-4 w-4 mr-2" />
-                      <span>저장</span>
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => {
-                        const foundationData = foundation as any;
-                        setValues([
-                          foundationData?.coreValue1 || "",
-                          foundationData?.coreValue2 || "",
-                          foundationData?.coreValue3 || ""
-                        ]);
-                        setEditingValues(false);
-                      }}
-                      className="text-slate-600 hover:bg-slate-100 hover:text-slate-800"
-                    >
-                      <X className="h-4 w-4 mr-2" />
-                      <span>취소</span>
-                    </Button>
-                  </div>
                 ) : null}
               </div>
             </CardHeader>
@@ -823,25 +807,14 @@ export default function Foundation() {
                     <Edit2 className="h-4 w-4 mr-2" />
                     <span>편집</span>
                   </Button>
-                ) : (editingGoals && !isPastYear) ? (
-                  <div className="flex items-center space-x-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setEditingGoals(false)}
-                      className="border-emerald-300 text-emerald-700 hover:bg-emerald-50 shadow-sm"
-                    >
-                      <Check className="h-4 w-4 mr-2" />
-                      <span>완료</span>
-                    </Button>
-                  </div>
                 ) : null}
               </div>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {!editingGoals && goals && goals.length > 0 ? (
+                {!editingGoals && (goals.length > 0 || tempGoals.length > 0) ? (
                   <div className="space-y-3">
+                    {/* Display saved goals */}
                     {(goals as any[]).map((goal: any) => {
                       const progress = calculateGoalProgress(goal.title);
                       
@@ -851,6 +824,52 @@ export default function Foundation() {
                             <div className="w-1/2 flex-shrink-0 p-4 bg-white/80 rounded-xl border border-slate-200/50 shadow-sm">
                               <p className="text-slate-800 whitespace-pre-wrap leading-relaxed font-medium">
                                 {goal.title}
+                              </p>
+                            </div>
+                            <div className="flex-1 flex items-center space-x-3 mt-2">
+                              <Progress 
+                                value={progress.percentage} 
+                                className="flex-1 h-2.5"
+                              />
+                              <span className="text-sm font-semibold text-slate-700 min-w-fit">
+                                {progress.completed}/{progress.total} ({progress.percentage}%)
+                              </span>
+                            </div>
+                          </div>
+                          
+                          {/* Detailed breakdown */}
+                          {progress.total > 0 && (
+                            <div className="flex gap-4 text-xs text-slate-600 font-medium" style={{marginLeft: "calc(50% + 16px)"}}>
+                              <span>프로젝트: {progress.projects.completed}/{progress.projects.total}</span>
+                              <span>할일: {progress.tasks.completed}/{progress.tasks.total}</span>
+                              <span>일정: {progress.events.completed}/{progress.events.total}</span>
+                            </div>
+                          )}
+                          
+                          {progress.total === 0 && (
+                            <p className="text-xs text-slate-500 italic" style={{marginLeft: "calc(50% + 16px)"}}>
+                              연결된 항목이 없습니다
+                            </p>
+                          )}
+                        </div>
+                      );
+                    })}
+                    
+                    {/* Display temporary goals */}
+                    {tempGoals.map((tempGoal: any) => {
+                      const progress = calculateGoalProgress(tempGoal.title);
+                      
+                      return (
+                        <div key={`temp-${tempGoal.id}`} className="space-y-3 p-4 bg-gradient-to-r from-yellow-50/70 to-amber-50/70 rounded-xl border border-yellow-200/60 relative">
+                          <div className="absolute top-2 right-2">
+                            <span className="text-xs px-2 py-1 bg-yellow-100 text-yellow-700 rounded-full font-medium">
+                              임시 저장
+                            </span>
+                          </div>
+                          <div className="flex items-start space-x-4">
+                            <div className="w-1/2 flex-shrink-0 p-4 bg-white/80 rounded-xl border border-slate-200/50 shadow-sm">
+                              <p className="text-slate-800 whitespace-pre-wrap leading-relaxed font-medium">
+                                {tempGoal.title}
                               </p>
                             </div>
                             <div className="flex-1 flex items-center space-x-3 mt-2">
@@ -939,6 +958,61 @@ export default function Foundation() {
                         );
                       })}
                       
+                      {/* Display temporary goals in edit mode */}
+                      {tempGoals.map((tempGoal: any) => {
+                        const progress = calculateGoalProgress(tempGoal.title);
+                        
+                        return (
+                          <div key={`temp-edit-${tempGoal.id}`} className="space-y-3 p-4 bg-gradient-to-r from-yellow-50/70 to-amber-50/70 rounded-xl border border-yellow-200/60 relative">
+                            <div className="absolute top-2 right-2">
+                              <span className="text-xs px-2 py-1 bg-yellow-100 text-yellow-700 rounded-full font-medium">
+                                임시 저장
+                              </span>
+                            </div>
+                            <div className="flex items-start space-x-4">
+                              <Textarea
+                                value={tempGoal.title}
+                                readOnly
+                                className="w-1/2 flex-shrink-0 min-h-[2.5rem] resize-none border-slate-300 bg-white/80 rounded-xl shadow-sm"
+                                rows={Math.max(1, Math.ceil(tempGoal.title.length / 40))}
+                              />
+                              <div className="flex-1 flex items-center space-x-3 mt-2">
+                                <Progress 
+                                  value={progress.percentage} 
+                                  className="flex-1 h-2.5"
+                                />
+                                <span className="text-sm font-semibold text-slate-700 min-w-fit">
+                                  {progress.completed}/{progress.total} ({progress.percentage}%)
+                                </span>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => handleDeleteTempGoal(tempGoal.id)}
+                                  className="text-slate-400 hover:text-red-600 hover:bg-red-50 flex-shrink-0 rounded-xl"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            </div>
+                            
+                            {/* Detailed breakdown */}
+                            {progress.total > 0 && (
+                              <div className="flex gap-4 text-xs text-slate-600 font-medium" style={{marginLeft: "calc(50% + 16px)"}}>
+                                <span>프로젝트: {progress.projects.completed}/{progress.projects.total}</span>
+                                <span>할일: {progress.tasks.completed}/{progress.tasks.total}</span>
+                                <span>일정: {progress.events.completed}/{progress.events.total}</span>
+                              </div>
+                            )}
+                            
+                            {progress.total === 0 && (
+                              <p className="text-xs text-slate-500 italic" style={{marginLeft: "calc(50% + 16px)"}}>
+                                연결된 항목이 없습니다
+                              </p>
+                            )}
+                          </div>
+                        );
+                      })}
+                      
                       {/* Add New Goal */}
                       <div className="flex items-start space-x-4 p-4 bg-gradient-to-r from-slate-50/50 to-gray-50/50 rounded-xl border border-slate-200/50">
                         <Textarea
@@ -948,7 +1022,7 @@ export default function Foundation() {
                           onKeyDown={(e) => {
                             if (e.key === 'Enter' && !e.shiftKey) {
                               e.preventDefault();
-                              handleAddGoal();
+                              handleAddGoalToTemp();
                             }
                           }}
                           className="w-1/2 flex-shrink-0 min-h-[2.5rem] resize-none border-slate-300 focus:border-blue-500 focus:ring-blue-500/20 rounded-xl shadow-sm"
@@ -956,8 +1030,8 @@ export default function Foundation() {
                         />
                         <div className="flex-1"></div>
                         <Button
-                          onClick={handleAddGoal}
-                          disabled={!newGoal.trim() || addGoalMutation.isPending}
+                          onClick={handleAddGoalToTemp}
+                          disabled={!newGoal.trim()}
                           size="sm"
                           className="flex-shrink-0 mt-2 bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm border-0 rounded-xl"
                         >
@@ -966,7 +1040,7 @@ export default function Foundation() {
                       </div>
                     </div>
 
-                    {(goals as any[]).length === 0 && (
+                    {(goals as any[]).length === 0 && tempGoals.length === 0 && (
                       <div className="text-center text-slate-500 py-12 bg-slate-50/30 rounded-xl border border-slate-200">
                         <div className="text-base font-medium">아직 설정된 연간 목표가 없습니다.</div>
                         <div className="text-sm mt-1">위에서 첫 번째 목표를 추가해보세요.</div>
