@@ -31,6 +31,11 @@ export default function Foundation() {
   const [editingMission, setEditingMission] = useState(false);
   const [editingValues, setEditingValues] = useState(false);
   const [editingGoals, setEditingGoals] = useState(false);
+  
+  // Time-based access control
+  const isPastYear = selectedYear < currentYear;
+  const isFutureYear = selectedYear > currentYear;
+  const isCurrentYear = selectedYear === currentYear;
 
   // Generate year options (current year and +/- 5 years)
   const yearOptions = Array.from({ length: 11 }, (_, i) => currentYear - 5 + i);
@@ -81,14 +86,21 @@ export default function Foundation() {
 
   // Effect to clear edit modes and refresh data when year changes
   useEffect(() => {
-    setEditingMission(false);
-    setEditingValues(false);
-    setEditingGoals(false);
+    // For future years without foundation data, automatically set to new creation mode
+    if (isFutureYear && !foundation) {
+      setEditingMission(true);
+      setEditingValues(true);
+      setEditingGoals(true);
+    } else {
+      setEditingMission(false);
+      setEditingValues(false);
+      setEditingGoals(false);
+    }
     
     // Refresh foundation data for the selected year
     refetchFoundation();
     refetchGoals();
-  }, [selectedYear, refetchFoundation, refetchGoals]);
+  }, [selectedYear, isFutureYear, foundation, refetchFoundation, refetchGoals]);
 
   // Calculate annual progress for each core value
   const calculateAnnualProgress = (coreValue: string) => {
@@ -371,6 +383,22 @@ export default function Foundation() {
               <p className="text-sm text-gray-600 mt-1">
                 개인 미션과 핵심 가치를 설정하여 목표 달성의 기반을 만드세요
               </p>
+              {/* Year Status Indicator */}
+              {isPastYear && (
+                <div className="px-3 py-1 bg-gray-100 text-gray-600 text-xs rounded-full border">
+                  과거 계획 (읽기 전용)
+                </div>
+              )}
+              {isFutureYear && (
+                <div className="px-3 py-1 bg-blue-100 text-blue-600 text-xs rounded-full border border-blue-200">
+                  미래 계획
+                </div>
+              )}
+              {isCurrentYear && (
+                <div className="px-3 py-1 bg-green-100 text-green-600 text-xs rounded-full border border-green-200">
+                  현재 계획
+                </div>
+              )}
             </div>
           </div>
 
@@ -409,18 +437,19 @@ export default function Foundation() {
                 <ChevronRight className="h-4 w-4" />
               </Button>
             </div>
-            {/* New Plan Dropdown */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="outline"
-                  className="flex items-center space-x-2"
-                >
-                  <Plus className="h-4 w-4" />
-                  <span>신규 계획</span>
-                  <ChevronDown className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
+            {/* New Plan Dropdown - Only available for current and future years */}
+            {!isPastYear && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className="flex items-center space-x-2"
+                  >
+                    <Plus className="h-4 w-4" />
+                    <span>신규 계획</span>
+                    <ChevronDown className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
               <DropdownMenuContent align="start">
                 <DropdownMenuItem
                   onClick={() => {
@@ -452,7 +481,8 @@ export default function Foundation() {
                   <span>데이터 불러오기</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>
-            </DropdownMenu>
+              </DropdownMenu>
+            )}
             
             <Dialog open={showSelectDialog} onOpenChange={setShowSelectDialog}>
               <DialogContent className="sm:max-w-[600px]">
@@ -527,14 +557,15 @@ export default function Foundation() {
               </DialogContent>
             </Dialog>
             
-            {(!foundation || editingMission || editingValues || !foundation) && (
+            {/* Save Button - Only available for current and future years */}
+            {!isPastYear && (!foundation || editingMission || editingValues || !foundation) && (
               <Button
                 onClick={handleSaveFoundation}
                 disabled={saveFoundationMutation.isPending}
                 className="flex items-center space-x-2"
               >
                 <Save className="h-4 w-4" />
-                <span>저장</span>
+                <span>{selectedYear}년 저장</span>
               </Button>
             )}
           </div>
@@ -546,7 +577,7 @@ export default function Foundation() {
             <CardHeader>
               <div className="flex items-center justify-between">
                 <CardTitle>개인 미션</CardTitle>
-                {!editingMission && foundation ? (
+                {!editingMission && foundation && !isPastYear ? (
                   <Button
                     variant="outline"
                     size="sm"
@@ -556,7 +587,7 @@ export default function Foundation() {
                     <Edit2 className="h-4 w-4" />
                     <span>편집</span>
                   </Button>
-                ) : editingMission ? (
+                ) : (editingMission && !isPastYear) ? (
                   <div className="flex items-center space-x-2">
                     <Button
                       variant="outline"
@@ -620,7 +651,7 @@ export default function Foundation() {
             <CardHeader>
               <div className="flex items-center justify-between">
                 <CardTitle>핵심 가치 (3가지)</CardTitle>
-                {!editingValues && foundation ? (
+                {!editingValues && foundation && !isPastYear ? (
                   <Button
                     variant="outline"
                     size="sm"
@@ -630,7 +661,7 @@ export default function Foundation() {
                     <Edit2 className="h-4 w-4" />
                     <span>편집</span>
                   </Button>
-                ) : editingValues ? (
+                ) : (editingValues && !isPastYear) ? (
                   <div className="flex items-center space-x-2">
                     <Button
                       variant="outline"
@@ -781,7 +812,7 @@ export default function Foundation() {
             <CardHeader>
               <div className="flex items-center justify-between">
                 <CardTitle>{selectedYear}년 연간 목표</CardTitle>
-                {!editingGoals && goals && goals.length > 0 ? (
+                {!editingGoals && goals && goals.length > 0 && !isPastYear ? (
                   <Button
                     variant="outline"
                     size="sm"
@@ -791,7 +822,7 @@ export default function Foundation() {
                     <Edit2 className="h-4 w-4" />
                     <span>편집</span>
                   </Button>
-                ) : editingGoals ? (
+                ) : (editingGoals && !isPastYear) ? (
                   <div className="flex items-center space-x-2">
                     <Button
                       variant="outline"
