@@ -1039,7 +1039,9 @@ export default function Foundation() {
                                 <div className="text-xs text-slate-500 mb-1">핵심가치</div>
                                 <Select value={tempGoal.coreValue || "none"} onValueChange={(value) => handleTempGoalCoreValueChange(tempGoal.id, value)}>
                                   <SelectTrigger className="w-full h-6 text-xs border-slate-200 bg-white/80">
-                                    <SelectValue placeholder="선택" />
+                                    <SelectValue>
+                                      {tempGoal.coreValue || "해당 없음"}
+                                    </SelectValue>
                                   </SelectTrigger>
                                   <SelectContent>
                                     <SelectItem value="none">해당 없음</SelectItem>
@@ -1101,7 +1103,9 @@ export default function Foundation() {
                                   <div className="text-xs text-slate-500 mb-1">핵심가치</div>
                                   <Select value={goal.coreValue || "none"} onValueChange={(value) => handleGoalCoreValueChange(goal.id, value)}>
                                     <SelectTrigger className="w-full h-6 text-xs border-slate-200 bg-white/80">
-                                      <SelectValue placeholder="선택" />
+                                      <SelectValue>
+                                        {goal.coreValue || "해당 없음"}
+                                      </SelectValue>
                                     </SelectTrigger>
                                     <SelectContent>
                                       <SelectItem value="none">해당 없음</SelectItem>
@@ -1172,7 +1176,9 @@ export default function Foundation() {
                                   <div className="text-xs text-slate-500 mb-1">핵심가치</div>
                                   <Select value={tempGoal.coreValue || "none"} onValueChange={(value) => handleTempGoalCoreValueChange(tempGoal.id, value)}>
                                     <SelectTrigger className="w-full h-6 text-xs border-slate-200 bg-white/80">
-                                      <SelectValue placeholder="선택" />
+                                      <SelectValue>
+                                        {tempGoal.coreValue || "해당 없음"}
+                                      </SelectValue>
                                     </SelectTrigger>
                                     <SelectContent>
                                       <SelectItem value="none">해당 없음</SelectItem>
@@ -1234,7 +1240,9 @@ export default function Foundation() {
                               <div className="text-xs text-slate-500 mb-1">핵심가치</div>
                               <Select value={newGoalCoreValue || "none"} onValueChange={setNewGoalCoreValue}>
                                 <SelectTrigger className="w-full h-6 text-xs border-slate-200 bg-white/80">
-                                  <SelectValue placeholder="선택" />
+                                  <SelectValue>
+                                    {newGoalCoreValue === "none" || !newGoalCoreValue ? "해당 없음" : newGoalCoreValue}
+                                  </SelectValue>
                                 </SelectTrigger>
                                 <SelectContent>
                                   <SelectItem value="none">해당 없음</SelectItem>
