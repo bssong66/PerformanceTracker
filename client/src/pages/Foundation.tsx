@@ -35,9 +35,7 @@ export default function Foundation() {
   // Temporary storage for annual goals (before saving to DB)
   const [tempGoals, setTempGoals] = useState<any[]>([]);
   
-  // State for editing existing goals
-  const [editingGoalIds, setEditingGoalIds] = useState<number[]>([]);
-  const [editedGoalTitles, setEditedGoalTitles] = useState<{[key: number]: string}>({});
+
   
   // Time-based access control
   const isPastYear = selectedYear < currentYear;
@@ -345,55 +343,7 @@ export default function Foundation() {
     setTempGoals(tempGoals.filter(goal => goal.id !== tempId));
   };
 
-  const handleEditGoal = (goalId: number, currentTitle: string) => {
-    setEditingGoalIds([...editingGoalIds, goalId]);
-    setEditedGoalTitles({...editedGoalTitles, [goalId]: currentTitle});
-  };
 
-  const handleCancelEditGoal = (goalId: number) => {
-    setEditingGoalIds(editingGoalIds.filter(id => id !== goalId));
-    const newEditedTitles = {...editedGoalTitles};
-    delete newEditedTitles[goalId];
-    setEditedGoalTitles(newEditedTitles);
-  };
-
-  const handleSaveEditedGoal = async (goalId: number) => {
-    const newTitle = editedGoalTitles[goalId];
-    if (newTitle && newTitle.trim()) {
-      try {
-        // Update goal via API
-        await fetch(`/api/goals/${goalId}`, {
-          method: 'PATCH',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            title: newTitle.trim()
-          }),
-        });
-        
-        // Remove from editing state
-        setEditingGoalIds(editingGoalIds.filter(id => id !== goalId));
-        const newEditedTitles = {...editedGoalTitles};
-        delete newEditedTitles[goalId];
-        setEditedGoalTitles(newEditedTitles);
-        
-        // Refresh goals
-        refetchGoals();
-        
-        toast({
-          title: "목표 수정",
-          description: "연간 목표가 수정되었습니다.",
-        });
-      } catch (error) {
-        toast({
-          title: "수정 실패",
-          description: "목표를 수정하는데 실패했습니다.",
-          variant: "destructive",
-        });
-      }
-    }
-  };
 
   const handleDeleteGoal = (goalId: number) => {
     deleteGoalMutation.mutate(goalId);
@@ -965,26 +915,15 @@ export default function Foundation() {
                     <div className="space-y-3">
                       {(goals as any[]).map((goal: any) => {
                         const progress = calculateGoalProgress(goal.title);
-                        const isEditing = editingGoalIds.includes(goal.id);
                         
                         return (
                           <div key={goal.id} className="space-y-3 p-4 bg-gradient-to-r from-amber-50/50 to-orange-50/50 rounded-xl border border-amber-200/50">
                             <div className="flex items-start space-x-4">
-                              <Textarea
-                                value={isEditing ? (editedGoalTitles[goal.id] || goal.title) : goal.title}
-                                readOnly={!isEditing}
-                                onChange={(e) => {
-                                  if (isEditing) {
-                                    setEditedGoalTitles({...editedGoalTitles, [goal.id]: e.target.value});
-                                  }
-                                }}
-                                className={`w-1/2 flex-shrink-0 min-h-[2.5rem] resize-none rounded-xl shadow-sm ${
-                                  isEditing 
-                                    ? 'border-blue-300 focus:border-blue-500 focus:ring-blue-500/20 bg-white' 
-                                    : 'border-slate-300 bg-white/80'
-                                }`}
-                                rows={Math.max(1, Math.ceil((isEditing ? (editedGoalTitles[goal.id] || goal.title) : goal.title).length / 40))}
-                              />
+                              <div className="w-1/2 flex-shrink-0 p-4 bg-white/80 rounded-xl border border-slate-200/50 shadow-sm">
+                                <p className="text-slate-800 whitespace-pre-wrap leading-relaxed font-medium">
+                                  {goal.title}
+                                </p>
+                              </div>
                               <div className="flex-1 flex items-center space-x-3 mt-2">
                                 <Progress 
                                   value={progress.percentage} 
@@ -994,45 +933,7 @@ export default function Foundation() {
                                   {progress.completed}/{progress.total} ({progress.percentage}%)
                                 </span>
                                 
-                                {isEditing ? (
-                                  <>
-                                    <Button
-                                      variant="ghost"
-                                      size="sm"
-                                      onClick={() => handleSaveEditedGoal(goal.id)}
-                                      className="text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 flex-shrink-0 rounded-xl"
-                                    >
-                                      <Check className="h-4 w-4" />
-                                    </Button>
-                                    <Button
-                                      variant="ghost"
-                                      size="sm"
-                                      onClick={() => handleCancelEditGoal(goal.id)}
-                                      className="text-slate-600 hover:text-slate-700 hover:bg-slate-50 flex-shrink-0 rounded-xl"
-                                    >
-                                      <X className="h-4 w-4" />
-                                    </Button>
-                                  </>
-                                ) : (
-                                  <>
-                                    <Button
-                                      variant="ghost"
-                                      size="sm"
-                                      onClick={() => handleEditGoal(goal.id, goal.title)}
-                                      className="text-slate-600 hover:text-slate-700 hover:bg-slate-50 flex-shrink-0 rounded-xl"
-                                    >
-                                      <Edit2 className="h-4 w-4" />
-                                    </Button>
-                                    <Button
-                                      variant="ghost"
-                                      size="sm"
-                                      onClick={() => handleDeleteGoal(goal.id)}
-                                      className="text-slate-400 hover:text-red-600 hover:bg-red-50 flex-shrink-0 rounded-xl"
-                                    >
-                                      <Trash2 className="h-4 w-4" />
-                                    </Button>
-                                  </>
-                                )}
+
                               </div>
                             </div>
                             
@@ -1109,10 +1010,10 @@ export default function Foundation() {
                         );
                       })}
                       
-                      {/* Add New Goal */}
-                      <div className="flex items-start space-x-4 p-4 bg-gradient-to-r from-slate-50/50 to-gray-50/50 rounded-xl border border-slate-200/50">
+                      {/* Add New Goal Input */}
+                      <div className="p-4 bg-gradient-to-r from-slate-50/50 to-gray-50/50 rounded-xl border border-slate-200/50">
                         <Textarea
-                          placeholder="새로운 목표를 입력하세요..."
+                          placeholder="새로운 목표를 입력하세요... (Enter로 추가)"
                           value={newGoal}
                           onChange={(e) => setNewGoal(e.target.value)}
                           onKeyDown={(e) => {
@@ -1121,18 +1022,9 @@ export default function Foundation() {
                               handleAddGoalToTemp();
                             }
                           }}
-                          className="w-1/2 flex-shrink-0 min-h-[2.5rem] resize-none border-slate-300 focus:border-blue-500 focus:ring-blue-500/20 rounded-xl shadow-sm"
-                          rows={Math.max(1, Math.ceil(newGoal.length / 40))}
+                          className="w-full min-h-[2.5rem] resize-none border-slate-300 focus:border-blue-500 focus:ring-blue-500/20 rounded-xl shadow-sm"
+                          rows={Math.max(1, Math.ceil(newGoal.length / 80))}
                         />
-                        <div className="flex-1"></div>
-                        <Button
-                          onClick={handleAddGoalToTemp}
-                          disabled={!newGoal.trim()}
-                          size="sm"
-                          className="flex-shrink-0 mt-2 bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm border-0 rounded-xl"
-                        >
-                          <Plus className="h-4 w-4" />
-                        </Button>
                       </div>
                     </div>
 
