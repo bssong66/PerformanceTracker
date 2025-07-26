@@ -406,15 +406,6 @@ export default function Foundation() {
                   <ChevronRight className="h-4 w-4" />
                 </Button>
               </div>
-              
-              {selectedYear !== currentYear && (
-                <div className="flex items-center space-x-1 px-2 py-1 bg-blue-50 rounded-lg border border-blue-200">
-                  <Calendar className="h-3 w-3 text-blue-600" />
-                  <span className="text-xs text-blue-700 font-medium">
-                    {selectedYear > currentYear ? '미래 계획' : '과거 계획'}
-                  </span>
-                </div>
-              )}
             </div>
           </div>
 
