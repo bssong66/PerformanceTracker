@@ -632,8 +632,8 @@ export default function Foundation() {
                 <ChevronRight className="h-4 w-4 text-slate-600" />
               </Button>
             </div>
-            {/* New Plan Dropdown - Only available for current and future years */}
-            {!isPastYear && (
+            {/* New Plan Dropdown - Only available for current and future years, and only if no foundation exists yet */}
+            {!isPastYear && !foundation && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button
