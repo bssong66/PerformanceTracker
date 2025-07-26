@@ -876,7 +876,12 @@ export default function Foundation() {
           <Card className="border-0 shadow-sm bg-white/70 backdrop-blur-sm">
             <CardHeader className="pb-4">
               <div className="flex items-center justify-between">
-                <CardTitle className="text-xl font-semibold text-slate-900">개인 미션</CardTitle>
+                <div className="flex items-center space-x-3">
+                  <CardTitle className="text-xl font-semibold text-slate-900">개인 미션</CardTitle>
+                  <span className="text-sm text-slate-500 italic font-light">
+                    꾸준한 실천이 더 나은 미래를 만듭니다
+                  </span>
+                </div>
                 {!editingMission && foundation && !isPastYear ? (
                   <Button
                     variant="outline"
