@@ -180,7 +180,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const id = parseInt(req.params.id);
       const updates = req.body;
-      const event = await storage.updateEvent(id, updates);
+      
+      // Remove fields that shouldn't be updated
+      const { id: _, createdAt, ...validUpdates } = updates;
+      
+      const event = await storage.updateEvent(id, validUpdates);
       
       if (!event) {
         return res.status(404).json({ message: "Event not found" });
@@ -188,7 +192,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json(event);
     } catch (error) {
-      res.status(400).json({ message: "Invalid event data" });
+      console.error('Update event error:', error);
+      res.status(400).json({ message: "Invalid event data", error: error.message });
     }
   });
 

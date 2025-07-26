@@ -144,6 +144,12 @@ export default function Calendar() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(eventData)
       });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to update event');
+      }
+      
       return response.json();
     },
     onSuccess: () => {
@@ -151,6 +157,13 @@ export default function Calendar() {
       setShowEventDialog(false);
       resetEventForm();
       toast({ title: "일정 수정", description: "일정이 수정되었습니다." });
+    },
+    onError: (error: any) => {
+      toast({ 
+        title: "일정 수정 실패", 
+        description: error.message || "일정을 수정하는데 실패했습니다.", 
+        variant: "destructive" 
+      });
     }
   });
 
@@ -336,13 +349,27 @@ export default function Calendar() {
     if (event.resource.type !== 'event' || event.resource.data.isRecurring) return;
     
     const eventData = event.resource.data;
+    const isAllDay = format(start, 'HH:mm') === '00:00' && format(end, 'HH:mm') === '00:00';
+    
     const updatedEvent = {
-      ...eventData,
+      id: eventData.id,
+      userId: eventData.userId,
+      title: eventData.title,
+      description: eventData.description,
       startDate: format(start, 'yyyy-MM-dd'),
       endDate: format(end, 'yyyy-MM-dd'),
-      startTime: format(start, 'HH:mm'),
-      endTime: format(end, 'HH:mm'),
-      isAllDay: format(start, 'HH:mm') === '00:00' && format(end, 'HH:mm') === '00:00'
+      startTime: isAllDay ? null : format(start, 'HH:mm'),
+      endTime: isAllDay ? null : format(end, 'HH:mm'),
+      priority: eventData.priority,
+      color: eventData.color,
+      isAllDay: isAllDay,
+      repeatType: eventData.repeatType,
+      repeatInterval: eventData.repeatInterval,
+      repeatEndDate: eventData.repeatEndDate,
+      repeatWeekdays: eventData.repeatWeekdays,
+      coreValue: eventData.coreValue,
+      annualGoal: eventData.annualGoal,
+      projectId: eventData.projectId
     };
     
     updateEventMutation.mutate(updatedEvent);
@@ -354,13 +381,27 @@ export default function Calendar() {
     if (event.resource.type !== 'event' || event.resource.data.isRecurring) return;
     
     const eventData = event.resource.data;
+    const isAllDay = format(start, 'HH:mm') === '00:00' && format(end, 'HH:mm') === '00:00';
+    
     const updatedEvent = {
-      ...eventData,
+      id: eventData.id,
+      userId: eventData.userId,
+      title: eventData.title,
+      description: eventData.description,
       startDate: format(start, 'yyyy-MM-dd'),
       endDate: format(end, 'yyyy-MM-dd'),
-      startTime: format(start, 'HH:mm'),
-      endTime: format(end, 'HH:mm'),
-      isAllDay: format(start, 'HH:mm') === '00:00' && format(end, 'HH:mm') === '00:00'
+      startTime: isAllDay ? null : format(start, 'HH:mm'),
+      endTime: isAllDay ? null : format(end, 'HH:mm'),
+      priority: eventData.priority,
+      color: eventData.color,
+      isAllDay: isAllDay,
+      repeatType: eventData.repeatType,
+      repeatInterval: eventData.repeatInterval,
+      repeatEndDate: eventData.repeatEndDate,
+      repeatWeekdays: eventData.repeatWeekdays,
+      coreValue: eventData.coreValue,
+      annualGoal: eventData.annualGoal,
+      projectId: eventData.projectId
     };
     
     updateEventMutation.mutate(updatedEvent);
