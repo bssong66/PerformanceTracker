@@ -865,53 +865,7 @@ export default function Foundation() {
         </div>
 
         <div className="space-y-8">
-          {/* Personal Mission */}
-          <Card className="border-0 shadow-sm bg-white/70 backdrop-blur-sm">
-            <CardHeader className="pb-4">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-xl font-semibold text-slate-900">개인 미션</CardTitle>
-                {!editingMission && foundation && !isPastYear ? (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setEditingMission(true)}
-                    className="border-slate-300 text-slate-700 hover:bg-slate-50 hover:text-slate-900 shadow-sm"
-                  >
-                    <Edit2 className="h-4 w-4 mr-2" />
-                    <span>편집</span>
-                  </Button>
-                ) : null}
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {!editingMission && foundation ? (
-                  <div className="space-y-3">
-                    <Label className="text-slate-700 font-medium">개인 미션</Label>
-                    <div className="p-4 bg-slate-50/50 rounded-xl border border-slate-200">
-                      <p className="text-slate-800 whitespace-pre-wrap leading-relaxed">
-                        {mission || "설정된 개인 미션이 없습니다."}
-                      </p>
-                    </div>
-                  </div>
-                ) : (
-                  <>
-                    <Label htmlFor="mission" className="text-slate-700 font-medium">
-                      한 문장으로 당신의 인생 목적을 표현해보세요
-                    </Label>
-                    <Textarea
-                      id="mission"
-                      placeholder="예: 기술을 통해 사람들의 삶을 더 편리하고 풍요롭게 만드는 개발자가 되겠다."
-                      value={mission}
-                      onChange={(e) => setMission(e.target.value)}
-                      rows={3}
-                      className="border-slate-300 focus:border-blue-500 focus:ring-blue-500/20 rounded-xl"
-                    />
-                  </>
-                )}
-              </div>
-            </CardContent>
-          </Card>
+          
 
           {/* Core Values */}
           <Card className="border-0 shadow-sm bg-white/70 backdrop-blur-sm">
