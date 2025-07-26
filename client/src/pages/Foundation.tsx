@@ -420,81 +420,63 @@ export default function Foundation() {
                 <p className="text-sm text-gray-600">
                   의사결정의 기준이 되는 개인 가치를 설정하세요
                 </p>
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-                  {values.map((value, index) => (
-                    <div key={index}>
-                      <Label htmlFor={`value-${index}`}>가치 {index + 1}</Label>
-                      <Input
-                        id={`value-${index}`}
-                        placeholder={`예: ${
-                          index === 0 ? '성장' : index === 1 ? '정직' : '배려'
-                        }`}
-                        value={value}
-                        onChange={(e) => handleValueChange(index, e.target.value)}
-                      />
-                    </div>
-                  ))}
+                <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
+                  {values.map((value, index) => {
+                    const progress = value.trim() ? calculateAnnualProgress(value) : null;
+                    
+                    return (
+                      <div key={index} className="space-y-3">
+                        <div>
+                          <Label htmlFor={`value-${index}`}>가치 {index + 1}</Label>
+                          <Input
+                            id={`value-${index}`}
+                            placeholder={`예: ${
+                              index === 0 ? '성장' : index === 1 ? '정직' : '배려'
+                            }`}
+                            value={value}
+                            onChange={(e) => handleValueChange(index, e.target.value)}
+                          />
+                        </div>
+                        
+                        {/* Progress bar for this core value */}
+                        {progress && value.trim() && (
+                          <div className="space-y-2 p-3 bg-gray-50 rounded-lg border">
+                            <div className="flex items-center justify-between text-sm">
+                              <span className="font-medium text-gray-700">
+                                {currentYear}년 완성도
+                              </span>
+                              <span className="text-gray-600">
+                                {progress.completed}/{progress.total} ({progress.percentage}%)
+                              </span>
+                            </div>
+                            
+                            <Progress 
+                              value={progress.percentage} 
+                              className="h-2"
+                            />
+                            
+                            {progress.total > 0 && (
+                              <div className="flex flex-col gap-1 text-xs text-gray-500">
+                                <span>프로젝트: {progress.projects.completed}/{progress.projects.total}</span>
+                                <span>할일: {progress.tasks.completed}/{progress.tasks.total}</span>
+                                <span>일정: {progress.events.completed}/{progress.events.total}</span>
+                              </div>
+                            )}
+                            
+                            {progress.total === 0 && (
+                              <p className="text-xs text-gray-400 italic">
+                                연결된 항목이 없습니다
+                              </p>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             </CardContent>
           </Card>
-
-          {/* Annual Progress */}
-          {foundation && values.some(v => v.trim() !== "") && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <TrendingUp className="h-5 w-5" />
-                  {currentYear}년 핵심 가치 완성도
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-6">
-                  <p className="text-sm text-gray-600">
-                    각 핵심 가치와 연결된 프로젝트, 할일, 일정의 완성도를 보여줍니다
-                  </p>
-                  
-                  <div className="space-y-4">
-                    {values.map((value, index) => {
-                      if (!value.trim()) return null;
-                      
-                      const progress = calculateAnnualProgress(value);
-                      
-                      return (
-                        <div key={index} className="space-y-2">
-                          <div className="flex items-center justify-between">
-                            <span className="font-medium text-gray-900">{value}</span>
-                            <span className="text-sm text-gray-500">
-                              {progress.completed}/{progress.total} ({progress.percentage}%)
-                            </span>
-                          </div>
-                          
-                          <Progress 
-                            value={progress.percentage} 
-                            className="h-3"
-                          />
-                          
-                          {progress.total > 0 && (
-                            <div className="flex gap-4 text-xs text-gray-500">
-                              <span>프로젝트: {progress.projects.completed}/{progress.projects.total}</span>
-                              <span>할일: {progress.tasks.completed}/{progress.tasks.total}</span>
-                              <span>일정: {progress.events.completed}/{progress.events.total}</span>
-                            </div>
-                          )}
-                          
-                          {progress.total === 0 && (
-                            <p className="text-xs text-gray-400 italic">
-                              이 가치와 연결된 항목이 없습니다
-                            </p>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          )}
 
           {/* Annual Goals */}
           <Card>
