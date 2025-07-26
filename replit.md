@@ -147,14 +147,6 @@ Preferred communication style: Simple, everyday language.
 ```
 
 ### Recent Changes (July 26, 2025)
-- **Unified Save System Implementation Completed**
-- Removed all section-level save/cancel buttons from Foundation page
-- Implemented unified save functionality using only top-level save button
-- Added temporary storage system for annual goals with Enter key addition
-- Created visual distinction between saved goals and temporary goals ("임시 저장" indicator)
-- Implemented year change behavior that discards unsaved temporary data
-- Removed individual edit/delete buttons from existing goals for simplified UI
-- Streamlined new goal input with full-width textarea and Enter key submission
 - **Year-based Foundation Management System Implementation**
 - Updated database schema to add year column to foundations table with NOT NULL constraint
 - Modified DatabaseStorage and MemStorage classes to support year-based Foundation queries

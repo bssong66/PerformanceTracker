@@ -184,8 +184,7 @@ export class MemStorage implements IStorage {
   async getAnnualGoals(userId: number, year?: number): Promise<AnnualGoal[]> {
     const currentYear = year || new Date().getFullYear();
     return Array.from(this.annualGoals.values())
-      .filter(goal => goal.userId === userId && goal.year === currentYear)
-      .sort((a, b) => a.id - b.id); // Sort by ID to maintain consistent order
+      .filter(goal => goal.userId === userId && goal.year === currentYear);
   }
 
   async createAnnualGoal(goal: InsertAnnualGoal): Promise<AnnualGoal> {
@@ -194,7 +193,6 @@ export class MemStorage implements IStorage {
       ...goal, 
       id,
       completed: goal.completed ?? null,
-      coreValue: goal.coreValue ?? null,
       createdAt: new Date()
     };
     this.annualGoals.set(id, newGoal);
@@ -653,7 +651,7 @@ export class MemStorage implements IStorage {
 
 import { drizzle } from 'drizzle-orm/neon-http';
 import { neon } from '@neondatabase/serverless';
-import { eq, and, inArray, desc } from 'drizzle-orm';
+import { eq, and, inArray } from 'drizzle-orm';
 
 // Initialize database connection
 const sql = neon(process.env.DATABASE_URL!);
@@ -683,7 +681,6 @@ export class DatabaseStorage implements IStorage {
       .select()
       .from(foundations)
       .where(and(eq(foundations.userId, userId), eq(foundations.year, currentYear)))
-      .orderBy(desc(foundations.updatedAt))
       .limit(1);
     return result[0];
   }

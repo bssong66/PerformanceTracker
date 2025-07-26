@@ -194,7 +194,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(event);
     } catch (error) {
       console.error('Update event error:', error);
-      res.status(400).json({ message: "Invalid event data", error: error instanceof Error ? error.message : 'Unknown error' });
+      res.status(400).json({ message: "Invalid event data", error: error.message });
     }
   });
 

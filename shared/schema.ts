@@ -25,7 +25,6 @@ export const annualGoals = pgTable("annual_goals", {
   userId: integer("user_id").notNull(),
   title: text("title").notNull(),
   year: integer("year").notNull(),
-  coreValue: text("core_value"), // Connected core value from foundation
   completed: boolean("completed").default(false),
   createdAt: timestamp("created_at").defaultNow(),
 });
