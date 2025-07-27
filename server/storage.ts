@@ -787,6 +787,11 @@ export class DatabaseStorage implements IStorage {
     return await db.select().from(projects).where(eq(projects.userId, userId));
   }
 
+  async getProject(id: number): Promise<Project | undefined> {
+    const result = await db.select().from(projects).where(eq(projects.id, id)).limit(1);
+    return result[0];
+  }
+
   async createProject(project: InsertProject): Promise<Project> {
     const result = await db.insert(projects).values(project).returning();
     return result[0];
@@ -818,6 +823,10 @@ export class DatabaseStorage implements IStorage {
     }
     
     return await db.select().from(tasks).where(and(...conditions));
+  }
+
+  async getTasksByProject(projectId: number): Promise<Task[]> {
+    return await db.select().from(tasks).where(eq(tasks.projectId, projectId));
   }
 
   async getTasksByPriority(userId: number, priority: string, date?: string): Promise<Task[]> {
