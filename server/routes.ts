@@ -26,9 +26,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Foundation routes
-  app.get("/api/foundation/:userId", async (req, res) => {
+  app.get("/api/foundation/:userId", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.params.userId;
+      const userId = req.user.claims.sub; // Use authenticated user ID
       const year = req.query.year ? parseInt(req.query.year as string) : undefined;
       const foundation = await storage.getFoundation(userId, year);
       
@@ -42,9 +42,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/foundations/:userId", async (req, res) => {
+  app.get("/api/foundations/:userId", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.params.userId;
+      const userId = req.user.claims.sub;
       const foundations = await storage.getAllFoundations(userId);
       res.json(foundations);
     } catch (error) {
@@ -52,9 +52,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/foundation", async (req, res) => {
+  app.post("/api/foundation", isAuthenticated, async (req: any, res) => {
     try {
-      const foundationData = insertFoundationSchema.parse(req.body);
+      const foundationData = insertFoundationSchema.parse({
+        ...req.body,
+        userId: req.user.claims.sub
+      });
       const foundation = await storage.upsertFoundation(foundationData);
       res.json(foundation);
     } catch (error) {
@@ -63,9 +66,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Annual goals routes
-  app.get("/api/goals/:userId", async (req, res) => {
+  app.get("/api/goals/:userId", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.params.userId;
+      const userId = req.user.claims.sub;
       const year = req.query.year ? parseInt(req.query.year as string) : undefined;
       const goals = await storage.getAnnualGoals(userId, year);
       res.json(goals);
@@ -74,9 +77,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/goals", async (req, res) => {
+  app.post("/api/goals", isAuthenticated, async (req: any, res) => {
     try {
-      const goalData = insertAnnualGoalSchema.parse(req.body);
+      const goalData = insertAnnualGoalSchema.parse({
+        ...req.body,
+        userId: req.user.claims.sub
+      });
       const goal = await storage.createAnnualGoal(goalData);
       res.json(goal);
     } catch (error) {
@@ -116,9 +122,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Project routes
-  app.get("/api/projects/:userId", async (req, res) => {
+  app.get("/api/projects/:userId", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.params.userId;
+      const userId = req.user.claims.sub;
       const projects = await storage.getProjects(userId);
       res.json(projects);
     } catch (error) {
@@ -126,9 +132,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/projects", async (req, res) => {
+  app.post("/api/projects", isAuthenticated, async (req: any, res) => {
     try {
-      const projectData = insertProjectSchema.parse(req.body);
+      const projectData = insertProjectSchema.parse({
+        ...req.body,
+        userId: req.user.claims.sub
+      });
       const project = await storage.createProject(projectData);
       res.json(project);
     } catch (error) {
@@ -216,9 +225,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Event routes
-  app.get("/api/events/:userId", async (req, res) => {
+  app.get("/api/events/:userId", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.params.userId;
+      const userId = req.user.claims.sub;
       const { startDate, endDate } = req.query;
       const events = await storage.getEvents(
         userId, 
@@ -231,9 +240,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/events", async (req, res) => {
+  app.post("/api/events", isAuthenticated, async (req: any, res) => {
     try {
-      const eventData = insertEventSchema.parse(req.body);
+      const eventData = insertEventSchema.parse({
+        ...req.body,
+        userId: req.user.claims.sub
+      });
       const event = await storage.createEvent(eventData);
       res.json(event);
     } catch (error) {
@@ -295,9 +307,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Task routes
-  app.get("/api/tasks/:userId", async (req, res) => {
+  app.get("/api/tasks/:userId", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.params.userId;
+      const userId = req.user.claims.sub;
       const date = req.query.date as string;
       const priority = req.query.priority as string;
       
@@ -314,9 +326,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/tasks", async (req, res) => {
+  app.post("/api/tasks", isAuthenticated, async (req: any, res) => {
     try {
-      const taskData = insertTaskSchema.parse(req.body);
+      const taskData = insertTaskSchema.parse({
+        ...req.body,
+        userId: req.user.claims.sub
+      });
       const task = await storage.createTask(taskData);
       res.json(task);
     } catch (error) {
@@ -373,9 +388,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Habit routes
-  app.get("/api/habits/:userId", async (req, res) => {
+  app.get("/api/habits/:userId", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.params.userId;
+      const userId = req.user.claims.sub;
       console.log('Getting habits for user:', userId);
       const habits = await storage.getHabits(userId);
       console.log('Found habits:', habits);
@@ -386,10 +401,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/habits", async (req, res) => {
+  app.post("/api/habits", isAuthenticated, async (req: any, res) => {
     try {
       console.log('Creating habit with data:', req.body);
-      const habitData = insertHabitSchema.parse(req.body);
+      const habitData = insertHabitSchema.parse({
+        ...req.body,
+        userId: req.user.claims.sub
+      });
       console.log('Parsed habit data:', habitData);
       const habit = await storage.createHabit(habitData);
       res.json(habit);
@@ -431,9 +449,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Habit log routes
-  app.get("/api/habit-logs/:userId/:date", async (req, res) => {
+  app.get("/api/habit-logs/:userId/:date", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.params.userId;
+      const userId = req.user.claims.sub;
       const date = req.params.date;
       console.log('Getting habit logs for user:', userId, 'date:', date);
       const logs = await storage.getHabitLogsForDate(userId, date);
@@ -445,9 +463,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/habit-logs", async (req, res) => {
+  app.post("/api/habit-logs", isAuthenticated, async (req: any, res) => {
     try {
-      const logData = insertHabitLogSchema.parse(req.body);
+      const logData = insertHabitLogSchema.parse({
+        ...req.body,
+        userId: req.user.claims.sub
+      });
       const log = await storage.createHabitLog(logData);
       res.json(log);
     } catch (error) {
@@ -483,9 +504,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Weekly review routes
-  app.get("/api/weekly-review/:userId/:weekStartDate", async (req, res) => {
+  app.get("/api/weekly-review/:userId/:weekStartDate", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.params.userId;
+      const userId = req.user.claims.sub;
       const weekStartDate = req.params.weekStartDate;
       const review = await storage.getWeeklyReview(userId, weekStartDate);
       
@@ -499,9 +520,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/weekly-review", async (req, res) => {
+  app.post("/api/weekly-review", isAuthenticated, async (req: any, res) => {
     try {
-      const reviewData = insertWeeklyReviewSchema.parse(req.body);
+      const reviewData = insertWeeklyReviewSchema.parse({
+        ...req.body,
+        userId: req.user.claims.sub
+      });
       const review = await storage.upsertWeeklyReview(reviewData);
       res.json(review);
     } catch (error) {
