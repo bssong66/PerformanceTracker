@@ -464,7 +464,7 @@ export default function ProjectManagement() {
   const confirmDelete = (type: 'project' | 'task', id: number) => {
     if (type === 'project') {
       // Check if project has tasks
-      const projectTasks = tasks.filter((task: any) => task.projectId === id);
+      const projectTasks = allTasks.filter((task: any) => task.projectId === id);
       if (projectTasks.length > 0) {
         // Show warning dialog for project with tasks
         toast({
