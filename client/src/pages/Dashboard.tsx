@@ -402,57 +402,8 @@ export default function Dashboard() {
           </Card>
         </div>
 
-        {/* 오늘의 일정 및 할일 */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-12">
-          {/* 오늘의 일정 */}
-          <Card className="bg-white/90 backdrop-blur-sm border-0 shadow-lg">
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <Calendar className="h-6 w-6 text-indigo-600" />
-                <span>오늘의 일정</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {eventStats.todayEvents.length > 0 ? (
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between mb-4">
-                    <span className="text-sm text-gray-500">완료율</span>
-                    <span className="text-sm font-semibold text-indigo-600">
-                      {todayEventCompletionRate}%
-                    </span>
-                  </div>
-                  <Progress value={todayEventCompletionRate} className="h-3 mb-4" />
-                  <div className="space-y-3">
-                    {eventStats.todayEvents.map((event: any) => (
-                      <div key={event.id} className={`p-3 rounded-lg border-l-4 ${
-                        event.priority === 'high' ? 'border-red-500 bg-red-50' :
-                        event.priority === 'medium' ? 'border-orange-500 bg-orange-50' :
-                        'border-green-500 bg-green-50'
-                      }`}>
-                        <div className="flex items-center justify-between">
-                          <div className={`text-sm font-medium ${event.completed ? 'line-through text-gray-500' : ''}`}>
-                            {event.title}
-                          </div>
-                          {event.completed && <CheckCircle2 className="h-4 w-4 text-green-500" />}
-                        </div>
-                        {event.startTime && event.endTime && (
-                          <div className="text-xs text-gray-500 mt-1">
-                            {event.startTime} - {event.endTime}
-                          </div>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ) : (
-                <div className="text-center text-gray-500 py-8">
-                  <Calendar className="h-12 w-12 mx-auto mb-2 text-gray-300" />
-                  <p>오늘 예정된 일정이 없습니다</p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
+        {/* 우선순위별 할일 및 일정 현황 */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
           {/* 우선순위별 할일 현황 */}
           <Card className="bg-white/90 backdrop-blur-sm border-0 shadow-lg">
             <CardHeader>
@@ -578,46 +529,52 @@ export default function Dashboard() {
           </Card>
         </div>
 
-        {/* 핵심가치별 진행률 및 다가오는 일정 */}
+        {/* 오늘의 일정 및 다가오는 일정 */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
-          {/* 핵심가치별 진행률 */}
+          {/* 오늘의 일정 */}
           <Card className="bg-white/90 backdrop-blur-sm border-0 shadow-lg">
             <CardHeader>
               <CardTitle className="flex items-center space-x-2">
-                <Heart className="h-6 w-6 text-red-600" />
-                <span>핵심가치별 진행률</span>
+                <Calendar className="h-6 w-6 text-indigo-600" />
+                <span>오늘의 일정</span>
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-6">
-              {coreValueProgress.length > 0 ? (
-                coreValueProgress.map((valueData, index) => (
-                  <div key={valueData.value} className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-2">
-                        <div className={`w-4 h-4 rounded ${
-                          index === 0 ? 'bg-blue-500' : 
-                          index === 1 ? 'bg-purple-500' : 'bg-green-500'
-                        }`}></div>
-                        <span className="font-medium">{valueData.value}</span>
-                      </div>
-                      <span className="text-sm font-semibold">
-                        {valueData.percentage}%
-                      </span>
-                    </div>
-                    <Progress value={valueData.percentage} className="h-3" />
-                    <div className="text-xs text-gray-500 space-x-4">
-                      <span>할일: {valueData.tasks.completed}/{valueData.tasks.total}</span>
-                      <span>일정: {valueData.events.completed}/{valueData.events.total}</span>
-                      <span>프로젝트: {valueData.projects.completed}/{valueData.projects.total}</span>
-                      <span>습관: {valueData.habits.total}개</span>
-                    </div>
+            <CardContent>
+              {eventStats.todayEvents.length > 0 ? (
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between mb-4">
+                    <span className="text-sm text-gray-500">완료율</span>
+                    <span className="text-sm font-semibold text-indigo-600">
+                      {todayEventCompletionRate}%
+                    </span>
                   </div>
-                ))
+                  <Progress value={todayEventCompletionRate} className="h-3 mb-4" />
+                  <div className="space-y-3">
+                    {eventStats.todayEvents.map((event: any) => (
+                      <div key={event.id} className={`p-3 rounded-lg border-l-4 ${
+                        event.priority === 'high' ? 'border-red-500 bg-red-50' :
+                        event.priority === 'medium' ? 'border-orange-500 bg-orange-50' :
+                        'border-green-500 bg-green-50'
+                      }`}>
+                        <div className="flex items-center justify-between">
+                          <div className={`text-sm font-medium ${event.completed ? 'line-through text-gray-500' : ''}`}>
+                            {event.title}
+                          </div>
+                          {event.completed && <CheckCircle2 className="h-4 w-4 text-green-500" />}
+                        </div>
+                        {event.startTime && event.endTime && (
+                          <div className="text-xs text-gray-500 mt-1">
+                            {event.startTime} - {event.endTime}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
               ) : (
                 <div className="text-center text-gray-500 py-8">
-                  <Heart className="h-12 w-12 mx-auto mb-2 text-gray-300" />
-                  <p>핵심가치를 설정해주세요</p>
-                  <p className="text-sm">가치중심계획에서 설정할 수 있습니다</p>
+                  <Calendar className="h-12 w-12 mx-auto mb-2 text-gray-300" />
+                  <p>오늘 예정된 일정이 없습니다</p>
                 </div>
               )}
             </CardContent>
@@ -666,6 +623,51 @@ export default function Dashboard() {
                 <div className="text-center text-gray-500 py-8">
                   <Clock className="h-12 w-12 mx-auto mb-2 text-gray-300" />
                   <p>다가오는 일정이 없습니다</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* 핵심가치별 진행률 */}
+        <div className="grid grid-cols-1 gap-8 mb-12">
+          <Card className="bg-white/90 backdrop-blur-sm border-0 shadow-lg">
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2">
+                <Heart className="h-6 w-6 text-red-600" />
+                <span>핵심가치별 진행률</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {coreValueProgress.length > 0 ? (
+                coreValueProgress.map((valueData, index) => (
+                  <div key={valueData.value} className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-2">
+                        <div className={`w-4 h-4 rounded ${
+                          index === 0 ? 'bg-blue-500' : 
+                          index === 1 ? 'bg-purple-500' : 'bg-green-500'
+                        }`}></div>
+                        <span className="font-medium">{valueData.value}</span>
+                      </div>
+                      <span className="text-sm font-semibold">
+                        {valueData.percentage}%
+                      </span>
+                    </div>
+                    <Progress value={valueData.percentage} className="h-3" />
+                    <div className="text-xs text-gray-500 space-x-4">
+                      <span>할일: {valueData.tasks.completed}/{valueData.tasks.total}</span>
+                      <span>일정: {valueData.events.completed}/{valueData.events.total}</span>
+                      <span>프로젝트: {valueData.projects.completed}/{valueData.projects.total}</span>
+                      <span>습관: {valueData.habits.total}개</span>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="text-center text-gray-500 py-8">
+                  <Heart className="h-12 w-12 mx-auto mb-2 text-gray-300" />
+                  <p>핵심가치를 설정해주세요</p>
+                  <p className="text-sm">가치중심계획에서 설정할 수 있습니다</p>
                 </div>
               )}
             </CardContent>
