@@ -77,7 +77,12 @@ export default function Dashboard() {
     totalTasks: (tasks as any[]).length,
     completedTasks: (tasks as any[]).filter((t: any) => t.completed).length,
     totalProjects: (projects as any[]).length,
-    completedProjects: (projects as any[]).filter((p: any) => p.status === 'completed').length,
+    // Projects table doesn't have status column - calculate completion based on end_date
+    completedProjects: (projects as any[]).filter((p: any) => {
+      if (!p.endDate) return false;
+      const endDate = new Date(p.endDate);
+      return endDate <= today;
+    }).length,
     totalGoals: (goals as any[]).length,
     activeHabits: (habits as any[]).filter((h: any) => h.isActive).length,
   };
@@ -129,7 +134,11 @@ export default function Dashboard() {
     const totalItems = relatedTasks.length + relatedProjects.length + relatedHabits.length + relatedEvents.length;
     const completedItems = 
       relatedTasks.filter((t: any) => t.completed).length +
-      relatedProjects.filter((p: any) => p.status === 'completed').length +
+      relatedProjects.filter((p: any) => {
+        if (!p.endDate) return false;
+        const endDate = new Date(p.endDate);
+        return endDate <= today;
+      }).length +
       relatedEvents.filter((e: any) => e.completed).length;
 
     return {
@@ -138,7 +147,11 @@ export default function Dashboard() {
       completedItems,
       percentage: totalItems > 0 ? Math.round((completedItems / totalItems) * 100) : 0,
       tasks: { total: relatedTasks.length, completed: relatedTasks.filter((t: any) => t.completed).length },
-      projects: { total: relatedProjects.length, completed: relatedProjects.filter((p: any) => p.status === 'completed').length },
+      projects: { total: relatedProjects.length, completed: relatedProjects.filter((p: any) => {
+        if (!p.endDate) return false;
+        const endDate = new Date(p.endDate);
+        return endDate <= today;
+      }).length },
       habits: { total: relatedHabits.length },
       events: { total: relatedEvents.length, completed: relatedEvents.filter((e: any) => e.completed).length },
     };
@@ -245,6 +258,37 @@ export default function Dashboard() {
       </div>
     );
   }
+
+  // 데이터 정합성 체크용 로그 (개발환경에서만)
+  if (typeof window !== 'undefined' && window.location.hostname === 'localhost') {
+    console.log('Dashboard Data Integrity Check:', {
+      actualData: {
+        tasks: { total: tasks.length, completed: tasks.filter((t: any) => t.completed).length },
+        projects: { total: projects.length },
+        habits: { total: habits.length, active: habits.filter((h: any) => h.isActive).length },
+        events: { total: events.length, completed: events.filter((e: any) => e.completed).length }
+      },
+      calculatedStats: {
+        overallStats,
+        priorityStats,
+        eventStats: {
+          totalEvents: eventStats.totalEvents,
+          completedEvents: eventStats.completedEvents
+        },
+        habitStats: {
+          totalHabits: habitStats.totalHabits,
+          weeklyCompletions: habitStats.weeklyCompletions
+        }
+      },
+      databaseExpected: {
+        tasks: { total: 43, aCompleted: 7, bCompleted: 5, cCompleted: 0 },
+        projects: { total: 1 },
+        habits: { active: 2 },
+        events: { total: 4, highPriority: 1, mediumPriority: 3 }
+      }
+    });
+  }
+
   // 원형 진행률 컴포넌트
   const CircularProgressIndicator = ({ value, max, size = 80, strokeWidth = 8, color = "blue" }: any) => {
     const percentage = max > 0 ? (value / max) * 100 : 0;
