@@ -16,8 +16,7 @@ import { queryClient } from "@/lib/queryClient";
 import { format, startOfMonth, endOfMonth, subDays, addDays } from "date-fns";
 import { ko } from "date-fns/locale";
 
-// Mock user ID for demo
-const MOCK_USER_ID = 1;
+// Remove mock user ID - use authenticated endpoints
 
 // Function to get appropriate icon for habit based on name
 const getHabitIcon = (habitName: string) => {
@@ -65,64 +64,71 @@ export default function MonthlyReview() {
   const [openPopovers, setOpenPopovers] = useState<{[taskId: number]: boolean}>({});
 
   const { data: monthlyReview } = useQuery({
-    queryKey: [api.monthlyReview.get(MOCK_USER_ID, currentYear, currentMonth)],
+    queryKey: ['/api/monthly-reviews', currentYear, currentMonth],
     meta: { errorMessage: "Monthly review not found" },
+    retry: false,
   });
 
   const { data: foundation } = useQuery({
-    queryKey: [api.foundation.get(MOCK_USER_ID)],
+    queryKey: ['/api/foundation/1'],
     meta: { errorMessage: "Foundation not found" },
+    retry: false,
   });
 
   const { data: habits = [] } = useQuery({
-    queryKey: [api.habits.list(MOCK_USER_ID)],
+    queryKey: ['/api/habits/1'],
+    retry: false,
   });
 
   // Get tasks for the current month to calculate completion stats
   const { data: monthTasks = [] } = useQuery({
-    queryKey: [`/api/tasks/${MOCK_USER_ID}?startDate=${format(monthStart, 'yyyy-MM-dd')}&endDate=${format(monthEnd, 'yyyy-MM-dd')}`],
+    queryKey: [`/api/tasks/1?startDate=${format(monthStart, 'yyyy-MM-dd')}&endDate=${format(monthEnd, 'yyyy-MM-dd')}`],
+    retry: false,
   });
 
   // Get projects to display project names with tasks
   const { data: projects = [] } = useQuery({
-    queryKey: [`/api/projects/${MOCK_USER_ID}`],
+    queryKey: ['/api/projects/1'],
+    retry: false,
   });
 
   // Get time blocks for the current month to calculate work-life balance
   const { data: monthTimeBlocks = [] } = useQuery({
-    queryKey: ['timeBlocks', 'month', MOCK_USER_ID, format(monthStart, 'yyyy-MM-dd')],
+    queryKey: ['timeBlocks', 'month', format(monthStart, 'yyyy-MM-dd')],
     queryFn: async () => {
       const days = [];
       const currentDate = new Date(monthStart);
       while (currentDate <= monthEnd) {
         const date = format(currentDate, 'yyyy-MM-dd');
-        const dayBlocks = await fetch(api.timeBlocks.list(MOCK_USER_ID, date)).then(res => res.json());
+        const dayBlocks = await fetch(`/api/time-blocks?date=${date}`).then(res => res.json());
         days.push(...dayBlocks);
         currentDate.setDate(currentDate.getDate() + 1);
       }
       return days;
     },
+    retry: false,
   });
 
   // Get events for the current month
   const { data: monthEvents = [] } = useQuery({
-    queryKey: ['events', 'month', MOCK_USER_ID, format(monthStart, 'yyyy-MM-dd')],
+    queryKey: ['events', 'month', format(monthStart, 'yyyy-MM-dd')],
     queryFn: async () => {
       const startDate = format(monthStart, 'yyyy-MM-dd');
       const endDate = format(monthEnd, 'yyyy-MM-dd');
       return [];
     },
+    retry: false,
   });
 
   // Get habit logs for the current month to calculate completion rates
   const { data: monthHabitLogs = [] } = useQuery({
-    queryKey: ['habitLogs', 'month', MOCK_USER_ID, format(monthStart, 'yyyy-MM-dd')],
+    queryKey: ['habitLogs', 'month', format(monthStart, 'yyyy-MM-dd')],
     queryFn: async () => {
       const logs = [];
       const currentDate = new Date(monthStart);
       while (currentDate <= monthEnd) {
         const date = format(currentDate, 'yyyy-MM-dd');
-        const dayLogs = await fetch(api.habitLogs.list(MOCK_USER_ID, date)).then(res => res.json());
+        const dayLogs = await fetch(`/api/habit-logs?date=${date}`).then(res => res.json());
         logs.push(...dayLogs);
         currentDate.setDate(currentDate.getDate() + 1);
       }
@@ -324,7 +330,7 @@ export default function MonthlyReview() {
         description: "월간 리뷰가 성공적으로 저장되었습니다.",
       });
       queryClient.invalidateQueries({ 
-        queryKey: [api.monthlyReview.get(MOCK_USER_ID, currentYear, currentMonth)] 
+        queryKey: ['/api/monthly-reviews', currentYear, currentMonth] 
       });
     },
     onError: () => {
@@ -386,7 +392,7 @@ export default function MonthlyReview() {
       });
       // Invalidate queries to refresh the data
       queryClient.invalidateQueries({ 
-        queryKey: [`/api/tasks/${MOCK_USER_ID}?startDate=${format(monthStart, 'yyyy-MM-dd')}&endDate=${format(monthEnd, 'yyyy-MM-dd')}`] 
+        queryKey: [`/api/tasks/1?startDate=${format(monthStart, 'yyyy-MM-dd')}&endDate=${format(monthEnd, 'yyyy-MM-dd')}`] 
       });
     },
     onError: () => {
@@ -400,7 +406,6 @@ export default function MonthlyReview() {
 
   const handleSaveReview = () => {
     saveReviewMutation.mutate({
-      userId: MOCK_USER_ID,
       year: currentYear,
       month: currentMonth,
       workHours,

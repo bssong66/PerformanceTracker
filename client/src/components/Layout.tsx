@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { 
   Home, 
   Sprout, 
@@ -12,8 +13,11 @@ import {
   Menu,
   FolderOpen,
   BarChart3,
-  Focus
+  Focus,
+  LogOut,
+  User
 } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -31,6 +35,11 @@ const navigation = [
 export function Layout({ children }: LayoutProps) {
   const [location] = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const { user } = useAuth();
+
+  const handleLogout = () => {
+    window.location.href = '/api/logout';
+  };
 
   const isActive = (href: string) => {
     if (href === '/') {
@@ -72,6 +81,35 @@ export function Layout({ children }: LayoutProps) {
           );
         })}
       </nav>
+      
+      {/* User Profile & Logout Section */}
+      <div className="flex-shrink-0 p-4 border-t border-gray-200">
+        <div className="flex items-center">
+          <Avatar className="h-8 w-8 mr-3">
+            <AvatarImage src={user?.profileImageUrl} alt={user?.firstName || user?.email || '사용자'} />
+            <AvatarFallback>
+              <User className="h-4 w-4" />
+            </AvatarFallback>
+          </Avatar>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-medium text-gray-900 truncate">
+              {user?.firstName || user?.email || '사용자'}
+            </p>
+            <p className="text-xs text-gray-500 truncate">
+              {user?.email}
+            </p>
+          </div>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleLogout}
+            className="ml-2 p-1 text-gray-400 hover:text-gray-600"
+            title="로그아웃"
+          >
+            <LogOut className="h-4 w-4" />
+          </Button>
+        </div>
+      </div>
     </div>
   );
 

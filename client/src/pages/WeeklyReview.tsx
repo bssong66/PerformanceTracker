@@ -16,8 +16,7 @@ import { queryClient } from "@/lib/queryClient";
 import { format, startOfWeek, endOfWeek, subDays, addDays } from "date-fns";
 import { ko } from "date-fns/locale";
 
-// Mock user ID for demo
-const MOCK_USER_ID = 1;
+// Remove mock user ID - use authenticated endpoints
 
 // Function to get appropriate icon for habit based on name
 const getHabitIcon = (habitName: string) => {
@@ -64,65 +63,73 @@ export default function WeeklyReview() {
   const [openPopovers, setOpenPopovers] = useState<{[taskId: number]: boolean}>({});
 
   const { data: weeklyReview } = useQuery({
-    queryKey: [api.weeklyReview.get(MOCK_USER_ID, weekStartDate)],
+    queryKey: ['/api/weekly-reviews', weekStartDate],
     meta: { errorMessage: "Weekly review not found" },
+    retry: false,
   });
 
   const { data: foundation } = useQuery({
-    queryKey: [api.foundation.get(MOCK_USER_ID)],
+    queryKey: ['/api/foundation/1'],
     meta: { errorMessage: "Foundation not found" },
+    retry: false,
   });
 
   const { data: habits = [] } = useQuery({
-    queryKey: [api.habits.list(MOCK_USER_ID)],
+    queryKey: ['/api/habits/1'],
+    retry: false,
   });
 
   // Get tasks for the past week to calculate completion stats
   const { data: weekTasks = [] } = useQuery({
-    queryKey: [`/api/tasks/${MOCK_USER_ID}?startDate=${format(subDays(weekStart, 7), 'yyyy-MM-dd')}&endDate=${format(weekEnd, 'yyyy-MM-dd')}`],
+    queryKey: [`/api/tasks/1?startDate=${format(subDays(weekStart, 7), 'yyyy-MM-dd')}&endDate=${format(weekEnd, 'yyyy-MM-dd')}`],
+    retry: false,
   });
 
   // Get projects to display project names with tasks
   const { data: projects = [] } = useQuery({
-    queryKey: [`/api/projects/${MOCK_USER_ID}`],
+    queryKey: ['/api/projects/1'],
+    retry: false,
   });
 
   // Get time blocks for the past week to calculate work-life balance
   const { data: weekTimeBlocks = [] } = useQuery({
-    queryKey: ['timeBlocks', 'week', MOCK_USER_ID, weekStartDate],
+    queryKey: ['timeBlocks', 'week', weekStartDate],
     queryFn: async () => {
       const days = [];
       for (let i = 0; i < 7; i++) {
         const date = format(subDays(weekStart, 7 - i), 'yyyy-MM-dd');
-        const dayBlocks = await fetch(api.timeBlocks.list(MOCK_USER_ID, date)).then(res => res.json());
+        const dayBlocks = await fetch(`/api/time-blocks?date=${date}`).then(res => res.json());
         days.push(...dayBlocks);
       }
       return days;
     },
+    retry: false,
   });
 
   // Get events for the past week
   const { data: weekEvents = [] } = useQuery({
-    queryKey: ['events', 'week', MOCK_USER_ID, weekStartDate],
+    queryKey: ['events', 'week', weekStartDate],
     queryFn: async () => {
       const startDate = format(subDays(weekStart, 7), 'yyyy-MM-dd');
       const endDate = format(weekEnd, 'yyyy-MM-dd');
       return [];
     },
+    retry: false,
   });
 
   // Get habit logs for the past week to calculate completion rates
   const { data: weekHabitLogs = [] } = useQuery({
-    queryKey: ['habitLogs', 'week', MOCK_USER_ID, weekStartDate],
+    queryKey: ['habitLogs', 'week', weekStartDate],
     queryFn: async () => {
       const logs = [];
       for (let i = 0; i < 7; i++) {
         const date = format(subDays(weekStart, 7 - i), 'yyyy-MM-dd');
-        const dayLogs = await fetch(api.habitLogs.list(MOCK_USER_ID, date)).then(res => res.json());
+        const dayLogs = await fetch(`/api/habit-logs?date=${date}`).then(res => res.json());
         logs.push(...dayLogs);
       }
       return logs;
     },
+    retry: false,
   });
 
   // Calculate work and personal hours from time blocks
@@ -306,7 +313,7 @@ export default function WeeklyReview() {
         description: "주간 리뷰가 성공적으로 저장되었습니다.",
       });
       queryClient.invalidateQueries({ 
-        queryKey: [api.weeklyReview.get(MOCK_USER_ID, weekStartDate)] 
+        queryKey: ['/api/weekly-reviews', weekStartDate] 
       });
     },
     onError: () => {
@@ -368,7 +375,7 @@ export default function WeeklyReview() {
       });
       // Invalidate queries to refresh the data
       queryClient.invalidateQueries({ 
-        queryKey: [`/api/tasks/${MOCK_USER_ID}?startDate=${format(subDays(weekStart, 7), 'yyyy-MM-dd')}&endDate=${format(weekEnd, 'yyyy-MM-dd')}`] 
+        queryKey: [`/api/tasks/1?startDate=${format(subDays(weekStart, 7), 'yyyy-MM-dd')}&endDate=${format(weekEnd, 'yyyy-MM-dd')}`] 
       });
     },
     onError: () => {
@@ -382,7 +389,6 @@ export default function WeeklyReview() {
 
   const handleSaveReview = () => {
     saveReviewMutation.mutate({
-      userId: MOCK_USER_ID,
       weekStartDate,
       workHours,
       personalHours,
