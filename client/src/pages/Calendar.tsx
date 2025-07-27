@@ -28,8 +28,7 @@ moment.locale("ko");
 const localizer = momentLocalizer(moment);
 const DnDCalendar = withDragAndDrop(BigCalendar);
 
-// Mock user ID for demo
-const MOCK_USER_ID = 1;
+// Remove mock user ID - use authenticated endpoints
 
 const priorityColors = {
   high: '#EF4444',    // 빨간색
@@ -82,34 +81,33 @@ export default function Calendar() {
 
   // Fetch events
   const { data: events = [] } = useQuery({
-    queryKey: ['events', MOCK_USER_ID],
-    queryFn: () => fetch(`/api/events/${MOCK_USER_ID}`).then(res => res.json()),
+    queryKey: ['/api/events/1'],
+    retry: false,
   });
 
   // Fetch all tasks to display on calendar
   const { data: allTasks = [] } = useQuery({
-    queryKey: ['tasks-all', MOCK_USER_ID],
-    queryFn: () => fetch(`/api/tasks/${MOCK_USER_ID}`).then(res => res.json()),
+    queryKey: ['/api/tasks/1'],
+    retry: false,
   });
 
   // Fetch projects for task context
   const { data: projects = [] } = useQuery({
-    queryKey: ['projects', MOCK_USER_ID],
-    queryFn: () => fetch(`/api/projects/${MOCK_USER_ID}`).then(res => res.json()),
+    queryKey: ['/api/projects/1'],
+    retry: false,
   });
 
   // Fetch foundation (core values) for dropdown
   const { data: foundation = null } = useQuery({
-    queryKey: ['foundation', MOCK_USER_ID],
-    queryFn: () => fetch(`/api/foundation/${MOCK_USER_ID}`).then(res => res.json()).catch(() => null),
-    refetchOnWindowFocus: true,
+    queryKey: ['/api/foundation/1'],
+    retry: false,
     refetchInterval: 5000, // 5초마다 자동 새로고침
   });
 
   // Fetch annual goals for dropdown
   const { data: annualGoals = [] } = useQuery({
-    queryKey: ['goals', MOCK_USER_ID],
-    queryFn: () => fetch(`/api/goals/${MOCK_USER_ID}`).then(res => res.json()),
+    queryKey: ['/api/goals/1'],
+    retry: false,
     refetchOnWindowFocus: true,
     refetchInterval: 5000, // 5초마다 자동 새로고침
   });
@@ -131,7 +129,7 @@ export default function Calendar() {
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['events', MOCK_USER_ID] });
+      queryClient.invalidateQueries({ queryKey: ['/api/events/1'] });
       setShowEventDialog(false);
       resetEventForm();
       toast({ title: "일정 생성", description: "새 일정이 생성되었습니다." });
@@ -162,7 +160,7 @@ export default function Calendar() {
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['events', MOCK_USER_ID] });
+      queryClient.invalidateQueries({ queryKey: ['/api/events/1'] });
       setShowEventDialog(false);
       resetEventForm();
       toast({ title: "일정 수정", description: "일정이 수정되었습니다." });
@@ -185,7 +183,7 @@ export default function Calendar() {
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['events', MOCK_USER_ID] });
+      queryClient.invalidateQueries({ queryKey: ['/api/events/1'] });
       setShowEventDialog(false);
       resetEventForm();
       toast({ title: "일정 삭제", description: "일정이 삭제되었습니다." });
@@ -204,7 +202,7 @@ export default function Calendar() {
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['events', MOCK_USER_ID] });
+      queryClient.invalidateQueries({ queryKey: ['/api/events/1'] });
       setContextMenu(null);
       toast({ title: "일정 완료 상태가 변경되었습니다" });
     }
@@ -222,8 +220,7 @@ export default function Calendar() {
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['tasks', MOCK_USER_ID] });
-      queryClient.invalidateQueries({ queryKey: ['/api/tasks', MOCK_USER_ID] });
+      queryClient.invalidateQueries({ queryKey: ['/api/tasks/1'] });
       setContextMenu(null);
       toast({ title: "할일 완료 상태가 변경되었습니다" });
     }
@@ -350,12 +347,16 @@ export default function Calendar() {
 
   // Convert events and tasks to calendar format
   const calendarEvents = useMemo(() => {
-    const eventItems = (events || []).flatMap((event: any) => generateRecurringEvents(event));
+    const safeEvents = Array.isArray(events) ? events : [];
+    const eventItems = safeEvents.flatMap((event: any) => generateRecurringEvents(event));
 
-    const taskItems = (allTasks || [])
+    const safeTasks = Array.isArray(allTasks) ? allTasks : [];
+    const safeProjects = Array.isArray(projects) ? projects : [];
+    
+    const taskItems = safeTasks
       .filter((task: any) => task.startDate || task.endDate)
       .map((task: any) => {
-        const project = (projects || []).find((p: any) => p.id === task.projectId);
+        const project = safeProjects.find((p: any) => p.id === task.projectId);
         return {
           id: `task-${task.id}`,
           title: `[할일] ${task.title}`,
@@ -584,7 +585,6 @@ export default function Calendar() {
     }
 
     const eventData = {
-      userId: MOCK_USER_ID,
       title: eventForm.title,
       description: eventForm.description || null,
       startDate: eventForm.startDate,
