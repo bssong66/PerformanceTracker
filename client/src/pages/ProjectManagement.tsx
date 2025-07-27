@@ -235,27 +235,54 @@ export default function ProjectManagement() {
     }
   });
 
-  // Clone project mutation
+  // Clone project mutation with optimistic updates
   const cloneProjectMutation = useMutation({
     mutationFn: async (projectData: any) => {
+      // Create optimistic clone immediately
+      const optimisticClone = {
+        ...projectData,
+        id: Date.now(), // temporary ID
+        _isOptimistic: true
+      };
+      
+      // Add to cache immediately for instant UI update
+      queryClient.setQueryData(['projects', MOCK_USER_ID], (oldProjects: any) => {
+        return oldProjects ? [...oldProjects, optimisticClone] : [optimisticClone];
+      });
+      
+      // Show success message immediately
+      toast({ title: "프로젝트 복제", description: "프로젝트가 복제되었습니다." });
+      setShowCloneDialog(false);
+      setProjectToClone(null);
+      
+      // Then make the actual API call in background
       const response = await fetch('/api/projects', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(projectData)
       });
+      
       if (!response.ok) throw new Error('프로젝트 복제에 실패했습니다.');
       return response.json();
     },
-    onSuccess: (clonedProject) => {
-      // Optimistic update for better UX
+    onSuccess: (realClonedProject) => {
+      // Replace optimistic update with real data
       queryClient.setQueryData(['projects', MOCK_USER_ID], (oldProjects: any) => {
-        return oldProjects ? [...oldProjects, clonedProject] : [clonedProject];
+        if (!oldProjects) return [realClonedProject];
+        return oldProjects.map((p: any) => 
+          p._isOptimistic && p.title === realClonedProject.title 
+            ? realClonedProject 
+            : p
+        );
       });
-      setShowCloneDialog(false);
-      setProjectToClone(null);
-      toast({ title: "프로젝트 복제", description: "프로젝트가 복제되었습니다." });
     },
     onError: (error: Error) => {
+      // Remove optimistic update on error
+      queryClient.setQueryData(['projects', MOCK_USER_ID], (oldProjects: any) => {
+        if (!oldProjects) return [];
+        return oldProjects.filter((p: any) => !p._isOptimistic);
+      });
+      
       toast({ 
         title: "복제 실패", 
         description: error.message || "프로젝트 복제 중 오류가 발생했습니다.", 
