@@ -584,9 +584,32 @@ export default function Dashboard() {
             <div className="grid grid-cols-7 gap-2">
               {weekDays.map((day, index) => {
                 const dayStr = format(day, 'yyyy-MM-dd');
-                const dayLogs = (weeklyHabitLogs as any[]).filter((log: any) => log.date === dayStr);
-                const completedLogs = dayLogs.filter((log: any) => log.completed);
-                const completionRate = dayLogs.length > 0 ? (completedLogs.length / dayLogs.length) * 100 : 0;
+                
+                // 해당일의 습관 로그
+                const dayHabitLogs = (weeklyHabitLogs as any[]).filter((log: any) => log.date === dayStr);
+                const completedHabits = dayHabitLogs.filter((log: any) => log.completed);
+                
+                // 해당일의 할일 (예정일 기준)
+                const dayTasks = (tasks as any[]).filter((task: any) => {
+                  if (task.dueDate) {
+                    return format(new Date(task.dueDate), 'yyyy-MM-dd') === dayStr;
+                  }
+                  // dueDate가 없으면 생성일 기준
+                  return format(new Date(task.createdAt), 'yyyy-MM-dd') === dayStr;
+                });
+                const completedTasks = dayTasks.filter((task: any) => task.completed);
+                
+                // 해당일의 일정
+                const dayEvents = (events as any[]).filter((event: any) => 
+                  format(new Date(event.startDate), 'yyyy-MM-dd') === dayStr
+                );
+                const completedEvents = dayEvents.filter((event: any) => event.completed);
+                
+                // 전체 활동 수 및 완료된 활동 수 계산
+                const totalActivities = dayHabitLogs.length + dayTasks.length + dayEvents.length;
+                const completedActivities = completedHabits.length + completedTasks.length + completedEvents.length;
+                
+                const completionRate = totalActivities > 0 ? (completedActivities / totalActivities) * 100 : 0;
                 
                 return (
                   <div key={index} className="text-center p-2">
@@ -612,7 +635,7 @@ export default function Dashboard() {
                       {Math.round(completionRate)}
                     </div>
                     <div className="text-xs text-gray-400 mt-1">
-                      {completedLogs.length}/{dayLogs.length}
+                      {completedActivities}/{totalActivities}
                     </div>
                   </div>
                 );
