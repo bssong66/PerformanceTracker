@@ -29,6 +29,7 @@ export interface IStorage {
   
   // Project methods
   getProjects(userId: number): Promise<Project[]>;
+  getProject(id: number): Promise<Project | undefined>;
   createProject(project: InsertProject): Promise<Project>;
   updateProject(id: number, updates: Partial<Project>): Promise<Project | undefined>;
   deleteProject(id: number): Promise<boolean>;
@@ -36,6 +37,7 @@ export interface IStorage {
   
   // Task methods
   getTasks(userId: number, date?: string, projectId?: number): Promise<Task[]>;
+  getTasksByProject(projectId: number): Promise<Task[]>;
   getTasksByPriority(userId: number, priority: string, date?: string): Promise<Task[]>;
   createTask(task: InsertTask): Promise<Task>;
   updateTask(id: number, updates: Partial<Task>): Promise<Task | undefined>;
@@ -221,6 +223,10 @@ export class MemStorage implements IStorage {
       .filter(project => project.userId === userId);
   }
 
+  async getProject(id: number): Promise<Project | undefined> {
+    return this.projects.get(id);
+  }
+
   async createProject(project: InsertProject): Promise<Project> {
     const id = this.currentId++;
     const newProject: Project = { 
@@ -287,6 +293,11 @@ export class MemStorage implements IStorage {
         if (projectId && task.projectId !== projectId) return false;
         return true;
       });
+  }
+
+  async getTasksByProject(projectId: number): Promise<Task[]> {
+    return Array.from(this.tasks.values())
+      .filter(task => task.projectId === projectId);
   }
 
   async getTasksByPriority(userId: number, priority: string, date?: string): Promise<Task[]> {

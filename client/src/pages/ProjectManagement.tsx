@@ -235,13 +235,18 @@ export default function ProjectManagement() {
     }
   });
 
-  // Clone project mutation with optimistic updates
+  // Clone project mutation with optimistic updates and task cloning
   const cloneProjectMutation = useMutation({
-    mutationFn: async (projectData: any) => {
+    mutationFn: async (originalProjectId: number) => {
       // Create optimistic clone immediately
+      const originalProject = projects.find(p => p.id === originalProjectId);
+      if (!originalProject) throw new Error('원본 프로젝트를 찾을 수 없습니다.');
+
       const optimisticClone = {
-        ...projectData,
+        ...originalProject,
         id: Date.now(), // temporary ID
+        title: `${originalProject.title} (복사본)`,
+        completed: false,
         _isOptimistic: true
       };
       
@@ -250,22 +255,24 @@ export default function ProjectManagement() {
         return oldProjects ? [...oldProjects, optimisticClone] : [optimisticClone];
       });
       
-      // Show success message immediately
-      toast({ title: "프로젝트 복제", description: "프로젝트가 복제되었습니다." });
       setShowCloneDialog(false);
       setProjectToClone(null);
       
       // Then make the actual API call in background
-      const response = await fetch('/api/projects', {
+      const response = await fetch(`/api/projects/${originalProjectId}/clone`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(projectData)
+        body: JSON.stringify({
+          title: `${originalProject.title} (복사본)`
+        })
       });
       
       if (!response.ok) throw new Error('프로젝트 복제에 실패했습니다.');
       return response.json();
     },
-    onSuccess: (realClonedProject) => {
+    onSuccess: (result) => {
+      const { project: realClonedProject, tasks: clonedTasks, message } = result;
+      
       // Replace optimistic update with real data
       queryClient.setQueryData(['projects', MOCK_USER_ID], (oldProjects: any) => {
         if (!oldProjects) return [realClonedProject];
@@ -274,6 +281,14 @@ export default function ProjectManagement() {
             ? realClonedProject 
             : p
         );
+      });
+
+      // Invalidate tasks cache to show new cloned tasks
+      queryClient.invalidateQueries({ queryKey: ['tasks', MOCK_USER_ID] });
+      
+      toast({ 
+        title: "프로젝트 복제 완료", 
+        description: message || `프로젝트와 ${clonedTasks.length}개의 할일이 복제되었습니다.`
       });
     },
     onError: (error: Error) => {
@@ -847,21 +862,7 @@ export default function ProjectManagement() {
   // Execute project clone
   const executeClone = () => {
     if (!projectToClone) return;
-    
-    const cloneData = {
-      userId: MOCK_USER_ID,
-      title: `${projectToClone.title} (복사본)`,
-      description: projectToClone.description || '',
-      priority: projectToClone.priority,
-      color: projectToClone.color,
-      startDate: projectToClone.startDate || '',
-      endDate: projectToClone.endDate || '',
-      coreValue: projectToClone.coreValue || '',
-      annualGoal: projectToClone.annualGoal || '',
-      imageUrls: projectToClone.imageUrls || []
-    };
-
-    cloneProjectMutation.mutate(cloneData);
+    cloneProjectMutation.mutate(projectToClone.id);
   };
 
   return (

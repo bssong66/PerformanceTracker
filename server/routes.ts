@@ -120,6 +120,54 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Clone project with tasks
+  app.post("/api/projects/:id/clone", async (req, res) => {
+    try {
+      const originalProjectId = parseInt(req.params.id);
+      const { title } = req.body;
+      
+      // Get original project
+      const originalProject = await storage.getProject(originalProjectId);
+      if (!originalProject) {
+        return res.status(404).json({ message: "Original project not found" });
+      }
+
+      // Clone project
+      const cloneData = {
+        ...originalProject,
+        title: title || `${originalProject.title} (복사본)`,
+        id: undefined // Remove id so new one is generated
+      };
+      const clonedProject = await storage.createProject(cloneData);
+
+      // Get original project tasks
+      const originalTasks = await storage.getTasksByProject(originalProjectId);
+      
+      // Clone tasks
+      const clonedTasks = [];
+      for (const task of originalTasks) {
+        const taskCloneData = {
+          ...task,
+          id: undefined, // Remove id so new one is generated
+          projectId: clonedProject.id,
+          completed: false, // Reset completion status
+          completedAt: null
+        };
+        const clonedTask = await storage.createTask(taskCloneData);
+        clonedTasks.push(clonedTask);
+      }
+
+      res.json({ 
+        project: clonedProject, 
+        tasks: clonedTasks,
+        message: `프로젝트와 ${clonedTasks.length}개의 할일이 복제되었습니다.`
+      });
+    } catch (error) {
+      console.error('Project clone error:', error);
+      res.status(500).json({ message: "프로젝트 복제 중 오류가 발생했습니다." });
+    }
+  });
+
   app.patch("/api/projects/:id", async (req, res) => {
     try {
       const id = parseInt(req.params.id);
