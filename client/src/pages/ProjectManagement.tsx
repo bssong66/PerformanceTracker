@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { Plus, Folder, Image, Eye, Trash2, Calendar, Edit, ChevronDown, ChevronRight, ChevronLeft, CheckCircle, Circle, Play } from 'lucide-react';
+import { Plus, Folder, Image, Eye, Trash2, Calendar, Edit, ChevronDown, ChevronRight, ChevronLeft, CheckCircle, Circle, Play, X, ImagePlus } from 'lucide-react';
 import { format } from 'date-fns';
 import { ko } from 'date-fns/locale';
 
@@ -95,9 +95,10 @@ export default function ProjectManagement() {
 
   // Fetch foundations for core values
   const { data: foundation, error: foundationError, refetch: refetchFoundation } = useQuery({
-    queryKey: ['foundation', MOCK_USER_ID],
+    queryKey: ['foundation', MOCK_USER_ID, new Date().getFullYear()],
     queryFn: async () => {
-      const response = await fetch(`/api/foundation/${MOCK_USER_ID}`);
+      const currentYear = new Date().getFullYear();
+      const response = await fetch(`/api/foundation/${MOCK_USER_ID}?year=${currentYear}`);
       if (!response.ok && response.status !== 404) {
         throw new Error('Failed to fetch foundation');
       }
@@ -115,7 +116,8 @@ export default function ProjectManagement() {
   const { data: annualGoals = [], error: goalsError } = useQuery({
     queryKey: ['goals', MOCK_USER_ID, new Date().getFullYear()],
     queryFn: async () => {
-      const response = await fetch(`/api/goals/${MOCK_USER_ID}?year=${new Date().getFullYear()}`);
+      const currentYear = new Date().getFullYear();
+      const response = await fetch(`/api/goals/${MOCK_USER_ID}?year=${currentYear}`);
       if (!response.ok && response.status !== 404) {
         throw new Error('Failed to fetch goals');
       }
@@ -638,7 +640,7 @@ export default function ProjectManagement() {
     }
   };
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>, isDetailEdit = false) => {
     const files = e.target.files;
     if (files && files.length > 0) {
       Array.from(files).forEach(file => {
@@ -652,6 +654,8 @@ export default function ProjectManagement() {
         reader.readAsDataURL(file);
       });
     }
+    // Clear the input value to allow uploading the same file again
+    e.target.value = '';
   };
 
   const handlePriorityChange = (priority: 'high' | 'medium' | 'low') => {
@@ -2003,6 +2007,59 @@ export default function ProjectManagement() {
                         ))}
                       </SelectContent>
                     </Select>
+                  </div>
+                </div>
+
+                <div>
+                  <Label className="text-sm font-medium text-gray-700">이미지</Label>
+                  <div className="mt-2">
+                    {projectForm.imageUrls.length > 0 && (
+                      <div className="grid grid-cols-4 gap-2 mb-4">
+                        {projectForm.imageUrls.map((imageUrl: string, index: number) => (
+                          <div key={index} className="relative group">
+                            <img
+                              src={imageUrl}
+                              alt={`프로젝트 이미지 ${index + 1}`}
+                              className="w-16 h-16 object-cover rounded border cursor-pointer hover:opacity-80"
+                              onClick={() => {
+                                setViewingImage(imageUrl);
+                                setCurrentImageIndex(index);
+                                setCurrentImageProject(selectedProject);
+                              }}
+                            />
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setProjectForm(prev => ({
+                                  ...prev,
+                                  imageUrls: prev.imageUrls.filter((_, i) => i !== index)
+                                }));
+                              }}
+                              className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                            >
+                              <X className="h-3 w-3" />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    
+                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
+                      <input
+                        type="file"
+                        accept="image/*"
+                        multiple
+                        onChange={(e) => handleImageUpload(e, true)}
+                        className="hidden"
+                        id="project-detail-image-upload"
+                      />
+                      <label htmlFor="project-detail-image-upload" className="cursor-pointer">
+                        <ImagePlus className="h-8 w-8 text-gray-400 mx-auto mb-2" />
+                        <p className="text-sm text-gray-500">
+                          클릭하여 이미지 추가
+                        </p>
+                      </label>
+                    </div>
                   </div>
                 </div>
 
