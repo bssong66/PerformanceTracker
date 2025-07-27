@@ -45,6 +45,9 @@ function TaskManagement() {
   const [viewingImage, setViewingImage] = useState<string | null>(null);
   const [viewingTask, setViewingTask] = useState<Task | null>(null);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [showTaskDetailDialog, setShowTaskDetailDialog] = useState(false);
+  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+  const [isEditMode, setIsEditMode] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -138,6 +141,8 @@ function TaskManagement() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tasks', MOCK_USER_ID] });
       setShowTaskDialog(false);
+      setShowTaskDetailDialog(false);
+      setIsEditMode(false);
       resetForm();
       toast({ title: "할일 수정", description: "할일이 수정되었습니다." });
     }
@@ -240,6 +245,52 @@ function TaskManagement() {
     });
     setEditingTask(task);
     setShowTaskDialog(true);
+  };
+
+  const openTaskDetailDialog = (task: Task) => {
+    setSelectedTask(task);
+    setShowTaskDetailDialog(true);
+    setIsEditMode(false);
+  };
+
+  const handleEditModeToggle = () => {
+    if (selectedTask) {
+      setTaskForm({
+        title: selectedTask.title,
+        priority: selectedTask.priority,
+        notes: selectedTask.notes || '',
+        startDate: selectedTask.startDate || '',
+        endDate: selectedTask.endDate || '',
+        projectId: null,
+        imageUrls: selectedTask.imageUrls || [],
+        coreValue: (selectedTask as any).coreValue || 'none',
+        annualGoal: (selectedTask as any).annualGoal || 'none'
+      });
+      setEditingTask(selectedTask);
+    }
+    setIsEditMode(true);
+  };
+
+  const handleSaveFromDetail = () => {
+    if (!selectedTask) return;
+    
+    const taskData = {
+      ...taskForm,
+      userId: MOCK_USER_ID,
+      coreValue: taskForm.coreValue === 'none' ? null : taskForm.coreValue,
+      annualGoal: taskForm.annualGoal === 'none' ? null : taskForm.annualGoal
+    };
+
+    updateTaskMutation.mutate({ 
+      ...selectedTask, 
+      ...taskData 
+    });
+  };
+
+  const handleCancelFromDetail = () => {
+    setIsEditMode(false);
+    setShowTaskDetailDialog(false);
+    setSelectedTask(null);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -583,7 +634,10 @@ function TaskManagement() {
                           <Circle className="h-5 w-5 text-gray-400" />
                         )}
                       </button>
-                      <span className={`text-sm font-medium ${task.completed ? 'line-through text-gray-500' : 'text-gray-900'}`}>
+                      <span 
+                        className={`text-sm font-medium cursor-pointer hover:text-blue-600 ${task.completed ? 'line-through text-gray-500' : 'text-gray-900'}`}
+                        onClick={() => openTaskDetailDialog(task)}
+                      >
                         {task.title}
                       </span>
                     </div>
@@ -607,14 +661,7 @@ function TaskManagement() {
                           </span>
                         </Button>
                       )}
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => openEditDialog(task)}
-                        className="h-8 w-8 p-0"
-                      >
-                        <Edit className="h-3 w-3" />
-                      </Button>
+
                       <Button
                         variant="ghost"
                         size="sm"
@@ -756,6 +803,265 @@ function TaskManagement() {
           </DialogContent>
         </Dialog>
       )}
+
+      {/* Task Detail Dialog */}
+      {selectedTask && (
+        <Dialog open={showTaskDetailDialog} onOpenChange={(open) => {
+          if (!open) {
+            setShowTaskDetailDialog(false);
+            setSelectedTask(null);
+            setIsEditMode(false);
+          }
+        }}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>
+                {isEditMode ? '할일 수정' : '할일 상세'}
+              </DialogTitle>
+              <p className="text-sm text-gray-500 mt-2">
+                {isEditMode ? '할일 정보를 수정하세요.' : '할일의 상세 정보를 확인하세요.'}
+              </p>
+            </DialogHeader>
+
+            {isEditMode ? (
+              <form onSubmit={(e) => {
+                e.preventDefault();
+                handleSaveFromDetail();
+              }} className="space-y-4">
+                <div>
+                  <Label htmlFor="title">할일 제목</Label>
+                  <Input
+                    id="title"
+                    value={taskForm.title}
+                    onChange={(e) => setTaskForm(prev => ({ ...prev, title: e.target.value }))}
+                    placeholder="할일 제목을 입력하세요"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <Label>우선순위</Label>
+                  <Select
+                    value={taskForm.priority}
+                    onValueChange={(value: 'A' | 'B' | 'C') => 
+                      setTaskForm(prev => ({ ...prev, priority: value }))
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="A">A급 (긴급+중요)</SelectItem>
+                      <SelectItem value="B">B급 (중요)</SelectItem>
+                      <SelectItem value="C">C급 (일반)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <Label>연관 핵심가치</Label>
+                  <Select
+                    value={taskForm.coreValue}
+                    onValueChange={(value) => 
+                      setTaskForm(prev => ({ ...prev, coreValue: value }))
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="핵심가치를 선택하세요 (선택사항)" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">선택 안함</SelectItem>
+                      {foundation && (
+                        <>
+                          {foundation.coreValue1 && (
+                            <SelectItem value={foundation.coreValue1}>{foundation.coreValue1}</SelectItem>
+                          )}
+                          {foundation.coreValue2 && (
+                            <SelectItem value={foundation.coreValue2}>{foundation.coreValue2}</SelectItem>
+                          )}
+                          {foundation.coreValue3 && (
+                            <SelectItem value={foundation.coreValue3}>{foundation.coreValue3}</SelectItem>
+                          )}
+                        </>
+                      )}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <Label>연관 연간목표</Label>
+                  <Select
+                    value={taskForm.annualGoal}
+                    onValueChange={(value) => 
+                      setTaskForm(prev => ({ ...prev, annualGoal: value }))
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="연간목표를 선택하세요 (선택사항)" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">선택 안함</SelectItem>
+                      {annualGoals.map((goal: any) => (
+                        <SelectItem key={goal.id} value={goal.title}>
+                          {goal.title}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="startDate">시작일</Label>
+                    <Input
+                      id="startDate"
+                      type="date"
+                      value={taskForm.startDate}
+                      onChange={(e) => setTaskForm(prev => ({ ...prev, startDate: e.target.value }))}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="endDate">마감일</Label>
+                    <Input
+                      id="endDate"
+                      type="date"
+                      value={taskForm.endDate}
+                      onChange={(e) => setTaskForm(prev => ({ ...prev, endDate: e.target.value }))}
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <Label htmlFor="notes">메모</Label>
+                  <Textarea
+                    id="notes"
+                    value={taskForm.notes}
+                    onChange={(e) => setTaskForm(prev => ({ ...prev, notes: e.target.value }))}
+                    placeholder="할일에 대한 메모"
+                    rows={3}
+                  />
+                </div>
+
+                <div className="flex justify-end space-x-2 pt-4">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={handleCancelFromDetail}
+                  >
+                    취소
+                  </Button>
+                  <Button 
+                    type="submit" 
+                    disabled={updateTaskMutation.isPending}
+                  >
+                    {updateTaskMutation.isPending ? (
+                      <div className="flex items-center">
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                        저장 중...
+                      </div>
+                    ) : (
+                      '저장'
+                    )}
+                  </Button>
+                </div>
+              </form>
+            ) : (
+              <div className="space-y-4">
+                <div>
+                  <Label className="text-sm font-medium text-gray-600">할일 제목</Label>
+                  <p className="text-sm text-gray-900 mt-1">{selectedTask.title}</p>
+                </div>
+
+                <div>
+                  <Label className="text-sm font-medium text-gray-600">우선순위</Label>
+                  <p className="text-sm text-gray-900 mt-1">
+                    {selectedTask.priority}급 {
+                      selectedTask.priority === 'A' ? '(긴급+중요)' :
+                      selectedTask.priority === 'B' ? '(중요)' : '(일반)'
+                    }
+                  </p>
+                </div>
+
+                {((selectedTask as any).coreValue && (selectedTask as any).coreValue !== 'none') && (
+                  <div>
+                    <Label className="text-sm font-medium text-gray-600">연관 핵심가치</Label>
+                    <p className="text-sm text-gray-900 mt-1">🎯 {(selectedTask as any).coreValue}</p>
+                  </div>
+                )}
+
+                {((selectedTask as any).annualGoal && (selectedTask as any).annualGoal !== 'none') && (
+                  <div>
+                    <Label className="text-sm font-medium text-gray-600">연관 연간목표</Label>
+                    <p className="text-sm text-gray-900 mt-1">📅 {(selectedTask as any).annualGoal}</p>
+                  </div>
+                )}
+
+                {(selectedTask.startDate || selectedTask.endDate) && (
+                  <div className="grid grid-cols-2 gap-4">
+                    {selectedTask.startDate && (
+                      <div>
+                        <Label className="text-sm font-medium text-gray-600">시작일</Label>
+                        <p className="text-sm text-gray-900 mt-1">
+                          {format(new Date(selectedTask.startDate), 'yyyy년 MM월 dd일', { locale: ko })}
+                        </p>
+                      </div>
+                    )}
+                    {selectedTask.endDate && (
+                      <div>
+                        <Label className="text-sm font-medium text-gray-600">마감일</Label>
+                        <p className="text-sm text-gray-900 mt-1">
+                          {format(new Date(selectedTask.endDate), 'yyyy년 MM월 dd일', { locale: ko })}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {selectedTask.notes && (
+                  <div>
+                    <Label className="text-sm font-medium text-gray-600">메모</Label>
+                    <p className="text-sm text-gray-900 mt-1 whitespace-pre-wrap">{selectedTask.notes}</p>
+                  </div>
+                )}
+
+                {selectedTask.imageUrls && selectedTask.imageUrls.length > 0 && (
+                  <div>
+                    <Label className="text-sm font-medium text-gray-600">이미지</Label>
+                    <div className="grid grid-cols-4 gap-2 mt-2">
+                      {selectedTask.imageUrls.map((imageUrl, index) => (
+                        <img
+                          key={index}
+                          src={imageUrl}
+                          alt={`할일 이미지 ${index + 1}`}
+                          className="w-16 h-16 object-cover rounded border cursor-pointer hover:opacity-80"
+                          onClick={() => {
+                            setViewingTask(selectedTask);
+                            setViewingImage(imageUrl);
+                            setCurrentImageIndex(index);
+                          }}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                <div className="flex justify-end space-x-2 pt-4">
+                  <Button
+                    variant="outline"
+                    onClick={() => setShowTaskDetailDialog(false)}
+                  >
+                    닫기
+                  </Button>
+                  <Button onClick={handleEditModeToggle}>
+                    수정
+                  </Button>
+                </div>
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
+      )}
+
       {filteredTasks.length === 0 && (
         <div className="text-center py-12">
           <ListTodo className="h-12 w-12 text-gray-400 mx-auto mb-4" />
