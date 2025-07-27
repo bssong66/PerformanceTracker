@@ -147,6 +147,14 @@ Preferred communication style: Simple, everyday language.
 ```
 
 ### Recent Changes (July 27, 2025)
+- **Pomodoro Timer Completion Notification System Implementation**
+- Added system notification support with browser Notification API
+- Implemented completion dialog with multiple action options (task completion, session extension, break start)
+- Created comprehensive completion flow with 25/15/10 minute extension options
+- Added browser notification permission request functionality
+- Replaced basic beep sound with pleasant bell sound using Web Audio API (C-E-G arpeggio)
+- Fixed routing issues and added /daily path for Daily Management page
+- Enhanced useTimer hook with completion acknowledgment and break management
 - **Daily Management Page Tab Structure Implementation**
 - Integrated Focus Mode as a tab within Daily Management instead of standalone page
 - Created tabbed interface with "일일관리" and "포커스모드" tabs using Shadcn Tabs component

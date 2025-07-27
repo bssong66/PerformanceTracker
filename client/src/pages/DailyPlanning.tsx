@@ -51,7 +51,7 @@ export default function DailyPlanning() {
   const [showCompletionDialog, setShowCompletionDialog] = useState(false);
   const [notificationPermission, setNotificationPermission] = useState<NotificationPermission>('default');
   
-  const timer = useTimer(0); // 테스트용 - 5초로 설정
+  const timer = useTimer(25); // 25분 포모도로
   const { minutes, seconds, isRunning, isBreak, isCompleted, start, pause, reset, startBreak, extendSession, acknowledgeCompletion } = timer;
 
   // 알림 권한 확인

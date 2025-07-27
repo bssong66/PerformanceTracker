@@ -15,8 +15,8 @@ interface UseTimerReturn {
 }
 
 export const useTimer = (initialMinutes: number = 25): UseTimerReturn => {
-  const [minutes, setMinutes] = useState(initialMinutes === 0 ? 0 : initialMinutes);
-  const [seconds, setSeconds] = useState(initialMinutes === 0 ? 5 : 0); // 테스트용: 0분이면 5초로 설정
+  const [minutes, setMinutes] = useState(initialMinutes);
+  const [seconds, setSeconds] = useState(0);
   const [isRunning, setIsRunning] = useState(false);
   const [isBreak, setIsBreak] = useState(false);
   const [isCompleted, setIsCompleted] = useState(false);
@@ -51,14 +51,48 @@ export const useTimer = (initialMinutes: number = 25): UseTimerReturn => {
         };
       }
       
-      // 알림음 재생
+      // 경쾌한 종소리 재생
       try {
-        const audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmYfBTuVz/DFeC0FLYnP8Ot0IAOFQAACFt6e3yIjdCJMaL3f6F4ZGCcaNjMfGCdPNTsbCF4lEhggYS4IHbUiYCoOH4kpFRwgCHYiFiAbYysMHnIkFRwcBGIjGR0UgS0AHoEjFxwcbUAgIBBgGH4EgB4a2+YUAd4w7+cKmgjJAo3X1Q4KjB5g4tAGHDgYaG5mC4cQJhsJ1o4+7NcfHjkSdHc3YA0MYPCnvILYBABOHIUQnpNRG//1vIo9Gv7auwkKOj7XjSYTJ1Vt2LlUKjlEhSgYF6ZOKyoGMGD9DzMFGG2C7+MAKOEjFRggYSgMHbAkYikOH4gpFR8gCHgiFiAbZikMHnIjFRwcBGMjGR0UgS0AHoEjFxwcbUAeIRBgGH4EgR4a2+YUAd4w7+cKmgjJAo3X1Q4KjB5g4tAGHDgYaG5mC4cQJhsJ1o4+7NcfHjkSdHc3YA0MY/2+7e+K');
-        audio.play().catch(() => {
-          // 오디오 재생 실패시 무시
-        });
+        // 더 밝고 경쾌한 종소리 (C-E-G 코드 아르페지오)
+        const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+        
+        const playBellTone = (frequency: number, startTime: number, duration: number) => {
+          const oscillator = audioContext.createOscillator();
+          const gainNode = audioContext.createGain();
+          
+          // 사인파로 부드러운 종소리 생성
+          oscillator.type = 'sine';
+          oscillator.frequency.setValueAtTime(frequency, startTime);
+          
+          // 종소리 특유의 감쇠 효과
+          gainNode.gain.setValueAtTime(0, startTime);
+          gainNode.gain.linearRampToValueAtTime(0.3, startTime + 0.01);
+          gainNode.gain.exponentialRampToValueAtTime(0.01, startTime + duration);
+          
+          oscillator.connect(gainNode);
+          gainNode.connect(audioContext.destination);
+          
+          oscillator.start(startTime);
+          oscillator.stop(startTime + duration);
+        };
+        
+        const now = audioContext.currentTime;
+        // C-E-G 아르페지오 (523.25, 659.25, 783.99 Hz)
+        playBellTone(523.25, now, 0.8);        // C5
+        playBellTone(659.25, now + 0.15, 0.8);  // E5  
+        playBellTone(783.99, now + 0.3, 1.0);   // G5
+        
       } catch (error) {
-        // 오디오 생성 실패시 무시
+        // Web Audio API 지원하지 않는 경우 fallback
+        try {
+          // 간단한 종소리 대체음
+          const audio = new Audio('data:audio/wav;base64,UklGRhQEAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YfADAAC4uLi4uLi4uLi4uLi4QEBAQEBAQEBAQEBAuLi4uLi4uLi4uLi4uLhAQEBAQEBAQEBAQEC4uLi4uLi4uLi4uLi4QEBAQEBAQEBAQEBAuLi4uLi4uLi4uLi4uLhAQEBAQEBAQEBAQEC4uLi4uLi4uLi4uLi4');
+          audio.play().catch(() => {
+            // 오디오 재생 실패시 무시
+          });
+        } catch (fallbackError) {
+          // 모든 오디오 실패시 무시
+        }
       }
     }
 
@@ -79,13 +113,8 @@ export const useTimer = (initialMinutes: number = 25): UseTimerReturn => {
 
   const reset = useCallback(() => {
     setIsRunning(false);
-    if (isBreak) {
-      setMinutes(0);
-      setSeconds(5); // 휴식 리셋도 5초로
-    } else {
-      setMinutes(initialMinutes === 0 ? 0 : initialMinutes);
-      setSeconds(initialMinutes === 0 ? 5 : 0);
-    }
+    setMinutes(isBreak ? 5 : initialMinutes);
+    setSeconds(0);
   }, [initialMinutes, isBreak]);
 
   const startBreak = useCallback(() => {
