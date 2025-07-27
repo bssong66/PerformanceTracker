@@ -15,8 +15,8 @@ interface UseTimerReturn {
 }
 
 export const useTimer = (initialMinutes: number = 25): UseTimerReturn => {
-  const [minutes, setMinutes] = useState(initialMinutes);
-  const [seconds, setSeconds] = useState(0);
+  const [minutes, setMinutes] = useState(initialMinutes === 0 ? 0 : initialMinutes);
+  const [seconds, setSeconds] = useState(initialMinutes === 0 ? 5 : 0); // 테스트용: 0분이면 5초로 설정
   const [isRunning, setIsRunning] = useState(false);
   const [isBreak, setIsBreak] = useState(false);
   const [isCompleted, setIsCompleted] = useState(false);
@@ -79,8 +79,13 @@ export const useTimer = (initialMinutes: number = 25): UseTimerReturn => {
 
   const reset = useCallback(() => {
     setIsRunning(false);
-    setMinutes(isBreak ? 5 : initialMinutes);
-    setSeconds(0);
+    if (isBreak) {
+      setMinutes(0);
+      setSeconds(5); // 휴식 리셋도 5초로
+    } else {
+      setMinutes(initialMinutes === 0 ? 0 : initialMinutes);
+      setSeconds(initialMinutes === 0 ? 5 : 0);
+    }
   }, [initialMinutes, isBreak]);
 
   const startBreak = useCallback(() => {
