@@ -1983,9 +1983,15 @@ export default function ProjectManagement() {
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="none">없음</SelectItem>
-                        {foundation?.coreValues?.map((value: string, index: number) => (
-                          <SelectItem key={index} value={value}>{value}</SelectItem>
-                        ))}
+                        {foundation?.coreValue1 && (
+                          <SelectItem value={foundation.coreValue1}>{foundation.coreValue1}</SelectItem>
+                        )}
+                        {foundation?.coreValue2 && (
+                          <SelectItem value={foundation.coreValue2}>{foundation.coreValue2}</SelectItem>
+                        )}
+                        {foundation?.coreValue3 && (
+                          <SelectItem value={foundation.coreValue3}>{foundation.coreValue3}</SelectItem>
+                        )}
                       </SelectContent>
                     </Select>
                   </div>
