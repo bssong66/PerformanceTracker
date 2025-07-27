@@ -1,16 +1,48 @@
-import { pgTable, text, serial, integer, boolean, timestamp, date } from "drizzle-orm/pg-core";
+import { sql } from 'drizzle-orm';
+import {
+  index,
+  jsonb,
+  pgTable,
+  text,
+  serial,
+  integer,
+  boolean,
+  timestamp,
+  date,
+  varchar,
+} from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
+// Session storage table.
+// (IMPORTANT) This table is mandatory for Replit Auth, don't drop it.
+export const sessions = pgTable(
+  "sessions",
+  {
+    sid: varchar("sid").primaryKey(),
+    sess: jsonb("sess").notNull(),
+    expire: timestamp("expire").notNull(),
+  },
+  (table) => [index("IDX_session_expire").on(table.expire)],
+);
+
+// User storage table.
+// (IMPORTANT) This table is mandatory for Replit Auth, don't drop it.
 export const users = pgTable("users", {
-  id: serial("id").primaryKey(),
-  username: text("username").notNull().unique(),
-  password: text("password").notNull(),
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  email: varchar("email").unique(),
+  firstName: varchar("first_name"),
+  lastName: varchar("last_name"),
+  profileImageUrl: varchar("profile_image_url"),
+  role: varchar("role").default("user"), // "user" | "admin"
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
 });
 
 export const foundations = pgTable("foundations", {
   id: serial("id").primaryKey(),
-  userId: integer("user_id").notNull(),
+  userId: varchar("user_id").notNull(),
   year: integer("year").notNull(),
   personalMission: text("personal_mission"),
   coreValue1: text("core_value_1"),
@@ -22,7 +54,7 @@ export const foundations = pgTable("foundations", {
 
 export const annualGoals = pgTable("annual_goals", {
   id: serial("id").primaryKey(),
-  userId: integer("user_id").notNull(),
+  userId: varchar("user_id").notNull(),
   title: text("title").notNull(),
   year: integer("year").notNull(),
   coreValue: text("core_value"), // Connected core value from foundation
@@ -32,7 +64,7 @@ export const annualGoals = pgTable("annual_goals", {
 
 export const projects = pgTable("projects", {
   id: serial("id").primaryKey(),
-  userId: integer("user_id").notNull(),
+  userId: varchar("user_id").notNull(),
   title: text("title").notNull(),
   description: text("description"),
   color: text("color").default("#3B82F6"), // hex color for calendar display
@@ -48,7 +80,7 @@ export const projects = pgTable("projects", {
 
 export const tasks = pgTable("tasks", {
   id: serial("id").primaryKey(),
-  userId: integer("user_id").notNull(),
+  userId: varchar("user_id").notNull(),
   projectId: integer("project_id"), // nullable - tasks can exist without projects
   title: text("title").notNull(),
   priority: text("priority").notNull(), // 'A', 'B', 'C'
@@ -69,7 +101,7 @@ export const tasks = pgTable("tasks", {
 
 export const events = pgTable("events", {
   id: serial("id").primaryKey(),
-  userId: integer("user_id").notNull(),
+  userId: varchar("user_id").notNull(),
   projectId: integer("project_id"), // nullable
   title: text("title").notNull(),
   description: text("description"),
@@ -92,7 +124,7 @@ export const events = pgTable("events", {
 
 export const habits = pgTable("habits", {
   id: serial("id").primaryKey(),
-  userId: integer("user_id").notNull(),
+  userId: varchar("user_id").notNull(),
   name: text("name").notNull(),
   description: text("description"),
   isActive: boolean("is_active").default(true),
@@ -116,7 +148,7 @@ export const habitLogs = pgTable("habit_logs", {
 
 export const weeklyReviews = pgTable("weekly_reviews", {
   id: serial("id").primaryKey(),
-  userId: integer("user_id").notNull(),
+  userId: varchar("user_id").notNull(),
   weekStartDate: date("week_start_date").notNull(),
   workHours: integer("work_hours").default(0),
   personalHours: integer("personal_hours").default(0),
@@ -130,7 +162,7 @@ export const weeklyReviews = pgTable("weekly_reviews", {
 
 export const monthlyReviews = pgTable("monthly_reviews", {
   id: serial("id").primaryKey(),
-  userId: integer("user_id").notNull(),
+  userId: varchar("user_id").notNull(),
   year: integer("year").notNull(),
   month: integer("month").notNull(),
   workHours: integer("work_hours").default(0),
@@ -145,7 +177,7 @@ export const monthlyReviews = pgTable("monthly_reviews", {
 
 export const dailyReflections = pgTable("daily_reflections", {
   id: serial("id").primaryKey(),
-  userId: integer("user_id").notNull(),
+  userId: varchar("user_id").notNull(),
   date: date("date").notNull(),
   reflection: text("reflection"),
   imageUrls: text("image_urls").array(),
@@ -155,7 +187,7 @@ export const dailyReflections = pgTable("daily_reflections", {
 
 export const timeBlocks = pgTable("time_blocks", {
   id: serial("id").primaryKey(),
-  userId: integer("user_id").notNull(),
+  userId: varchar("user_id").notNull(),
   date: date("date").notNull(),
   startTime: text("start_time").notNull(), // e.g., "08:00"
   endTime: text("end_time").notNull(), // e.g., "10:00"
@@ -167,7 +199,7 @@ export const timeBlocks = pgTable("time_blocks", {
 
 export const userSettings = pgTable("user_settings", {
   id: serial("id").primaryKey(),
-  userId: integer("user_id").notNull().unique(),
+  userId: varchar("user_id").notNull().unique(),
   customActivities: text("custom_activities").array().default([]),
   defaultActivities: text("default_activities").array().default([
     "회의", "업무", "휴식", "학습", "운동", "식사", "이동", "개인시간"
@@ -176,9 +208,17 @@ export const userSettings = pgTable("user_settings", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// Type definitions for Replit Auth will be at the end
+
 // Insert schemas
 export const insertUserSchema = createInsertSchema(users).omit({
-  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const upsertUserSchema = createInsertSchema(users).omit({
+  createdAt: true,
+  updatedAt: true,
 });
 
 export const insertFoundationSchema = createInsertSchema(foundations).omit({
@@ -247,8 +287,9 @@ export const insertUserSettingsSchema = createInsertSchema(userSettings).omit({
 });
 
 // Types
-export type User = typeof users.$inferSelect;
+export type User = typeof users.$inferSelect;  
 export type InsertUser = z.infer<typeof insertUserSchema>;
+export type UpsertUser = z.infer<typeof upsertUserSchema>;
 
 export type Foundation = typeof foundations.$inferSelect;
 export type InsertFoundation = z.infer<typeof insertFoundationSchema>;

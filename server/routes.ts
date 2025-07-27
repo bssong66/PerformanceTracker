@@ -7,12 +7,28 @@ import {
   insertWeeklyReviewSchema, insertMonthlyReviewSchema, insertDailyReflectionSchema, insertTimeBlockSchema,
   insertUserSettingsSchema
 } from "@shared/schema";
+import { setupAuth, isAuthenticated } from "./replitAuth";
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Auth middleware
+  await setupAuth(app);
+
+  // Auth routes
+  app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      res.json(user);
+    } catch (error) {
+      console.error("Error fetching user:", error);
+      res.status(500).json({ message: "Failed to fetch user" });
+    }
+  });
+
   // Foundation routes
   app.get("/api/foundation/:userId", async (req, res) => {
     try {
-      const userId = parseInt(req.params.userId);
+      const userId = req.params.userId;
       const year = req.query.year ? parseInt(req.query.year as string) : undefined;
       const foundation = await storage.getFoundation(userId, year);
       
@@ -28,7 +44,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/foundations/:userId", async (req, res) => {
     try {
-      const userId = parseInt(req.params.userId);
+      const userId = req.params.userId;
       const foundations = await storage.getAllFoundations(userId);
       res.json(foundations);
     } catch (error) {
@@ -49,7 +65,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Annual goals routes
   app.get("/api/goals/:userId", async (req, res) => {
     try {
-      const userId = parseInt(req.params.userId);
+      const userId = req.params.userId;
       const year = req.query.year ? parseInt(req.query.year as string) : undefined;
       const goals = await storage.getAnnualGoals(userId, year);
       res.json(goals);
@@ -102,7 +118,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Project routes
   app.get("/api/projects/:userId", async (req, res) => {
     try {
-      const userId = parseInt(req.params.userId);
+      const userId = req.params.userId;
       const projects = await storage.getProjects(userId);
       res.json(projects);
     } catch (error) {
@@ -202,7 +218,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Event routes
   app.get("/api/events/:userId", async (req, res) => {
     try {
-      const userId = parseInt(req.params.userId);
+      const userId = req.params.userId;
       const { startDate, endDate } = req.query;
       const events = await storage.getEvents(
         userId, 
@@ -281,7 +297,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Task routes
   app.get("/api/tasks/:userId", async (req, res) => {
     try {
-      const userId = parseInt(req.params.userId);
+      const userId = req.params.userId;
       const date = req.query.date as string;
       const priority = req.query.priority as string;
       
@@ -359,7 +375,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Habit routes
   app.get("/api/habits/:userId", async (req, res) => {
     try {
-      const userId = parseInt(req.params.userId);
+      const userId = req.params.userId;
       console.log('Getting habits for user:', userId);
       const habits = await storage.getHabits(userId);
       console.log('Found habits:', habits);
@@ -417,7 +433,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Habit log routes
   app.get("/api/habit-logs/:userId/:date", async (req, res) => {
     try {
-      const userId = parseInt(req.params.userId);
+      const userId = req.params.userId;
       const date = req.params.date;
       console.log('Getting habit logs for user:', userId, 'date:', date);
       const logs = await storage.getHabitLogsForDate(userId, date);
@@ -469,7 +485,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Weekly review routes
   app.get("/api/weekly-review/:userId/:weekStartDate", async (req, res) => {
     try {
-      const userId = parseInt(req.params.userId);
+      const userId = req.params.userId;
       const weekStartDate = req.params.weekStartDate;
       const review = await storage.getWeeklyReview(userId, weekStartDate);
       
@@ -496,7 +512,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Monthly review routes
   app.get("/api/monthly-review/:userId/:year/:month", async (req, res) => {
     try {
-      const userId = parseInt(req.params.userId);
+      const userId = req.params.userId;
       const year = parseInt(req.params.year);
       const month = parseInt(req.params.month);
       const review = await storage.getMonthlyReview(userId, year, month);
@@ -524,7 +540,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Daily reflection routes
   app.get("/api/daily-reflection/:userId/:date", async (req, res) => {
     try {
-      const userId = parseInt(req.params.userId);
+      const userId = req.params.userId;
       const date = req.params.date;
       const reflection = await storage.getDailyReflection(userId, date);
       
@@ -551,7 +567,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Time block routes
   app.get("/api/time-blocks/:userId/:date", async (req, res) => {
     try {
-      const userId = parseInt(req.params.userId);
+      const userId = req.params.userId;
       const date = req.params.date;
       const blocks = await storage.getTimeBlocks(userId, date);
       res.json(blocks);
@@ -604,7 +620,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // User settings routes
   app.get("/api/user-settings/:userId", async (req, res) => {
     try {
-      const userId = parseInt(req.params.userId);
+      const userId = req.params.userId;
       const settings = await storage.getUserSettings(userId);
       
       if (!settings) {
@@ -648,7 +664,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/tasks/carried-over/:userId/:date", async (req, res) => {
     try {
-      const userId = parseInt(req.params.userId);
+      const userId = req.params.userId;
       const date = req.params.date;
       const carriedOverTasks = await storage.getCarriedOverTasks(userId, date);
       res.json(carriedOverTasks);

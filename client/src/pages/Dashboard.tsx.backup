@@ -159,20 +159,20 @@ export default function Dashboard() {
 
   // 일정 통계 계산
   const eventStats = {
-    totalEvents: Array.isArray(events) ? events.length : 0,
-    completedEvents: Array.isArray(events) ? (events as any[]).filter((e: any) => e.completed).length : 0,
+    totalEvents: (events as any[]).length,
+    completedEvents: Array.isArray(events) ? (events as any[]).filter((e: any) => e.completed).length,
     todayEvents: Array.isArray(events) ? (events as any[]).filter((e: any) => {
       const eventDate = format(new Date(e.startDate), 'yyyy-MM-dd');
       return eventDate === todayStr;
-    }) : [],
+    }),
     weekEvents: Array.isArray(events) ? (events as any[]).filter((e: any) => {
       const eventDate = new Date(e.startDate);
       return eventDate >= weekStart && eventDate <= weekEnd;
-    }) : [],
+    }),
     upcomingEvents: Array.isArray(events) ? (events as any[]).filter((e: any) => {
       const eventDate = new Date(e.startDate);
       return eventDate > today && !e.completed;
-    }).slice(0, 5) : [],
+    }).slice(0, 5),
   };
 
   // 일정 완료율
@@ -188,16 +188,16 @@ export default function Dashboard() {
   // 우선순위별 일정 통계
   const eventPriorityStats = {
     high: {
-      total: Array.isArray(events) ? (events as any[]).filter((e: any) => e.priority === 'high').length : 0,
-      completed: Array.isArray(events) ? (events as any[]).filter((e: any) => e.priority === 'high' && e.completed).length : 0,
+      total: Array.isArray(events) ? (events as any[]).filter((e: any) => e.priority === 'high').length,
+      completed: Array.isArray(events) ? (events as any[]).filter((e: any) => e.priority === 'high' && e.completed).length,
     },
     medium: {
-      total: Array.isArray(events) ? (events as any[]).filter((e: any) => e.priority === 'medium').length : 0,
-      completed: Array.isArray(events) ? (events as any[]).filter((e: any) => e.priority === 'medium' && e.completed).length : 0,
+      total: Array.isArray(events) ? (events as any[]).filter((e: any) => e.priority === 'medium').length,
+      completed: Array.isArray(events) ? (events as any[]).filter((e: any) => e.priority === 'medium' && e.completed).length,
     },
     low: {
-      total: Array.isArray(events) ? (events as any[]).filter((e: any) => e.priority === 'low').length : 0,
-      completed: Array.isArray(events) ? (events as any[]).filter((e: any) => e.priority === 'low' && e.completed).length : 0,
+      total: Array.isArray(events) ? (events as any[]).filter((e: any) => e.priority === 'low').length,
+      completed: Array.isArray(events) ? (events as any[]).filter((e: any) => e.priority === 'low' && e.completed).length,
     },
   };
 
@@ -210,7 +210,7 @@ export default function Dashboard() {
   // 각 연간 목표별로 관련된 활동들을 계산
   goals.forEach((goal: any) => {
     const relatedTasks = (tasks as any[]).filter((t: any) => t.annualGoal === goal.title);
-    const relatedEvents = Array.isArray(events) ? (events as any[]).filter((e: any) => e.annualGoal === goal.title) : [];
+    const relatedEvents = Array.isArray(events) ? (events as any[]).filter((e: any) => e.annualGoal === goal.title);
     const relatedHabits = (habits as any[]).filter((h: any) => h.annualGoal === goal.title && h.isActive);
     
     // 할일과 일정은 개별 완료 여부로 계산
@@ -266,7 +266,7 @@ export default function Dashboard() {
         tasks: { total: tasks.length, completed: tasks.filter((t: any) => t.completed).length },
         projects: { total: projects.length },
         habits: { total: habits.length, active: habits.filter((h: any) => h.isActive).length },
-        events: { total: Array.isArray(events) ? events.length : 0, completed: Array.isArray(events) ? events.filter((e: any) => e.completed).length : 0 }
+        events: { total: events.length, completed: events.filter((e: any) => e.completed).length }
       },
       calculatedStats: {
         overallStats,
@@ -661,7 +661,7 @@ export default function Dashboard() {
                 // 해당일의 일정
                 const dayEvents = Array.isArray(events) ? (events as any[]).filter((event: any) => 
                   format(new Date(event.startDate), 'yyyy-MM-dd') === dayStr
-                ) : [];
+                );
                 const completedEvents = dayEvents.filter((event: any) => event.completed);
                 
                 // 전체 활동 수 및 완료된 활동 수 계산
