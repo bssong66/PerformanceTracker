@@ -64,6 +64,11 @@ export default function ProjectManagement() {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<{type: 'project' | 'task', id: number} | null>(null);
   
+  // Project detail popup states
+  const [showProjectDetailDialog, setShowProjectDetailDialog] = useState(false);
+  const [selectedProject, setSelectedProject] = useState<any>(null);
+  const [isEditingProjectDetail, setIsEditingProjectDetail] = useState(false);
+  
   // State for task sorting
   const [taskSortBy, setTaskSortBy] = useState<'priority' | 'date' | 'title'>('priority');
   const [taskSortOrder, setTaskSortOrder] = useState<'asc' | 'desc'>('asc');
@@ -165,11 +170,11 @@ export default function ProjectManagement() {
 
   // Update project mutation
   const updateProjectMutation = useMutation({
-    mutationFn: async (updatedProject: Project) => {
-      const response = await fetch(`/api/projects/${updatedProject.id}`, {
+    mutationFn: async ({ projectId, updates }: { projectId: number, updates: any }) => {
+      const response = await fetch(`/api/projects/${projectId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(updatedProject)
+        body: JSON.stringify(updates)
       });
       
       if (!response.ok) {
@@ -185,6 +190,9 @@ export default function ProjectManagement() {
         return oldProjects.map((p: any) => p.id === updatedProject.id ? updatedProject : p);
       });
       setShowProjectDialog(false);
+      setShowProjectDetailDialog(false);
+      setIsEditingProjectDetail(false);
+      setSelectedProject(null);
       resetForm();
       setEditingProject(null);
       toast({ title: "프로젝트 수정", description: "프로젝트가 수정되었습니다." });
@@ -452,6 +460,20 @@ export default function ProjectManagement() {
   };
 
   const confirmDelete = (type: 'project' | 'task', id: number) => {
+    if (type === 'project') {
+      // Check if project has tasks
+      const projectTasks = tasks.filter((task: any) => task.projectId === id);
+      if (projectTasks.length > 0) {
+        // Show warning dialog for project with tasks
+        toast({
+          title: "삭제 불가",
+          description: "프로젝트에 할일이 있습니다. 할일을 모두 삭제 후에 프로젝트를 삭제할 수 있습니다.",
+          variant: "destructive"
+        });
+        return;
+      }
+    }
+    
     setDeleteTarget({ type, id });
     setShowDeleteDialog(true);
   };
@@ -471,6 +493,61 @@ export default function ProjectManagement() {
   const cancelDelete = () => {
     setShowDeleteDialog(false);
     setDeleteTarget(null);
+  };
+
+  // Project detail popup functions
+  const openProjectDetailDialog = (project: any) => {
+    setSelectedProject(project);
+    setShowProjectDetailDialog(true);
+    setIsEditingProjectDetail(false);
+  };
+
+  const handleProjectDetailEdit = () => {
+    setIsEditingProjectDetail(true);
+    // Set form values for editing
+    setProjectForm({
+      title: selectedProject.title,
+      description: selectedProject.description || '',
+      priority: selectedProject.priority,
+      color: selectedProject.color,
+      startDate: selectedProject.startDate || '',
+      endDate: selectedProject.endDate || '',
+      coreValue: selectedProject.coreValue || '',
+      annualGoal: selectedProject.annualGoal || '',
+      imageUrls: selectedProject.imageUrls || []
+    });
+  };
+
+  const handleProjectDetailSave = () => {
+    if (!projectForm.title.trim()) {
+      toast({ title: "오류", description: "프로젝트 제목을 입력해주세요.", variant: "destructive" });
+      return;
+    }
+
+    const projectData = {
+      title: projectForm.title,
+      description: projectForm.description,
+      priority: projectForm.priority,
+      color: projectForm.color,
+      startDate: projectForm.startDate || null,
+      endDate: projectForm.endDate || null,
+      coreValue: projectForm.coreValue || null,
+      annualGoal: projectForm.annualGoal || null,
+      imageUrls: projectForm.imageUrls,
+      userId: MOCK_USER_ID
+    };
+
+    updateProjectMutation.mutate({ 
+      projectId: selectedProject.id, 
+      updates: projectData 
+    });
+  };
+
+  const handleProjectDetailCancel = () => {
+    setIsEditingProjectDetail(false);
+    setShowProjectDetailDialog(false);
+    setSelectedProject(null);
+    resetForm();
   };
 
   const handleTaskSubmit = (e: React.FormEvent) => {
@@ -552,7 +629,10 @@ export default function ProjectManagement() {
     };
 
     if (editingProject) {
-      updateProjectMutation.mutate({ ...editingProject, ...projectData });
+      updateProjectMutation.mutate({ 
+        projectId: editingProject.id, 
+        updates: projectData 
+      });
     } else {
       createProjectMutation.mutate(projectData);
     }
@@ -969,7 +1049,12 @@ export default function ProjectManagement() {
                     
                     <div className="flex-1">
                       <div className="flex items-center space-x-2 mb-1">
-                        <h3 className="font-medium text-gray-900">{project.title}</h3>
+                        <h3 
+                          className="font-medium text-gray-900 cursor-pointer hover:text-blue-600 transition-colors"
+                          onClick={() => openProjectDetailDialog(project)}
+                        >
+                          {project.title}
+                        </h3>
                         
                         {/* 프로젝트 상태 아이콘 */}
                         {(() => {
@@ -1119,15 +1204,6 @@ export default function ProjectManagement() {
                         )}
                       </Button>
                     )}
-                    
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => openEditDialog(project)}
-                      className="h-8 w-8 p-0"
-                    >
-                      <Edit className="h-3 w-3" />
-                    </Button>
                     
                     <Button
                       variant="ghost"
@@ -1802,6 +1878,201 @@ export default function ProjectManagement() {
         </Dialog>
       )}
 
+      {/* Project Detail Dialog */}
+      {selectedProject && (
+        <Dialog open={showProjectDetailDialog} onOpenChange={() => {
+          if (!isEditingProjectDetail) {
+            setShowProjectDetailDialog(false);
+            setSelectedProject(null);
+          }
+        }}>
+          <DialogContent className="sm:max-w-lg">
+            <DialogHeader>
+              <DialogTitle>
+                {isEditingProjectDetail ? '프로젝트 수정' : '프로젝트 상세'}
+              </DialogTitle>
+              <DialogDescription>
+                {isEditingProjectDetail ? '프로젝트 정보를 수정하세요.' : '프로젝트의 상세 정보를 확인하세요.'}
+              </DialogDescription>
+            </DialogHeader>
+            
+            {isEditingProjectDetail ? (
+              <form onSubmit={(e) => { e.preventDefault(); handleProjectDetailSave(); }} className="space-y-4">
+                <div>
+                  <Label htmlFor="projectTitle">프로젝트 제목</Label>
+                  <Input
+                    id="projectTitle"
+                    value={projectForm.title}
+                    onChange={(e) => setProjectForm(prev => ({ ...prev, title: e.target.value }))}
+                    placeholder="프로젝트 제목을 입력하세요"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="projectDescription">설명</Label>
+                  <Textarea
+                    id="projectDescription"
+                    value={projectForm.description}
+                    onChange={(e) => setProjectForm(prev => ({ ...prev, description: e.target.value }))}
+                    placeholder="프로젝트에 대한 설명"
+                    rows={3}
+                  />
+                </div>
+
+                <div>
+                  <Label>중요도</Label>
+                  <Select
+                    value={projectForm.priority}
+                    onValueChange={(value: 'high' | 'medium' | 'low') => {
+                      setProjectForm(prev => ({ 
+                        ...prev, 
+                        priority: value,
+                        color: priorityColors[value]
+                      }));
+                    }}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="high">높음</SelectItem>
+                      <SelectItem value="medium">보통</SelectItem>
+                      <SelectItem value="low">낮음</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="projectStartDate">시작일</Label>
+                    <Input
+                      id="projectStartDate"
+                      type="date"
+                      value={projectForm.startDate}
+                      onChange={(e) => setProjectForm(prev => ({ ...prev, startDate: e.target.value }))}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="projectEndDate">종료일</Label>
+                    <Input
+                      id="projectEndDate"
+                      type="date"
+                      value={projectForm.endDate}
+                      min={projectForm.startDate}
+                      onChange={(e) => setProjectForm(prev => ({ ...prev, endDate: e.target.value }))}
+                    />
+                  </div>
+                </div>
+
+                <div className="flex justify-end space-x-2 pt-4">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={handleProjectDetailCancel}
+                  >
+                    취소
+                  </Button>
+                  <Button type="submit">
+                    저장
+                  </Button>
+                </div>
+              </form>
+            ) : (
+              <div className="space-y-4">
+                <div>
+                  <Label className="text-sm font-medium text-gray-600">프로젝트 제목</Label>
+                  <p className="text-sm text-gray-900 mt-1">{selectedProject.title}</p>
+                </div>
+
+                {selectedProject.description && (
+                  <div>
+                    <Label className="text-sm font-medium text-gray-600">설명</Label>
+                    <p className="text-sm text-gray-900 mt-1 whitespace-pre-wrap">{selectedProject.description}</p>
+                  </div>
+                )}
+
+                <div>
+                  <Label className="text-sm font-medium text-gray-600">중요도</Label>
+                  <p className="text-sm text-gray-900 mt-1">
+                    {selectedProject.priority === 'high' ? '높음' :
+                     selectedProject.priority === 'medium' ? '보통' : '낮음'}
+                  </p>
+                </div>
+
+                {(selectedProject.startDate || selectedProject.endDate) && (
+                  <div className="grid grid-cols-2 gap-4">
+                    {selectedProject.startDate && (
+                      <div>
+                        <Label className="text-sm font-medium text-gray-600">시작일</Label>
+                        <p className="text-sm text-gray-900 mt-1">
+                          {format(new Date(selectedProject.startDate), 'yyyy년 MM월 dd일', { locale: ko })}
+                        </p>
+                      </div>
+                    )}
+                    {selectedProject.endDate && (
+                      <div>
+                        <Label className="text-sm font-medium text-gray-600">종료일</Label>
+                        <p className="text-sm text-gray-900 mt-1">
+                          {format(new Date(selectedProject.endDate), 'yyyy년 MM월 dd일', { locale: ko })}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {selectedProject.coreValue && (
+                  <div>
+                    <Label className="text-sm font-medium text-gray-600">핵심 가치</Label>
+                    <p className="text-sm text-gray-900 mt-1">{selectedProject.coreValue}</p>
+                  </div>
+                )}
+
+                {selectedProject.annualGoal && (
+                  <div>
+                    <Label className="text-sm font-medium text-gray-600">연간 목표</Label>
+                    <p className="text-sm text-gray-900 mt-1">{selectedProject.annualGoal}</p>
+                  </div>
+                )}
+
+                {selectedProject.imageUrls && selectedProject.imageUrls.length > 0 && (
+                  <div>
+                    <Label className="text-sm font-medium text-gray-600">이미지</Label>
+                    <div className="grid grid-cols-4 gap-2 mt-2">
+                      {selectedProject.imageUrls.map((imageUrl: string, index: number) => (
+                        <img
+                          key={index}
+                          src={imageUrl}
+                          alt={`프로젝트 이미지 ${index + 1}`}
+                          className="w-16 h-16 object-cover rounded border cursor-pointer hover:opacity-80"
+                          onClick={() => {
+                            setViewingImage(imageUrl);
+                            setCurrentImageIndex(index);
+                            setCurrentImageProject(selectedProject);
+                          }}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                <div className="flex justify-end space-x-2 pt-4">
+                  <Button
+                    variant="outline"
+                    onClick={() => setShowProjectDetailDialog(false)}
+                  >
+                    닫기
+                  </Button>
+                  <Button onClick={handleProjectDetailEdit}>
+                    수정
+                  </Button>
+                </div>
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
+      )}
+
       {/* Delete Confirmation Dialog */}
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
         <AlertDialogContent>
@@ -1810,8 +2081,10 @@ export default function ProjectManagement() {
               {deleteTarget?.type === 'project' ? '프로젝트 삭제 확인' : '할일 삭제 확인'}
             </AlertDialogTitle>
             <AlertDialogDescription>
-              정말로 삭제하시겠습니까? 삭제한 내용은 복구할 수 없습니다.
-              {deleteTarget?.type === 'project' && ' 프로젝트와 관련된 모든 할일도 함께 삭제됩니다.'}
+              {deleteTarget?.type === 'project' 
+                ? '정말로 삭제 하시겠습니까? 삭제된 프로젝트는 복구할 수 없습니다.'
+                : '정말로 삭제하시겠습니까? 삭제한 내용은 복구할 수 없습니다.'
+              }
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
