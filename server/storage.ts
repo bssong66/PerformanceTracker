@@ -16,6 +16,7 @@ export interface IStorage {
   // User methods - (IMPORTANT) these user operations are mandatory for Replit Auth.
   getUser(id: string): Promise<User | undefined>;
   upsertUser(user: UpsertUser): Promise<User>;
+  getAllUsers(): Promise<User[]>;
   
   // Foundation methods
   getFoundation(userId: string, year?: number): Promise<Foundation | undefined>;
@@ -112,6 +113,10 @@ export class DatabaseStorage implements IStorage {
       })
       .returning();
     return user;
+  }
+
+  async getAllUsers(): Promise<User[]> {
+    return await db.select().from(users);
   }
 
   // Foundation methods

@@ -25,6 +25,54 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Development: Admin user switch (개발용 사용자 전환)
+  app.post('/api/dev/switch-user', isAuthenticated, async (req: any, res) => {
+    try {
+      const { targetUserId } = req.body;
+      const currentUserId = req.user.claims.sub;
+      
+      // 현재 사용자가 admin인지 확인하거나 개발 환경에서만 허용
+      if (process.env.NODE_ENV !== 'development') {
+        return res.status(403).json({ message: "Only available in development" });
+      }
+      
+      // 대상 사용자가 존재하는지 확인
+      const targetUser = await storage.getUser(targetUserId);
+      if (!targetUser) {
+        return res.status(404).json({ message: "Target user not found" });
+      }
+      
+      // 세션에서 사용자 정보 업데이트
+      req.user.claims.sub = targetUserId;
+      req.user.claims.email = targetUser.email;
+      req.user.claims.first_name = targetUser.firstName;
+      req.user.claims.last_name = targetUser.lastName;
+      
+      res.json({ 
+        message: "User switched successfully", 
+        currentUser: targetUser 
+      });
+    } catch (error) {
+      console.error("Error switching user:", error);
+      res.status(500).json({ message: "Failed to switch user" });
+    }
+  });
+
+  // Development: Get all users for switching (개발용 사용자 목록)
+  app.get('/api/dev/users', isAuthenticated, async (req: any, res) => {
+    try {
+      if (process.env.NODE_ENV !== 'development') {
+        return res.status(403).json({ message: "Only available in development" });
+      }
+      
+      const users = await storage.getAllUsers();
+      res.json(users);
+    } catch (error) {
+      console.error("Error fetching users:", error);
+      res.status(500).json({ message: "Failed to fetch users" });
+    }
+  });
+
   // Foundation routes
   app.get("/api/foundation/:userId", isAuthenticated, async (req: any, res) => {
     try {

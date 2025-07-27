@@ -1,15 +1,53 @@
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { LogOut, User, Settings, BarChart } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { LogOut, User, Settings, BarChart, Users } from "lucide-react";
 import { Link } from "wouter";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 
 export default function Home() {
   const { user, isLoading } = useAuth();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   const handleLogout = () => {
     window.location.href = '/api/logout';
   };
+
+  // Development: Get all users for switching
+  const { data: allUsers } = useQuery({
+    queryKey: ['/api/dev/users'],
+    enabled: import.meta.env.DEV,
+  });
+
+  // Development: Switch user mutation
+  const switchUserMutation = useMutation({
+    mutationFn: async (targetUserId: string) => {
+      return await apiRequest('/api/dev/switch-user', {
+        method: 'POST',
+        body: { targetUserId },
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/auth/user'] });
+      toast({
+        title: "사용자 전환 완료",
+        description: "성공적으로 사용자가 전환되었습니다.",
+      });
+      // 페이지 새로고침으로 완전한 상태 초기화
+      window.location.reload();
+    },
+    onError: (error) => {
+      toast({
+        title: "사용자 전환 실패",
+        description: "사용자 전환 중 오류가 발생했습니다.",
+        variant: "destructive",
+      });
+    },
+  });
 
   if (isLoading) {
     return (
@@ -36,6 +74,33 @@ export default function Home() {
             </p>
           </div>
           <div className="flex items-center space-x-4">
+            {/* Development: User Switch Dropdown */}
+            {import.meta.env.DEV && allUsers && allUsers.length > 1 && (
+              <div className="flex items-center space-x-2">
+                <Users className="h-4 w-4 text-gray-500" />
+                <Select
+                  value={user?.id}
+                  onValueChange={(targetUserId) => {
+                    if (targetUserId !== user?.id) {
+                      switchUserMutation.mutate(targetUserId);
+                    }
+                  }}
+                  disabled={switchUserMutation.isPending}
+                >
+                  <SelectTrigger className="w-48">
+                    <SelectValue placeholder="사용자 선택" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {allUsers.map((u: any) => (
+                      <SelectItem key={u.id} value={u.id}>
+                        {u.firstName || u.email} {u.id === user?.id && "(현재)"}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+            
             {user?.profileImageUrl && (
               <img 
                 src={user.profileImageUrl} 
