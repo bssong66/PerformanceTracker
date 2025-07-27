@@ -111,11 +111,17 @@ export class DatabaseStorage implements IStorage {
   async upsertUser(userData: UpsertUser): Promise<User> {
     const [user] = await db
       .insert(users)
-      .values(userData)
+      .values({
+        ...userData,
+        password: userData.password || null,
+        authType: userData.authType || 'replit'
+      })
       .onConflictDoUpdate({
         target: users.id,
         set: {
           ...userData,
+          password: userData.password || null,
+          authType: userData.authType || 'replit',
           updatedAt: new Date(),
         },
       })

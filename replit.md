@@ -147,6 +147,19 @@ Preferred communication style: Simple, everyday language.
 ```
 
 ### Recent Changes (July 27, 2025)
+- **Local Authentication System Implementation Completed**
+- Added bcryptjs password hashing for secure local authentication
+- Implemented Passport Local Strategy alongside existing Replit Auth
+- Created comprehensive login/signup page (/login) with dual authentication support
+- Added password and authType columns to users table via direct SQL migration
+- Enhanced upsertUser method to handle both Replit and local authentication data
+- Updated Landing page with login redirect to /login page
+- Configured logout functionality through existing /api/logout endpoint
+- **Foundation Data Empty State Enhancement**
+- Modified WeeklyReview and MonthlyReview to show informative empty states
+- Changed from hiding sections to displaying "등록된 핵심가치가 없습니다" message
+- Added guidance text directing users to set core values in Foundation page
+- Ensured proper data isolation between different user accounts
 - **Pomodoro Timer Completion Notification System Implementation**
 - Added system notification support with browser Notification API
 - Implemented completion dialog with multiple action options (task completion, session extension, break start)
