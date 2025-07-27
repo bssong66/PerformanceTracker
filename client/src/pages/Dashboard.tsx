@@ -578,8 +578,51 @@ export default function Dashboard() {
           </Card>
         </div>
 
-        {/* 다가오는 일정 및 핵심가치별 진행률 */}
+        {/* 핵심가치별 진행률 및 다가오는 일정 */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
+          {/* 핵심가치별 진행률 */}
+          <Card className="bg-white/90 backdrop-blur-sm border-0 shadow-lg">
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2">
+                <Heart className="h-6 w-6 text-red-600" />
+                <span>핵심가치별 진행률</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {coreValueProgress.length > 0 ? (
+                coreValueProgress.map((valueData, index) => (
+                  <div key={valueData.value} className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-2">
+                        <div className={`w-4 h-4 rounded ${
+                          index === 0 ? 'bg-blue-500' : 
+                          index === 1 ? 'bg-purple-500' : 'bg-green-500'
+                        }`}></div>
+                        <span className="font-medium">{valueData.value}</span>
+                      </div>
+                      <span className="text-sm font-semibold">
+                        {valueData.percentage}%
+                      </span>
+                    </div>
+                    <Progress value={valueData.percentage} className="h-3" />
+                    <div className="text-xs text-gray-500 space-x-4">
+                      <span>할일: {valueData.tasks.completed}/{valueData.tasks.total}</span>
+                      <span>일정: {valueData.events.completed}/{valueData.events.total}</span>
+                      <span>프로젝트: {valueData.projects.completed}/{valueData.projects.total}</span>
+                      <span>습관: {valueData.habits.total}개</span>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="text-center text-gray-500 py-8">
+                  <Heart className="h-12 w-12 mx-auto mb-2 text-gray-300" />
+                  <p>핵심가치를 설정해주세요</p>
+                  <p className="text-sm">가치중심계획에서 설정할 수 있습니다</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
           {/* 다가오는 일정 */}
           <Card className="bg-white/90 backdrop-blur-sm border-0 shadow-lg">
             <CardHeader>
@@ -623,49 +666,6 @@ export default function Dashboard() {
                 <div className="text-center text-gray-500 py-8">
                   <Clock className="h-12 w-12 mx-auto mb-2 text-gray-300" />
                   <p>다가오는 일정이 없습니다</p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* 핵심가치별 진행률 */}
-          <Card className="bg-white/90 backdrop-blur-sm border-0 shadow-lg">
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <Heart className="h-6 w-6 text-red-600" />
-                <span>핵심가치별 진행률</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              {coreValueProgress.length > 0 ? (
-                coreValueProgress.map((valueData, index) => (
-                  <div key={valueData.value} className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-2">
-                        <div className={`w-4 h-4 rounded ${
-                          index === 0 ? 'bg-blue-500' : 
-                          index === 1 ? 'bg-purple-500' : 'bg-green-500'
-                        }`}></div>
-                        <span className="font-medium">{valueData.value}</span>
-                      </div>
-                      <span className="text-sm font-semibold">
-                        {valueData.percentage}%
-                      </span>
-                    </div>
-                    <Progress value={valueData.percentage} className="h-3" />
-                    <div className="text-xs text-gray-500 space-x-4">
-                      <span>할일: {valueData.tasks.completed}/{valueData.tasks.total}</span>
-                      <span>일정: {valueData.events.completed}/{valueData.events.total}</span>
-                      <span>프로젝트: {valueData.projects.completed}/{valueData.projects.total}</span>
-                      <span>습관: {valueData.habits.total}개</span>
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <div className="text-center text-gray-500 py-8">
-                  <Heart className="h-12 w-12 mx-auto mb-2 text-gray-300" />
-                  <p>핵심가치를 설정해주세요</p>
-                  <p className="text-sm">가치중심계획에서 설정할 수 있습니다</p>
                 </div>
               )}
             </CardContent>
