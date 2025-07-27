@@ -350,12 +350,12 @@ export default function Calendar() {
 
   // Convert events and tasks to calendar format
   const calendarEvents = useMemo(() => {
-    const eventItems = events.flatMap((event: any) => generateRecurringEvents(event));
+    const eventItems = (events || []).flatMap((event: any) => generateRecurringEvents(event));
 
-    const taskItems = allTasks
+    const taskItems = (allTasks || [])
       .filter((task: any) => task.startDate || task.endDate)
       .map((task: any) => {
-        const project = projects.find((p: any) => p.id === task.projectId);
+        const project = (projects || []).find((p: any) => p.id === task.projectId);
         return {
           id: `task-${task.id}`,
           title: `[할일] ${task.title}`,
