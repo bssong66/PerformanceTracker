@@ -216,9 +216,20 @@ export default function ProjectManagement() {
       });
       return response.json();
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['projects', MOCK_USER_ID] });
+    onSuccess: (_, projectId) => {
+      // Optimistic update - remove the project immediately from cache
+      queryClient.setQueryData(['projects', MOCK_USER_ID], (oldProjects: any) => {
+        if (!oldProjects) return [];
+        return oldProjects.filter((p: any) => p.id !== projectId);
+      });
       toast({ title: "프로젝트 삭제", description: "프로젝트가 삭제되었습니다." });
+    },
+    onError: (error: Error) => {
+      toast({ 
+        title: "삭제 실패", 
+        description: error.message || "프로젝트 삭제 중 오류가 발생했습니다.", 
+        variant: "destructive" 
+      });
     }
   });
 
@@ -320,8 +331,8 @@ export default function ProjectManagement() {
     },
     onSettled: () => {
       // Lighter refetch for data consistency - only invalidate, don't force refetch immediately
-      queryClient.invalidateQueries({ queryKey: ['tasks', MOCK_USER_ID] }, { refetchType: 'none' });
-      queryClient.invalidateQueries({ queryKey: ['projects', MOCK_USER_ID] }, { refetchType: 'none' });
+      queryClient.invalidateQueries({ queryKey: ['tasks', MOCK_USER_ID] });
+      queryClient.invalidateQueries({ queryKey: ['projects', MOCK_USER_ID] });
     }
   });
 
@@ -698,10 +709,6 @@ export default function ProjectManagement() {
 
   // Handle task deletion
   const handleTaskDelete = async (taskId: number) => {
-    if (!window.confirm('이 할일을 삭제하시겠습니까?')) {
-      return;
-    }
-
     try {
       const response = await fetch(`/api/tasks/${taskId}`, {
         method: 'DELETE'
@@ -711,8 +718,12 @@ export default function ProjectManagement() {
         throw new Error('할일 삭제에 실패했습니다.');
       }
 
-      // Invalidate queries to refresh the data
-      queryClient.invalidateQueries({ queryKey: ['tasks', MOCK_USER_ID] });
+      // Optimistic update - remove the task immediately from cache
+      queryClient.setQueryData(['tasks', MOCK_USER_ID], (oldTasks: any) => {
+        if (!oldTasks) return [];
+        return oldTasks.filter((t: any) => t.id !== taskId);
+      });
+      
       toast({ title: "할일 삭제", description: "할일이 삭제되었습니다." });
     } catch (error: any) {
       toast({ 
