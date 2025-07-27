@@ -163,12 +163,43 @@ function TaskManagement() {
       const response = await fetch(`/api/tasks/${task.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...task, completed: !task.completed })
+        body: JSON.stringify({ completed: !task.completed })
       });
+      if (!response.ok) throw new Error('Failed to update task');
       return response.json();
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['tasks', MOCK_USER_ID] });
+    onMutate: async (task: Task) => {
+      // Cancel any outgoing refetches
+      await queryClient.cancelQueries({ queryKey: ['tasks', MOCK_USER_ID] });
+
+      // Snapshot the previous value
+      const previousTasks = queryClient.getQueryData(['tasks', MOCK_USER_ID]);
+
+      // Optimistically update to the new value
+      queryClient.setQueryData(['tasks', MOCK_USER_ID], (old: any) => {
+        if (!old) return old;
+        return old.map((t: any) => 
+          t.id === task.id 
+            ? { ...t, completed: !task.completed, completedAt: !task.completed ? new Date().toISOString() : null }
+            : t
+        );
+      });
+
+      // Return a context object with the snapshotted value
+      return { previousTasks };
+    },
+    onError: (err, variables, context) => {
+      // If the mutation fails, use the context returned from onMutate to roll back
+      queryClient.setQueryData(['tasks', MOCK_USER_ID], context?.previousTasks);
+      toast({ 
+        title: "오류", 
+        description: "할일 상태 변경에 실패했습니다.", 
+        variant: "destructive" 
+      });
+    },
+    onSettled: () => {
+      // Lighter refetch for data consistency
+      queryClient.invalidateQueries({ queryKey: ['tasks', MOCK_USER_ID] }, { refetchType: 'none' });
     }
   });
 
