@@ -283,8 +283,12 @@ export default function ProjectManagement() {
         );
       });
 
-      // Invalidate tasks cache to show new cloned tasks
+      // Force refresh of tasks cache to show new cloned tasks immediately
       queryClient.invalidateQueries({ queryKey: ['tasks', MOCK_USER_ID] });
+      queryClient.refetchQueries({ queryKey: ['tasks', MOCK_USER_ID] });
+      
+      // Automatically expand the cloned project to show the tasks
+      setExpandedProjects(prev => new Set([...Array.from(prev), realClonedProject.id]));
       
       toast({ 
         title: "프로젝트 복제 완료", 
