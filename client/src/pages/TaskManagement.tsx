@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -48,6 +49,8 @@ function TaskManagement() {
   const [showTaskDetailDialog, setShowTaskDetailDialog] = useState(false);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [isEditMode, setIsEditMode] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [taskToDelete, setTaskToDelete] = useState<number | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -229,6 +232,24 @@ function TaskManagement() {
       setTaskForm(prev => ({ ...prev, priority }));
     }
     setShowTaskDialog(true);
+  };
+
+  const confirmDeleteTask = (taskId: number) => {
+    setTaskToDelete(taskId);
+    setShowDeleteDialog(true);
+  };
+
+  const handleDeleteTask = () => {
+    if (taskToDelete) {
+      deleteTaskMutation.mutate(taskToDelete);
+      setShowDeleteDialog(false);
+      setTaskToDelete(null);
+    }
+  };
+
+  const cancelDeleteTask = () => {
+    setShowDeleteDialog(false);
+    setTaskToDelete(null);
   };
 
   const openEditDialog = (task: Task) => {
@@ -665,7 +686,7 @@ function TaskManagement() {
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => deleteTaskMutation.mutate(task.id)}
+                        onClick={() => confirmDeleteTask(task.id)}
                         className="h-8 w-8 p-0 text-red-500 hover:text-red-700"
                       >
                         <Trash2 className="h-3 w-3" />
@@ -1061,6 +1082,24 @@ function TaskManagement() {
           </DialogContent>
         </Dialog>
       )}
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>할일 삭제 확인</AlertDialogTitle>
+            <AlertDialogDescription>
+              정말로 삭제하시겠습니까? 삭제한 내용은 복구할 수 없습니다.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={cancelDeleteTask}>삭제 취소</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteTask} className="bg-red-600 hover:bg-red-700">
+              삭제
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {filteredTasks.length === 0 && (
         <div className="text-center py-12">

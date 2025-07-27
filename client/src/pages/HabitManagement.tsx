@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -36,6 +37,8 @@ export default function HabitManagement() {
   const { toast } = useToast();
   const [showHabitDialog, setShowHabitDialog] = useState(false);
   const [editingHabit, setEditingHabit] = useState<Habit | null>(null);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [habitToDelete, setHabitToDelete] = useState<number | null>(null);
   const today = format(new Date(), 'yyyy-MM-dd');
   
   const [habitForm, setHabitForm] = useState({
@@ -300,6 +303,24 @@ export default function HabitManagement() {
     return { completed, days };
   };
 
+  const confirmDeleteHabit = (habitId: number) => {
+    setHabitToDelete(habitId);
+    setShowDeleteDialog(true);
+  };
+
+  const handleDeleteHabit = () => {
+    if (habitToDelete) {
+      deleteHabitMutation.mutate(habitToDelete);
+      setShowDeleteDialog(false);
+      setHabitToDelete(null);
+    }
+  };
+
+  const cancelDeleteHabit = () => {
+    setShowDeleteDialog(false);
+    setHabitToDelete(null);
+  };
+
   return (
     <div className="p-6 space-y-6">
       <div className="flex justify-between items-center">
@@ -465,7 +486,7 @@ export default function HabitManagement() {
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => deleteHabitMutation.mutate(habit.id)}
+                      onClick={() => confirmDeleteHabit(habit.id)}
                       className="h-8 w-8 p-0 text-red-500 hover:text-red-700"
                     >
                       <Trash2 className="h-4 w-4" />
@@ -568,6 +589,24 @@ export default function HabitManagement() {
           </Button>
         </div>
       )}
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>습관 삭제 확인</AlertDialogTitle>
+            <AlertDialogDescription>
+              정말로 삭제하시겠습니까? 삭제한 내용은 복구할 수 없습니다. 습관과 관련된 모든 기록도 함께 삭제됩니다.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={cancelDeleteHabit}>삭제 취소</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteHabit} className="bg-red-600 hover:bg-red-700">
+              삭제
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

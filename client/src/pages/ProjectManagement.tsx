@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from '@/components/ui/dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { Plus, Folder, Image, Eye, Trash2, Calendar, Edit, ChevronDown, ChevronRight, ChevronLeft, CheckCircle, Circle, Play } from 'lucide-react';
@@ -60,6 +61,8 @@ export default function ProjectManagement() {
   const [showTaskDetailDialog, setShowTaskDetailDialog] = useState(false);
   const [selectedTask, setSelectedTask] = useState<any | null>(null);
   const [isEditMode, setIsEditMode] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<{type: 'project' | 'task', id: number} | null>(null);
   
   // State for task sorting
   const [taskSortBy, setTaskSortBy] = useState<'priority' | 'date' | 'title'>('priority');
@@ -446,6 +449,28 @@ export default function ProjectManagement() {
       newExpanded.add(projectId);
     }
     setExpandedProjects(newExpanded);
+  };
+
+  const confirmDelete = (type: 'project' | 'task', id: number) => {
+    setDeleteTarget({ type, id });
+    setShowDeleteDialog(true);
+  };
+
+  const handleDelete = () => {
+    if (deleteTarget) {
+      if (deleteTarget.type === 'project') {
+        deleteProjectMutation.mutate(deleteTarget.id);
+      } else if (deleteTarget.type === 'task') {
+        handleTaskDelete(deleteTarget.id);
+      }
+      setShowDeleteDialog(false);
+      setDeleteTarget(null);
+    }
+  };
+
+  const cancelDelete = () => {
+    setShowDeleteDialog(false);
+    setDeleteTarget(null);
   };
 
   const handleTaskSubmit = (e: React.FormEvent) => {
@@ -1107,7 +1132,7 @@ export default function ProjectManagement() {
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => deleteProjectMutation.mutate(project.id)}
+                      onClick={() => confirmDelete('project', project.id)}
                       className="text-red-500 hover:text-red-700 h-8 w-8 p-0"
                     >
                       <Trash2 className="h-3 w-3" />
@@ -1211,7 +1236,7 @@ export default function ProjectManagement() {
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                onClick={() => handleTaskDelete(task.id)}
+                                onClick={() => confirmDelete('task', task.id)}
                                 className="h-7 w-7 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
                                 title="할일 삭제"
                               >
@@ -1776,6 +1801,27 @@ export default function ProjectManagement() {
           </DialogContent>
         </Dialog>
       )}
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {deleteTarget?.type === 'project' ? '프로젝트 삭제 확인' : '할일 삭제 확인'}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              정말로 삭제하시겠습니까? 삭제한 내용은 복구할 수 없습니다.
+              {deleteTarget?.type === 'project' && ' 프로젝트와 관련된 모든 할일도 함께 삭제됩니다.'}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={cancelDelete}>삭제 취소</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} className="bg-red-600 hover:bg-red-700">
+              삭제
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {projects.length === 0 && (
         <div className="text-center py-12">
