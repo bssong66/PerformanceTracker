@@ -512,8 +512,8 @@ export default function ProjectManagement() {
       color: selectedProject.color,
       startDate: selectedProject.startDate || '',
       endDate: selectedProject.endDate || '',
-      coreValue: selectedProject.coreValue || '',
-      annualGoal: selectedProject.annualGoal || '',
+      coreValue: selectedProject.coreValue || 'none',
+      annualGoal: selectedProject.annualGoal || 'none',
       imageUrls: selectedProject.imageUrls || []
     });
   };
@@ -531,8 +531,8 @@ export default function ProjectManagement() {
       color: projectForm.color,
       startDate: projectForm.startDate || null,
       endDate: projectForm.endDate || null,
-      coreValue: projectForm.coreValue || null,
-      annualGoal: projectForm.annualGoal || null,
+      coreValue: projectForm.coreValue === 'none' ? null : projectForm.coreValue,
+      annualGoal: projectForm.annualGoal === 'none' ? null : projectForm.annualGoal,
       imageUrls: projectForm.imageUrls,
       userId: MOCK_USER_ID
     };
@@ -1965,6 +1965,47 @@ export default function ProjectManagement() {
                   </div>
                 </div>
 
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label>핵심 가치</Label>
+                    <Select
+                      value={projectForm.coreValue}
+                      onValueChange={(value) => 
+                        setProjectForm(prev => ({ ...prev, coreValue: value }))
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="핵심 가치 선택" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">없음</SelectItem>
+                        {foundation?.coreValues?.map((value: string, index: number) => (
+                          <SelectItem key={index} value={value}>{value}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label>연간 목표</Label>
+                    <Select
+                      value={projectForm.annualGoal}
+                      onValueChange={(value) => 
+                        setProjectForm(prev => ({ ...prev, annualGoal: value }))
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="연간 목표 선택" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">없음</SelectItem>
+                        {annualGoals?.map((goal: any) => (
+                          <SelectItem key={goal.id} value={goal.title}>{goal.title}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
                 <div className="flex justify-end space-x-2 pt-4">
                   <Button
                     type="button"
@@ -2021,19 +2062,16 @@ export default function ProjectManagement() {
                   </div>
                 )}
 
-                {selectedProject.coreValue && (
+                <div className="grid grid-cols-2 gap-4">
                   <div>
                     <Label className="text-sm font-medium text-gray-600">핵심 가치</Label>
-                    <p className="text-sm text-gray-900 mt-1">{selectedProject.coreValue}</p>
+                    <p className="text-sm text-gray-900 mt-1">{selectedProject.coreValue || '없음'}</p>
                   </div>
-                )}
-
-                {selectedProject.annualGoal && (
                   <div>
                     <Label className="text-sm font-medium text-gray-600">연간 목표</Label>
-                    <p className="text-sm text-gray-900 mt-1">{selectedProject.annualGoal}</p>
+                    <p className="text-sm text-gray-900 mt-1">{selectedProject.annualGoal || '없음'}</p>
                   </div>
-                )}
+                </div>
 
                 {selectedProject.imageUrls && selectedProject.imageUrls.length > 0 && (
                   <div>
