@@ -1645,11 +1645,9 @@ export default function ProjectManagement() {
                           className="w-16 h-16 object-cover rounded border cursor-pointer hover:opacity-80"
                           onClick={() => setViewingTaskImage(imageUrl)}
                         />
-                        <Button
+                        <button
                           type="button"
-                          variant="destructive"
-                          size="sm"
-                          className="absolute -top-2 -right-2 h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                          className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity shadow-sm"
                           onClick={() => {
                             setTaskForm(prev => ({
                               ...prev,
@@ -1657,8 +1655,8 @@ export default function ProjectManagement() {
                             }));
                           }}
                         >
-                          ×
-                        </Button>
+                          <X className="h-2.5 w-2.5" />
+                        </button>
                       </div>
                     ))}
                   </div>
@@ -2146,9 +2144,9 @@ export default function ProjectManagement() {
                                   imageUrls: prev.imageUrls.filter((_, i) => i !== index)
                                 }));
                               }}
-                              className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                              className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity shadow-sm"
                             >
-                              <X className="h-3 w-3" />
+                              <X className="h-2.5 w-2.5" />
                             </button>
                           </div>
                         ))}
