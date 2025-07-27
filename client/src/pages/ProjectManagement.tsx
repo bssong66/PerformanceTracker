@@ -8,7 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { Plus, Folder, Image, Eye, Trash2, Calendar, Edit, ChevronDown, ChevronRight, ChevronLeft, CheckCircle } from 'lucide-react';
+import { Plus, Folder, Image, Eye, Trash2, Calendar, Edit, ChevronDown, ChevronRight, ChevronLeft, CheckCircle, Circle, Play } from 'lucide-react';
 import { format } from 'date-fns';
 import { ko } from 'date-fns/locale';
 
@@ -844,10 +844,21 @@ export default function ProjectManagement() {
                       <div className="flex items-center space-x-2 mb-1">
                         <h3 className="font-medium text-gray-900">{project.title}</h3>
                         
-                        {/* 프로젝트 완료 아이콘 */}
-                        {project.completed && (
-                          <CheckCircle className="h-5 w-5 text-green-600" title="프로젝트 완료" />
-                        )}
+                        {/* 프로젝트 상태 아이콘 */}
+                        {(() => {
+                          const completedTasks = projectTasks.filter((task: any) => task.completed).length;
+                          const totalTasks = projectTasks.length;
+                          
+                          if (totalTasks === 0) {
+                            return <div title="계획수립"><Circle className="h-5 w-5 text-gray-400" /></div>;
+                          } else if (completedTasks === totalTasks) {
+                            return <div title="완료"><CheckCircle className="h-5 w-5 text-green-600" /></div>;
+                          } else if (completedTasks > 0) {
+                            return <div title="진행중"><Play className="h-5 w-5 text-blue-600" /></div>;
+                          } else {
+                            return <div title="계획수립"><Circle className="h-5 w-5 text-gray-400" /></div>;
+                          }
+                        })()}
                         
                         <span className={`px-2 py-1 rounded-full text-xs font-medium ${
                           project.priority === 'high' ? 'bg-red-100 text-red-800' :
@@ -891,20 +902,57 @@ export default function ProjectManagement() {
                       </div>
                       
                       {/* Progress Bar */}
-                      {projectTasks.length > 0 && (
+                      {(
                         <div className="mt-2">
                           <div className="flex items-center justify-between text-xs text-gray-500 mb-1">
                             <span>진행률</span>
-                            <span className={project.completed ? 'text-green-600 font-semibold' : ''}>
+                            <span className={(() => {
+                              const completedTasks = projectTasks.filter((task: any) => task.completed).length;
+                              const totalTasks = projectTasks.length;
+                              
+                              if (totalTasks === 0) {
+                                return 'text-gray-500';
+                              } else if (completedTasks === totalTasks) {
+                                return 'text-green-600 font-semibold';
+                              } else if (completedTasks > 0) {
+                                return 'text-blue-600 font-medium';
+                              } else {
+                                return 'text-gray-500';
+                              }
+                            })()}>
                               {completionPercentage}%
-                              {project.completed && ' (완료)'}
+                              {(() => {
+                                const completedTasks = projectTasks.filter((task: any) => task.completed).length;
+                                const totalTasks = projectTasks.length;
+                                
+                                if (totalTasks === 0) {
+                                  return ' (계획수립)';
+                                } else if (completedTasks === totalTasks) {
+                                  return ' (완료)';
+                                } else if (completedTasks > 0) {
+                                  return ' (진행중)';
+                                } else {
+                                  return ' (계획수립)';
+                                }
+                              })()}
                             </span>
                           </div>
                           <div className="w-full bg-gray-200 rounded-full h-2">
                             <div 
-                              className={`h-2 rounded-full transition-all duration-300 ${
-                                project.completed ? 'bg-green-600' : 'bg-blue-600'
-                              }`}
+                              className={`h-2 rounded-full transition-all duration-300 ${(() => {
+                                const completedTasks = projectTasks.filter((task: any) => task.completed).length;
+                                const totalTasks = projectTasks.length;
+                                
+                                if (totalTasks === 0) {
+                                  return 'bg-gray-300';
+                                } else if (completedTasks === totalTasks) {
+                                  return 'bg-green-600';
+                                } else if (completedTasks > 0) {
+                                  return 'bg-blue-600';
+                                } else {
+                                  return 'bg-gray-300';
+                                }
+                              })()}`}
                               style={{ width: `${completionPercentage}%` }}
                             />
                           </div>
