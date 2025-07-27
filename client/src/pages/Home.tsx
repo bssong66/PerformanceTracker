@@ -26,10 +26,7 @@ export default function Home() {
   // Development: Switch user mutation
   const switchUserMutation = useMutation({
     mutationFn: async (targetUserId: string) => {
-      return await apiRequest('/api/dev/switch-user', {
-        method: 'POST',
-        body: { targetUserId },
-      });
+      return await apiRequest('POST', '/api/dev/switch-user', { targetUserId });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/auth/user'] });
