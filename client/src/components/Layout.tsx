@@ -24,7 +24,7 @@ const navigation = [
   { name: '가치중심계획', href: '/foundation', icon: Sprout },
   { name: '일정관리', href: '/calendar', icon: CalendarDays },
   { name: '계획관리', href: '/planning', icon: FolderOpen },
-  { name: '일일관리', href: '/daily-planning', icon: Calendar },
+  { name: '일일관리', href: '/daily', icon: Calendar },
   { name: '리뷰', href: '/review', icon: BarChart3 },
 ];
 

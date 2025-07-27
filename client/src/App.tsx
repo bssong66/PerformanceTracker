@@ -24,6 +24,7 @@ function Router() {
         <Route path="/calendar" component={Calendar} />
         <Route path="/planning" component={Planning} />
         <Route path="/daily-planning" component={DailyPlanning} />
+        <Route path="/daily" component={DailyPlanning} />
         <Route path="/review" component={Review} />
 
         <Route component={NotFound} />
