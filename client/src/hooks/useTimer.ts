@@ -15,8 +15,8 @@ interface UseTimerReturn {
 }
 
 export const useTimer = (initialMinutes: number = 25): UseTimerReturn => {
-  const [minutes, setMinutes] = useState(initialMinutes);
-  const [seconds, setSeconds] = useState(0);
+  const [minutes, setMinutes] = useState(initialMinutes === 0 ? 0 : initialMinutes);
+  const [seconds, setSeconds] = useState(initialMinutes === 0 ? 10 : 0); // 테스트용: 0분이면 10초로 설정
   const [isRunning, setIsRunning] = useState(false);
   const [isBreak, setIsBreak] = useState(false);
   const [isCompleted, setIsCompleted] = useState(false);
@@ -36,6 +36,18 @@ export const useTimer = (initialMinutes: number = 25): UseTimerReturn => {
     } else if (minutes === 0 && seconds === 0 && isRunning) {
       setIsRunning(false);
       setIsCompleted(true);
+      
+      // 타이머 종료 후 시간 설정 (휴식/작업 모드에 따라)
+      if (isBreak) {
+        // 휴식 완료 시 원래 시간으로 복귀
+        setIsBreak(false);
+        setMinutes(initialMinutes);
+        setSeconds(0);
+      } else {
+        // 작업 완료 시 대기 상태 (다이얼로그에서 선택할 때까지 00:00 유지)
+        setMinutes(0);
+        setSeconds(0);
+      }
       
       // 시스템 알림 발송
       if ('Notification' in window && Notification.permission === 'granted') {
@@ -113,15 +125,21 @@ export const useTimer = (initialMinutes: number = 25): UseTimerReturn => {
 
   const reset = useCallback(() => {
     setIsRunning(false);
-    setMinutes(isBreak ? 5 : initialMinutes);
-    setSeconds(0);
+    setIsCompleted(false);
+    if (isBreak) {
+      setMinutes(0);
+      setSeconds(5); // 휴식 리셋은 5초
+    } else {
+      setMinutes(initialMinutes === 0 ? 0 : initialMinutes);
+      setSeconds(initialMinutes === 0 ? 10 : 0); // 작업 리셋은 10초
+    }
   }, [initialMinutes, isBreak]);
 
   const startBreak = useCallback(() => {
     setIsBreak(true);
     setMinutes(5);
     setSeconds(0);
-    setIsRunning(false);
+    setIsRunning(true); // 휴식 시간 자동 시작
     setIsCompleted(false);
   }, []);
 
