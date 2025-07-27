@@ -140,6 +140,7 @@ export const habits = pgTable("habits", {
 export const habitLogs = pgTable("habit_logs", {
   id: serial("id").primaryKey(),
   habitId: integer("habit_id").notNull(),
+  userId: varchar("user_id").notNull(),
   date: date("date").notNull(),
   completed: boolean("completed").default(false),
   notes: text("notes"),
