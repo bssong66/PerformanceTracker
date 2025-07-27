@@ -253,8 +253,59 @@ export default function ProjectManagement() {
       if (!response.ok) throw new Error('Failed to update task');
       return response.json();
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['tasks', MOCK_USER_ID] });
+    onMutate: async ({ taskId, completed }) => {
+      // Cancel any outgoing refetches (so they don't overwrite our optimistic update)
+      await queryClient.cancelQueries({ queryKey: ['tasks', MOCK_USER_ID] });
+
+      // Snapshot the previous value
+      const previousTasks = queryClient.getQueryData(['tasks', MOCK_USER_ID]);
+
+      // Optimistically update to the new value
+      queryClient.setQueryData(['tasks', MOCK_USER_ID], (old: any) => {
+        if (!old) return old;
+        return old.map((task: any) => 
+          task.id === taskId 
+            ? { ...task, completed, completedAt: completed ? new Date().toISOString() : null }
+            : task
+        );
+      });
+
+      // Return a context object with the snapshotted value
+      return { previousTasks };
+    },
+    onError: (err, variables, context) => {
+      // If the mutation fails, use the context returned from onMutate to roll back
+      queryClient.setQueryData(['tasks', MOCK_USER_ID], context?.previousTasks);
+      toast({ 
+        title: "오류", 
+        description: "할일 상태 변경에 실패했습니다.", 
+        variant: "destructive" 
+      });
+    },
+    onSuccess: (updatedTask) => {
+      // Update project completion status optimistically
+      if (updatedTask.projectId) {
+        const allTasks = queryClient.getQueryData(['tasks', MOCK_USER_ID]) as any[];
+        if (allTasks) {
+          const projectTasks = allTasks.filter(task => task.projectId === updatedTask.projectId);
+          const allCompleted = projectTasks.length > 0 && projectTasks.every(task => task.completed);
+          
+          // Update project completion status
+          queryClient.setQueryData(['projects', MOCK_USER_ID], (oldProjects: any) => {
+            if (!oldProjects) return oldProjects;
+            return oldProjects.map((project: any) => 
+              project.id === updatedTask.projectId 
+                ? { ...project, completed: allCompleted }
+                : project
+            );
+          });
+        }
+      }
+    },
+    onSettled: () => {
+      // Lighter refetch for data consistency - only invalidate, don't force refetch immediately
+      queryClient.invalidateQueries({ queryKey: ['tasks', MOCK_USER_ID] }, { refetchType: 'none' });
+      queryClient.invalidateQueries({ queryKey: ['projects', MOCK_USER_ID] }, { refetchType: 'none' });
     }
   });
 
