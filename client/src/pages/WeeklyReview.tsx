@@ -421,11 +421,11 @@ export default function WeeklyReview() {
     bCompleted: (weekTasks as any[]).filter((t: any) => t.priority === 'B' && t.completed).length,
   };
 
-  const coreValues = [
-    (foundation as any)?.coreValue1 || "가치 1",
-    (foundation as any)?.coreValue2 || "가치 2", 
-    (foundation as any)?.coreValue3 || "가치 3",
-  ];
+  const coreValues = foundation ? [
+    (foundation as any)?.coreValue1,
+    (foundation as any)?.coreValue2, 
+    (foundation as any)?.coreValue3,
+  ].filter(Boolean) : [];
 
   // Helper function to get task display name with project name
   const getTaskDisplayName = (task: any) => {
@@ -699,40 +699,42 @@ export default function WeeklyReview() {
                   </div>
                 </div>
 
-                {/* Value Alignment Check */}
-                <div>
-                  <Label className="text-sm font-semibold text-gray-900 mb-3 block">
-                    가치 점검
-                  </Label>
-                  <p className="text-xs text-gray-600 mb-4">
-                    일정, 할일, 시간블록 데이터를 분석하여 자동으로 계산된 가치 정렬도입니다
-                  </p>
-                  <div className="space-y-4">
-                    {coreValues.map((value, index) => (
-                      <div key={index}>
-                        <div className="flex items-center justify-between mb-2">
-                          <span className="text-sm text-gray-600">{value}</span>
-                          <div className="flex items-center space-x-2">
-                            <div className="w-16 text-center font-semibold">
-                              {valueAlignments[index] || 0}%
+                {/* Value Alignment Check - Only show if foundation exists */}
+                {foundation && coreValues.length > 0 ? (
+                  <div>
+                    <Label className="text-sm font-semibold text-gray-900 mb-3 block">
+                      가치 점검
+                    </Label>
+                    <p className="text-xs text-gray-600 mb-4">
+                      일정, 할일, 시간블록 데이터를 분석하여 자동으로 계산된 가치 정렬도입니다
+                    </p>
+                    <div className="space-y-4">
+                      {coreValues.map((value, index) => (
+                        <div key={index}>
+                          <div className="flex items-center justify-between mb-2">
+                            <span className="text-sm text-gray-600">{value}</span>
+                            <div className="flex items-center space-x-2">
+                              <div className="w-16 text-center font-semibold">
+                                {valueAlignments[index] || 0}%
+                              </div>
                             </div>
                           </div>
+                          <ProgressBar 
+                            value={valueAlignments[index] || 0} 
+                            max={100}
+                            color={
+                              (valueAlignments[index] || 0) >= 80 ? 'success' :
+                              (valueAlignments[index] || 0) >= 60 ? 'warning' : 'danger'
+                            }
+                          />
+                          <div className="text-xs text-gray-500 mt-1">
+                            키워드 매칭 및 연결된 가치 기반 자동 계산
+                          </div>
                         </div>
-                        <ProgressBar 
-                          value={valueAlignments[index] || 0} 
-                          max={100}
-                          color={
-                            (valueAlignments[index] || 0) >= 80 ? 'success' :
-                            (valueAlignments[index] || 0) >= 60 ? 'warning' : 'danger'
-                          }
-                        />
-                        <div className="text-xs text-gray-500 mt-1">
-                          키워드 매칭 및 연결된 가치 기반 자동 계산
-                        </div>
-                      </div>
-                    ))}
+                      ))}
+                    </div>
                   </div>
-                </div>
+                ) : null}
 
                 {/* Weekly Reflection */}
                 <div>
