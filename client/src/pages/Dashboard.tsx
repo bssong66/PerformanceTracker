@@ -305,9 +305,25 @@ export default function Dashboard() {
             {format(today, 'yyyy년 M월 d일 EEEE', { locale: ko })} • 핵심 성과 현황
           </p>
           {foundation && (
-            <div className="mt-4 p-4 bg-white/60 rounded-lg backdrop-blur-sm">
-              <div className="text-sm font-medium text-blue-900 mb-1">개인 미션</div>
-              <div className="text-gray-700">{(foundation as any).personalMission}</div>
+            <div className="mt-8 max-w-4xl mx-auto">
+              <Card className="bg-gradient-to-r from-blue-600 to-purple-700 border-0 shadow-xl overflow-hidden">
+                <CardContent className="p-8 text-center">
+                  <div className="flex items-center justify-center mb-4">
+                    <div className="p-3 bg-white/20 rounded-full mr-3">
+                      <Heart className="h-8 w-8 text-white" />
+                    </div>
+                    <h2 className="text-2xl font-bold text-white">개인 미션</h2>
+                  </div>
+                  <div className="text-xl text-white/95 font-medium leading-relaxed max-w-3xl mx-auto">
+                    "{(foundation as any).personalMission}"
+                  </div>
+                  <div className="mt-6 pt-6 border-t border-white/20">
+                    <div className="text-white/80 text-sm">
+                      {format(today, 'yyyy년')} • 나의 삶의 방향성
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
             </div>
           )}
         </div>
