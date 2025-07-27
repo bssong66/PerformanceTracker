@@ -223,6 +223,7 @@ export default function Calendar() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tasks', MOCK_USER_ID] });
+      queryClient.invalidateQueries({ queryKey: ['/api/tasks', MOCK_USER_ID] });
       setContextMenu(null);
       toast({ title: "할일 완료 상태가 변경되었습니다" });
     }
@@ -262,7 +263,7 @@ export default function Calendar() {
     // Add the original event
     events.push({
       id: event.id,
-      title: event.completed ? `✅ ${event.title}` : event.title,
+      title: event.title,
       start: baseStart,
       end: baseEnd,
       resizable: true,
@@ -325,7 +326,7 @@ export default function Calendar() {
           const nextEnd = new Date(nextDate.getTime() + duration);
           events.push({
             id: `${event.id}-repeat-${instanceCount}`,
-            title: event.completed ? `🔄 ✅ ${event.title}` : `🔄 ${event.title}`,
+            title: `🔄 ${event.title}`,
             start: nextDate,
             end: nextEnd,
             resizable: false, // Recurring instances can't be resized individually
@@ -729,7 +730,7 @@ export default function Calendar() {
                     >
                       <Check className="w-4 h-4" />
                       <span>
-                        {contextMenu.item.completed ? '완료 해제' : '완료 표시'}
+                        {contextMenu.item.completed ? '완료 해제' : '완료'}
                       </span>
                     </button>
                   </div>
