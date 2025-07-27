@@ -699,15 +699,15 @@ export default function WeeklyReview() {
                   </div>
                 </div>
 
-                {/* Value Alignment Check - Only show if foundation exists */}
-                {foundation && coreValues.length > 0 ? (
-                  <div>
-                    <Label className="text-sm font-semibold text-gray-900 mb-3 block">
-                      가치 점검
-                    </Label>
-                    <p className="text-xs text-gray-600 mb-4">
-                      일정, 할일, 시간블록 데이터를 분석하여 자동으로 계산된 가치 정렬도입니다
-                    </p>
+                {/* Value Alignment Check */}
+                <div>
+                  <Label className="text-sm font-semibold text-gray-900 mb-3 block">
+                    가치 점검
+                  </Label>
+                  <p className="text-xs text-gray-600 mb-4">
+                    일정, 할일, 시간블록 데이터를 분석하여 자동으로 계산된 가치 정렬도입니다
+                  </p>
+                  {foundation && coreValues.length > 0 ? (
                     <div className="space-y-4">
                       {coreValues.map((value, index) => (
                         <div key={index}>
@@ -733,8 +733,13 @@ export default function WeeklyReview() {
                         </div>
                       ))}
                     </div>
-                  </div>
-                ) : null}
+                  ) : (
+                    <div className="text-center p-4 bg-gray-50 rounded-lg border border-gray-200">
+                      <p className="text-sm text-gray-500">등록된 핵심가치가 없습니다</p>
+                      <p className="text-xs text-gray-400 mt-1">가치중심계획에서 핵심가치를 설정해주세요.</p>
+                    </div>
+                  )}
+                </div>
 
                 {/* Weekly Reflection */}
                 <div>
