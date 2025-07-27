@@ -36,8 +36,8 @@ export default function DailyPlanning() {
     title: string;
     type: "focus" | "meeting" | "break";
   }>({
-    startTime: ":",
-    endTime: ":",
+    startTime: "",
+    endTime: "",
     title: "",
     type: "focus",
   });
@@ -55,27 +55,23 @@ export default function DailyPlanning() {
     queryFn: () => fetch(api.tasks.list(MOCK_USER_ID, today)).then(res => res.json()),
   });
 
-  const { data: allTasks = [] } = useQuery({
-    queryKey: ['tasks', 'all', MOCK_USER_ID],
-    queryFn: async () => {
-      const response = await fetch(api.tasks.list(MOCK_USER_ID));
-      return response.json();
-    },
-  });
+
 
   const { data: projects = [] } = useQuery({
     queryKey: ['projects', MOCK_USER_ID],
     queryFn: () => fetch(`/api/projects/${MOCK_USER_ID}`).then(res => res.json()),
   });
 
+  const currentYear = new Date().getFullYear();
+  
   const { data: foundation } = useQuery({
-    queryKey: ['foundation', MOCK_USER_ID],
-    queryFn: () => fetch(`/api/foundation/${MOCK_USER_ID}`).then(res => res.json()),
+    queryKey: ['foundation', MOCK_USER_ID, currentYear],
+    queryFn: () => fetch(`/api/foundation/${MOCK_USER_ID}?year=${currentYear}`).then(res => res.json()),
   });
 
   const { data: annualGoals = [] } = useQuery({
-    queryKey: ['goals', MOCK_USER_ID],
-    queryFn: () => fetch(`/api/goals/${MOCK_USER_ID}`).then(res => res.json()),
+    queryKey: ['goals', MOCK_USER_ID, currentYear],
+    queryFn: () => fetch(`/api/goals/${MOCK_USER_ID}?year=${currentYear}`).then(res => res.json()),
   });
 
   const { data: timeBlocks = [] } = useQuery({
@@ -103,7 +99,6 @@ export default function DailyPlanning() {
     mutationFn: createTask,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tasks', MOCK_USER_ID, today] });
-      queryClient.invalidateQueries({ queryKey: ['tasks', 'all', MOCK_USER_ID] });
       setNewTask("");
     },
   });
@@ -112,7 +107,6 @@ export default function DailyPlanning() {
     mutationFn: ({ id, updates }: { id: number; updates: any }) => updateTask(id, updates),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tasks', MOCK_USER_ID, today] });
-      queryClient.invalidateQueries({ queryKey: ['tasks', 'all', MOCK_USER_ID] });
     },
   });
 
@@ -132,17 +126,17 @@ export default function DailyPlanning() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['timeBlocks', MOCK_USER_ID, today] });
       setNewTimeBlock({
-        startTime: ":",
-        endTime: ":",
+        startTime: "",
+        endTime: "",
         title: "",
         type: "focus",
       });
     },
   });
 
-  // Use dailyTasks for daily planning tab, allTasks for focus mode
+  // Use dailyTasks for both tabs to ensure data consistency
   const tasks = dailyTasks;
-  const focusTasks = allTasks;
+  const focusTasks = dailyTasks;
 
   // Group tasks by priority
   const tasksByPriority = {
@@ -190,11 +184,18 @@ export default function DailyPlanning() {
   }, [dailyReflection]);
 
   const handleAddTask = () => {
-    if (!newTask.trim()) return;
+    if (!newTask.trim()) {
+      toast({
+        title: "입력 오류",
+        description: "할일 제목을 입력해주세요.",
+        variant: "destructive",
+      });
+      return;
+    }
 
     addTaskMutation.mutate({
       userId: MOCK_USER_ID,
-      title: newTask,
+      title: newTask.trim(),
       priority: selectedPriority,
       coreValue: selectedCoreValue === 'none' ? null : selectedCoreValue,
       annualGoal: selectedAnnualGoal === 'none' ? null : selectedAnnualGoal,
@@ -226,7 +227,24 @@ export default function DailyPlanning() {
   };
 
   const handleAddTimeBlock = () => {
-    if (!newTimeBlock.startTime || !newTimeBlock.endTime || !newTimeBlock.title) return;
+    if (!newTimeBlock.startTime || !newTimeBlock.endTime || !newTimeBlock.title.trim()) {
+      toast({
+        title: "입력 오류",
+        description: "시작 시간, 종료 시간, 활동 제목을 모두 입력해주세요.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // 시간 유효성 검사
+    if (newTimeBlock.startTime >= newTimeBlock.endTime) {
+      toast({
+        title: "시간 오류",
+        description: "종료 시간은 시작 시간보다 늦어야 합니다.",
+        variant: "destructive",
+      });
+      return;
+    }
 
     addTimeBlockMutation.mutate({
       userId: MOCK_USER_ID,
@@ -580,7 +598,7 @@ export default function DailyPlanning() {
                       <Checkbox
                         id="a-tasks-only"
                         checked={showATasksOnly}
-                        onCheckedChange={setShowATasksOnly}
+                        onCheckedChange={(checked) => setShowATasksOnly(checked === true)}
                       />
                       <Label htmlFor="a-tasks-only" className="text-sm">A급 할일만 표시</Label>
                     </div>
@@ -589,7 +607,7 @@ export default function DailyPlanning() {
                       <Checkbox
                         id="block-notifications"
                         checked={blockNotifications}
-                        onCheckedChange={setBlockNotifications}
+                        onCheckedChange={(checked) => setBlockNotifications(checked === true)}
                       />
                       <Label htmlFor="block-notifications" className="text-sm">알림 차단 (개발 예정)</Label>
                     </div>
