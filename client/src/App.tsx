@@ -14,6 +14,7 @@ import Planning from "@/pages/Planning";
 import DailyPlanning from "@/pages/DailyPlanning";
 import Review from "@/pages/Review";
 import Landing from "@/pages/Landing";
+import Login from "@/pages/Login";
 import Home from "@/pages/Home";
 
 import NotFound from "@/pages/not-found";
@@ -34,6 +35,7 @@ function Router() {
 
   return (
     <Switch>
+      <Route path="/login" component={Login} />
       {!isAuthenticated ? (
         <Route path="/" component={Landing} />
       ) : (

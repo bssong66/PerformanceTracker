@@ -15,7 +15,15 @@ import { eq, and, desc, asc, gte, lte, or } from "drizzle-orm";
 export interface IStorage {
   // User methods - (IMPORTANT) these user operations are mandatory for Replit Auth.
   getUser(id: string): Promise<User | undefined>;
+  getUserByEmail(email: string): Promise<User | undefined>;
   upsertUser(user: UpsertUser): Promise<User>;
+  createLocalUser(userData: {
+    email: string;
+    password: string;
+    firstName: string;
+    lastName: string;
+    authType: string;
+  }): Promise<User>;
   getAllUsers(): Promise<User[]>;
   
   // Foundation methods
@@ -112,6 +120,29 @@ export class DatabaseStorage implements IStorage {
         },
       })
       .returning();
+    return user;
+  }
+
+  async getUserByEmail(email: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.email, email));
+    return user;
+  }
+
+  async createLocalUser(userData: {
+    email: string;
+    password: string;
+    firstName: string;
+    lastName: string;
+    authType: string;
+  }): Promise<User> {
+    const [user] = await db.insert(users).values({
+      email: userData.email,
+      password: userData.password,
+      firstName: userData.firstName,
+      lastName: userData.lastName,
+      authType: userData.authType,
+      profileImageUrl: null,
+    }).returning();
     return user;
   }
 

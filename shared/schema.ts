@@ -34,6 +34,8 @@ export const users = pgTable("users", {
   firstName: varchar("first_name"),
   lastName: varchar("last_name"),
   profileImageUrl: varchar("profile_image_url"),
+  password: varchar("password"), // For local authentication
+  authType: varchar("auth_type").default("replit"), // 'replit' or 'local'
   role: varchar("role").default("user"), // "user" | "admin"
   isActive: boolean("is_active").default(true),
   createdAt: timestamp("created_at").defaultNow(),

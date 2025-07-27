@@ -4,7 +4,7 @@ import { CheckCircle, Target, Calendar, TrendingUp, Users, Star } from "lucide-r
 
 export default function Landing() {
   const handleLogin = () => {
-    window.location.href = '/api/login';
+    window.location.href = '/login';
   };
 
   return (
@@ -30,7 +30,7 @@ export default function Landing() {
                 onClick={handleLogin}
                 className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3"
               >
-                지금 시작하기
+                로그인 / 회원가입
               </Button>
               <Button 
                 size="lg" 

@@ -1,5 +1,7 @@
 import * as client from "openid-client";
 import { Strategy, type VerifyFunction } from "openid-client/passport";
+import { Strategy as LocalStrategy } from "passport-local";
+import bcrypt from "bcryptjs";
 
 import passport from "passport";
 import session from "express-session";
@@ -72,6 +74,40 @@ export async function setupAuth(app: Express) {
   app.use(passport.initialize());
   app.use(passport.session());
 
+  // Local Strategy for username/password authentication
+  passport.use(new LocalStrategy({
+    usernameField: 'email',
+    passwordField: 'password'
+  }, async (email, password, done) => {
+    try {
+      const user = await storage.getUserByEmail(email);
+      if (!user) {
+        return done(null, false, { message: '이메일 또는 비밀번호가 잘못되었습니다.' });
+      }
+
+      if (user.authType !== 'local') {
+        return done(null, false, { message: '이 이메일은 다른 방식으로 가입되었습니다.' });
+      }
+
+      const isValid = await bcrypt.compare(password, user.password || '');
+      if (!isValid) {
+        return done(null, false, { message: '이메일 또는 비밀번호가 잘못되었습니다.' });
+      }
+
+      return done(null, {
+        claims: {
+          sub: user.id,
+          email: user.email,
+          first_name: user.firstName,
+          last_name: user.lastName,
+          profile_image_url: user.profileImageUrl
+        }
+      });
+    } catch (error) {
+      return done(error);
+    }
+  }));
+
   const config = await getOidcConfig();
 
   const verify: VerifyFunction = async (
@@ -115,14 +151,77 @@ export async function setupAuth(app: Express) {
     })(req, res, next);
   });
 
+  // Local login route
+  app.post("/api/auth/login", (req, res, next) => {
+    passport.authenticate('local', (err: any, user: any, info: any) => {
+      if (err) {
+        return res.status(500).json({ message: "서버 오류가 발생했습니다." });
+      }
+      if (!user) {
+        return res.status(401).json({ message: info.message || "로그인에 실패했습니다." });
+      }
+      req.logIn(user, (err) => {
+        if (err) {
+          return res.status(500).json({ message: "로그인 처리 중 오류가 발생했습니다." });
+        }
+        return res.json({ message: "로그인이 완료되었습니다.", user: user.claims });
+      });
+    })(req, res, next);
+  });
+
+  // Local signup route
+  app.post("/api/auth/signup", async (req, res) => {
+    try {
+      const { email, password, firstName, lastName } = req.body;
+
+      if (!email || !password || !firstName) {
+        return res.status(400).json({ message: "필수 정보를 입력해주세요." });
+      }
+
+      // Check if user already exists
+      const existingUser = await storage.getUserByEmail(email);
+      if (existingUser) {
+        return res.status(409).json({ message: "이미 가입된 이메일입니다." });
+      }
+
+      // Hash password
+      const hashedPassword = await bcrypt.hash(password, 10);
+
+      // Create user
+      const newUser = await storage.createLocalUser({
+        email,
+        password: hashedPassword,
+        firstName,
+        lastName: lastName || '',
+        authType: 'local'
+      });
+
+      // Auto login after signup
+      const userForSession = {
+        claims: {
+          sub: newUser.id,
+          email: newUser.email,
+          first_name: newUser.firstName,
+          last_name: newUser.lastName,
+          profile_image_url: newUser.profileImageUrl
+        }
+      };
+
+      req.logIn(userForSession, (err) => {
+        if (err) {
+          return res.status(500).json({ message: "회원가입 후 로그인 처리 중 오류가 발생했습니다." });
+        }
+        return res.json({ message: "회원가입이 완료되었습니다.", user: userForSession.claims });
+      });
+    } catch (error) {
+      console.error("Signup error:", error);
+      res.status(500).json({ message: "회원가입 중 오류가 발생했습니다." });
+    }
+  });
+
   app.get("/api/logout", (req, res) => {
     req.logout(() => {
-      res.redirect(
-        client.buildEndSessionUrl(config, {
-          client_id: process.env.REPL_ID!,
-          post_logout_redirect_uri: `${req.protocol}://${req.hostname}`,
-        }).href
-      );
+      res.redirect("/");
     });
   });
 }
