@@ -144,6 +144,50 @@ export default function Dashboard() {
     };
   });
 
+  // 일정 통계 계산
+  const eventStats = {
+    totalEvents: (events as any[]).length,
+    completedEvents: (events as any[]).filter((e: any) => e.completed).length,
+    todayEvents: (events as any[]).filter((e: any) => {
+      const eventDate = format(new Date(e.startDate), 'yyyy-MM-dd');
+      return eventDate === todayStr;
+    }),
+    weekEvents: (events as any[]).filter((e: any) => {
+      const eventDate = new Date(e.startDate);
+      return eventDate >= weekStart && eventDate <= weekEnd;
+    }),
+    upcomingEvents: (events as any[]).filter((e: any) => {
+      const eventDate = new Date(e.startDate);
+      return eventDate > today && !e.completed;
+    }).slice(0, 5),
+  };
+
+  // 일정 완료율
+  const eventCompletionRate = eventStats.totalEvents > 0 
+    ? Math.round((eventStats.completedEvents / eventStats.totalEvents) * 100) 
+    : 0;
+
+  // 오늘 일정 완료율
+  const todayEventCompletionRate = eventStats.todayEvents.length > 0
+    ? Math.round((eventStats.todayEvents.filter((e: any) => e.completed).length / eventStats.todayEvents.length) * 100)
+    : 0;
+
+  // 우선순위별 일정 통계
+  const eventPriorityStats = {
+    high: {
+      total: (events as any[]).filter((e: any) => e.priority === 'high').length,
+      completed: (events as any[]).filter((e: any) => e.priority === 'high' && e.completed).length,
+    },
+    medium: {
+      total: (events as any[]).filter((e: any) => e.priority === 'medium').length,
+      completed: (events as any[]).filter((e: any) => e.priority === 'medium' && e.completed).length,
+    },
+    low: {
+      total: (events as any[]).filter((e: any) => e.priority === 'low').length,
+      completed: (events as any[]).filter((e: any) => e.priority === 'low' && e.completed).length,
+    },
+  };
+
   // 전체 완료율
   const overallProgress = overallStats.totalTasks > 0 
     ? Math.round((overallStats.completedTasks / overallStats.totalTasks) * 100) 
@@ -238,7 +282,7 @@ export default function Dashboard() {
         </div>
 
         {/* 핵심 지표 카드 */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-12">
           {/* 전체 할일 진행률 */}
           <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg">
             <CardContent className="p-6 text-center">
@@ -250,6 +294,21 @@ export default function Dashboard() {
                 value={overallStats.completedTasks} 
                 max={overallStats.totalTasks} 
                 color="blue"
+              />
+            </CardContent>
+          </Card>
+
+          {/* 일정 완료율 */}
+          <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg">
+            <CardContent className="p-6 text-center">
+              <div className="flex items-center justify-center mb-4">
+                <Calendar className="h-8 w-8 text-indigo-600 mr-2" />
+                <h3 className="text-lg font-semibold text-gray-900">일정 완료율</h3>
+              </div>
+              <CircularProgressIndicator 
+                value={eventStats.completedEvents} 
+                max={eventStats.totalEvents} 
+                color="purple"
               />
             </CardContent>
           </Card>
@@ -310,8 +369,58 @@ export default function Dashboard() {
           </Card>
         </div>
 
-        {/* 우선순위별 할일 현황 */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
+        {/* 오늘의 일정 및 할일 */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-12">
+          {/* 오늘의 일정 */}
+          <Card className="bg-white/90 backdrop-blur-sm border-0 shadow-lg">
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2">
+                <Calendar className="h-6 w-6 text-indigo-600" />
+                <span>오늘의 일정</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {eventStats.todayEvents.length > 0 ? (
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between mb-4">
+                    <span className="text-sm text-gray-500">완료율</span>
+                    <span className="text-sm font-semibold text-indigo-600">
+                      {todayEventCompletionRate}%
+                    </span>
+                  </div>
+                  <Progress value={todayEventCompletionRate} className="h-3 mb-4" />
+                  <div className="space-y-3">
+                    {eventStats.todayEvents.map((event: any) => (
+                      <div key={event.id} className={`p-3 rounded-lg border-l-4 ${
+                        event.priority === 'high' ? 'border-red-500 bg-red-50' :
+                        event.priority === 'medium' ? 'border-orange-500 bg-orange-50' :
+                        'border-green-500 bg-green-50'
+                      }`}>
+                        <div className="flex items-center justify-between">
+                          <div className={`text-sm font-medium ${event.completed ? 'line-through text-gray-500' : ''}`}>
+                            {event.title}
+                          </div>
+                          {event.completed && <CheckCircle2 className="h-4 w-4 text-green-500" />}
+                        </div>
+                        {event.startTime && event.endTime && (
+                          <div className="text-xs text-gray-500 mt-1">
+                            {event.startTime} - {event.endTime}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center text-gray-500 py-8">
+                  <Calendar className="h-12 w-12 mx-auto mb-2 text-gray-300" />
+                  <p>오늘 예정된 일정이 없습니다</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* 우선순위별 할일 현황 */}
           <Card className="bg-white/90 backdrop-blur-sm border-0 shadow-lg">
             <CardHeader>
               <CardTitle className="flex items-center space-x-2">
@@ -373,6 +482,119 @@ export default function Dashboard() {
             </CardContent>
           </Card>
 
+          {/* 우선순위별 일정 현황 */}
+          <Card className="bg-white/90 backdrop-blur-sm border-0 shadow-lg">
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2">
+                <Clock className="h-6 w-6 text-purple-600" />
+                <span>우선순위별 일정 현황</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {/* 높은 우선순위 일정 */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-2">
+                    <div className="w-4 h-4 bg-red-500 rounded"></div>
+                    <span className="font-medium">높음 (긴급)</span>
+                  </div>
+                  <span className="text-sm font-semibold">
+                    {eventPriorityStats.high.completed}/{eventPriorityStats.high.total}
+                  </span>
+                </div>
+                <Progress 
+                  value={eventPriorityStats.high.total > 0 ? (eventPriorityStats.high.completed / eventPriorityStats.high.total) * 100 : 0} 
+                  className="h-3"
+                />
+              </div>
+
+              {/* 중간 우선순위 일정 */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-2">
+                    <div className="w-4 h-4 bg-orange-500 rounded"></div>
+                    <span className="font-medium">보통 (중요)</span>
+                  </div>
+                  <span className="text-sm font-semibold">
+                    {eventPriorityStats.medium.completed}/{eventPriorityStats.medium.total}
+                  </span>
+                </div>
+                <Progress 
+                  value={eventPriorityStats.medium.total > 0 ? (eventPriorityStats.medium.completed / eventPriorityStats.medium.total) * 100 : 0} 
+                  className="h-3"
+                />
+              </div>
+
+              {/* 낮은 우선순위 일정 */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-2">
+                    <div className="w-4 h-4 bg-green-500 rounded"></div>
+                    <span className="font-medium">낮음 (일반)</span>
+                  </div>
+                  <span className="text-sm font-semibold">
+                    {eventPriorityStats.low.completed}/{eventPriorityStats.low.total}
+                  </span>
+                </div>
+                <Progress 
+                  value={eventPriorityStats.low.total > 0 ? (eventPriorityStats.low.completed / eventPriorityStats.low.total) * 100 : 0} 
+                  className="h-3"
+                />
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* 다가오는 일정 및 핵심가치별 진행률 */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
+          {/* 다가오는 일정 */}
+          <Card className="bg-white/90 backdrop-blur-sm border-0 shadow-lg">
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2">
+                <Clock className="h-6 w-6 text-green-600" />
+                <span>다가오는 일정</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {eventStats.upcomingEvents.length > 0 ? (
+                <div className="space-y-3">
+                  {eventStats.upcomingEvents.map((event: any) => (
+                    <div key={event.id} className={`p-3 rounded-lg border-l-4 ${
+                      event.priority === 'high' ? 'border-red-500 bg-red-50' :
+                      event.priority === 'medium' ? 'border-orange-500 bg-orange-50' :
+                      'border-green-500 bg-green-50'
+                    }`}>
+                      <div className="flex items-center justify-between">
+                        <div className="text-sm font-medium">{event.title}</div>
+                        <div className={`text-xs px-2 py-1 rounded ${
+                          event.priority === 'high' ? 'bg-red-100 text-red-700' :
+                          event.priority === 'medium' ? 'bg-orange-100 text-orange-700' :
+                          'bg-green-100 text-green-700'
+                        }`}>
+                          {event.priority === 'high' ? '높음' : event.priority === 'medium' ? '보통' : '낮음'}
+                        </div>
+                      </div>
+                      <div className="text-xs text-gray-500 mt-1">
+                        {format(new Date(event.startDate), 'M월 d일 (EEE)', { locale: ko })}
+                        {event.startTime && ` ${event.startTime}`}
+                      </div>
+                      {event.coreValue && (
+                        <div className="text-xs text-blue-600 bg-blue-100 px-2 py-1 rounded-full mt-2 inline-block">
+                          {event.coreValue}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center text-gray-500 py-8">
+                  <Clock className="h-12 w-12 mx-auto mb-2 text-gray-300" />
+                  <p>다가오는 일정이 없습니다</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
           {/* 핵심가치별 진행률 */}
           <Card className="bg-white/90 backdrop-blur-sm border-0 shadow-lg">
             <CardHeader>
@@ -400,6 +622,7 @@ export default function Dashboard() {
                     <Progress value={valueData.percentage} className="h-3" />
                     <div className="text-xs text-gray-500 space-x-4">
                       <span>할일: {valueData.tasks.completed}/{valueData.tasks.total}</span>
+                      <span>일정: {valueData.events.completed}/{valueData.events.total}</span>
                       <span>프로젝트: {valueData.projects.completed}/{valueData.projects.total}</span>
                       <span>습관: {valueData.habits.total}개</span>
                     </div>
