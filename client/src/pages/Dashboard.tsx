@@ -188,6 +188,37 @@ export default function Dashboard() {
     },
   };
 
+  // 연간 목표 관련 활동 통계 계산
+  const goalRelatedStats = {
+    totalActivities: 0,
+    completedActivities: 0
+  };
+
+  // 각 연간 목표별로 관련된 활동들을 계산
+  goals.forEach((goal: any) => {
+    const relatedTasks = (tasks as any[]).filter((t: any) => t.annualGoal === goal.title);
+    const relatedEvents = (events as any[]).filter((e: any) => e.annualGoal === goal.title);
+    const relatedHabits = (habits as any[]).filter((h: any) => h.annualGoal === goal.title && h.isActive);
+    
+    // 할일과 일정은 개별 완료 여부로 계산
+    goalRelatedStats.totalActivities += relatedTasks.length + relatedEvents.length;
+    goalRelatedStats.completedActivities += 
+      relatedTasks.filter((t: any) => t.completed).length +
+      relatedEvents.filter((e: any) => e.completed).length;
+    
+    // 습관은 이번 주 완료된 로그 기준으로 계산
+    relatedHabits.forEach((habit: any) => {
+      const habitLogs = (weeklyHabitLogs as any[]).filter((log: any) => log.habitId === habit.id);
+      goalRelatedStats.totalActivities += habitLogs.length;
+      goalRelatedStats.completedActivities += habitLogs.filter((log: any) => log.completed).length;
+    });
+  });
+
+  // 연간 목표 완료율
+  const annualGoalProgress = goalRelatedStats.totalActivities > 0 
+    ? Math.round((goalRelatedStats.completedActivities / goalRelatedStats.totalActivities) * 100) 
+    : 0;
+
   // 전체 완료율
   const overallProgress = overallStats.totalTasks > 0 
     ? Math.round((overallStats.completedTasks / overallStats.totalTasks) * 100) 
@@ -349,21 +380,20 @@ export default function Dashboard() {
             </CardContent>
           </Card>
 
-          {/* 연간 목표 */}
+          {/* 연간 목표 달성률 */}
           <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg">
             <CardContent className="p-6 text-center">
               <div className="flex items-center justify-center mb-4">
                 <Trophy className="h-8 w-8 text-green-600 mr-2" />
-                <h3 className="text-lg font-semibold text-gray-900">연간 목표</h3>
+                <h3 className="text-lg font-semibold text-gray-900">연간 목표 달성률</h3>
               </div>
-              <div className="text-center">
-                <div className="text-3xl font-bold text-green-600 mb-1">
-                  {overallStats.totalGoals}
-                </div>
-                <div className="text-sm text-gray-500">설정된 목표</div>
-                <div className="text-xs text-gray-400 mt-1">
-                  {currentYear}년 계획
-                </div>
+              <CircularProgressIndicator 
+                value={goalRelatedStats.completedActivities} 
+                max={goalRelatedStats.totalActivities} 
+                color="green"
+              />
+              <div className="text-xs text-gray-400 mt-2">
+                {overallStats.totalGoals}개 목표 • {goalRelatedStats.totalActivities}개 활동
               </div>
             </CardContent>
           </Card>
