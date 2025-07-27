@@ -7,10 +7,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
 import { TaskItem } from "@/components/TaskItem";
 import { PriorityBadge } from "@/components/PriorityBadge";
-import { Plus, Mic, CalendarDays, X, ChevronLeft, ChevronRight, AlertTriangle, Focus, Play, Pause, RotateCcw, Target, Clock, CheckCircle } from "lucide-react";
+import { Plus, Mic, CalendarDays, X, ChevronLeft, ChevronRight, AlertTriangle, Focus, Play, Pause, RotateCcw, Target, Clock, CheckCircle, Bell } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { api, createTask, updateTask, saveDailyReflection, createTimeBlock } from "@/lib/api";
 import { queryClient } from "@/lib/queryClient";
@@ -47,8 +48,25 @@ export default function DailyPlanning() {
   const [blockNotifications, setBlockNotifications] = useState(false);
   const [showATasksOnly, setShowATasksOnly] = useState(false);
   const [completedSessions, setCompletedSessions] = useState(0);
+  const [showCompletionDialog, setShowCompletionDialog] = useState(false);
+  const [notificationPermission, setNotificationPermission] = useState<NotificationPermission>('default');
   
   const timer = useTimer(25);
+  const { minutes, seconds, isRunning, isBreak, isCompleted, start, pause, reset, startBreak, extendSession, acknowledgeCompletion } = timer;
+
+  // 알림 권한 확인
+  useEffect(() => {
+    if ('Notification' in window) {
+      setNotificationPermission(Notification.permission);
+    }
+  }, []);
+
+  // 포모도로 완료 처리
+  useEffect(() => {
+    if (isCompleted) {
+      setShowCompletionDialog(true);
+    }
+  }, [isCompleted]);
 
   const { data: dailyTasks = [], isLoading: tasksLoading } = useQuery({
     queryKey: ['tasks', MOCK_USER_ID, today],
@@ -175,7 +193,7 @@ export default function DailyPlanning() {
         });
       }
     }
-  }, [timer.minutes, timer.seconds, timer.isRunning, timer.isBreak, toast]);
+  }, [minutes, seconds, isRunning, isBreak, toast]);
 
   useEffect(() => {
     if (dailyReflection?.content) {
@@ -258,11 +276,52 @@ export default function DailyPlanning() {
     setSelectedTask(task);
   };
 
+  // 알림 권한 요청
+  const requestNotificationPermission = async () => {
+    if ('Notification' in window && Notification.permission === 'default') {
+      const permission = await Notification.requestPermission();
+      setNotificationPermission(permission);
+      return permission;
+    }
+    return Notification.permission;
+  };
+
+  // 할일 완료 및 세션 종료
+  const handleCompleteTaskAndEndSession = () => {
+    if (selectedTask) {
+      handleToggleTask(selectedTask.id, true);
+      toast({
+        title: "할일 완료!",
+        description: `"${selectedTask.title}"이(가) 완료되었습니다. 5분 휴식을 시작합니다.`,
+      });
+    }
+    
+    setShowCompletionDialog(false);
+    acknowledgeCompletion();
+    startBreak(); // 5분 휴식 시작
+    setCompletedSessions(prev => prev + 1);
+  };
+
+  // 세션 연장
+  const handleExtendSession = (additionalMinutes: number) => {
+    extendSession(additionalMinutes);
+    setShowCompletionDialog(false);
+    acknowledgeCompletion();
+    
+    toast({
+      title: "세션 연장",
+      description: `${additionalMinutes}분 추가 세션을 시작합니다.`,
+    });
+    
+    // 연장된 세션 자동 시작
+    setTimeout(() => start(), 100);
+  };
+
   const handleCompleteSession = () => {
     if (selectedTask) {
       handleToggleTask(selectedTask.id, true);
     }
-    timer.reset();
+    reset();
     setCompletedSessions(prev => prev + 1);
   };
 
@@ -504,25 +563,25 @@ export default function DailyPlanning() {
                 <CardContent className="text-center space-y-6">
                   {/* Timer Display */}
                   <div className="text-6xl font-mono font-bold text-gray-900">
-                    {String(timer.minutes).padStart(2, '0')}:{String(timer.seconds).padStart(2, '0')}
+                    {String(minutes).padStart(2, '0')}:{String(seconds).padStart(2, '0')}
                   </div>
                   
                   {/* Timer Type */}
                   <div className="text-lg font-medium text-gray-600">
-                    {timer.isBreak ? '휴식 시간' : '집중 시간'}
+                    {isBreak ? '휴식 시간' : '집중 시간'}
                   </div>
 
                   {/* Controls */}
                   <div className="flex justify-center space-x-4">
                     <Button
-                      onClick={timer.isRunning ? timer.pause : timer.start}
+                      onClick={isRunning ? pause : start}
                       size="lg"
                       className="w-16 h-16 rounded-full"
                     >
-                      {timer.isRunning ? <Pause className="h-6 w-6" /> : <Play className="h-6 w-6" />}
+                      {isRunning ? <Pause className="h-6 w-6" /> : <Play className="h-6 w-6" />}
                     </Button>
                     <Button
-                      onClick={timer.reset}
+                      onClick={reset}
                       variant="outline"
                       size="lg"
                       className="w-16 h-16 rounded-full"
@@ -639,6 +698,86 @@ export default function DailyPlanning() {
             </div>
           </TabsContent>
         </Tabs>
+
+        {/* 포모도로 완료 다이얼로그 */}
+        <Dialog open={showCompletionDialog} onOpenChange={setShowCompletionDialog}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle className="flex items-center space-x-2">
+                <CheckCircle className="h-5 w-5 text-green-500" />
+                <span>포모도로 세션 완료!</span>
+              </DialogTitle>
+              <DialogDescription>
+                25분 집중 세션이 완료되었습니다. 다음 행동을 선택해주세요.
+              </DialogDescription>
+            </DialogHeader>
+            
+            <div className="space-y-3">
+              {/* 할일 완료 및 휴식 */}
+              <Button
+                onClick={handleCompleteTaskAndEndSession}
+                className="w-full"
+                size="lg"
+              >
+                <CheckCircle className="h-4 w-4 mr-2" />
+                할일 완료하고 5분 휴식하기
+              </Button>
+              
+              {/* 세션 연장 옵션 */}
+              <div className="grid grid-cols-3 gap-2">
+                <Button
+                  onClick={() => handleExtendSession(25)}
+                  variant="outline"
+                  size="sm"
+                >
+                  +25분
+                </Button>
+                <Button
+                  onClick={() => handleExtendSession(15)}
+                  variant="outline"
+                  size="sm"
+                >
+                  +15분
+                </Button>
+                <Button
+                  onClick={() => handleExtendSession(10)}
+                  variant="outline"
+                  size="sm"
+                >
+                  +10분
+                </Button>
+              </div>
+              
+              {/* 휴식만 시작 */}
+              <Button
+                onClick={() => {
+                  setShowCompletionDialog(false);
+                  acknowledgeCompletion();
+                  startBreak();
+                }}
+                variant="outline"
+                className="w-full"
+              >
+                할일은 진행 중, 5분 휴식만 하기
+              </Button>
+              
+              {/* 알림 설정 */}
+              {notificationPermission === 'default' && (
+                <div className="pt-2 border-t">
+                  <Button
+                    onClick={requestNotificationPermission}
+                    variant="ghost"
+                    size="sm"
+                    className="w-full text-xs"
+                  >
+                    <Bell className="h-3 w-3 mr-1" />
+                    브라우저 알림 허용하기
+                  </Button>
+                </div>
+              )}
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );
