@@ -17,7 +17,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
-import { CalendarIcon, Clock, Repeat, Save, X } from "lucide-react";
+import { CalendarIcon, Clock, Repeat, Save, X, Check, MousePointer2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient } from "@/lib/queryClient";
 import { format } from "date-fns";
@@ -51,6 +51,14 @@ export default function Calendar() {
   const [isEditing, setIsEditing] = useState(false);
   const [selectedSlot, setSelectedSlot] = useState<{ start: Date; end: Date } | null>(null);
   const [selectedEvent, setSelectedEvent] = useState<any>(null);
+  
+  // Context menu state
+  const [contextMenu, setContextMenu] = useState<{
+    x: number;
+    y: number;
+    item: any;
+    type: 'event' | 'task';
+  } | null>(null);
   
   // Event form state
   const [eventForm, setEventForm] = useState({
@@ -181,6 +189,42 @@ export default function Calendar() {
       setShowEventDialog(false);
       resetEventForm();
       toast({ title: "일정 삭제", description: "일정이 삭제되었습니다." });
+    }
+  });
+
+  // Complete event mutation (for context menu)
+  const completeEventMutation = useMutation({
+    mutationFn: async ({ id, completed }: { id: number; completed: boolean }) => {
+      const response = await fetch(`/api/events/${id}/complete`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ completed })
+      });
+      if (!response.ok) throw new Error('Failed to complete event');
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['events', MOCK_USER_ID] });
+      setContextMenu(null);
+      toast({ title: "일정 완료 상태가 변경되었습니다" });
+    }
+  });
+
+  // Complete task mutation (for context menu)  
+  const completeTaskMutation = useMutation({
+    mutationFn: async ({ id, completed }: { id: number; completed: boolean }) => {
+      const response = await fetch(`/api/tasks/${id}/complete`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ completed })
+      });
+      if (!response.ok) throw new Error('Failed to complete task');
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['tasks', MOCK_USER_ID] });
+      setContextMenu(null);
+      toast({ title: "할일 완료 상태가 변경되었습니다" });
     }
   });
 
@@ -457,6 +501,55 @@ export default function Calendar() {
     }
   }, [toast]);
 
+  // Handle right-click context menu
+  const handleEventRightClick = useCallback((event: any, e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    const eventData = event.resource.data;
+    const eventType = event.resource.type;
+    
+    // Don't show context menu for recurring instances
+    if (eventData.isRecurring) {
+      return;
+    }
+    
+    setContextMenu({
+      x: e.clientX,
+      y: e.clientY,
+      item: eventData,
+      type: eventType
+    });
+  }, []);
+
+  // Handle context menu actions
+  const handleContextMenuAction = useCallback((action: string) => {
+    if (!contextMenu) return;
+    
+    const { item, type } = contextMenu;
+    
+    if (action === 'complete') {
+      if (type === 'event') {
+        completeEventMutation.mutate({ 
+          id: item.id, 
+          completed: !item.completed 
+        });
+      } else if (type === 'task') {
+        completeTaskMutation.mutate({ 
+          id: item.id, 
+          completed: !item.completed 
+        });
+      }
+    }
+    
+    setContextMenu(null);
+  }, [contextMenu, completeEventMutation, completeTaskMutation]);
+
+  // Close context menu on outside click
+  const handleCloseContextMenu = useCallback(() => {
+    setContextMenu(null);
+  }, []);
+
   // Event style getter
   const eventStyleGetter = (event: any) => {
     const backgroundColor = event.resource?.color || '#3174ad';
@@ -539,9 +632,15 @@ export default function Calendar() {
           {/* Header */}
           <div className="mb-6">
             <h1 className="text-2xl font-bold text-gray-900 mb-2">일정관리</h1>
-            <p className="text-gray-600">
-              드래그로 일정을 생성하고, 크기 조정 및 이동이 가능합니다
-            </p>
+            <div className="space-y-1">
+              <p className="text-gray-600">
+                드래그로 일정을 생성하고, 크기 조정 및 이동이 가능합니다
+              </p>
+              <div className="flex items-center space-x-2 text-sm text-gray-500">
+                <MousePointer2 className="w-4 h-4" />
+                <span>일정이나 할일을 우클릭하여 완료 상태를 변경할 수 있습니다</span>
+              </div>
+            </div>
           </div>
 
           {/* Calendar */}
@@ -565,7 +664,10 @@ export default function Calendar() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div style={{ height: '600px' }}>
+              <div 
+                style={{ height: '600px', position: 'relative' }} 
+                onClick={handleCloseContextMenu}
+              >
                 <DnDCalendar
                   localizer={localizer}
                   events={calendarEvents}
@@ -586,6 +688,16 @@ export default function Calendar() {
                   draggableAccessor={(event: any) => event.draggable}
                   eventPropGetter={eventStyleGetter}
                   culture="ko"
+                  components={{
+                    event: ({ event }: { event: any }) => (
+                      <div
+                        onContextMenu={(e) => handleEventRightClick(event, e)}
+                        className="w-full h-full"
+                      >
+                        {event.title}
+                      </div>
+                    )
+                  }}
                   messages={{
                     next: "다음",
                     previous: "이전",
@@ -601,6 +713,27 @@ export default function Calendar() {
                     allDay: "종일"
                   }}
                 />
+                
+                {/* Context Menu */}
+                {contextMenu && (
+                  <div
+                    className="fixed bg-white border border-gray-200 rounded-md shadow-lg py-1 z-50"
+                    style={{
+                      left: contextMenu.x,
+                      top: contextMenu.y,
+                    }}
+                  >
+                    <button
+                      className="w-full px-4 py-2 text-left text-sm hover:bg-gray-100 flex items-center space-x-2"
+                      onClick={() => handleContextMenuAction('complete')}
+                    >
+                      <Check className="w-4 h-4" />
+                      <span>
+                        {contextMenu.item.completed ? '완료 해제' : '완료 표시'}
+                      </span>
+                    </button>
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>

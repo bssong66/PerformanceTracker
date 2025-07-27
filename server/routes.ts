@@ -213,6 +213,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Event completion route
+  app.patch("/api/events/:id/complete", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const { completed } = req.body;
+      const event = await storage.updateEvent(id, { completed });
+      
+      if (!event) {
+        return res.status(404).json({ message: "Event not found" });
+      }
+      
+      res.json(event);
+    } catch (error) {
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
   // Task routes
   app.get("/api/tasks/:userId", async (req, res) => {
     try {
@@ -269,6 +286,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Task completion route
+  app.patch("/api/tasks/:id/complete", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const { completed } = req.body;
+      const task = await storage.updateTask(id, { completed });
+      
+      if (!task) {
+        return res.status(404).json({ message: "Task not found" });
+      }
+      
+      res.json(task);
     } catch (error) {
       res.status(500).json({ message: "Internal server error" });
     }
