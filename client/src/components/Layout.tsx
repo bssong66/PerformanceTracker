@@ -26,7 +26,6 @@ const navigation = [
   { name: '계획관리', href: '/planning', icon: FolderOpen },
   { name: '일일관리', href: '/daily-planning', icon: Calendar },
   { name: '리뷰', href: '/review', icon: BarChart3 },
-  { name: '포커스 모드', href: '/focus', icon: Focus },
 ];
 
 export function Layout({ children }: LayoutProps) {
