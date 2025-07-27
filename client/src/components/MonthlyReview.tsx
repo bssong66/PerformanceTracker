@@ -70,8 +70,7 @@ export default function MonthlyReview() {
   });
 
   const { data: foundation } = useQuery({
-    queryKey: ['/api/foundation/1'],
-    meta: { errorMessage: "Foundation not found" },
+    queryKey: ['/api/foundation/auth'],
     retry: false,
   });
 

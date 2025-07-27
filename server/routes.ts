@@ -74,6 +74,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Foundation routes
+  app.get("/api/foundation/auth", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const year = req.query.year ? parseInt(req.query.year as string) : undefined;
+      const foundation = await storage.getFoundation(userId, year);
+      
+      if (!foundation) {
+        return res.status(404).json({ message: "Foundation not found" });
+      }
+      
+      res.json(foundation);
+    } catch (error) {
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
   app.get("/api/foundation/:userId", isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub; // Use authenticated user ID
