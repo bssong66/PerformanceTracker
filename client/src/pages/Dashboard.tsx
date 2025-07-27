@@ -314,33 +314,21 @@ export default function Dashboard() {
 
         {/* 핵심 지표 카드 */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-12">
-          {/* 전체 할일 진행률 */}
+          {/* 연간 목표 달성률 */}
           <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg">
             <CardContent className="p-6 text-center">
               <div className="flex items-center justify-center mb-4">
-                <CheckCircle2 className="h-8 w-8 text-blue-600 mr-2" />
-                <h3 className="text-lg font-semibold text-gray-900">할일 완료율</h3>
+                <Trophy className="h-8 w-8 text-green-600 mr-2" />
+                <h3 className="text-lg font-semibold text-gray-900">연간 목표 달성률</h3>
               </div>
               <CircularProgressIndicator 
-                value={overallStats.completedTasks} 
-                max={overallStats.totalTasks} 
-                color="blue"
+                value={goalRelatedStats.completedActivities} 
+                max={goalRelatedStats.totalActivities} 
+                color="green"
               />
-            </CardContent>
-          </Card>
-
-          {/* 일정 완료율 */}
-          <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg">
-            <CardContent className="p-6 text-center">
-              <div className="flex items-center justify-center mb-4">
-                <Calendar className="h-8 w-8 text-indigo-600 mr-2" />
-                <h3 className="text-lg font-semibold text-gray-900">일정 완료율</h3>
+              <div className="text-xs text-gray-400 mt-2">
+                (연간) {overallStats.totalGoals}개 목표 • {goalRelatedStats.totalActivities}개 활동
               </div>
-              <CircularProgressIndicator 
-                value={eventStats.completedEvents} 
-                max={eventStats.totalEvents} 
-                color="purple"
-              />
             </CardContent>
           </Card>
 
@@ -356,6 +344,39 @@ export default function Dashboard() {
                 max={overallStats.totalProjects} 
                 color="purple"
               />
+              <div className="text-xs text-gray-400 mt-2">(연간)</div>
+            </CardContent>
+          </Card>
+
+          {/* 전체 할일 진행률 */}
+          <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg">
+            <CardContent className="p-6 text-center">
+              <div className="flex items-center justify-center mb-4">
+                <CheckCircle2 className="h-8 w-8 text-blue-600 mr-2" />
+                <h3 className="text-lg font-semibold text-gray-900">할일 완료율</h3>
+              </div>
+              <CircularProgressIndicator 
+                value={overallStats.completedTasks} 
+                max={overallStats.totalTasks} 
+                color="blue"
+              />
+              <div className="text-xs text-gray-400 mt-2">(연간)</div>
+            </CardContent>
+          </Card>
+
+          {/* 일정 완료율 */}
+          <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg">
+            <CardContent className="p-6 text-center">
+              <div className="flex items-center justify-center mb-4">
+                <Calendar className="h-8 w-8 text-indigo-600 mr-2" />
+                <h3 className="text-lg font-semibold text-gray-900">일정 완료율</h3>
+              </div>
+              <CircularProgressIndicator 
+                value={eventStats.completedEvents} 
+                max={eventStats.totalEvents} 
+                color="purple"
+              />
+              <div className="text-xs text-gray-400 mt-2">(연간)</div>
             </CardContent>
           </Card>
 
@@ -364,7 +385,7 @@ export default function Dashboard() {
             <CardContent className="p-6 text-center">
               <div className="flex items-center justify-center mb-4">
                 <Flame className="h-8 w-8 text-orange-600 mr-2" />
-                <h3 className="text-lg font-semibold text-gray-900">주간 습관</h3>
+                <h3 className="text-lg font-semibold text-gray-900">습관</h3>
               </div>
               <div className="relative inline-flex items-center justify-center">
                 <div className="text-center">
@@ -373,27 +394,9 @@ export default function Dashboard() {
                   </div>
                   <div className="text-sm text-gray-500">완료율</div>
                   <div className="text-xs text-gray-400 mt-1">
-                    {habitStats.totalHabits}개 활성 습관
+                    (연간) {habitStats.totalHabits}개 활성 습관
                   </div>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* 연간 목표 달성률 */}
-          <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg">
-            <CardContent className="p-6 text-center">
-              <div className="flex items-center justify-center mb-4">
-                <Trophy className="h-8 w-8 text-green-600 mr-2" />
-                <h3 className="text-lg font-semibold text-gray-900">연간 목표 달성률</h3>
-              </div>
-              <CircularProgressIndicator 
-                value={goalRelatedStats.completedActivities} 
-                max={goalRelatedStats.totalActivities} 
-                color="green"
-              />
-              <div className="text-xs text-gray-400 mt-2">
-                {overallStats.totalGoals}개 목표 • {goalRelatedStats.totalActivities}개 활동
               </div>
             </CardContent>
           </Card>
