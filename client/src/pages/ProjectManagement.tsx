@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { Plus, Folder, Image, Eye, Trash2, Calendar, Edit, ChevronDown, ChevronRight, ChevronLeft, CheckCircle, Circle, Play, X, ImagePlus } from 'lucide-react';
+import { Plus, Folder, Image, Eye, Trash2, Calendar, Edit, ChevronDown, ChevronRight, ChevronLeft, CheckCircle, Circle, Play, X, ImagePlus, Copy } from 'lucide-react';
 import { format } from 'date-fns';
 import { ko } from 'date-fns/locale';
 
@@ -63,6 +63,8 @@ export default function ProjectManagement() {
   const [isEditMode, setIsEditMode] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<{type: 'project' | 'task', id: number} | null>(null);
+  const [showCloneDialog, setShowCloneDialog] = useState(false);
+  const [projectToClone, setProjectToClone] = useState<Project | null>(null);
   
   // Project detail popup states
   const [showProjectDetailDialog, setShowProjectDetailDialog] = useState(false);
@@ -228,6 +230,35 @@ export default function ProjectManagement() {
       toast({ 
         title: "삭제 실패", 
         description: error.message || "프로젝트 삭제 중 오류가 발생했습니다.", 
+        variant: "destructive" 
+      });
+    }
+  });
+
+  // Clone project mutation
+  const cloneProjectMutation = useMutation({
+    mutationFn: async (projectData: any) => {
+      const response = await fetch('/api/projects', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(projectData)
+      });
+      if (!response.ok) throw new Error('프로젝트 복제에 실패했습니다.');
+      return response.json();
+    },
+    onSuccess: (clonedProject) => {
+      // Optimistic update for better UX
+      queryClient.setQueryData(['projects', MOCK_USER_ID], (oldProjects: any) => {
+        return oldProjects ? [...oldProjects, clonedProject] : [clonedProject];
+      });
+      setShowCloneDialog(false);
+      setProjectToClone(null);
+      toast({ title: "프로젝트 복제", description: "프로젝트가 복제되었습니다." });
+    },
+    onError: (error: Error) => {
+      toast({ 
+        title: "복제 실패", 
+        description: error.message || "프로젝트 복제 중 오류가 발생했습니다.", 
         variant: "destructive" 
       });
     }
@@ -780,6 +811,32 @@ export default function ProjectManagement() {
     setSelectedTask(null);
   };
 
+  // Handle project clone
+  const handleCloneProject = (project: Project) => {
+    setProjectToClone(project);
+    setShowCloneDialog(true);
+  };
+
+  // Execute project clone
+  const executeClone = () => {
+    if (!projectToClone) return;
+    
+    const cloneData = {
+      userId: MOCK_USER_ID,
+      title: `${projectToClone.title} (복사본)`,
+      description: projectToClone.description || '',
+      priority: projectToClone.priority,
+      color: projectToClone.color,
+      startDate: projectToClone.startDate || '',
+      endDate: projectToClone.endDate || '',
+      coreValue: projectToClone.coreValue || '',
+      annualGoal: projectToClone.annualGoal || '',
+      imageUrls: projectToClone.imageUrls || []
+    };
+
+    cloneProjectMutation.mutate(cloneData);
+  };
+
   return (
     <div className="p-6 space-y-6">
       <div className="flex justify-between items-center">
@@ -1219,6 +1276,16 @@ export default function ProjectManagement() {
                         )}
                       </Button>
                     )}
+                    
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleCloneProject(project)}
+                      className="h-8 w-8 p-0 text-blue-600 hover:text-blue-700"
+                      title="프로젝트 복제"
+                    >
+                      <Copy className="h-3 w-3" />
+                    </Button>
                     
                     <Button
                       variant="ghost"
@@ -2203,6 +2270,40 @@ export default function ProjectManagement() {
             <AlertDialogCancel onClick={cancelDelete}>삭제 취소</AlertDialogCancel>
             <AlertDialogAction onClick={handleDelete} className="bg-red-600 hover:bg-red-700">
               삭제
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Project Clone Confirmation Dialog */}
+      <AlertDialog open={showCloneDialog} onOpenChange={setShowCloneDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>프로젝트 복제 확인</AlertDialogTitle>
+            <AlertDialogDescription>
+              '{projectToClone?.title}' 프로젝트를 복제하시겠습니까?
+              <br />
+              동일한 내용으로 새로운 프로젝트가 생성되며, 제목에 "(복사본)"이 추가됩니다.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => {
+              setShowCloneDialog(false);
+              setProjectToClone(null);
+            }}>취소</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={executeClone} 
+              className="bg-blue-600 hover:bg-blue-700"
+              disabled={cloneProjectMutation.isPending}
+            >
+              {cloneProjectMutation.isPending ? (
+                <div className="flex items-center">
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                  복제 중...
+                </div>
+              ) : (
+                '복제'
+              )}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
