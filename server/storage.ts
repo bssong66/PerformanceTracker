@@ -32,6 +32,7 @@ export interface IStorage {
   createProject(project: InsertProject): Promise<Project>;
   updateProject(id: number, updates: Partial<Project>): Promise<Project | undefined>;
   deleteProject(id: number): Promise<boolean>;
+  updateProjectCompletion(projectId: number): Promise<void>;
   
   // Task methods
   getTasks(userId: number, date?: string, projectId?: number): Promise<Task[]>;
@@ -232,6 +233,7 @@ export class MemStorage implements IStorage {
       coreValue: project.coreValue ?? null,
       annualGoal: project.annualGoal ?? null,
       imageUrls: project.imageUrls ?? null,
+      completed: project.completed ?? false,
       createdAt: new Date()
     };
     this.projects.set(id, newProject);
@@ -249,6 +251,31 @@ export class MemStorage implements IStorage {
 
   async deleteProject(id: number): Promise<boolean> {
     return this.projects.delete(id);
+  }
+
+  async updateProjectCompletion(projectId: number): Promise<void> {
+    const project = this.projects.get(projectId);
+    if (!project) return;
+
+    // 프로젝트의 모든 할일 가져오기
+    const projectTasks = Array.from(this.tasks.values())
+      .filter(task => task.projectId === projectId);
+
+    // 할일이 없으면 완료되지 않은 상태로 설정
+    if (projectTasks.length === 0) {
+      const updated = { ...project, completed: false };
+      this.projects.set(projectId, updated);
+      return;
+    }
+
+    // 모든 할일이 완료되었는지 확인
+    const allCompleted = projectTasks.every(task => task.completed);
+    
+    // 프로젝트 완료 상태 업데이트
+    if (project.completed !== allCompleted) {
+      const updated = { ...project, completed: allCompleted };
+      this.projects.set(projectId, updated);
+    }
   }
 
   // Task methods
@@ -305,6 +332,12 @@ export class MemStorage implements IStorage {
       completedAt: updates.completed ? new Date() : task.completedAt
     };
     this.tasks.set(id, updated);
+    
+    // 할일이 프로젝트에 속해있고 완료 상태가 변경된 경우, 프로젝트 완료 상태 업데이트
+    if (updated.projectId && updates.completed !== undefined) {
+      await this.updateProjectCompletion(updated.projectId);
+    }
+    
     return updated;
   }
 
@@ -341,6 +374,8 @@ export class MemStorage implements IStorage {
       repeatWeekdays: event.repeatWeekdays ?? null,
       coreValue: event.coreValue ?? null,
       annualGoal: event.annualGoal ?? null,
+      priority: event.priority ?? "medium",
+      completed: event.completed ?? false,
       createdAt: new Date()
     };
     this.events.set(id, newEvent);
@@ -799,7 +834,40 @@ export class DatabaseStorage implements IStorage {
       .set(updates)
       .where(eq(tasks.id, id))
       .returning();
-    return result[0];
+    
+    // 할일이 프로젝트에 속해있고 완료 상태가 변경된 경우, 프로젝트 완료 상태 업데이트
+    const task = result[0];
+    if (task && task.projectId && updates.completed !== undefined) {
+      await this.updateProjectCompletion(task.projectId);
+    }
+    
+    return task;
+  }
+
+  async updateProjectCompletion(projectId: number): Promise<void> {
+    // 프로젝트의 모든 할일 가져오기
+    const projectTasks = await db
+      .select()
+      .from(tasks)
+      .where(eq(tasks.projectId, projectId));
+
+    // 할일이 없으면 완료되지 않은 상태로 설정
+    if (projectTasks.length === 0) {
+      await db
+        .update(projects)
+        .set({ completed: false })
+        .where(eq(projects.id, projectId));
+      return;
+    }
+
+    // 모든 할일이 완료되었는지 확인
+    const allCompleted = projectTasks.every(task => task.completed);
+    
+    // 프로젝트 완료 상태 업데이트
+    await db
+      .update(projects)
+      .set({ completed: allCompleted })
+      .where(eq(projects.id, projectId));
   }
 
   async deleteTask(id: number): Promise<boolean> {

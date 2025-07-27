@@ -8,7 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { Plus, Folder, Image, Eye, Trash2, Calendar, Edit, ChevronDown, ChevronRight, ChevronLeft } from 'lucide-react';
+import { Plus, Folder, Image, Eye, Trash2, Calendar, Edit, ChevronDown, ChevronRight, ChevronLeft, CheckCircle } from 'lucide-react';
 import { format } from 'date-fns';
 import { ko } from 'date-fns/locale';
 
@@ -32,6 +32,7 @@ interface Project {
   annualGoal?: string;
   imageUrls?: string[];
   userId: number;
+  completed?: boolean;
 }
 
 export default function ProjectManagement() {
@@ -843,6 +844,11 @@ export default function ProjectManagement() {
                       <div className="flex items-center space-x-2 mb-1">
                         <h3 className="font-medium text-gray-900">{project.title}</h3>
                         
+                        {/* 프로젝트 완료 아이콘 */}
+                        {project.completed && (
+                          <CheckCircle className="h-5 w-5 text-green-600" title="프로젝트 완료" />
+                        )}
+                        
                         <span className={`px-2 py-1 rounded-full text-xs font-medium ${
                           project.priority === 'high' ? 'bg-red-100 text-red-800' :
                           project.priority === 'medium' ? 'bg-yellow-100 text-yellow-800' :
@@ -889,11 +895,16 @@ export default function ProjectManagement() {
                         <div className="mt-2">
                           <div className="flex items-center justify-between text-xs text-gray-500 mb-1">
                             <span>진행률</span>
-                            <span>{completionPercentage}%</span>
+                            <span className={project.completed ? 'text-green-600 font-semibold' : ''}>
+                              {completionPercentage}%
+                              {project.completed && ' (완료)'}
+                            </span>
                           </div>
                           <div className="w-full bg-gray-200 rounded-full h-2">
                             <div 
-                              className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                              className={`h-2 rounded-full transition-all duration-300 ${
+                                project.completed ? 'bg-green-600' : 'bg-blue-600'
+                              }`}
                               style={{ width: `${completionPercentage}%` }}
                             />
                           </div>

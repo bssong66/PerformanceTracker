@@ -42,6 +42,7 @@ export const projects = pgTable("projects", {
   coreValue: text("core_value"), // Connected core value from foundation
   annualGoal: text("annual_goal"), // Connected annual goal
   imageUrls: text("image_urls").array(),
+  completed: boolean("completed").default(false), // 프로젝트 완료 상태
   createdAt: timestamp("created_at").defaultNow(),
 });
 
