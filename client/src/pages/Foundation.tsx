@@ -13,11 +13,12 @@ import { Trash2, Plus, Save, RefreshCw, Database, TrendingUp, Edit2, Check, X, C
 import { useToast } from "@/hooks/use-toast";
 import { api, saveFoundation, createAnnualGoal, deleteAnnualGoal } from "@/lib/api";
 import { queryClient } from "@/lib/queryClient";
-import { useAuth } from "@/hooks/useAuth";
+
+// Mock user ID for demo
+const MOCK_USER_ID = 1;
 
 export default function Foundation() {
   const { toast } = useToast();
-  const { user, isLoading: userLoading } = useAuth();
   const currentYear = new Date().getFullYear();
   const [selectedYear, setSelectedYear] = useState(currentYear);
 
@@ -46,65 +47,48 @@ export default function Foundation() {
   // Generate year options (current year and +/- 5 years)
   const yearOptions = Array.from({ length: 11 }, (_, i) => currentYear - 5 + i);
 
-  const { data: foundation, isLoading: foundationLoading, refetch: refetchFoundation, error: foundationError } = useQuery({
-    queryKey: ["/api/foundation/auth", selectedYear],
-    queryFn: () => fetch(`/api/foundation/auth?year=${selectedYear}`).then(res => {
-      if (!res.ok) {
-        if (res.status === 404) {
-          return null; // Foundation not found - this is expected
-        }
-        throw new Error('Failed to fetch foundation');
-      }
-      return res.json();
-    }),
-    enabled: !!user && !userLoading,
+  const { data: foundation, isLoading: foundationLoading, refetch: refetchFoundation } = useQuery({
+    queryKey: [api.foundation.get(MOCK_USER_ID, selectedYear)],
+    meta: { errorMessage: "Foundation not found" },
   });
 
   const { data: goals = [], isLoading: goalsLoading, refetch: refetchGoals } = useQuery({
-    queryKey: ["/api/goals", selectedYear],
-    queryFn: () => fetch(`/api/goals?year=${selectedYear}`).then(res => res.json()),
-    enabled: !!user && !userLoading,
+    queryKey: [api.goals.list(MOCK_USER_ID, selectedYear)],
   });
 
   const { data: allFoundations = [], refetch: refetchAllFoundations } = useQuery({
-    queryKey: ["/api/foundations"],
-    queryFn: () => fetch("/api/foundations").then(res => res.json()),
-    enabled: showSelectDialog && !!user && !userLoading,
+    queryKey: [api.foundation.getAll(MOCK_USER_ID)],
+    enabled: showSelectDialog,
   });
 
   // Get all tasks for annual progress calculation
   const { data: allTasks = [] } = useQuery({
-    queryKey: ['tasks'],
-    queryFn: () => fetch("/api/tasks").then(res => res.json()),
-    enabled: !!user && !userLoading,
+    queryKey: ['tasks', MOCK_USER_ID],
+    queryFn: () => fetch(`/api/tasks/${MOCK_USER_ID}`).then(res => res.json()),
   });
 
   // Get all projects for annual progress calculation
   const { data: allProjects = [] } = useQuery({
-    queryKey: ['projects'],
-    queryFn: () => fetch("/api/projects").then(res => res.json()),
-    enabled: !!user && !userLoading,
+    queryKey: ['projects', MOCK_USER_ID],
+    queryFn: () => fetch(`/api/projects/${MOCK_USER_ID}`).then(res => res.json()),
   });
 
   // Get all events for annual progress calculation
   const { data: allEvents = [] } = useQuery({
-    queryKey: ['events', currentYear],
-    queryFn: () => fetch(`/api/events?startDate=${currentYear}-01-01&endDate=${currentYear}-12-31`).then(res => res.json()),
-    enabled: !!user && !userLoading,
+    queryKey: ['events', MOCK_USER_ID],
+    queryFn: () => fetch(`/api/events/${MOCK_USER_ID}?startDate=${currentYear}-01-01&endDate=${currentYear}-12-31`).then(res => res.json()),
   });
 
   // Get all habits for annual progress calculation
   const { data: allHabits = [] } = useQuery({
-    queryKey: ['habits'],
-    queryFn: () => fetch("/api/habits").then(res => res.json()),
-    enabled: !!user && !userLoading,
+    queryKey: ['habits', MOCK_USER_ID],
+    queryFn: () => fetch(`/api/habits/${MOCK_USER_ID}`).then(res => res.json()),
   });
 
   // Get habit logs for this year
   const { data: allHabitLogs = [] } = useQuery({
-    queryKey: ['habit-logs-year', currentYear],
-    queryFn: () => fetch(`/api/habit-logs?startDate=${currentYear}-01-01&endDate=${currentYear}-12-31`).then(res => res.json()),
-    enabled: !!user && !userLoading,
+    queryKey: ['habit-logs-year', MOCK_USER_ID, currentYear],
+    queryFn: () => fetch(`/api/habit-logs/${MOCK_USER_ID}/${currentYear}-01-01?endDate=${currentYear}-12-31`).then(res => res.json()),
   });
 
   // Set initial values when foundation data loads (but not when editing)
@@ -132,10 +116,10 @@ export default function Foundation() {
     
     // Invalidate and refetch queries for the new year
     queryClient.invalidateQueries({ 
-      queryKey: ["/api/foundation/auth", selectedYear]
+      queryKey: [api.foundation.get(MOCK_USER_ID, selectedYear)] 
     });
     queryClient.invalidateQueries({ 
-      queryKey: ["/api/goals", selectedYear]
+      queryKey: [api.goals.list(MOCK_USER_ID, selectedYear)] 
     });
   }, [selectedYear]);
 
@@ -338,8 +322,8 @@ export default function Foundation() {
     mutationFn: saveFoundation,
     onSuccess: () => {
       // Invalidate foundation queries across all pages
-      queryClient.invalidateQueries({ queryKey: ["/api/foundation/auth", selectedYear] });
-      queryClient.invalidateQueries({ queryKey: ['foundation', selectedYear] });
+      queryClient.invalidateQueries({ queryKey: [api.foundation.get(MOCK_USER_ID, selectedYear)] });
+      queryClient.invalidateQueries({ queryKey: ['foundation', MOCK_USER_ID, selectedYear] });
       toast({
         title: "저장 완료",
         description: `${selectedYear}년 가치 중심 계획이 저장되었습니다.`,
@@ -359,8 +343,8 @@ export default function Foundation() {
     onSuccess: () => {
       setNewGoal("");
       // Invalidate goals queries across all pages
-      queryClient.invalidateQueries({ queryKey: ["/api/goals", selectedYear] });
-      queryClient.invalidateQueries({ queryKey: ['goals', selectedYear] });
+      queryClient.invalidateQueries({ queryKey: [api.goals.list(MOCK_USER_ID, selectedYear)] });
+      queryClient.invalidateQueries({ queryKey: ['goals', MOCK_USER_ID, selectedYear] });
       toast({
         title: "목표 추가",
         description: "새로운 연간 목표가 추가되었습니다.",
