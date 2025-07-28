@@ -64,31 +64,63 @@ export default function Foundation() {
   // Get all tasks for annual progress calculation
   const { data: allTasks = [] } = useQuery({
     queryKey: ['tasks', MOCK_USER_ID],
-    queryFn: () => fetch(`/api/tasks/${MOCK_USER_ID}`).then(res => res.json()),
+    queryFn: () => fetch(`/api/tasks/${MOCK_USER_ID}`)
+      .then(res => {
+        if (!res.ok) throw new Error('Failed to fetch tasks');
+        return res.json();
+      })
+      .then(data => Array.isArray(data) ? data : [])
+      .catch(() => []),
   });
 
   // Get all projects for annual progress calculation
   const { data: allProjects = [] } = useQuery({
     queryKey: ['projects', MOCK_USER_ID],
-    queryFn: () => fetch(`/api/projects/${MOCK_USER_ID}`).then(res => res.json()),
+    queryFn: () => fetch(`/api/projects/${MOCK_USER_ID}`)
+      .then(res => {
+        if (!res.ok) throw new Error('Failed to fetch projects');
+        return res.json();
+      })
+      .then(data => Array.isArray(data) ? data : [])
+      .catch(() => []),
   });
 
   // Get all events for annual progress calculation
   const { data: allEvents = [] } = useQuery({
     queryKey: ['events', MOCK_USER_ID],
-    queryFn: () => fetch(`/api/events/${MOCK_USER_ID}?startDate=${currentYear}-01-01&endDate=${currentYear}-12-31`).then(res => res.json()),
+    queryFn: () => fetch(`/api/events/${MOCK_USER_ID}?startDate=${currentYear}-01-01&endDate=${currentYear}-12-31`)
+      .then(res => {
+        if (!res.ok) {
+          throw new Error('Failed to fetch events');
+        }
+        return res.json();
+      })
+      .then(data => Array.isArray(data) ? data : [])
+      .catch(() => []), // Return empty array on error
   });
 
   // Get all habits for annual progress calculation
   const { data: allHabits = [] } = useQuery({
     queryKey: ['habits', MOCK_USER_ID],
-    queryFn: () => fetch(`/api/habits/${MOCK_USER_ID}`).then(res => res.json()),
+    queryFn: () => fetch(`/api/habits/${MOCK_USER_ID}`)
+      .then(res => {
+        if (!res.ok) throw new Error('Failed to fetch habits');
+        return res.json();
+      })
+      .then(data => Array.isArray(data) ? data : [])
+      .catch(() => []),
   });
 
   // Get habit logs for this year
   const { data: allHabitLogs = [] } = useQuery({
     queryKey: ['habit-logs-year', MOCK_USER_ID, currentYear],
-    queryFn: () => fetch(`/api/habit-logs/${MOCK_USER_ID}/${currentYear}-01-01?endDate=${currentYear}-12-31`).then(res => res.json()),
+    queryFn: () => fetch(`/api/habit-logs/${MOCK_USER_ID}/${currentYear}-01-01?endDate=${currentYear}-12-31`)
+      .then(res => {
+        if (!res.ok) throw new Error('Failed to fetch habit logs');
+        return res.json();
+      })
+      .then(data => Array.isArray(data) ? data : [])
+      .catch(() => []),
   });
 
   // Set initial values when foundation data loads (but not when editing)

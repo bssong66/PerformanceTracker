@@ -300,6 +300,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       );
       res.json(events);
     } catch (error) {
+      console.error('Events API error:', error);
       res.status(500).json({ message: "Internal server error" });
     }
   });
