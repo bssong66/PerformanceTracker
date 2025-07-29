@@ -261,12 +261,35 @@ export default function Dashboard() {
 
   // 데이터 정합성 체크용 로그 (개발환경에서만)
   if (typeof window !== 'undefined' && window.location.hostname === 'localhost') {
+    // 최신 테스트 결과 기반 예상 데이터
+    const expectedDashboardData = {
+      tasks: { total: 47, completed: 18 },
+      projects: { total: 2, completed: 0 },
+      habits: { total: 2, active: 2 },
+      events: { total: 5, completed: 1 },
+      goals: { total: 3 },
+      priorityStats: {
+        A: { total: 32, completed: 13 },
+        B: { total: 14, completed: 5 },
+        C: { total: 1, completed: 0 },
+      },
+      goalActivities: { total: 20, completed: 6 }
+    };
+
     console.log('Dashboard Data Integrity Check:', {
       actualData: {
         tasks: { total: tasks.length, completed: tasks.filter((t: any) => t.completed).length },
-        projects: { total: projects.length },
+        projects: { 
+          total: projects.length,
+          completed: projects.filter((p: any) => {
+            if (!p.endDate) return false;
+            const endDate = new Date(p.endDate);
+            return endDate <= today;
+          }).length
+        },
         habits: { total: habits.length, active: habits.filter((h: any) => h.isActive).length },
-        events: { total: Array.isArray(events) ? events.length : 0, completed: Array.isArray(events) ? events.filter((e: any) => e.completed).length : 0 }
+        events: { total: Array.isArray(events) ? events.length : 0, completed: Array.isArray(events) ? events.filter((e: any) => e.completed).length : 0 },
+        goals: { total: goals.length }
       },
       calculatedStats: {
         overallStats,
@@ -278,13 +301,20 @@ export default function Dashboard() {
         habitStats: {
           totalHabits: habitStats.totalHabits,
           weeklyCompletions: habitStats.weeklyCompletions
-        }
+        },
+        goalRelatedStats,
+        annualGoalProgress
       },
-      databaseExpected: {
-        tasks: { total: 43, aCompleted: 7, bCompleted: 5, cCompleted: 0 },
-        projects: { total: 1 },
-        habits: { active: 2 },
-        events: { total: 4, highPriority: 1, mediumPriority: 3 }
+      expectedData: expectedDashboardData,
+      dataMatches: {
+        tasks: tasks.length === expectedDashboardData.tasks.total,
+        projects: projects.length === expectedDashboardData.projects.total,
+        habits: habits.filter((h: any) => h.isActive).length === expectedDashboardData.habits.active,
+        events: (Array.isArray(events) ? events.length : 0) === expectedDashboardData.events.total,
+        goals: goals.length === expectedDashboardData.goals.total,
+        priorityA: priorityStats.A.total === expectedDashboardData.priorityStats.A.total,
+        priorityB: priorityStats.B.total === expectedDashboardData.priorityStats.B.total,
+        priorityC: priorityStats.C.total === expectedDashboardData.priorityStats.C.total
       }
     });
   }
