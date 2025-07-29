@@ -138,22 +138,22 @@ export default function Home() {
             </Card>
           </Link>
 
-          <Link href="/daily">
-            <Card className="cursor-pointer hover:shadow-lg transition-shadow duration-200 bg-white/90 backdrop-blur-sm border-0">
-              <CardHeader className="pb-3">
-                <Settings className="h-8 w-8 text-green-600 mb-2" />
-                <CardTitle className="text-lg">일일관리</CardTitle>
-                <CardDescription>오늘의 계획과 실행</CardDescription>
-              </CardHeader>
-            </Card>
-          </Link>
-
           <Link href="/planning">
             <Card className="cursor-pointer hover:shadow-lg transition-shadow duration-200 bg-white/90 backdrop-blur-sm border-0">
               <CardHeader className="pb-3">
                 <Settings className="h-8 w-8 text-orange-600 mb-2" />
                 <CardTitle className="text-lg">계획수립</CardTitle>
                 <CardDescription>프로젝트와 할일 관리</CardDescription>
+              </CardHeader>
+            </Card>
+          </Link>
+
+          <Link href="/daily">
+            <Card className="cursor-pointer hover:shadow-lg transition-shadow duration-200 bg-white/90 backdrop-blur-sm border-0">
+              <CardHeader className="pb-3">
+                <Settings className="h-8 w-8 text-green-600 mb-2" />
+                <CardTitle className="text-lg">일일관리</CardTitle>
+                <CardDescription>오늘의 계획과 실행</CardDescription>
               </CardHeader>
             </Card>
           </Link>
