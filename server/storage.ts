@@ -213,7 +213,7 @@ export class DatabaseStorage implements IStorage {
 
   async deleteAnnualGoal(id: number): Promise<boolean> {
     const result = await db.delete(annualGoals).where(eq(annualGoals.id, id));
-    return result.rowCount > 0;
+    return (result.rowCount ?? 0) > 0;
   }
 
   // Project methods
@@ -242,7 +242,7 @@ export class DatabaseStorage implements IStorage {
 
   async deleteProject(id: number): Promise<boolean> {
     const result = await db.delete(projects).where(eq(projects.id, id));
-    return result.rowCount > 0;
+    return (result.rowCount ?? 0) > 0;
   }
 
   async updateProjectCompletion(projectId: number): Promise<void> {
@@ -326,7 +326,7 @@ export class DatabaseStorage implements IStorage {
 
   async deleteTask(id: number): Promise<boolean> {
     const result = await db.delete(tasks).where(eq(tasks.id, id));
-    return result.rowCount > 0;
+    return (result.rowCount ?? 0) > 0;
   }
 
   // Event methods
@@ -334,7 +334,13 @@ export class DatabaseStorage implements IStorage {
     let conditions = [eq(events.userId, userId)];
     
     if (startDate && endDate) {
-      conditions.push(and(gte(events.date, startDate), lte(events.date, endDate)));
+      conditions.push(
+        or(
+          and(gte(events.startDate, startDate), lte(events.startDate, endDate)),
+          and(gte(events.endDate, startDate), lte(events.endDate, endDate)),
+          and(lte(events.startDate, startDate), gte(events.endDate, endDate))
+        )
+      );
     }
     
     return await db.select().from(events).where(and(...conditions));
@@ -356,7 +362,7 @@ export class DatabaseStorage implements IStorage {
 
   async deleteEvent(id: number): Promise<boolean> {
     const result = await db.delete(events).where(eq(events.id, id));
-    return result.rowCount > 0;
+    return (result.rowCount ?? 0) > 0;
   }
 
   // Habit methods
@@ -380,7 +386,7 @@ export class DatabaseStorage implements IStorage {
 
   async deleteHabit(id: number): Promise<boolean> {
     const result = await db.delete(habits).where(eq(habits.id, id));
-    return result.rowCount > 0;
+    return (result.rowCount ?? 0) > 0;
   }
 
   // Habit log methods
@@ -388,7 +394,8 @@ export class DatabaseStorage implements IStorage {
     let conditions = [eq(habitLogs.habitId, habitId)];
     
     if (startDate && endDate) {
-      conditions.push(and(gte(habitLogs.date, startDate), lte(habitLogs.date, endDate)));
+      conditions.push(gte(habitLogs.date, startDate));
+      conditions.push(lte(habitLogs.date, endDate));
     }
     
     return await db.select().from(habitLogs).where(and(...conditions));
@@ -423,7 +430,7 @@ export class DatabaseStorage implements IStorage {
         eq(habitLogs.userId, userId),
         eq(habitLogs.date, date)
       ));
-    return result.rowCount > 0;
+    return (result.rowCount ?? 0) > 0;
   }
 
   // Weekly review methods
@@ -543,7 +550,7 @@ export class DatabaseStorage implements IStorage {
 
   async deleteTimeBlock(id: number): Promise<boolean> {
     const result = await db.delete(timeBlocks).where(eq(timeBlocks.id, id));
-    return result.rowCount > 0;
+    return (result.rowCount ?? 0) > 0;
   }
 
   // User settings methods
