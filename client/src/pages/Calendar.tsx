@@ -881,14 +881,14 @@ export default function Calendar() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="none">선택안함</SelectItem>
-                      {foundation?.coreValue1 && (
-                        <SelectItem value={foundation.coreValue1}>{foundation.coreValue1}</SelectItem>
+                      {(foundation as any)?.coreValue1 && (
+                        <SelectItem value={(foundation as any).coreValue1}>{(foundation as any).coreValue1}</SelectItem>
                       )}
-                      {foundation?.coreValue2 && (
-                        <SelectItem value={foundation.coreValue2}>{foundation.coreValue2}</SelectItem>
+                      {(foundation as any)?.coreValue2 && (
+                        <SelectItem value={(foundation as any).coreValue2}>{(foundation as any).coreValue2}</SelectItem>
                       )}
-                      {foundation?.coreValue3 && (
-                        <SelectItem value={foundation.coreValue3}>{foundation.coreValue3}</SelectItem>
+                      {(foundation as any)?.coreValue3 && (
+                        <SelectItem value={(foundation as any).coreValue3}>{(foundation as any).coreValue3}</SelectItem>
                       )}
                     </SelectContent>
                   </Select>
@@ -905,7 +905,7 @@ export default function Calendar() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="none">선택안함</SelectItem>
-                      {annualGoals.map((goal: any) => (
+                      {(annualGoals as any[]).map((goal: any) => (
                         <SelectItem key={goal.id} value={goal.title}>
                           {goal.title}
                         </SelectItem>
