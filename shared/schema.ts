@@ -211,6 +211,19 @@ export const userSettings = pgTable("user_settings", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+export const projectFiles = pgTable("project_files", {
+  id: serial("id").primaryKey(),
+  projectId: integer("project_id").notNull(),
+  userId: varchar("user_id").notNull(),
+  fileName: text("file_name").notNull(),
+  originalFileName: text("original_file_name").notNull(),
+  fileSize: integer("file_size").notNull(), // in bytes
+  mimeType: text("mime_type").notNull(),
+  objectPath: text("object_path").notNull(), // path in object storage
+  description: text("description"),
+  uploadedAt: timestamp("uploaded_at").defaultNow(),
+});
+
 // Type definitions for Replit Auth will be at the end
 
 // Insert schemas
@@ -289,6 +302,11 @@ export const insertUserSettingsSchema = createInsertSchema(userSettings).omit({
   updatedAt: true,
 });
 
+export const insertProjectFileSchema = createInsertSchema(projectFiles).omit({
+  id: true,
+  uploadedAt: true,
+});
+
 // Types
 export type User = typeof users.$inferSelect;  
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -328,3 +346,6 @@ export type InsertTimeBlock = z.infer<typeof insertTimeBlockSchema>;
 
 export type UserSettings = typeof userSettings.$inferSelect;
 export type InsertUserSettings = z.infer<typeof insertUserSettingsSchema>;
+
+export type ProjectFile = typeof projectFiles.$inferSelect;
+export type InsertProjectFile = z.infer<typeof insertProjectFileSchema>;

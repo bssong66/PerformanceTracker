@@ -12,6 +12,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Plus, Folder, Image, Eye, Trash2, Calendar, Edit, ChevronDown, ChevronRight, ChevronLeft, CheckCircle, Circle, Play, X, ImagePlus, Copy } from 'lucide-react';
 import { format } from 'date-fns';
 import { ko } from 'date-fns/locale';
+import { ProjectFileManager } from '@/components/ProjectFileManager';
 
 const MOCK_USER_ID = 1;
 
@@ -239,7 +240,7 @@ export default function ProjectManagement() {
   const cloneProjectMutation = useMutation({
     mutationFn: async (originalProjectId: number) => {
       // Create optimistic clone immediately
-      const originalProject = projects.find(p => p.id === originalProjectId);
+      const originalProject = projects.find((p: Project) => p.id === originalProjectId);
       if (!originalProject) throw new Error('원본 프로젝트를 찾을 수 없습니다.');
 
       const optimisticClone = {
@@ -2264,6 +2265,14 @@ export default function ProjectManagement() {
                     </div>
                   </div>
                 )}
+
+                {/* Project File Management Section */}
+                <div className="border-t pt-4">
+                  <ProjectFileManager 
+                    projectId={selectedProject.id} 
+                    projectTitle={selectedProject.title}
+                  />
+                </div>
 
                 <div className="flex justify-end space-x-2 pt-4">
                   <Button

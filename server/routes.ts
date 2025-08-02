@@ -5,8 +5,12 @@ import {
   insertFoundationSchema, insertAnnualGoalSchema, insertProjectSchema,
   insertTaskSchema, insertEventSchema, insertHabitSchema, insertHabitLogSchema, 
   insertWeeklyReviewSchema, insertMonthlyReviewSchema, insertDailyReflectionSchema, insertTimeBlockSchema,
-  insertUserSettingsSchema
+  insertUserSettingsSchema, insertProjectFileSchema
 } from "@shared/schema";
+import {
+  ObjectStorageService,
+  ObjectNotFoundError,
+} from "./objectStorage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -285,6 +289,113 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ success: true });
     } catch (error) {
       res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Project file routes
+  app.get("/api/projects/:projectId/files", isAuthenticated, async (req: any, res) => {
+    try {
+      const projectId = parseInt(req.params.projectId);
+      const files = await storage.getProjectFiles(projectId);
+      res.json(files);
+    } catch (error) {
+      console.error('Get project files error:', error);
+      res.status(500).json({ message: "Failed to fetch project files" });
+    }
+  });
+
+  app.post("/api/projects/:projectId/files/upload", isAuthenticated, async (req: any, res) => {
+    try {
+      const objectStorageService = new ObjectStorageService();
+      const uploadURL = await objectStorageService.getObjectEntityUploadURL();
+      res.json({ uploadURL });
+    } catch (error) {
+      console.error('Get upload URL error:', error);
+      res.status(500).json({ message: "Failed to get upload URL" });
+    }
+  });
+
+  app.post("/api/projects/:projectId/files", isAuthenticated, async (req: any, res) => {
+    try {
+      const projectId = parseInt(req.params.projectId);
+      const userId = req.user.claims.sub;
+      
+      const fileData = insertProjectFileSchema.parse({
+        ...req.body,
+        projectId,
+        userId,
+      });
+      
+      const objectStorageService = new ObjectStorageService();
+      const normalizedPath = objectStorageService.normalizeObjectEntityPath(req.body.objectPath);
+      
+      // Set ACL policy for private file access
+      await objectStorageService.trySetObjectEntityAclPolicy(req.body.objectPath, {
+        owner: userId,
+        visibility: "private",
+      });
+      
+      const projectFile = await storage.createProjectFile({
+        ...fileData,
+        objectPath: normalizedPath,
+      });
+      
+      res.json(projectFile);
+    } catch (error) {
+      console.error('Create project file error:', error);
+      res.status(500).json({ message: "Failed to create project file record" });
+    }
+  });
+
+  app.get("/objects/:objectPath(*)", isAuthenticated, async (req: any, res) => {
+    const userId = req.user?.claims?.sub;
+    const objectStorageService = new ObjectStorageService();
+    try {
+      const objectFile = await objectStorageService.getObjectEntityFile(req.path);
+      const canAccess = await objectStorageService.canAccessObjectEntity({
+        objectFile,
+        userId: userId,
+        requestedPermission: "read" as any,
+      });
+      if (!canAccess) {
+        return res.sendStatus(401);
+      }
+      objectStorageService.downloadObject(objectFile, res);
+    } catch (error) {
+      console.error("Error checking object access:", error);
+      if (error instanceof ObjectNotFoundError) {
+        return res.sendStatus(404);
+      }
+      return res.sendStatus(500);
+    }
+  });
+
+  app.delete("/api/projects/:projectId/files/:fileId", isAuthenticated, async (req: any, res) => {
+    try {
+      const fileId = parseInt(req.params.fileId);
+      const userId = req.user.claims.sub;
+      
+      // Get file info to check ownership
+      const file = await storage.getProjectFile(fileId);
+      if (!file) {
+        return res.status(404).json({ message: "File not found" });
+      }
+      
+      // Check if user owns the file
+      if (file.userId !== userId) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+      
+      const success = await storage.deleteProjectFile(fileId);
+      
+      if (!success) {
+        return res.status(404).json({ message: "File not found" });
+      }
+      
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Delete project file error:', error);
+      res.status(500).json({ message: "Failed to delete project file" });
     }
   });
 

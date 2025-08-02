@@ -1,13 +1,14 @@
 import { 
   users, foundations, annualGoals, projects, tasks, events, habits, habitLogs, 
-  weeklyReviews, monthlyReviews, dailyReflections, timeBlocks, userSettings,
+  weeklyReviews, monthlyReviews, dailyReflections, timeBlocks, userSettings, projectFiles,
   type User, type UpsertUser, type Foundation, type InsertFoundation,
   type AnnualGoal, type InsertAnnualGoal, type Project, type InsertProject,
   type Task, type InsertTask, type Event, type InsertEvent,
   type Habit, type InsertHabit, type HabitLog, type InsertHabitLog,
   type WeeklyReview, type InsertWeeklyReview, type MonthlyReview,
   type InsertMonthlyReview, type DailyReflection, type InsertDailyReflection, 
-  type TimeBlock, type InsertTimeBlock, type UserSettings, type InsertUserSettings
+  type TimeBlock, type InsertTimeBlock, type UserSettings, type InsertUserSettings,
+  type ProjectFile, type InsertProjectFile
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, asc, gte, lte, or } from "drizzle-orm";
@@ -99,6 +100,12 @@ export interface IStorage {
   // Task carryover methods
   carryOverIncompleteTasks(userId: string, fromDate: string, toDate: string): Promise<Task[]>;
   getCarriedOverTasks(userId: string, date: string): Promise<Task[]>;
+  
+  // Project file methods
+  getProjectFiles(projectId: number): Promise<ProjectFile[]>;
+  createProjectFile(file: InsertProjectFile): Promise<ProjectFile>;
+  deleteProjectFile(id: number): Promise<boolean>;
+  getProjectFile(id: number): Promise<ProjectFile | undefined>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -617,6 +624,30 @@ export class DatabaseStorage implements IStorage {
         eq(tasks.scheduledDate, date),
         eq(tasks.isCarriedOver, true)
       ));
+  }
+
+  // Project file methods
+  async getProjectFiles(projectId: number): Promise<ProjectFile[]> {
+    return await db
+      .select()
+      .from(projectFiles)
+      .where(eq(projectFiles.projectId, projectId))
+      .orderBy(desc(projectFiles.uploadedAt));
+  }
+
+  async createProjectFile(file: InsertProjectFile): Promise<ProjectFile> {
+    const result = await db.insert(projectFiles).values(file).returning();
+    return result[0];
+  }
+
+  async deleteProjectFile(id: number): Promise<boolean> {
+    const result = await db.delete(projectFiles).where(eq(projectFiles.id, id));
+    return (result.rowCount ?? 0) > 0;
+  }
+
+  async getProjectFile(id: number): Promise<ProjectFile | undefined> {
+    const result = await db.select().from(projectFiles).where(eq(projectFiles.id, id)).limit(1);
+    return result[0];
   }
 }
 
