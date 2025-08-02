@@ -132,20 +132,6 @@ export default function Foundation() {
   const isProgressDataLoading = tasksLoading || projectsLoading || eventsLoading || habitsLoading || habitLogsLoading;
   const showProgressData = isCurrentYear && !isProgressDataLoading;
 
-  const { data: foundation, isLoading: foundationLoading, refetch: refetchFoundation } = useQuery({
-    queryKey: [api.foundation.get(MOCK_USER_ID, selectedYear)],
-    meta: { errorMessage: "Foundation not found" },
-  });
-
-  const { data: goals = [], isLoading: goalsLoading, refetch: refetchGoals } = useQuery({
-    queryKey: [api.goals.list(MOCK_USER_ID, selectedYear)],
-  });
-
-  const { data: allFoundations = [], refetch: refetchAllFoundations } = useQuery({
-    queryKey: [api.foundation.getAll(MOCK_USER_ID)],
-    enabled: showSelectDialog,
-  });
-
   // Set initial values when foundation data loads (but not when editing)
   useEffect(() => {
     if (foundation && !editingValues && !editingMission) {
@@ -559,10 +545,6 @@ export default function Foundation() {
         variant: "destructive",
       });
     }
-  };
-
-  const handleDeleteTempGoal = (tempId: number) => {
-    setTempGoals(tempGoals.filter(goal => goal.id !== tempId));
   };
 
   const handleGoalTitleChange = async (goalId: number, title: string) => {
