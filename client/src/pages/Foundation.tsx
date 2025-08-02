@@ -61,9 +61,9 @@ export default function Foundation() {
     enabled: showSelectDialog,
   });
 
-  // Get all tasks for annual progress calculation
-  const { data: allTasks = [] } = useQuery({
-    queryKey: ['tasks', MOCK_USER_ID],
+  // Get all tasks for annual progress calculation (only for current year to improve performance)
+  const { data: allTasks = [], isLoading: tasksLoading } = useQuery({
+    queryKey: ['tasks', MOCK_USER_ID, selectedYear],
     queryFn: () => fetch(`/api/tasks/${MOCK_USER_ID}`)
       .then(res => {
         if (!res.ok) throw new Error('Failed to fetch tasks');
@@ -71,11 +71,12 @@ export default function Foundation() {
       })
       .then(data => Array.isArray(data) ? data : [])
       .catch(() => []),
+    enabled: selectedYear === currentYear, // Only load for current year to improve performance
   });
 
-  // Get all projects for annual progress calculation
-  const { data: allProjects = [] } = useQuery({
-    queryKey: ['projects', MOCK_USER_ID],
+  // Get all projects for annual progress calculation (only for current year)
+  const { data: allProjects = [], isLoading: projectsLoading } = useQuery({
+    queryKey: ['projects', MOCK_USER_ID, selectedYear],
     queryFn: () => fetch(`/api/projects/${MOCK_USER_ID}`)
       .then(res => {
         if (!res.ok) throw new Error('Failed to fetch projects');
@@ -83,12 +84,13 @@ export default function Foundation() {
       })
       .then(data => Array.isArray(data) ? data : [])
       .catch(() => []),
+    enabled: selectedYear === currentYear, // Only load for current year to improve performance
   });
 
-  // Get all events for annual progress calculation
-  const { data: allEvents = [] } = useQuery({
-    queryKey: ['events', MOCK_USER_ID],
-    queryFn: () => fetch(`/api/events/${MOCK_USER_ID}?startDate=${currentYear}-01-01&endDate=${currentYear}-12-31`)
+  // Get all events for annual progress calculation (only for current year)
+  const { data: allEvents = [], isLoading: eventsLoading } = useQuery({
+    queryKey: ['events', MOCK_USER_ID, selectedYear],
+    queryFn: () => fetch(`/api/events/${MOCK_USER_ID}?startDate=${selectedYear}-01-01&endDate=${selectedYear}-12-31`)
       .then(res => {
         if (!res.ok) {
           throw new Error('Failed to fetch events');
@@ -97,11 +99,12 @@ export default function Foundation() {
       })
       .then(data => Array.isArray(data) ? data : [])
       .catch(() => []), // Return empty array on error
+    enabled: selectedYear === currentYear, // Only load for current year to improve performance
   });
 
-  // Get all habits for annual progress calculation
-  const { data: allHabits = [] } = useQuery({
-    queryKey: ['habits', MOCK_USER_ID],
+  // Get all habits for annual progress calculation (only for current year)
+  const { data: allHabits = [], isLoading: habitsLoading } = useQuery({
+    queryKey: ['habits', MOCK_USER_ID, selectedYear],
     queryFn: () => fetch(`/api/habits/${MOCK_USER_ID}`)
       .then(res => {
         if (!res.ok) throw new Error('Failed to fetch habits');
@@ -109,18 +112,38 @@ export default function Foundation() {
       })
       .then(data => Array.isArray(data) ? data : [])
       .catch(() => []),
+    enabled: selectedYear === currentYear, // Only load for current year to improve performance
   });
 
-  // Get habit logs for this year
-  const { data: allHabitLogs = [] } = useQuery({
-    queryKey: ['habit-logs-year', MOCK_USER_ID, currentYear],
-    queryFn: () => fetch(`/api/habit-logs/${MOCK_USER_ID}/${currentYear}-01-01?endDate=${currentYear}-12-31`)
+  // Get habit logs for this year (only for current year)
+  const { data: allHabitLogs = [], isLoading: habitLogsLoading } = useQuery({
+    queryKey: ['habit-logs-year', MOCK_USER_ID, selectedYear],
+    queryFn: () => fetch(`/api/habit-logs/${MOCK_USER_ID}/${selectedYear}-01-01?endDate=${selectedYear}-12-31`)
       .then(res => {
         if (!res.ok) throw new Error('Failed to fetch habit logs');
         return res.json();
       })
       .then(data => Array.isArray(data) ? data : [])
       .catch(() => []),
+    enabled: selectedYear === currentYear, // Only load for current year to improve performance
+  });
+
+  // Overall loading state for progress data
+  const isProgressDataLoading = tasksLoading || projectsLoading || eventsLoading || habitsLoading || habitLogsLoading;
+  const showProgressData = isCurrentYear && !isProgressDataLoading;
+
+  const { data: foundation, isLoading: foundationLoading, refetch: refetchFoundation } = useQuery({
+    queryKey: [api.foundation.get(MOCK_USER_ID, selectedYear)],
+    meta: { errorMessage: "Foundation not found" },
+  });
+
+  const { data: goals = [], isLoading: goalsLoading, refetch: refetchGoals } = useQuery({
+    queryKey: [api.goals.list(MOCK_USER_ID, selectedYear)],
+  });
+
+  const { data: allFoundations = [], refetch: refetchAllFoundations } = useQuery({
+    queryKey: [api.foundation.getAll(MOCK_USER_ID)],
+    enabled: showSelectDialog,
   });
 
   // Set initial values when foundation data loads (but not when editing)
@@ -487,6 +510,10 @@ export default function Foundation() {
     ));
   };
 
+  const handleDeleteTempGoal = (tempId: number) => {
+    setTempGoals(tempGoals.filter(goal => goal.id !== tempId));
+  };
+
   const handleGoalCoreValueChange = async (goalId: number, coreValue: string) => {
     const actualValue = coreValue === "none" ? null : coreValue;
     
@@ -697,14 +724,14 @@ export default function Foundation() {
 
   return (
     <div className="min-h-screen bg-slate-50/30">
-      <div className="max-w-5xl mx-auto px-6 py-8">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 py-4 sm:py-8">
         {/* Header */}
-        <div className="mb-10">
-          {/* Title and Description Row */}
-          <div className="flex items-start justify-between mb-8">
-            <div className="flex-1 flex items-center space-x-8">
-              <h1 className="text-3xl font-semibold text-slate-900 tracking-tight">가치 중심 계획</h1>
-              <p className="text-slate-600 mt-1 text-base leading-relaxed">
+        <div className="mb-6 sm:mb-10">
+          {/* Title and Description Row - Mobile Optimized */}
+          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between mb-6 sm:mb-8 space-y-4 sm:space-y-0">
+            <div className="flex-1 flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-8">
+              <h1 className="text-2xl sm:text-3xl font-semibold text-slate-900 tracking-tight">가치 중심 계획</h1>
+              <p className="text-slate-600 text-sm sm:text-base leading-relaxed">
                 개인 미션과 핵심 가치를 설정하여 목표 달성의 기반을 만드세요
               </p>
               {/* Year Status Indicator */}
@@ -726,10 +753,10 @@ export default function Foundation() {
             </div>
           </div>
 
-          {/* Action Buttons Row */}
-          <div className="flex items-center space-x-4">
-            {/* Year Selector */}
-            <div className="flex items-center space-x-2 bg-white rounded-lg border border-slate-200 shadow-sm p-1">
+          {/* Action Buttons Row - Mobile Optimized */}
+          <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-3 sm:space-y-0 sm:space-x-4">
+            {/* Year Selector - Mobile Optimized */}
+            <div className="flex items-center space-x-2 bg-white rounded-lg border border-slate-200 shadow-sm p-1 w-full sm:w-auto justify-center sm:justify-start">
               <Button
                 variant="ghost"
                 size="sm"
@@ -740,7 +767,7 @@ export default function Foundation() {
               </Button>
               
               <Select value={selectedYear.toString()} onValueChange={(value) => setSelectedYear(parseInt(value))}>
-                <SelectTrigger className="w-20 h-8 border-0 shadow-none font-medium text-slate-700">
+                <SelectTrigger className="w-16 sm:w-20 h-8 border-0 shadow-none font-medium text-slate-700">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -766,7 +793,7 @@ export default function Foundation() {
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button
-                    className="bg-slate-900 hover:bg-slate-800 text-white shadow-sm border-0 px-4 py-2 h-auto font-medium"
+                    className="bg-slate-900 hover:bg-slate-800 text-white shadow-sm border-0 px-3 sm:px-4 py-2 h-auto font-medium text-sm sm:text-base w-full sm:w-auto"
                   >
                     <Plus className="h-4 w-4 mr-2" />
                     <span>신규 계획</span>
