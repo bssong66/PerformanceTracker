@@ -50,7 +50,7 @@ export function ProjectFileManager({ projectId, projectTitle }: ProjectFileManag
       mimeType: string;
       objectPath: string;
     }) => {
-      return apiRequest(`/api/projects/${projectId}/files`, 'POST', fileData);
+      return apiRequest('POST', `/api/projects/${projectId}/files`, fileData);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['project-files', projectId] });
@@ -72,7 +72,7 @@ export function ProjectFileManager({ projectId, projectTitle }: ProjectFileManag
   // Delete mutation
   const deleteMutation = useMutation({
     mutationFn: async (fileId: number) => {
-      return apiRequest(`/api/projects/${projectId}/files/${fileId}`, 'DELETE');
+      return apiRequest('DELETE', `/api/projects/${projectId}/files/${fileId}`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['project-files', projectId] });
