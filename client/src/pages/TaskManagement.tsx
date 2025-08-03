@@ -14,6 +14,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
 import { Plus, ListTodo, Calendar, Clock, Eye, Trash2, Edit, CheckCircle, Circle, Camera, Image, ArrowLeft, ArrowRight, RefreshCw, FileText, Download } from 'lucide-react';
 import { FileUploader } from '@/components/FileUploader';
+import { UnifiedAttachmentManager } from '@/components/UnifiedAttachmentManager';
 import { format } from 'date-fns';
 import { ko } from 'date-fns/locale';
 
@@ -210,7 +211,7 @@ function TaskManagement() {
     },
     onSettled: () => {
       // Lighter refetch for data consistency
-      queryClient.invalidateQueries({ queryKey: ['tasks', MOCK_USER_ID] }, { refetchType: 'none' });
+      queryClient.invalidateQueries({ queryKey: ['tasks', MOCK_USER_ID] });
     }
   });
 
@@ -289,6 +290,7 @@ function TaskManagement() {
         endDate: selectedTask.endDate || '',
         projectId: null,
         imageUrls: selectedTask.imageUrls || [],
+        fileUrls: selectedTask.fileUrls || [],
         coreValue: (selectedTask as any).coreValue || 'none',
         annualGoal: (selectedTask as any).annualGoal || 'none'
       });
@@ -535,80 +537,16 @@ function TaskManagement() {
               </div>
 
               <div>
-                <Label>이미지</Label>
-                <div className="space-y-3">
-                  <div className="flex items-center space-x-2">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => fileInputRef.current?.click()}
-                      className="flex items-center space-x-2"
-                    >
-                      <Camera className="h-4 w-4" />
-                      <span>이미지 추가</span>
-                    </Button>
-                    <span className="text-sm text-gray-500">
-                      {taskForm.imageUrls.length}개의 이미지
-                    </span>
-                  </div>
-
-                  {taskForm.imageUrls.length > 0 && (
-                    <div className="grid grid-cols-4 gap-2">
-                      {taskForm.imageUrls.map((imageUrl, index) => (
-                        <div key={index} className="relative group">
-                          <img
-                            src={imageUrl}
-                            alt={`할일 이미지 ${index + 1}`}
-                            className="w-16 h-16 object-cover rounded border cursor-pointer hover:opacity-80"
-                            onClick={() => {
-                              const tempTask = { ...taskForm, imageUrls: taskForm.imageUrls };
-                              setViewingTask(tempTask as Task);
-                              setViewingImage(imageUrl);
-                              setCurrentImageIndex(index);
-                            }}
-                          />
-                          <Button
-                            type="button"
-                            variant="destructive"
-                            size="sm"
-                            className="absolute -top-2 -right-2 h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
-                            onClick={() => {
-                              setTaskForm(prev => ({
-                                ...prev,
-                                imageUrls: prev.imageUrls.filter((_, i) => i !== index)
-                              }));
-                            }}
-                          >
-                            ×
-                          </Button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-                <input
-                  type="file"
-                  ref={fileInputRef}
-                  onChange={handleImageUpload}
-                  accept="image/*"
-                  multiple
-                  className="hidden"
-                />
-              </div>
-
-              <div>
-                <Label>파일 첨부</Label>
-                <FileUploader
-                  files={taskForm.fileUrls}
+                <Label>첨부파일</Label>
+                <UnifiedAttachmentManager
+                  imageUrls={taskForm.imageUrls}
+                  fileUrls={taskForm.fileUrls}
+                  onImagesChange={(urls) => setTaskForm(prev => ({ ...prev, imageUrls: urls }))}
                   onFilesChange={(files) => setTaskForm(prev => ({ ...prev, fileUrls: files }))}
-                  maxFiles={10}
-                  maxFileSize={50 * 1024 * 1024} // 50MB
-                  acceptedTypes={["*/*"]}
                   uploadEndpoint="/api/files/upload"
-                >
-                  <FileText className="h-4 w-4" />
-                  <span>파일 추가</span>
-                </FileUploader>
+                  maxFiles={15}
+                  maxFileSize={50 * 1024 * 1024} // 50MB
+                />
               </div>
 
               <div className="flex justify-end space-x-2 pt-4">
@@ -983,6 +921,19 @@ function TaskManagement() {
                   />
                 </div>
 
+                <div>
+                  <Label>첨부파일</Label>
+                  <UnifiedAttachmentManager
+                    imageUrls={taskForm.imageUrls}
+                    fileUrls={taskForm.fileUrls}
+                    onImagesChange={(urls) => setTaskForm(prev => ({ ...prev, imageUrls: urls }))}
+                    onFilesChange={(files) => setTaskForm(prev => ({ ...prev, fileUrls: files }))}
+                    uploadEndpoint="/api/files/upload"
+                    maxFiles={15}
+                    maxFileSize={50 * 1024 * 1024} // 50MB
+                  />
+                </div>
+
                 <div className="flex justify-end space-x-2 pt-4">
                   <Button
                     type="button"
@@ -1106,11 +1057,9 @@ function TaskManagement() {
                             >
                               {file.name}
                             </div>
-                            {file.size && (
-                              <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                                {(file.size / 1024 / 1024).toFixed(2)} MB
-                              </div>
-                            )}
+                            <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                              첨부파일
+                            </div>
                           </div>
                           <div className="flex items-center space-x-1 flex-shrink-0">
                             <Button
@@ -1170,7 +1119,7 @@ function TaskManagement() {
           <ListTodo className="h-12 w-12 text-gray-400 mx-auto mb-4" />
           <h3 className="text-lg font-medium text-gray-900 mb-2">할일이 없습니다</h3>
           <p className="text-gray-500 mb-4">첫 번째 할일을 만들어보세요</p>
-          <Button onClick={openCreateDialog}>
+          <Button onClick={() => openCreateDialog()}>
             <Plus className="h-4 w-4 mr-2" />
             새 할일 만들기
           </Button>

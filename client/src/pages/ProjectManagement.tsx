@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useToast } from '@/hooks/use-toast';
 import { Plus, Folder, Image, Eye, Trash2, Calendar, Edit, ChevronDown, ChevronRight, ChevronLeft, CheckCircle, Circle, Play, X, ImagePlus, Copy, FileText, Download, File } from 'lucide-react';
 import { FileUploader } from '@/components/FileUploader';
+import { UnifiedAttachmentManager } from '@/components/UnifiedAttachmentManager';
 import { format } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import { ProjectFileManager } from '@/components/ProjectFileManager';
@@ -1051,82 +1052,16 @@ export default function ProjectManagement() {
               </div>
 
               <div>
-                <Label>이미지</Label>
-                <div className="space-y-3">
-                  <div className="flex items-center space-x-2">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => fileInputRef.current?.click()}
-                      className="flex items-center space-x-2"
-                    >
-                      <Image className="h-4 w-4" />
-                      <span>이미지 추가</span>
-                    </Button>
-                    <span className="text-sm text-gray-500">
-                      {projectForm.imageUrls.length}개의 이미지
-                    </span>
-                  </div>
-                  
-                  {projectForm.imageUrls.length > 0 && (
-                    <div className="grid grid-cols-4 gap-2">
-                      {projectForm.imageUrls.map((imageUrl, index) => (
-                        <div key={index} className="relative group">
-                          <img
-                            src={imageUrl}
-                            alt={`프로젝트 이미지 ${index + 1}`}
-                            className="w-16 h-16 object-cover rounded border cursor-pointer hover:opacity-80"
-                            onClick={() => {
-                              setViewingImage(imageUrl);
-                              setCurrentImageIndex(index);
-                              setCurrentImageProject({
-                                ...editingProject,
-                                imageUrls: projectForm.imageUrls
-                              } as Project);
-                            }}
-                          />
-                          <Button
-                            type="button"
-                            variant="destructive"
-                            size="sm"
-                            className="absolute -top-2 -right-2 h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
-                            onClick={() => {
-                              setProjectForm(prev => ({
-                                ...prev,
-                                imageUrls: prev.imageUrls.filter((_, i) => i !== index)
-                              }));
-                            }}
-                          >
-                            ×
-                          </Button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-                <input
-                  type="file"
-                  ref={fileInputRef}
-                  onChange={handleImageUpload}
-                  accept="image/*"
-                  multiple
-                  className="hidden"
-                />
-              </div>
-
-              <div>
-                <Label>파일 첨부</Label>
-                <FileUploader
-                  files={projectForm.fileUrls}
+                <Label>첨부파일</Label>
+                <UnifiedAttachmentManager
+                  imageUrls={projectForm.imageUrls}
+                  fileUrls={projectForm.fileUrls}
+                  onImagesChange={(urls) => setProjectForm(prev => ({ ...prev, imageUrls: urls }))}
                   onFilesChange={(files) => setProjectForm(prev => ({ ...prev, fileUrls: files }))}
-                  maxFiles={10}
-                  maxFileSize={50 * 1024 * 1024} // 50MB
-                  acceptedTypes={["*/*"]}
                   uploadEndpoint="/api/files/upload"
-                >
-                  <FileText className="h-4 w-4" />
-                  <span>파일 추가</span>
-                </FileUploader>
+                  maxFiles={15}
+                  maxFileSize={50 * 1024 * 1024} // 50MB
+                />
               </div>
 
               <div className="flex justify-end space-x-2 pt-4">
@@ -1655,73 +1590,16 @@ export default function ProjectManagement() {
             </div>
 
             <div>
-              <Label>이미지</Label>
-              <div className="space-y-3">
-                <div className="flex items-center space-x-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => taskFileInputRef.current?.click()}
-                    className="flex items-center space-x-2"
-                  >
-                    <Image className="h-4 w-4" />
-                    <span>이미지 추가</span>
-                  </Button>
-                  <span className="text-sm text-gray-500">
-                    {taskForm.imageUrls.length}개의 이미지
-                  </span>
-                </div>
-                
-                {taskForm.imageUrls.length > 0 && (
-                  <div className="grid grid-cols-4 gap-2">
-                    {taskForm.imageUrls.map((imageUrl, index) => (
-                      <div key={index} className="relative group">
-                        <img
-                          src={imageUrl}
-                          alt={`할일 이미지 ${index + 1}`}
-                          className="w-16 h-16 object-cover rounded border cursor-pointer hover:opacity-80"
-                          onClick={() => setViewingTaskImage(imageUrl)}
-                        />
-                        <button
-                          type="button"
-                          className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity shadow-sm"
-                          onClick={() => {
-                            setTaskForm(prev => ({
-                              ...prev,
-                              imageUrls: prev.imageUrls.filter((_, i) => i !== index)
-                            }));
-                          }}
-                        >
-                          <X className="h-2.5 w-2.5" />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-              <input
-                type="file"
-                ref={taskFileInputRef}
-                onChange={handleTaskImageUpload}
-                accept="image/*"
-                multiple
-                className="hidden"
-              />
-            </div>
-
-            <div>
-              <Label>파일 첨부</Label>
-              <FileUploader
-                files={taskForm.fileUrls}
+              <Label>첨부파일</Label>
+              <UnifiedAttachmentManager
+                imageUrls={taskForm.imageUrls}
+                fileUrls={taskForm.fileUrls}
+                onImagesChange={(urls) => setTaskForm(prev => ({ ...prev, imageUrls: urls }))}
                 onFilesChange={(files) => setTaskForm(prev => ({ ...prev, fileUrls: files }))}
-                maxFiles={10}
-                maxFileSize={50 * 1024 * 1024} // 50MB
-                acceptedTypes={["*/*"]}
                 uploadEndpoint="/api/files/upload"
-              >
-                <FileText className="h-4 w-4" />
-                <span>파일 추가</span>
-              </FileUploader>
+                maxFiles={15}
+                maxFileSize={50 * 1024 * 1024} // 50MB
+              />
             </div>
 
             <div className="flex justify-end space-x-2 pt-4">
