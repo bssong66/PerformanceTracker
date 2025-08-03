@@ -615,7 +615,7 @@ export default function ProjectManagement() {
         
         // Convert project files to fileUrls format
         const fileUrls = projectFiles.map((file: any) => ({
-          url: `/objects/${file.objectPath}`,
+          url: file.objectPath, // objectPath already contains /objects/...
           name: file.originalFileName,
           size: file.fileSize || 0
         }));
@@ -1876,75 +1876,13 @@ export default function ProjectManagement() {
                   />
                 </div>
 
-                <div>
-                  <Label>이미지</Label>
-                  <div className="space-y-3">
-                    <div className="flex items-center space-x-2">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={() => taskFileInputRef.current?.click()}
-                        className="flex items-center space-x-2"
-                      >
-                        <Image className="h-4 w-4" />
-                        <span>이미지 추가</span>
-                      </Button>
-                      <span className="text-sm text-gray-500">
-                        {taskForm.imageUrls.length}개의 이미지
-                      </span>
-                    </div>
-                    
-                    {taskForm.imageUrls.length > 0 && (
-                      <div className="grid grid-cols-4 gap-2">
-                        {taskForm.imageUrls.map((imageUrl, index) => (
-                          <div key={index} className="relative group">
-                            <img
-                              src={imageUrl}
-                              alt={`할일 이미지 ${index + 1}`}
-                              className="w-16 h-16 object-cover rounded border cursor-pointer hover:opacity-80"
-                              onClick={() => setViewingTaskImage(imageUrl)}
-                            />
-                            <button
-                              type="button"
-                              className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity shadow-sm"
-                              onClick={() => {
-                                setTaskForm(prev => ({
-                                  ...prev,
-                                  imageUrls: prev.imageUrls.filter((_, i) => i !== index)
-                                }));
-                              }}
-                            >
-                              <X className="h-2.5 w-2.5" />
-                            </button>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                  <input
-                    type="file"
-                    ref={taskFileInputRef}
-                    onChange={handleTaskImageUpload}
-                    accept="image/*"
-                    multiple
-                    className="hidden"
-                  />
-                </div>
-
-                <div>
-                  <Label>파일 첨부</Label>
-                  <FileUploader
-                    files={taskForm.fileUrls}
-                    onFilesChange={(files) => setTaskForm(prev => ({ ...prev, fileUrls: files }))}
-                    maxFiles={10}
-                    maxFileSize={50 * 1024 * 1024} // 50MB
-                    acceptedTypes={["*/*"]}
-                    uploadEndpoint="/api/files/upload"
-                  >
-                    <FileText className="h-4 w-4" />
-                    <span>파일 추가</span>
-                  </FileUploader>
-                </div>
+                <UnifiedAttachmentManager
+                  imageUrls={taskForm.imageUrls || []}
+                  fileUrls={taskForm.fileUrls || []}
+                  onImagesChange={(urls) => setTaskForm(prev => ({ ...prev, imageUrls: urls }))}
+                  onFilesChange={(files) => setTaskForm(prev => ({ ...prev, fileUrls: files }))}
+                  uploadEndpoint="/api/files/upload"
+                />
 
                 <div className="flex justify-end space-x-2 pt-4">
                   <Button
