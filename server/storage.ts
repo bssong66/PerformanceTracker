@@ -143,18 +143,19 @@ export class DatabaseStorage implements IStorage {
 
   async createLocalUser(userData: {
     email: string;
-    password: string;
+    password?: string;
     firstName: string;
     lastName: string;
     authType: string;
+    profileImageUrl?: string | null;
   }): Promise<User> {
     const [user] = await db.insert(users).values({
       email: userData.email,
-      password: userData.password,
+      password: userData.password || null,
       firstName: userData.firstName,
       lastName: userData.lastName,
       authType: userData.authType,
-      profileImageUrl: null,
+      profileImageUrl: userData.profileImageUrl || null,
     }).returning();
     return user;
   }

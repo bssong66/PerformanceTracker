@@ -1,6 +1,8 @@
 import * as client from "openid-client";
 import { Strategy, type VerifyFunction } from "openid-client/passport";
 import { Strategy as LocalStrategy } from "passport-local";
+import { Strategy as GoogleStrategy } from "passport-google-oauth20";
+import { Strategy as KakaoStrategy } from "passport-kakao";
 import bcrypt from "bcryptjs";
 
 import passport from "passport";
@@ -108,6 +110,112 @@ export async function setupAuth(app: Express) {
     }
   }));
 
+  // Google OAuth Strategy
+  if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
+    passport.use(new GoogleStrategy({
+      clientID: process.env.GOOGLE_CLIENT_ID,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+      callbackURL: "/api/auth/google/callback"
+    }, async (accessToken, refreshToken, profile, done) => {
+      try {
+        const email = profile.emails?.[0]?.value;
+        if (!email) {
+          return done(new Error('이메일 정보를 가져올 수 없습니다.'));
+        }
+
+        // Check if user exists
+        let user = await storage.getUserByEmail(email);
+        
+        if (user) {
+          // Update existing user
+          await storage.upsertUser({
+            id: user.id,
+            email: email,
+            firstName: profile.name?.givenName || '',
+            lastName: profile.name?.familyName || '',
+            profileImageUrl: profile.photos?.[0]?.value || null,
+            authType: 'google'
+          });
+        } else {
+          // Create new user
+          user = await storage.createLocalUser({
+            email: email,
+            firstName: profile.name?.givenName || '',
+            lastName: profile.name?.familyName || '',
+            profileImageUrl: profile.photos?.[0]?.value || null,
+            authType: 'google'
+          });
+        }
+
+        return done(null, {
+          claims: {
+            sub: user.id,
+            email: user.email,
+            first_name: user.firstName,
+            last_name: user.lastName,
+            profile_image_url: user.profileImageUrl
+          }
+        });
+      } catch (error) {
+        return done(error);
+      }
+    }));
+  }
+
+  // Kakao OAuth Strategy
+  if (process.env.KAKAO_CLIENT_ID && process.env.KAKAO_CLIENT_SECRET) {
+    passport.use(new KakaoStrategy({
+      clientID: process.env.KAKAO_CLIENT_ID,
+      clientSecret: process.env.KAKAO_CLIENT_SECRET,
+      callbackURL: "/api/auth/kakao/callback"
+    }, async (accessToken: string, refreshToken: string, profile: any, done: any) => {
+      try {
+        const email = profile._json?.kakao_account?.email;
+        const nickname = profile.displayName || profile._json?.properties?.nickname;
+        
+        if (!email) {
+          return done(new Error('이메일 정보를 가져올 수 없습니다.'));
+        }
+
+        // Check if user exists
+        let user = await storage.getUserByEmail(email);
+        
+        if (user) {
+          // Update existing user
+          await storage.upsertUser({
+            id: user.id,
+            email: email,
+            firstName: nickname || '',
+            lastName: '',
+            profileImageUrl: profile._json?.properties?.profile_image || null,
+            authType: 'kakao'
+          });
+        } else {
+          // Create new user
+          user = await storage.createLocalUser({
+            email: email,
+            firstName: nickname || '',
+            lastName: '',
+            profileImageUrl: profile._json?.properties?.profile_image || null,
+            authType: 'kakao'
+          });
+        }
+
+        return done(null, {
+          claims: {
+            sub: user.id,
+            email: user.email,
+            first_name: user.firstName,
+            last_name: user.lastName,
+            profile_image_url: user.profileImageUrl
+          }
+        });
+      } catch (error) {
+        return done(error);
+      }
+    }));
+  }
+
   const config = await getOidcConfig();
 
   const verify: VerifyFunction = async (
@@ -168,6 +276,28 @@ export async function setupAuth(app: Express) {
       });
     })(req, res, next);
   });
+
+  // Google OAuth routes
+  app.get("/api/auth/google", passport.authenticate("google", {
+    scope: ["profile", "email"]
+  }));
+
+  app.get("/api/auth/google/callback", 
+    passport.authenticate("google", { failureRedirect: "/login" }),
+    (req, res) => {
+      res.redirect("/");
+    }
+  );
+
+  // Kakao OAuth routes
+  app.get("/api/auth/kakao", passport.authenticate("kakao"));
+
+  app.get("/api/auth/kakao/callback",
+    passport.authenticate("kakao", { failureRedirect: "/login" }),
+    (req, res) => {
+      res.redirect("/");
+    }
+  );
 
   // Local signup route
   app.post("/api/auth/signup", async (req, res) => {
