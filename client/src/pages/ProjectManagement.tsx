@@ -2285,58 +2285,13 @@ export default function ProjectManagement() {
                   </div>
                 </div>
 
-                <div>
-                  <Label className="text-sm font-medium text-gray-700">이미지</Label>
-                  <div className="mt-2">
-                    {projectForm.imageUrls.length > 0 && (
-                      <div className="grid grid-cols-4 gap-2 mb-4">
-                        {projectForm.imageUrls.map((imageUrl: string, index: number) => (
-                          <div key={index} className="relative group">
-                            <img
-                              src={imageUrl}
-                              alt={`프로젝트 이미지 ${index + 1}`}
-                              className="w-16 h-16 object-cover rounded border cursor-pointer hover:opacity-80"
-                              onClick={() => {
-                                setViewingImage(imageUrl);
-                                setCurrentImageIndex(index);
-                                setCurrentImageProject(selectedProject);
-                              }}
-                            />
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setProjectForm(prev => ({
-                                  ...prev,
-                                  imageUrls: prev.imageUrls.filter((_, i) => i !== index)
-                                }));
-                              }}
-                              className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity shadow-sm"
-                            >
-                              <X className="h-2.5 w-2.5" />
-                            </button>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                    
-                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
-                      <input
-                        type="file"
-                        accept="image/*"
-                        multiple
-                        onChange={(e) => handleImageUpload(e, true)}
-                        className="hidden"
-                        id="project-detail-image-upload"
-                      />
-                      <label htmlFor="project-detail-image-upload" className="cursor-pointer">
-                        <ImagePlus className="h-8 w-8 text-gray-400 mx-auto mb-2" />
-                        <p className="text-sm text-gray-500">
-                          클릭하여 이미지 추가
-                        </p>
-                      </label>
-                    </div>
-                  </div>
-                </div>
+                <UnifiedAttachmentManager
+                  imageUrls={projectForm.imageUrls || []}
+                  fileUrls={projectForm.fileUrls || []}
+                  onImagesChange={(urls) => setProjectForm(prev => ({ ...prev, imageUrls: urls }))}
+                  onFilesChange={(files) => setProjectForm(prev => ({ ...prev, fileUrls: files }))}
+                  uploadEndpoint="/api/files/upload"
+                />
 
                 <div className="flex justify-end space-x-2 pt-4">
                   <Button
