@@ -602,6 +602,18 @@ export default function Foundation() {
     setSavingGoals(true);
     
     try {
+      // First, save Foundation data if it doesn't exist yet (essential for new users)
+      if (!foundation) {
+        await saveFoundationMutation.mutateAsync({
+          userId: MOCK_USER_ID,
+          year: selectedYear,
+          personalMission: mission || "",
+          coreValue1: values[0] || "",
+          coreValue2: values[1] || "",
+          coreValue3: values[2] || "",
+        });
+      }
+      
       // Save all temporary goals to database if any exist
       if (tempGoals.length > 0) {
         for (const tempGoal of tempGoals) {
@@ -613,12 +625,12 @@ export default function Foundation() {
           });
         }
         
-        // Refresh goals data
-        await refetchGoals();
+        // Refresh data
+        await Promise.all([refetchGoals(), refetchFoundation()]);
         
         toast({
-          title: "목표 저장 완료",
-          description: `${tempGoals.length}개의 목표가 저장되었습니다.`,
+          title: "저장 완료",
+          description: `Foundation과 ${tempGoals.length}개의 목표가 모두 저장되었습니다.`,
         });
       } else {
         // No temp goals, just save core value changes for existing goals
@@ -628,16 +640,18 @@ export default function Foundation() {
         });
       }
       
-      // Clear temporary data and exit edit mode
+      // Clear temporary data and exit edit modes
       setTempGoals([]);
       setNewGoal("");
       setNewGoalCoreValue("none");
       setEditingGoals(false);
+      setEditingMission(false);
+      setEditingValues(false);
       
     } catch (error) {
       toast({
         title: "저장 실패",
-        description: "목표 저장에 실패했습니다.",
+        description: "데이터 저장에 실패했습니다.",
         variant: "destructive",
       });
     } finally {
