@@ -758,7 +758,7 @@ export default function Calendar() {
           setShowEventDialog(open);
           if (!open) resetEventForm();
         }}>
-          <DialogContent className="max-w-5xl max-h-[80vh] overflow-hidden" aria-describedby="event-dialog-description">
+          <DialogContent className="max-w-3xl max-h-[56vh] overflow-hidden" aria-describedby="event-dialog-description">
             <DialogHeader>
               <DialogTitle>
                 {isEditing ? '일정 수정' : '새 일정 생성'}
@@ -768,10 +768,10 @@ export default function Calendar() {
               </div>
             </DialogHeader>
             
-            <div className="grid grid-cols-2 gap-6 h-[70vh] overflow-hidden">
+            <div className="grid grid-cols-2 gap-4 h-[40vh] overflow-hidden">
               {/* 왼쪽: 일정 내용 */}
-              <div className="space-y-4 overflow-y-auto pr-4">
-                <h3 className="text-lg font-semibold border-b pb-2">일정 내용</h3>
+              <div className="space-y-3 overflow-y-auto pr-2 max-h-full">
+                <h3 className="text-base font-semibold border-b pb-1 sticky top-0 bg-white">일정 내용</h3>
                 {/* 제목 */}
                 <div>
                   <Label htmlFor="event-title">일정 제목</Label>
@@ -922,8 +922,8 @@ export default function Calendar() {
               </div>
 
               {/* 오른쪽: 일정 결과 및 설정 */}
-              <div className="space-y-4 overflow-y-auto pr-4">
-                <h3 className="text-lg font-semibold border-b pb-2">일정 결과 및 설정</h3>
+              <div className="space-y-3 overflow-y-auto pr-2 max-h-full">
+                <h3 className="text-base font-semibold border-b pb-1 sticky top-0 bg-white">일정 결과 및 설정</h3>
                 
                 {/* 완료 상태 및 결과 */}
                 <div className="bg-gray-50 p-4 rounded-lg">
@@ -1055,7 +1055,7 @@ export default function Calendar() {
             </div>
 
             {/* 하단 버튼들 */}
-            <div className="flex space-x-2 pt-6 border-t">
+            <div className="flex space-x-2 pt-3 border-t mt-3">
               <Button
                 onClick={handleSaveEvent}
                 disabled={createEventMutation.isPending || updateEventMutation.isPending}
