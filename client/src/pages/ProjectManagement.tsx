@@ -2158,10 +2158,16 @@ export default function ProjectManagement() {
 
       {/* Project Detail Dialog */}
       {selectedProject && (
-        <Dialog open={showProjectDetailDialog} onOpenChange={() => {
-          if (!isEditingProjectDetail) {
-            setShowProjectDetailDialog(false);
-            setSelectedProject(null);
+        <Dialog open={showProjectDetailDialog} onOpenChange={(open) => {
+          if (!open) {
+            if (isEditingProjectDetail) {
+              // 편집 모드에서는 취소 핸들러를 호출
+              handleProjectDetailCancel();
+            } else {
+              // 일반 보기 모드에서는 바로 닫기
+              setShowProjectDetailDialog(false);
+              setSelectedProject(null);
+            }
           }
         }}>
           <DialogContent className="sm:max-w-lg">
