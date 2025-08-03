@@ -606,6 +606,10 @@ export default function ProjectManagement() {
   const handleProjectDetailEdit = () => {
     setIsEditingProjectDetail(true);
     // Set form values for editing
+    console.log('Selected project data:', selectedProject);
+    console.log('Project imageUrls:', selectedProject.imageUrls);
+    console.log('Project fileUrls:', selectedProject.fileUrls);
+    
     setProjectForm({
       title: selectedProject.title,
       description: selectedProject.description || '',
@@ -636,6 +640,7 @@ export default function ProjectManagement() {
       coreValue: projectForm.coreValue === 'none' ? null : projectForm.coreValue,
       annualGoal: projectForm.annualGoal === 'none' ? null : projectForm.annualGoal,
       imageUrls: projectForm.imageUrls,
+      fileUrls: projectForm.fileUrls,
       userId: MOCK_USER_ID
     };
 
