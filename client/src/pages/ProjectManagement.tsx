@@ -2115,8 +2115,17 @@ export default function ProjectManagement() {
                               ) : (
                                 <File className="h-5 w-5 text-gray-500" />
                               )}
-                              <div className="flex-1 min-w-0">
-                                <p className="text-sm font-medium text-gray-900 truncate">{file.name}</p>
+                              <div 
+                                className="flex-1 min-w-0 cursor-pointer"
+                                onClick={() => {
+                                  if (isImage || isPdf) {
+                                    setPreviewFile({ url: file.url, name: file.name, type: isImage ? 'image' : 'pdf' });
+                                  }
+                                }}
+                              >
+                                <p className="text-sm font-medium text-gray-900 truncate hover:text-blue-600 transition-colors">
+                                  {file.name || 'Unknown file'}
+                                </p>
                                 {file.size && (
                                   <p className="text-xs text-gray-500">
                                     {(file.size / 1024 / 1024).toFixed(2)} MB
@@ -2139,18 +2148,35 @@ export default function ProjectManagement() {
                               <Button
                                 size="sm"
                                 variant="outline"
-                                onClick={() => {
-                                  const link = document.createElement('a');
-                                  link.href = file.url;
-                                  link.download = file.name || 'download';
-                                  link.target = '_blank';
-                                  document.body.appendChild(link);
-                                  link.click();
-                                  document.body.removeChild(link);
+                                onClick={async () => {
+                                  try {
+                                    // Fetch the file data
+                                    const response = await fetch(file.url);
+                                    if (!response.ok) throw new Error('파일 다운로드에 실패했습니다.');
+                                    
+                                    const blob = await response.blob();
+                                    const url = window.URL.createObjectURL(blob);
+                                    
+                                    const link = document.createElement('a');
+                                    link.href = url;
+                                    link.download = file.name || 'download';
+                                    document.body.appendChild(link);
+                                    link.click();
+                                    
+                                    // Clean up
+                                    document.body.removeChild(link);
+                                    window.URL.revokeObjectURL(url);
+                                  } catch (error) {
+                                    console.error('Download error:', error);
+                                    // Fallback to direct link
+                                    window.open(file.url, '_blank');
+                                  }
                                 }}
                                 className="h-8 px-2"
                               >
-                                <Download className="h-3 w-3" />
+                                <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                </svg>
                                 <span className="ml-1 text-xs">다운로드</span>
                               </Button>
                             </div>
@@ -2188,14 +2214,26 @@ export default function ProjectManagement() {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => {
-                    const link = document.createElement('a');
-                    link.href = previewFile.url;
-                    link.download = previewFile.name || 'download';
-                    link.target = '_blank';
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
+                  onClick={async () => {
+                    try {
+                      const response = await fetch(previewFile.url);
+                      if (!response.ok) throw new Error('파일 다운로드에 실패했습니다.');
+                      
+                      const blob = await response.blob();
+                      const url = window.URL.createObjectURL(blob);
+                      
+                      const link = document.createElement('a');
+                      link.href = url;
+                      link.download = previewFile.name || 'download';
+                      document.body.appendChild(link);
+                      link.click();
+                      
+                      document.body.removeChild(link);
+                      window.URL.revokeObjectURL(url);
+                    } catch (error) {
+                      console.error('Download error:', error);
+                      window.open(previewFile.url, '_blank');
+                    }
                   }}
                   className="ml-4"
                 >

@@ -8,6 +8,7 @@ import { useToast } from '@/hooks/use-toast';
 interface FileItem {
   url: string;
   name: string;
+  size?: number;
 }
 
 interface FileUploaderProps {
@@ -156,7 +157,8 @@ export function FileUploader({
           
           const newFile: FileItem = {
             url: objectPath,
-            name: file.name
+            name: file.name,
+            size: file.size
           };
 
           onFilesChange([...files, newFile]);
@@ -239,13 +241,20 @@ export function FileUploader({
             >
               <div className="flex items-center space-x-2 flex-1 min-w-0">
                 {getFileIcon(file.name)}
-                <span 
-                  className="text-sm truncate cursor-pointer hover:text-blue-600 hover:underline" 
-                  title={file.name}
-                  onClick={() => downloadFile(file)}
-                >
-                  {file.name}
-                </span>
+                <div className="flex-1 min-w-0">
+                  <span 
+                    className="text-sm truncate cursor-pointer hover:text-blue-600 hover:underline block" 
+                    title={file.name}
+                    onClick={() => downloadFile(file)}
+                  >
+                    {file.name}
+                  </span>
+                  {file.size && (
+                    <div className="text-xs text-gray-500">
+                      {formatFileSize(file.size)}
+                    </div>
+                  )}
+                </div>
               </div>
               <div className="flex items-center space-x-1">
                 <Button
