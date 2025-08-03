@@ -156,6 +156,8 @@ export class ObjectStorageService {
 
   // Gets the object entity file from the object path.
   async getObjectEntityFile(objectPath: string): Promise<File> {
+    console.log('getObjectEntityFile called with:', objectPath);
+    
     if (!objectPath.startsWith("/objects/")) {
       throw new ObjectNotFoundError();
     }
@@ -166,15 +168,23 @@ export class ObjectStorageService {
     }
 
     const entityId = parts.slice(1).join("/");
+    console.log('Extracted entity ID:', entityId);
+    
     let entityDir = this.getPrivateObjectDir();
     if (!entityDir.endsWith("/")) {
       entityDir = `${entityDir}/`;
     }
     const objectEntityPath = `${entityDir}${entityId}`;
+    console.log('Full object entity path:', objectEntityPath);
+    
     const { bucketName, objectName } = parseObjectPath(objectEntityPath);
+    console.log('Bucket name:', bucketName, 'Object name:', objectName);
+    
     const bucket = objectStorageClient.bucket(bucketName);
     const objectFile = bucket.file(objectName);
     const [exists] = await objectFile.exists();
+    console.log('Object exists:', exists);
+    
     if (!exists) {
       throw new ObjectNotFoundError();
     }
@@ -216,6 +226,35 @@ export class ObjectStorageService {
     rawPath: string,
     aclPolicy: ObjectAclPolicy
   ): Promise<string> {
+    console.log('trySetObjectEntityAclPolicy input:', rawPath);
+    
+    // Extract the object path from the upload URL
+    if (rawPath.startsWith("https://storage.googleapis.com/")) {
+      const url = new URL(rawPath);
+      const bucketPath = url.pathname;
+      console.log('Bucket path from URL:', bucketPath);
+      
+      // Convert bucket path to object path
+      // Format: /bucket-name/.private/uploads/uuid -> /objects/uploads/uuid
+      const pathParts = bucketPath.split('/');
+      if (pathParts.length >= 4 && pathParts[2] === '.private' && pathParts[3] === 'uploads') {
+        const objectId = pathParts[4];
+        const normalizedPath = `/objects/uploads/${objectId}`;
+        console.log('Normalized path:', normalizedPath);
+        
+        try {
+          const objectFile = await this.getObjectEntityFile(normalizedPath);
+          await setObjectAclPolicy(objectFile, aclPolicy);
+          console.log('ACL policy set successfully for:', normalizedPath);
+          return normalizedPath;
+        } catch (error) {
+          console.error('Error setting ACL policy:', error);
+          throw error;
+        }
+      }
+    }
+    
+    // Fallback to original logic
     const normalizedPath = this.normalizeObjectEntityPath(rawPath);
     if (!normalizedPath.startsWith("/")) {
       return normalizedPath;

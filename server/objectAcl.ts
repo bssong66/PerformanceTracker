@@ -107,16 +107,25 @@ export async function setObjectAclPolicy(
   objectFile: File,
   aclPolicy: ObjectAclPolicy,
 ): Promise<void> {
+  console.log('Setting ACL policy for file:', objectFile.name, 'policy:', aclPolicy);
+  
   const [exists] = await objectFile.exists();
   if (!exists) {
+    console.error(`Object not found: ${objectFile.name}`);
     throw new Error(`Object not found: ${objectFile.name}`);
   }
 
-  await objectFile.setMetadata({
-    metadata: {
-      [ACL_POLICY_METADATA_KEY]: JSON.stringify(aclPolicy),
-    },
-  });
+  try {
+    await objectFile.setMetadata({
+      metadata: {
+        [ACL_POLICY_METADATA_KEY]: JSON.stringify(aclPolicy),
+      },
+    });
+    console.log('ACL policy set successfully for:', objectFile.name);
+  } catch (error) {
+    console.error('Error setting ACL metadata:', error);
+    throw error;
+  }
 }
 
 // Gets the ACL policy from the object metadata.
@@ -141,9 +150,14 @@ export async function canAccessObject({
   objectFile: File;
   requestedPermission: ObjectPermission;
 }): Promise<boolean> {
+  console.log('Checking access for user:', userId, 'file:', objectFile.name, 'permission:', requestedPermission);
+  
   // When this function is called, the acl policy is required.
   const aclPolicy = await getObjectAclPolicy(objectFile);
+  console.log('ACL policy found:', aclPolicy);
+  
   if (!aclPolicy) {
+    console.log('No ACL policy found, denying access');
     return false;
   }
 
@@ -152,18 +166,23 @@ export async function canAccessObject({
     aclPolicy.visibility === "public" &&
     requestedPermission === ObjectPermission.READ
   ) {
+    console.log('Public object, allowing read access');
     return true;
   }
 
   // Access control requires the user id.
   if (!userId) {
+    console.log('No user ID provided, denying access');
     return false;
   }
 
   // The owner of the object can always access it.
   if (aclPolicy.owner === userId) {
+    console.log('User is owner, allowing access');
     return true;
   }
+
+  console.log('User is not owner and object is private, denying access');
 
   // Go through the ACL rules to check if the user has the required permission.
   for (const rule of aclPolicy.aclRules || []) {
@@ -172,6 +191,7 @@ export async function canAccessObject({
       (await accessGroup.hasMember(userId)) &&
       isPermissionAllowed(requestedPermission, rule.permission)
     ) {
+      console.log('User has access through ACL rule');
       return true;
     }
   }
