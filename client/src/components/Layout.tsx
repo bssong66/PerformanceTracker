@@ -37,8 +37,14 @@ export function Layout({ children }: LayoutProps) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { user } = useAuth();
 
-  const handleLogout = () => {
-    window.location.href = '/api/logout';
+  const handleLogout = async () => {
+    try {
+      await fetch('/api/auth/logout', { method: 'POST' });
+      window.location.href = '/';
+    } catch (error) {
+      // Fallback to redirect logout
+      window.location.href = '/api/logout';
+    }
   };
 
   const isActive = (href: string) => {
@@ -86,17 +92,17 @@ export function Layout({ children }: LayoutProps) {
       <div className="flex-shrink-0 p-4 border-t border-gray-200">
         <div className="flex items-center">
           <Avatar className="h-8 w-8 mr-3">
-            <AvatarImage src={user?.profileImageUrl} alt={user?.firstName || user?.email || '사용자'} />
+            <AvatarImage src={(user as any)?.profileImageUrl} alt={(user as any)?.firstName || (user as any)?.email || '사용자'} />
             <AvatarFallback>
               <User className="h-4 w-4" />
             </AvatarFallback>
           </Avatar>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-medium text-gray-900 truncate">
-              {user?.firstName || user?.email || '사용자'}
+              {(user as any)?.firstName || (user as any)?.email || '사용자'}
             </p>
             <p className="text-xs text-gray-500 truncate">
-              {user?.email}
+              {(user as any)?.email}
             </p>
           </div>
           <Button

@@ -13,8 +13,14 @@ export default function Home() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const handleLogout = () => {
-    window.location.href = '/api/logout';
+  const handleLogout = async () => {
+    try {
+      await fetch('/api/auth/logout', { method: 'POST' });
+      window.location.href = '/';
+    } catch (error) {
+      // Fallback to redirect logout
+      window.location.href = '/api/logout';
+    }
   };
 
   // Development: Get all users for switching
@@ -64,7 +70,7 @@ export default function Home() {
         <div className="flex justify-between items-center mb-8">
           <div>
             <h1 className="text-3xl font-bold text-gray-900 mb-2">
-              환영합니다, {user?.firstName || user?.email || '사용자'}님!
+              환영합니다, {(user as any)?.firstName || (user as any)?.email || '사용자'}님!
             </h1>
             <p className="text-gray-600">
               오늘도 목표 달성을 위해 함께 해보아요.
@@ -72,13 +78,13 @@ export default function Home() {
           </div>
           <div className="flex items-center space-x-4">
             {/* Development: User Switch Dropdown */}
-            {import.meta.env.DEV && allUsers && allUsers.length > 1 && (
+            {import.meta.env.DEV && allUsers && (allUsers as any)?.length > 1 && (
               <div className="flex items-center space-x-2">
                 <Users className="h-4 w-4 text-gray-500" />
                 <Select
-                  value={user?.id}
+                  value={(user as any)?.id}
                   onValueChange={(targetUserId) => {
-                    if (targetUserId !== user?.id) {
+                    if (targetUserId !== (user as any)?.id) {
                       switchUserMutation.mutate(targetUserId);
                     }
                   }}
@@ -88,9 +94,9 @@ export default function Home() {
                     <SelectValue placeholder="사용자 선택" />
                   </SelectTrigger>
                   <SelectContent>
-                    {allUsers.map((u: any) => (
+                    {(allUsers as any)?.map((u: any) => (
                       <SelectItem key={u.id} value={u.id}>
-                        {u.firstName || u.email} {u.id === user?.id && "(현재)"}
+                        {u.firstName || u.email} {u.id === (user as any)?.id && "(현재)"}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -98,9 +104,9 @@ export default function Home() {
               </div>
             )}
             
-            {user?.profileImageUrl && (
+            {(user as any)?.profileImageUrl && (
               <img 
-                src={user.profileImageUrl} 
+                src={(user as any).profileImageUrl} 
                 alt="Profile" 
                 className="w-10 h-10 rounded-full object-cover"
               />

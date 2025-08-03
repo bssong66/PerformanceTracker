@@ -184,8 +184,8 @@ export async function setupAuth(app: Express) {
         return res.status(409).json({ message: "이미 가입된 이메일입니다." });
       }
 
-      // Hash password
-      const hashedPassword = await bcrypt.hash(password, 10);
+      // Hash password (reduced rounds for faster processing)
+      const hashedPassword = await bcrypt.hash(password, 8);
 
       // Create user
       const newUser = await storage.createLocalUser({
@@ -220,8 +220,28 @@ export async function setupAuth(app: Express) {
   });
 
   app.get("/api/logout", (req, res) => {
+    const user = req.user as any;
+    
     req.logout(() => {
-      res.redirect("/");
+      // For local users, just redirect to home without external OIDC logout
+      if (!user?.access_token) {
+        return res.redirect("/");
+      }
+      
+      // For Replit OAuth users, redirect to OIDC logout
+      res.redirect(
+        client.buildEndSessionUrl(config, {
+          client_id: process.env.REPL_ID!,
+          post_logout_redirect_uri: `${req.protocol}://${req.hostname}`,
+        }).href
+      );
+    });
+  });
+
+  // Fast logout endpoint that returns JSON instead of redirect
+  app.post("/api/auth/logout", (req, res) => {
+    req.logout(() => {
+      res.json({ message: "로그아웃되었습니다." });
     });
   });
 }
