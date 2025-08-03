@@ -603,28 +603,71 @@ export default function ProjectManagement() {
     setIsEditingProjectDetail(false);
   };
 
-  const handleProjectDetailEdit = () => {
+  const handleProjectDetailEdit = async () => {
     setIsEditingProjectDetail(true);
-    // Set form values for editing
-    console.log('Selected project data:', selectedProject);
-    console.log('Project imageUrls:', selectedProject.imageUrls);
-    console.log('Project fileUrls:', selectedProject.fileUrls);
     
-    setProjectForm({
-      title: selectedProject.title,
-      description: selectedProject.description || '',
-      priority: selectedProject.priority,
-      color: selectedProject.color,
-      startDate: selectedProject.startDate || '',
-      endDate: selectedProject.endDate || '',
-      coreValue: selectedProject.coreValue || 'none',
-      annualGoal: selectedProject.annualGoal || 'none',
-      imageUrls: selectedProject.imageUrls || [],
-      fileUrls: selectedProject.fileUrls || []
-    });
+    // Fetch project files from the dedicated API
+    try {
+      const filesResponse = await fetch(`/api/projects/${selectedProject.id}/files`);
+      if (filesResponse.ok) {
+        const projectFiles = await filesResponse.json();
+        console.log('Fetched project files:', projectFiles);
+        
+        // Convert project files to fileUrls format
+        const fileUrls = projectFiles.map((file: any) => ({
+          url: `/objects/${file.objectPath}`,
+          name: file.originalFileName,
+          size: file.fileSize || 0
+        }));
+        
+        console.log('Converted fileUrls:', fileUrls);
+        
+        setProjectForm({
+          title: selectedProject.title,
+          description: selectedProject.description || '',
+          priority: selectedProject.priority,
+          color: selectedProject.color,
+          startDate: selectedProject.startDate || '',
+          endDate: selectedProject.endDate || '',
+          coreValue: selectedProject.coreValue || 'none',
+          annualGoal: selectedProject.annualGoal || 'none',
+          imageUrls: selectedProject.imageUrls || [],
+          fileUrls: fileUrls
+        });
+      } else {
+        // Fallback to project data
+        setProjectForm({
+          title: selectedProject.title,
+          description: selectedProject.description || '',
+          priority: selectedProject.priority,
+          color: selectedProject.color,
+          startDate: selectedProject.startDate || '',
+          endDate: selectedProject.endDate || '',
+          coreValue: selectedProject.coreValue || 'none',
+          annualGoal: selectedProject.annualGoal || 'none',
+          imageUrls: selectedProject.imageUrls || [],
+          fileUrls: selectedProject.fileUrls || []
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching project files:', error);
+      // Fallback to project data
+      setProjectForm({
+        title: selectedProject.title,
+        description: selectedProject.description || '',
+        priority: selectedProject.priority,
+        color: selectedProject.color,
+        startDate: selectedProject.startDate || '',
+        endDate: selectedProject.endDate || '',
+        coreValue: selectedProject.coreValue || 'none',
+        annualGoal: selectedProject.annualGoal || 'none',
+        imageUrls: selectedProject.imageUrls || [],
+        fileUrls: selectedProject.fileUrls || []
+      });
+    }
   };
 
-  const handleProjectDetailSave = () => {
+  const handleProjectDetailSave = async () => {
     if (!projectForm.title.trim()) {
       toast({ title: "오류", description: "프로젝트 제목을 입력해주세요.", variant: "destructive" });
       return;
@@ -644,10 +687,25 @@ export default function ProjectManagement() {
       userId: MOCK_USER_ID
     };
 
-    updateProjectMutation.mutate({ 
-      projectId: selectedProject.id, 
-      updates: projectData 
-    });
+    try {
+      // Update project basic info
+      await updateProjectMutation.mutateAsync({ 
+        projectId: selectedProject.id, 
+        updates: projectData 
+      });
+
+      // If fileUrls changed, sync with project files table
+      // This will be handled by the UnifiedAttachmentManager component internally
+      console.log('Project updated successfully with files:', projectForm.fileUrls);
+      
+    } catch (error) {
+      console.error('Error updating project:', error);
+      toast({ 
+        title: "저장 실패", 
+        description: "프로젝트 저장 중 오류가 발생했습니다.", 
+        variant: "destructive" 
+      });
+    }
   };
 
   const handleProjectDetailCancel = () => {
