@@ -181,18 +181,51 @@ export function UnifiedAttachmentManager({
       // 이미지 업로드
       if (images.length > 0) {
         const uploadPromises = images.map(async (file) => {
-          const formData = new FormData();
-          formData.append('files', file);
-          
-          const response = await fetch(uploadEndpoint, {
+          // Get upload URL from backend
+          const uploadResponse = await fetch(uploadEndpoint, {
             method: 'POST',
-            body: formData
+            headers: {
+              'Content-Type': 'application/json',
+            },
           });
-          
-          if (!response.ok) throw new Error('이미지 업로드 실패');
-          
-          const result = await response.json();
-          return result.urls?.[0] || result.url;
+
+          if (!uploadResponse.ok) {
+            throw new Error('업로드 URL 요청에 실패했습니다.');
+          }
+
+          const { uploadURL } = await uploadResponse.json();
+
+          // Upload file to object storage
+          const uploadFileResponse = await fetch(uploadURL, {
+            method: 'PUT',
+            body: file,
+            headers: {
+              'Content-Type': file.type || 'application/octet-stream',
+            },
+          });
+
+          if (!uploadFileResponse.ok) {
+            throw new Error('이미지 업로드 실패');
+          }
+
+          // Set ACL policy for uploaded file
+          const aclResponse = await fetch('/api/files/set-acl', {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              uploadURL: uploadURL,
+              fileName: file.name
+            }),
+          });
+
+          if (!aclResponse.ok) {
+            throw new Error('ACL 설정 실패');
+          }
+
+          const aclResult = await aclResponse.json();
+          return aclResult.objectPath;
         });
 
         const uploadedImageUrls = await Promise.all(uploadPromises);
@@ -202,21 +235,53 @@ export function UnifiedAttachmentManager({
       // 파일 업로드
       if (documents.length > 0) {
         const uploadPromises = documents.map(async (file) => {
-          const formData = new FormData();
-          formData.append('files', file);
-          
-          const response = await fetch(uploadEndpoint, {
+          // Get upload URL from backend
+          const uploadResponse = await fetch(uploadEndpoint, {
             method: 'POST',
-            body: formData
+            headers: {
+              'Content-Type': 'application/json',
+            },
           });
-          
-          if (!response.ok) throw new Error('파일 업로드 실패');
-          
-          const result = await response.json();
+
+          if (!uploadResponse.ok) {
+            throw new Error('업로드 URL 요청에 실패했습니다.');
+          }
+
+          const { uploadURL } = await uploadResponse.json();
+
+          // Upload file to object storage
+          const uploadFileResponse = await fetch(uploadURL, {
+            method: 'PUT',
+            body: file,
+            headers: {
+              'Content-Type': file.type || 'application/octet-stream',
+            },
+          });
+
+          if (!uploadFileResponse.ok) {
+            throw new Error('파일 업로드 실패');
+          }
+
+          // Set ACL policy for uploaded file
+          const aclResponse = await fetch('/api/files/set-acl', {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              uploadURL: uploadURL,
+              fileName: file.name
+            }),
+          });
+
+          if (!aclResponse.ok) {
+            throw new Error('ACL 설정 실패');
+          }
+
+          const aclResult = await aclResponse.json();
           return {
-            url: result.urls?.[0] || result.url,
-            name: file.name,
-            size: file.size
+            url: aclResult.objectPath,
+            name: file.name
           };
         });
 
