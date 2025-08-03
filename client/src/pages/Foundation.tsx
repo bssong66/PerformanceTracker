@@ -173,6 +173,22 @@ export default function Foundation() {
     }
   }, [isFutureYear, foundation]);
 
+  // Effect to automatically enter edit mode for goals when no goals exist
+  useEffect(() => {
+    if (!goalsLoading && goals && (goals as any[]).length === 0 && tempGoals.length === 0 && !isPastYear) {
+      setEditingGoals(true);
+    }
+  }, [goals, goalsLoading, tempGoals, isPastYear]);
+
+  // Effect to automatically enter edit modes when no foundation data exists (for new users or years)
+  useEffect(() => {
+    if (!foundationLoading && !foundation && !editingMission && !editingValues && !editingGoals && !isPastYear) {
+      setEditingMission(true);
+      setEditingValues(true);
+      setEditingGoals(true);
+    }
+  }, [foundation, foundationLoading, editingMission, editingValues, editingGoals, isPastYear]);
+
   // Calculate annual progress for each core value
   const calculateAnnualProgress = (coreValue: string) => {
     if (!coreValue || coreValue.trim() === "") return { completed: 0, total: 0, percentage: 0, tasks: { completed: 0, total: 0 }, projects: { completed: 0, total: 0 }, events: { completed: 0, total: 0 }, habits: { completed: 0, total: 0 } };
