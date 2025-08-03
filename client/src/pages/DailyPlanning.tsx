@@ -143,6 +143,18 @@ export default function DailyPlanning() {
     },
   });
 
+  const updateEventMutation = useMutation({
+    mutationFn: ({ id, completed }: { id: number; completed: boolean }) => 
+      fetch(`/api/events/${id}/complete`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ completed })
+      }).then(res => res.json()),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['events', user?.id as string, today] });
+    },
+  });
+
   const saveReflectionMutation = useMutation({
     mutationFn: saveDailyReflection,
     onSuccess: () => {
@@ -258,6 +270,15 @@ export default function DailyPlanning() {
         description: "훌륭합니다! 다음 할일로 넘어가세요.",
       });
     }
+  };
+
+  const handleToggleEvent = (id: number, completed: boolean) => {
+    updateEventMutation.mutate({ id, completed });
+    
+    toast({
+      title: completed ? "일정 완료!" : "일정 완료 취소",
+      description: completed ? "일정이 완료되었습니다." : "일정이 미완료로 변경되었습니다.",
+    });
   };
 
   const handleSaveReflection = () => {
@@ -479,17 +500,36 @@ export default function DailyPlanning() {
                         <p className="text-xs text-gray-400 italic">예정된 일정이 없습니다.</p>
                       ) : (
                         todayEvents.map((event: any) => (
-                          <div key={event.id} className="flex items-center space-x-2 p-2 bg-green-50 rounded border border-green-200">
-                            <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                          <div key={event.id} className={`flex items-center space-x-2 p-2 rounded border ${
+                            event.completed 
+                              ? 'bg-gray-50 border-gray-200 opacity-75' 
+                              : 'bg-green-50 border-green-200'
+                          }`}>
+                            <Checkbox
+                              id={`event-${event.id}`}
+                              checked={event.completed || false}
+                              onCheckedChange={(checked) => handleToggleEvent(event.id, checked === true)}
+                              className="w-4 h-4"
+                            />
                             <div className="flex-1">
-                              <div className="text-sm font-medium text-green-800">{event.title}</div>
+                              <div className={`text-sm font-medium ${
+                                event.completed ? 'text-gray-500 line-through' : 'text-green-800'
+                              }`}>
+                                {event.title}
+                              </div>
                               {event.startTime && event.endTime && (
-                                <div className="text-xs text-green-600">
+                                <div className={`text-xs ${
+                                  event.completed ? 'text-gray-400' : 'text-green-600'
+                                }`}>
                                   {event.startTime} - {event.endTime}
                                 </div>
                               )}
-                              {!event.startTime && !event.endTime && event.allDay && (
-                                <div className="text-xs text-green-600">종일</div>
+                              {!event.startTime && !event.endTime && event.isAllDay && (
+                                <div className={`text-xs ${
+                                  event.completed ? 'text-gray-400' : 'text-green-600'
+                                }`}>
+                                  종일
+                                </div>
                               )}
                             </div>
                           </div>
