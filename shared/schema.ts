@@ -123,6 +123,8 @@ export const events = pgTable("events", {
   coreValue: text("core_value"), // Connected core value from foundation
   annualGoal: text("annual_goal"), // Connected annual goal
   completed: boolean("completed").default(false), // Event completion status
+  imageUrls: text("image_urls").array(),
+  fileUrls: jsonb("file_urls").$type<Array<{url: string, name: string, size: number}>>().default([]), // For general file uploads
   createdAt: timestamp("created_at").defaultNow(),
 });
 

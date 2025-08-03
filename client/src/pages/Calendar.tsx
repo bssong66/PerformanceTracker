@@ -22,6 +22,8 @@ import { useToast } from "@/hooks/use-toast";
 import { queryClient } from "@/lib/queryClient";
 import { format } from "date-fns";
 import { ko } from "date-fns/locale";
+import { UnifiedAttachmentManager } from "@/components/UnifiedAttachmentManager";
+import { useAuth } from "@/hooks/useAuth";
 
 // Setup moment localizer and DragAndDrop Calendar
 moment.locale("ko");
@@ -44,6 +46,7 @@ const taskPriorityColors = {
 
 export default function Calendar() {
   const { toast } = useToast();
+  const { user } = useAuth();
   const [view, setView] = useState<View>(Views.MONTH);
   const [date, setDate] = useState(new Date());
   const [showEventDialog, setShowEventDialog] = useState(false);
@@ -76,7 +79,9 @@ export default function Calendar() {
     repeatWeekdays: [] as string[],
     coreValue: '',
     annualGoal: '',
-    completed: false
+    completed: false,
+    imageUrls: [] as string[],
+    fileUrls: [] as Array<{url: string, name: string, size: number}>
   });
 
   // Fetch events
@@ -243,7 +248,9 @@ export default function Calendar() {
       repeatWeekdays: [],
       coreValue: 'none',
       annualGoal: 'none',
-      completed: false
+      completed: false,
+      imageUrls: [],
+      fileUrls: []
     });
     setIsEditing(false);
     setSelectedEvent(null);
@@ -490,7 +497,9 @@ export default function Calendar() {
         repeatWeekdays: eventData.repeatWeekdays ? JSON.parse(eventData.repeatWeekdays) : [],
         coreValue: eventData.coreValue || 'none',
         annualGoal: eventData.annualGoal || 'none',
-        completed: eventData.completed || false
+        completed: eventData.completed || false,
+        imageUrls: eventData.imageUrls || [],
+        fileUrls: eventData.fileUrls || []
       });
       setIsEditing(true);
       setShowEventDialog(true);
@@ -600,7 +609,9 @@ export default function Calendar() {
       repeatWeekdays: eventForm.repeatWeekdays.length > 0 ? JSON.stringify(eventForm.repeatWeekdays) : null,
       coreValue: eventForm.coreValue === 'none' ? null : eventForm.coreValue || null,
       annualGoal: eventForm.annualGoal === 'none' ? null : eventForm.annualGoal || null,
-      completed: eventForm.completed
+      completed: eventForm.completed,
+      imageUrls: eventForm.imageUrls,
+      fileUrls: eventForm.fileUrls
     };
 
     // For updates, include the ID
@@ -1000,6 +1011,22 @@ export default function Calendar() {
                     </div>
                   </>
                 )}
+              </div>
+
+              {/* 이미지 및 파일 업로드 섹션 */}
+              <div className="space-y-3">
+                <div className="flex items-center space-x-2">
+                  <Label>첨부파일</Label>
+                </div>
+                <UnifiedAttachmentManager
+                  imageUrls={eventForm.imageUrls}
+                  fileUrls={eventForm.fileUrls}
+                  onImagesChange={(imageUrls) => setEventForm(prev => ({ ...prev, imageUrls }))}
+                  onFilesChange={(fileUrls) => setEventForm(prev => ({ ...prev, fileUrls }))}
+                  uploadEndpoint="/api/files/upload"
+                  maxFiles={10}
+                  maxFileSize={10485760}
+                />
               </div>
 
               {/* 버튼들 */}
