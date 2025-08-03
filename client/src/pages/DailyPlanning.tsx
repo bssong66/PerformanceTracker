@@ -67,9 +67,17 @@ export default function DailyPlanning() {
     }
   }, [isCompleted]);
 
-  const { data: dailyTasks = [], isLoading: tasksLoading } = useQuery({
-    queryKey: ['tasks', user?.id, today],
-    queryFn: () => fetch(api.tasks.list(user?.id as string, today)).then(res => res.json()),
+  // 오늘 날짜의 모든 할일 가져오기 (날짜 필터 제거)
+  const { data: allTasks = [], isLoading: tasksLoading } = useQuery({
+    queryKey: ['tasks', user?.id],
+    queryFn: () => fetch(`/api/tasks/${user?.id as string}`).then(res => res.json()),
+    enabled: !!user?.id,
+  });
+
+  // 오늘 날짜의 일정 가져오기
+  const { data: todayEvents = [] } = useQuery({
+    queryKey: ['events', user?.id, today],
+    queryFn: () => fetch(`/api/events/${user?.id as string}?startDate=${today}&endDate=${today}`).then(res => res.json()),
     enabled: !!user?.id,
   });
 
@@ -123,7 +131,7 @@ export default function DailyPlanning() {
   const addTaskMutation = useMutation({
     mutationFn: createTask,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['tasks', user?.id as string, today] });
+      queryClient.invalidateQueries({ queryKey: ['tasks', user?.id as string] });
       setNewTask("");
     },
   });
@@ -131,7 +139,7 @@ export default function DailyPlanning() {
   const updateTaskMutation = useMutation({
     mutationFn: ({ id, updates }: { id: number; updates: any }) => updateTask(id, updates),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['tasks', user?.id as string, today] });
+      queryClient.invalidateQueries({ queryKey: ['tasks', user?.id as string] });
     },
   });
 
@@ -159,9 +167,18 @@ export default function DailyPlanning() {
     },
   });
 
-  // Use dailyTasks for both tabs to ensure data consistency
-  const tasks = dailyTasks;
-  const focusTasks = dailyTasks;
+  // 오늘 날짜의 할일만 필터링
+  const todayTasks = allTasks.filter((task: any) => {
+    if (task.dueDate) {
+      return task.dueDate === today;
+    }
+    // dueDate가 없는 경우 생성일이 오늘인 것들 포함
+    return task.createdAt && task.createdAt.startsWith(today);
+  });
+
+  // Use filtered tasks for both tabs to ensure data consistency
+  const tasks = todayTasks;
+  const focusTasks = todayTasks;
 
   // Group tasks by priority
   const tasksByPriority = {
@@ -448,7 +465,49 @@ export default function DailyPlanning() {
                     </div>
                   </div>
 
+                  {/* Today's Events/Schedule */}
+                  <div className="mb-4">
+                    <div className="flex items-center space-x-2 mb-2">
+                      <div className="w-1 h-4 bg-gradient-to-b from-green-500 to-green-600 rounded-full"></div>
+                      <h4 className="text-sm font-semibold text-gray-800">오늘의 일정</h4>
+                      <span className="text-xs text-gray-500">
+                        ({todayEvents.length}개)
+                      </span>
+                    </div>
+                    <div className="space-y-1 mb-4">
+                      {todayEvents.length === 0 ? (
+                        <p className="text-xs text-gray-400 italic">예정된 일정이 없습니다.</p>
+                      ) : (
+                        todayEvents.map((event: any) => (
+                          <div key={event.id} className="flex items-center space-x-2 p-2 bg-green-50 rounded border border-green-200">
+                            <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                            <div className="flex-1">
+                              <div className="text-sm font-medium text-green-800">{event.title}</div>
+                              {event.startTime && event.endTime && (
+                                <div className="text-xs text-green-600">
+                                  {event.startTime} - {event.endTime}
+                                </div>
+                              )}
+                              {!event.startTime && !event.endTime && event.allDay && (
+                                <div className="text-xs text-green-600">종일</div>
+                              )}
+                            </div>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </div>
+
                   {/* Tasks by Priority */}
+                  <div className="mb-2">
+                    <div className="flex items-center space-x-2 mb-2">
+                      <div className="w-1 h-4 bg-gradient-to-b from-blue-500 to-blue-600 rounded-full"></div>
+                      <h4 className="text-sm font-semibold text-gray-800">오늘의 할일</h4>
+                      <span className="text-xs text-gray-500">
+                        ({tasks.length}개)
+                      </span>
+                    </div>
+                  </div>
                   {(['A', 'B', 'C'] as const).map((priority) => (
                     <div key={priority}>
                       <div className="flex items-center space-x-2 mb-2">
