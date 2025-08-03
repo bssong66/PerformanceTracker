@@ -267,6 +267,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const id = parseInt(req.params.id);
       const updates = req.body;
+      
+      // Process fileUrls if they exist in the updates
+      if (updates.fileUrls) {
+        console.log('Processing project fileUrls:', updates.fileUrls);
+        
+        // Ensure fileUrls is an array of proper file objects
+        if (Array.isArray(updates.fileUrls)) {
+          updates.fileUrls = updates.fileUrls.map((file: any) => {
+            // If it's already a proper object, return as is
+            if (typeof file === 'object' && file.url && file.name) {
+              return {
+                url: String(file.url),
+                name: String(file.name),
+                size: Number(file.size) || 0
+              };
+            }
+            // If it's a string URL, create a basic file object
+            if (typeof file === 'string') {
+              const fileName = file.split('/').pop() || 'Unknown file';
+              return {
+                url: file,
+                name: fileName,
+                size: 0
+              };
+            }
+            // Invalid file data, skip
+            return null;
+          }).filter(Boolean); // Remove null entries
+        } else {
+          // Invalid fileUrls format, reset to empty array
+          updates.fileUrls = [];
+        }
+        
+        console.log('Processed project fileUrls:', updates.fileUrls);
+      }
+      
       const project = await storage.updateProject(id, updates);
       
       if (!project) {
@@ -275,6 +311,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json(project);
     } catch (error) {
+      console.error('Project update error:', error);
       res.status(400).json({ message: "Invalid project data" });
     }
   });
@@ -567,6 +604,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Remove userId from updates to prevent override
       const { userId: _, ...safeUpdates } = updates;
+      
+      // Process fileUrls if they exist in the updates
+      if (safeUpdates.fileUrls) {
+        console.log('Processing fileUrls:', safeUpdates.fileUrls);
+        
+        // Ensure fileUrls is an array of proper file objects
+        if (Array.isArray(safeUpdates.fileUrls)) {
+          safeUpdates.fileUrls = safeUpdates.fileUrls.map((file: any) => {
+            // If it's already a proper object, return as is
+            if (typeof file === 'object' && file.url && file.name) {
+              return {
+                url: String(file.url),
+                name: String(file.name),
+                size: Number(file.size) || 0
+              };
+            }
+            // If it's a string URL, create a basic file object
+            if (typeof file === 'string') {
+              const fileName = file.split('/').pop() || 'Unknown file';
+              return {
+                url: file,
+                name: fileName,
+                size: 0
+              };
+            }
+            // Invalid file data, skip
+            return null;
+          }).filter(Boolean); // Remove null entries
+        } else {
+          // Invalid fileUrls format, reset to empty array
+          safeUpdates.fileUrls = [];
+        }
+        
+        console.log('Processed fileUrls:', safeUpdates.fileUrls);
+      }
       
       console.log('Updating task:', id, 'with updates:', safeUpdates);
       const task = await storage.updateTask(id, safeUpdates);
@@ -1008,6 +1080,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { fileUrl } = req.body;
       const userId = req.user.claims.sub;
+      
+      if (!fileUrl) {
+        return res.status(400).json({ error: "fileUrl is required" });
+      }
+      
       const objectStorageService = new ObjectStorageService();
       
       console.log('Setting ACL for file:', fileUrl, 'user:', userId);
