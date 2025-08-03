@@ -20,7 +20,7 @@ export const api = {
 
   // Tasks
   tasks: {
-    list: (userId: number, date?: string, priority?: string) => {
+    list: (userId: string, date?: string, priority?: string) => {
       const params = new URLSearchParams();
       if (date) params.append('date', date);
       if (priority) params.append('priority', priority);
@@ -69,7 +69,7 @@ export const api = {
 
   // Time Blocks
   timeBlocks: {
-    list: (userId: number, date: string) => `/api/time-blocks/${userId}/${date}`,
+    list: (userId: string, date: string) => `/api/time-blocks/${userId}/${date}`,
     create: () => `/api/time-blocks`,
     update: (id: number) => `/api/time-blocks/${id}`,
     delete: (id: number) => `/api/time-blocks/${id}`,

@@ -69,7 +69,7 @@ export default function DailyPlanning() {
 
   const { data: dailyTasks = [], isLoading: tasksLoading } = useQuery({
     queryKey: ['tasks', user?.id, today],
-    queryFn: () => fetch(api.tasks.list(user?.id, today)).then(res => res.json()),
+    queryFn: () => fetch(api.tasks.list(user?.id as string, today)).then(res => res.json()),
     enabled: !!user?.id,
   });
 
@@ -77,7 +77,7 @@ export default function DailyPlanning() {
 
   const { data: projects = [] } = useQuery({
     queryKey: ['projects', user?.id],
-    queryFn: () => fetch(`/api/projects/${user?.id}`).then(res => res.json()),
+    queryFn: () => fetch(`/api/projects/${user?.id as string}`).then(res => res.json()),
     enabled: !!user?.id,
   });
 
@@ -85,37 +85,37 @@ export default function DailyPlanning() {
   
   const { data: foundation } = useQuery({
     queryKey: ['foundation', user?.id, currentYear],
-    queryFn: () => fetch(`/api/foundation/${user?.id}?year=${currentYear}`).then(res => res.json()),
+    queryFn: () => fetch(`/api/foundation/${user?.id as string}?year=${currentYear}`).then(res => res.json()),
     enabled: !!user?.id,
   });
 
   const { data: annualGoals = [] } = useQuery({
     queryKey: ['goals', user?.id, currentYear],
-    queryFn: () => fetch(`/api/goals/${user?.id}?year=${currentYear}`).then(res => res.json()),
+    queryFn: () => fetch(`/api/goals/${user?.id as string}?year=${currentYear}`).then(res => res.json()),
     enabled: !!user?.id,
   });
 
   const { data: timeBlocks = [] } = useQuery({
     queryKey: ['timeBlocks', user?.id, today],
-    queryFn: () => fetch(api.timeBlocks.list(user?.id, today)).then(res => res.json()),
+    queryFn: () => fetch(api.timeBlocks.list(user?.id as string, today)).then(res => res.json()),
     enabled: !!user?.id,
   });
 
   const { data: habits = [] } = useQuery({
     queryKey: ['habits', user?.id],
-    queryFn: () => fetch(`/api/habits/${user?.id}`).then(res => res.json()),
+    queryFn: () => fetch(`/api/habits/${user?.id as string}`).then(res => res.json()),
     enabled: !!user?.id,
   });
 
   const { data: habitLogs = [] } = useQuery({
     queryKey: ['habitLogs', user?.id, today],
-    queryFn: () => fetch(`/api/habit-logs/${user?.id}/${today}`).then(res => res.json()),
+    queryFn: () => fetch(`/api/habit-logs/${user?.id as string}/${today}`).then(res => res.json()),
     enabled: !!user?.id,
   });
 
   const { data: dailyReflection } = useQuery({
     queryKey: ['dailyReflection', user?.id, today],
-    queryFn: () => fetch(`/api/daily-reflection/${user?.id}/${today}`).then(res => res.json()).catch(() => null),
+    queryFn: () => fetch(`/api/daily-reflection/${user?.id as string}/${today}`).then(res => res.json()).catch(() => null),
     enabled: !!user?.id,
   });
 
@@ -123,7 +123,7 @@ export default function DailyPlanning() {
   const addTaskMutation = useMutation({
     mutationFn: createTask,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['tasks', user?.id, today] });
+      queryClient.invalidateQueries({ queryKey: ['tasks', user?.id as string, today] });
       setNewTask("");
     },
   });
@@ -131,14 +131,14 @@ export default function DailyPlanning() {
   const updateTaskMutation = useMutation({
     mutationFn: ({ id, updates }: { id: number; updates: any }) => updateTask(id, updates),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['tasks', user?.id, today] });
+      queryClient.invalidateQueries({ queryKey: ['tasks', user?.id as string, today] });
     },
   });
 
   const saveReflectionMutation = useMutation({
     mutationFn: saveDailyReflection,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['dailyReflection', user?.id, today] });
+      queryClient.invalidateQueries({ queryKey: ['dailyReflection', user?.id as string, today] });
       toast({
         title: "성공",
         description: "일일 회고가 저장되었습니다.",
@@ -149,7 +149,7 @@ export default function DailyPlanning() {
   const addTimeBlockMutation = useMutation({
     mutationFn: createTimeBlock,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['timeBlocks', user?.id, today] });
+      queryClient.invalidateQueries({ queryKey: ['timeBlocks', user?.id as string, today] });
       setNewTimeBlock({
         startTime: "",
         endTime: "",
@@ -219,7 +219,7 @@ export default function DailyPlanning() {
     }
 
     addTaskMutation.mutate({
-      userId: user?.id,
+      userId: user?.id as string,
       title: newTask.trim(),
       priority: selectedPriority,
       coreValue: selectedCoreValue === 'none' ? null : selectedCoreValue,
@@ -245,7 +245,7 @@ export default function DailyPlanning() {
 
   const handleSaveReflection = () => {
     saveReflectionMutation.mutate({
-      userId: user?.id,
+      userId: user?.id as string,
       date: today,
       content: reflection,
     });
@@ -272,7 +272,7 @@ export default function DailyPlanning() {
     }
 
     addTimeBlockMutation.mutate({
-      userId: user?.id,
+      userId: user?.id as string,
       date: today,
       ...newTimeBlock,
     });
