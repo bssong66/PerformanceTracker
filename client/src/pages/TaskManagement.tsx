@@ -12,7 +12,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
-import { Plus, ListTodo, Calendar, Clock, Eye, Trash2, Edit, CheckCircle, Circle, Camera, Image, ArrowLeft, ArrowRight, RefreshCw } from 'lucide-react';
+import { Plus, ListTodo, Calendar, Clock, Eye, Trash2, Edit, CheckCircle, Circle, Camera, Image, ArrowLeft, ArrowRight, RefreshCw, FileText } from 'lucide-react';
+import { FileUploader } from '@/components/FileUploader';
 import { format } from 'date-fns';
 import { ko } from 'date-fns/locale';
 
@@ -35,6 +36,7 @@ interface Task {
   projectId?: number | null;
   userId: number;
   imageUrls?: string[];
+  fileUrls?: Array<{url: string, name: string}>;
 }
 
 
@@ -62,6 +64,7 @@ function TaskManagement() {
     endDate: '',
     projectId: null as number | null,
     imageUrls: [] as string[],
+    fileUrls: [] as Array<{url: string, name: string}>,
     coreValue: '',
     annualGoal: ''
   });
@@ -220,6 +223,7 @@ function TaskManagement() {
       endDate: '',
       projectId: null, // Always null for independent tasks
       imageUrls: [],
+      fileUrls: [],
       coreValue: 'none',
       annualGoal: 'none'
     });
@@ -261,6 +265,7 @@ function TaskManagement() {
       endDate: task.endDate || '',
       projectId: null, // Always null for independent tasks
       imageUrls: task.imageUrls || [],
+      fileUrls: task.fileUrls || [],
       coreValue: (task as any).coreValue || 'none',
       annualGoal: (task as any).annualGoal || 'none'
     });
@@ -589,6 +594,21 @@ function TaskManagement() {
                   multiple
                   className="hidden"
                 />
+              </div>
+
+              <div>
+                <Label>파일 첨부</Label>
+                <FileUploader
+                  files={taskForm.fileUrls}
+                  onFilesChange={(files) => setTaskForm(prev => ({ ...prev, fileUrls: files }))}
+                  maxFiles={10}
+                  maxFileSize={50 * 1024 * 1024} // 50MB
+                  acceptedTypes={["*/*"]}
+                  uploadEndpoint="/api/files/upload"
+                >
+                  <FileText className="h-4 w-4" />
+                  <span>파일 추가</span>
+                </FileUploader>
               </div>
 
               <div className="flex justify-end space-x-2 pt-4">
@@ -1061,6 +1081,37 @@ function TaskManagement() {
                             setCurrentImageIndex(index);
                           }}
                         />
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {selectedTask.fileUrls && selectedTask.fileUrls.length > 0 && (
+                  <div>
+                    <Label className="text-sm font-medium text-gray-600">첨부 파일</Label>
+                    <div className="space-y-2 mt-2">
+                      {selectedTask.fileUrls.map((file, index) => (
+                        <div
+                          key={index}
+                          className="flex items-center justify-between p-2 bg-gray-50 rounded-lg border"
+                        >
+                          <div className="flex items-center space-x-2 flex-1 min-w-0">
+                            <FileText className="h-4 w-4 text-gray-500" />
+                            <span className="text-sm truncate" title={file.name}>
+                              {file.name}
+                            </span>
+                          </div>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => window.open(file.url, '_blank')}
+                            className="h-8 w-8 p-0 text-blue-500 hover:text-blue-700"
+                            title="다운로드"
+                          >
+                            <FileText className="h-3 w-3" />
+                          </Button>
+                        </div>
                       ))}
                     </div>
                   </div>

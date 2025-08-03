@@ -9,7 +9,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { Plus, Folder, Image, Eye, Trash2, Calendar, Edit, ChevronDown, ChevronRight, ChevronLeft, CheckCircle, Circle, Play, X, ImagePlus, Copy } from 'lucide-react';
+import { Plus, Folder, Image, Eye, Trash2, Calendar, Edit, ChevronDown, ChevronRight, ChevronLeft, CheckCircle, Circle, Play, X, ImagePlus, Copy, FileText } from 'lucide-react';
+import { FileUploader } from '@/components/FileUploader';
 import { format } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import { ProjectFileManager } from '@/components/ProjectFileManager';
@@ -33,6 +34,7 @@ interface Project {
   coreValue?: string;
   annualGoal?: string;
   imageUrls?: string[];
+  fileUrls?: Array<{url: string, name: string}>;
   userId: number;
   completed?: boolean;
 }
@@ -47,7 +49,8 @@ export default function ProjectManagement() {
     notes: '',
     startDate: '',
     endDate: '',
-    imageUrls: [] as string[]
+    imageUrls: [] as string[],
+    fileUrls: [] as Array<{url: string, name: string}>
   });
   const [showProjectDialog, setShowProjectDialog] = useState(false);
   const [editingProject, setEditingProject] = useState<Project | null>(null);
@@ -87,7 +90,8 @@ export default function ProjectManagement() {
     endDate: '',
     coreValue: '',
     annualGoal: '',
-    imageUrls: [] as string[]
+    imageUrls: [] as string[],
+    fileUrls: [] as Array<{url: string, name: string}>
   });
 
   // Fetch projects
@@ -456,7 +460,8 @@ export default function ProjectManagement() {
       endDate: '',
       coreValue: '',
       annualGoal: '',
-      imageUrls: []
+      imageUrls: [],
+      fileUrls: []
     });
     setEditingProject(null);
   };
@@ -468,7 +473,8 @@ export default function ProjectManagement() {
       startDate: '',
       endDate: '',
       notes: '',
-      imageUrls: []
+      imageUrls: [],
+      fileUrls: []
     });
     setEditingTask(null);
   };
@@ -488,7 +494,8 @@ export default function ProjectManagement() {
       endDate: project.endDate || '',
       coreValue: project.coreValue || '',
       annualGoal: project.annualGoal || '',
-      imageUrls: project.imageUrls || []
+      imageUrls: project.imageUrls || [],
+      fileUrls: project.fileUrls || []
     });
     setEditingProject(project);
     setShowProjectDialog(true);
@@ -508,7 +515,8 @@ export default function ProjectManagement() {
       startDate: '',
       endDate: '',
       notes: '',
-      imageUrls: []
+      imageUrls: [],
+      fileUrls: []
     });
     setEditingTask(null);
     setShowTaskDialog(true);
@@ -780,7 +788,8 @@ export default function ProjectManagement() {
       startDate: task.startDate || '',
       endDate: task.endDate || '',
       notes: task.notes || '',
-      imageUrls: task.imageUrls || []
+      imageUrls: task.imageUrls || [],
+      fileUrls: task.fileUrls || []
     });
     setShowTaskDialog(true);
   };
@@ -828,7 +837,8 @@ export default function ProjectManagement() {
         startDate: selectedTask.startDate || '',
         endDate: selectedTask.endDate || '',
         notes: selectedTask.notes || '',
-        imageUrls: selectedTask.imageUrls || []
+        imageUrls: selectedTask.imageUrls || [],
+        fileUrls: selectedTask.fileUrls || []
       });
       setEditingTask(selectedTask);
     }
@@ -1096,6 +1106,21 @@ export default function ProjectManagement() {
                   multiple
                   className="hidden"
                 />
+              </div>
+
+              <div>
+                <Label>파일 첨부</Label>
+                <FileUploader
+                  files={projectForm.fileUrls}
+                  onFilesChange={(files) => setProjectForm(prev => ({ ...prev, fileUrls: files }))}
+                  maxFiles={10}
+                  maxFileSize={50 * 1024 * 1024} // 50MB
+                  acceptedTypes={["*/*"]}
+                  uploadEndpoint="/api/files/upload"
+                >
+                  <FileText className="h-4 w-4" />
+                  <span>파일 추가</span>
+                </FileUploader>
               </div>
 
               <div className="flex justify-end space-x-2 pt-4">
@@ -1676,6 +1701,21 @@ export default function ProjectManagement() {
                 multiple
                 className="hidden"
               />
+            </div>
+
+            <div>
+              <Label>파일 첨부</Label>
+              <FileUploader
+                files={taskForm.fileUrls}
+                onFilesChange={(files) => setTaskForm(prev => ({ ...prev, fileUrls: files }))}
+                maxFiles={10}
+                maxFileSize={50 * 1024 * 1024} // 50MB
+                acceptedTypes={["*/*"]}
+                uploadEndpoint="/api/files/upload"
+              >
+                <FileText className="h-4 w-4" />
+                <span>파일 추가</span>
+              </FileUploader>
             </div>
 
             <div className="flex justify-end space-x-2 pt-4">
