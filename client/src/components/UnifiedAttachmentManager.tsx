@@ -438,64 +438,66 @@ export function UnifiedAttachmentManager({
             {allAttachments.map((attachment, index) => (
               <div
                 key={`${attachment.type}-${attachment.url}-${index}`}
-                className="flex items-center space-x-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg border"
+                className="p-3 bg-gray-50 dark:bg-gray-800 rounded-lg border space-y-2"
               >
-                <div className="flex-shrink-0">
-                  {attachment.type === 'image' ? (
-                    <img
-                      src={attachment.url}
-                      alt={attachment.name}
-                      className="w-10 h-10 rounded object-cover"
-                    />
-                  ) : (
-                    getFileIcon(attachment.name, attachment.mimeType)
-                  )}
-                </div>
-                
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-900 dark:text-gray-100 break-words">
-                    {attachment.name}
-                  </p>
-                  {attachment.size && (
-                    <p className="text-xs text-gray-500">
-                      {formatFileSize(attachment.size)}
-                    </p>
-                  )}
-                </div>
-                
-                <div className="flex-shrink-0">
-                  <div className="flex items-center space-x-1">
-                    {canPreview(attachment) && (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => handlePreview(attachment)}
-                        className="h-8 px-2"
-                      >
-                        <Eye className="h-3 w-3" />
-                        <span className="ml-1 text-xs hidden sm:inline">미리보기</span>
-                      </Button>
+                {/* 첫 번째 줄: 아이콘과 파일 정보 */}
+                <div className="flex items-center space-x-3">
+                  <div className="flex-shrink-0">
+                    {attachment.type === 'image' ? (
+                      <img
+                        src={attachment.url}
+                        alt={attachment.name}
+                        className="w-10 h-10 rounded object-cover"
+                      />
+                    ) : (
+                      getFileIcon(attachment.name, attachment.mimeType)
                     )}
-                    
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => handleDownload(attachment)}
-                      className="h-8 px-2"
-                    >
-                      <Download className="h-3 w-3" />
-                      <span className="ml-1 text-xs hidden sm:inline">다운로드</span>
-                    </Button>
-                    
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => handleRemove(attachment)}
-                      className="h-8 px-2 text-red-600 hover:text-red-700"
-                    >
-                      <X className="h-3 w-3" />
-                    </Button>
                   </div>
+                  
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-gray-900 dark:text-gray-100 break-words leading-tight">
+                      {attachment.name}
+                    </p>
+                    {attachment.size && (
+                      <p className="text-xs text-gray-500 mt-1">
+                        {formatFileSize(attachment.size)}
+                      </p>
+                    )}
+                  </div>
+                </div>
+                
+                {/* 두 번째 줄: 액션 버튼들 */}
+                <div className="flex items-center justify-end space-x-2 pt-1">
+                  {canPreview(attachment) && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handlePreview(attachment)}
+                      className="h-7 px-3 text-xs"
+                    >
+                      <Eye className="h-3 w-3 mr-1" />
+                      미리보기
+                    </Button>
+                  )}
+                  
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => handleDownload(attachment)}
+                    className="h-7 px-3 text-xs"
+                  >
+                    <Download className="h-3 w-3 mr-1" />
+                    다운로드
+                  </Button>
+                  
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => handleRemove(attachment)}
+                    className="h-7 px-2 text-xs text-red-600 hover:text-red-700 hover:bg-red-50"
+                  >
+                    <X className="h-3 w-3" />
+                  </Button>
                 </div>
               </div>
             ))}
