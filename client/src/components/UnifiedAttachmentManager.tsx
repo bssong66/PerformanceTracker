@@ -215,8 +215,7 @@ export function UnifiedAttachmentManager({
               'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-              uploadURL: uploadURL,
-              fileName: file.name
+              fileUrl: uploadURL
             }),
           });
 
@@ -269,8 +268,7 @@ export function UnifiedAttachmentManager({
               'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-              uploadURL: uploadURL,
-              fileName: file.name
+              fileUrl: uploadURL
             }),
           });
 
