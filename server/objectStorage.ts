@@ -184,6 +184,11 @@ export class ObjectStorageService {
   normalizeObjectEntityPath(
     rawPath: string,
   ): string {
+    // If it's already a normalized path, return as is
+    if (rawPath.startsWith("/objects/")) {
+      return rawPath;
+    }
+    
     if (!rawPath.startsWith("https://storage.googleapis.com/")) {
       return rawPath;
     }

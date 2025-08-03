@@ -149,25 +149,59 @@ export function FileUploader({
         }
       });
 
-      xhr.onload = () => {
+      xhr.onload = async () => {
         if (xhr.status === 200) {
-          // Extract object path from uploadURL
-          const url = new URL(uploadURL);
-          const bucketPath = url.pathname;
-          const objectPath = `/objects${bucketPath.split('/').slice(2).join('/')}`;
-          
-          const newFile: FileItem = {
-            url: objectPath,
-            name: file.name,
-            size: file.size
-          };
+          try {
+            // Set ACL policy for uploaded file
+            const aclResponse = await fetch('/api/files/set-acl', {
+              method: 'PUT',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                fileUrl: uploadURL
+              })
+            });
 
-          onFilesChange([...files, newFile]);
-          
-          toast({
-            title: "업로드 완료",
-            description: `${file.name}이 성공적으로 업로드되었습니다.`
-          });
+            if (!aclResponse.ok) {
+              throw new Error('ACL 설정에 실패했습니다.');
+            }
+
+            const { objectPath } = await aclResponse.json();
+            
+            const newFile: FileItem = {
+              url: objectPath,
+              name: file.name,
+              size: file.size
+            };
+
+            onFilesChange([...files, newFile]);
+            
+            toast({
+              title: "업로드 완료",
+              description: `${file.name}이 성공적으로 업로드되었습니다.`
+            });
+          } catch (error) {
+            console.error('ACL setting error:', error);
+            // Fallback to basic object path
+            const url = new URL(uploadURL);
+            const bucketPath = url.pathname;
+            const objectPath = `/objects/${bucketPath.split('/').slice(2).join('/')}`;
+            
+            const newFile: FileItem = {
+              url: objectPath,
+              name: file.name,
+              size: file.size
+            };
+
+            onFilesChange([...files, newFile]);
+            
+            toast({
+              title: "업로드 완료",
+              description: `${file.name}이 업로드되었지만 권한 설정에 문제가 있습니다.`,
+              variant: "destructive"
+            });
+          }
         } else {
           throw new Error('파일 업로드에 실패했습니다.');
         }

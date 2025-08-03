@@ -958,6 +958,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/objects/:objectPath(*)", isAuthenticated, async (req: any, res) => {
     const userId = req.user?.claims?.sub;
     const objectStorageService = new ObjectStorageService();
+    
+    console.log('Accessing object path:', req.path, 'for user:', userId);
+    
     try {
       const objectFile = await objectStorageService.getObjectEntityFile(
         req.path,
@@ -968,12 +971,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         requestedPermission: "read" as any,
       });
       if (!canAccess) {
+        console.log('Access denied for user:', userId, 'to object:', req.path);
         return res.sendStatus(401);
       }
+      
+      console.log('Serving object file:', objectFile.name);
       objectStorageService.downloadObject(objectFile, res);
     } catch (error) {
       console.error("Error checking object access:", error);
       if (error instanceof ObjectNotFoundError) {
+        console.log('Object not found:', req.path);
         return res.sendStatus(404);
       }
       return res.sendStatus(500);
@@ -993,6 +1000,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error searching for public object:", error);
       return res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  // File ACL setting endpoint
+  app.put("/api/files/set-acl", isAuthenticated, async (req: any, res) => {
+    try {
+      const { fileUrl } = req.body;
+      const userId = req.user.claims.sub;
+      const objectStorageService = new ObjectStorageService();
+      
+      console.log('Setting ACL for file:', fileUrl, 'user:', userId);
+      
+      const objectPath = await objectStorageService.trySetObjectEntityAclPolicy(
+        fileUrl,
+        {
+          owner: userId,
+          visibility: "private",
+        },
+      );
+
+      console.log('ACL set successfully, object path:', objectPath);
+
+      res.status(200).json({
+        objectPath: objectPath,
+      });
+    } catch (error) {
+      console.error("Error setting file ACL:", error);
+      res.status(500).json({ error: "Internal server error" });
     }
   });
 
