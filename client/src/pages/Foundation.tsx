@@ -237,7 +237,7 @@ export default function Foundation() {
     ).length;
     
     const completedEvents = valueEvents.filter((event: any) => 
-      new Date(event.startDate) <= today
+      event.completed === true
     ).length;
 
     // Calculate habit completion rate based on logs
@@ -330,7 +330,7 @@ export default function Foundation() {
     ).length;
     
     const completedEvents = goalEvents.filter((event: any) => 
-      new Date(event.startDate) <= today
+      event.completed === true
     ).length;
 
     // Calculate habit completion rate based on logs
