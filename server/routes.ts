@@ -370,6 +370,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // File download endpoint
+  app.get("/api/projects/:projectId/files/:fileId/download", isAuthenticated, async (req: any, res) => {
+    try {
+      const fileId = parseInt(req.params.fileId);
+      const userId = req.user.claims.sub;
+      
+      // Get file info to check ownership
+      const file = await storage.getProjectFile(fileId);
+      if (!file) {
+        return res.status(404).json({ message: "File not found" });
+      }
+      
+      // Check if user owns the file
+      if (file.userId !== userId) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+      
+      const objectStorageService = new ObjectStorageService();
+      try {
+        const objectFile = await objectStorageService.getObjectEntityFile(file.objectPath);
+        objectStorageService.downloadObject(objectFile, res);
+      } catch (error) {
+        console.error("Error downloading file:", error);
+        if (error instanceof ObjectNotFoundError) {
+          return res.status(404).json({ message: "File content not found" });
+        }
+        return res.status(500).json({ message: "Failed to download file" });
+      }
+    } catch (error) {
+      console.error('Download project file error:', error);
+      res.status(500).json({ message: "Failed to download project file" });
+    }
+  });
+
   app.delete("/api/projects/:projectId/files/:fileId", isAuthenticated, async (req: any, res) => {
     try {
       const fileId = parseInt(req.params.fileId);

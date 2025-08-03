@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { useToast } from '@/hooks/use-toast';
-import { FileUp, Download, Trash2, File, FileText, Image } from 'lucide-react';
+import { FileUp, Download, Trash2, File, FileText, Image, Eye } from 'lucide-react';
 import { ObjectUploader } from '@/components/ObjectUploader';
 import { format } from 'date-fns';
 import { ko } from 'date-fns/locale';
@@ -119,7 +119,7 @@ export function ProjectFileManager({ projectId, projectTitle }: ProjectFileManag
   };
 
   const handleDownload = (file: ProjectFile) => {
-    const downloadUrl = file.objectPath;
+    const downloadUrl = `/api/projects/${projectId}/files/${file.id}/download`;
     const link = document.createElement('a');
     link.href = downloadUrl;
     link.download = file.originalFileName;
@@ -146,6 +146,17 @@ export function ProjectFileManager({ projectId, projectTitle }: ProjectFileManag
       return <FileText className="h-4 w-4" />;
     }
     return <File className="h-4 w-4" />;
+  };
+
+  const handleView = (file: ProjectFile) => {
+    if (file.mimeType.startsWith('image/')) {
+      // Open image in a new tab for viewing
+      const viewUrl = `/api/projects/${projectId}/files/${file.id}/download`;
+      window.open(viewUrl, '_blank');
+    } else {
+      // For non-image files, just download
+      handleDownload(file);
+    }
   };
 
   const formatFileSize = (bytes: number) => {
@@ -204,6 +215,15 @@ export function ProjectFileManager({ projectId, projectTitle }: ProjectFileManag
                 </div>
               </div>
               <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleView(file)}
+                  className="flex items-center gap-1"
+                >
+                  <Eye className="h-3 w-3" />
+                  보기
+                </Button>
                 <Button
                   variant="outline"
                   size="sm"
