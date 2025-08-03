@@ -76,6 +76,7 @@ export const projects = pgTable("projects", {
   coreValue: text("core_value"), // Connected core value from foundation
   annualGoal: text("annual_goal"), // Connected annual goal
   imageUrls: text("image_urls").array(),
+  fileUrls: text("file_urls").array(), // For general file uploads
   completed: boolean("completed").default(false), // 프로젝트 완료 상태
   createdAt: timestamp("created_at").defaultNow(),
 });
@@ -96,6 +97,7 @@ export const tasks = pgTable("tasks", {
   coreValue: text("core_value"), // Connected core value from foundation
   annualGoal: text("annual_goal"), // Connected annual goal
   imageUrls: text("image_urls").array(),
+  fileUrls: text("file_urls").array(), // For general file uploads
   isCarriedOver: boolean("is_carried_over").default(false), // 이월된 할일인지 표시
   originalScheduledDate: date("original_scheduled_date"), // 원래 예정된 날짜
   createdAt: timestamp("created_at").defaultNow(),
