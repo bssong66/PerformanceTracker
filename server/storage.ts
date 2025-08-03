@@ -48,6 +48,7 @@ export interface IStorage {
   
   // Task methods
   getTasks(userId: string, date?: string, projectId?: number): Promise<Task[]>;
+  getTask(id: number): Promise<Task | undefined>;
   getTasksByProject(projectId: number): Promise<Task[]>;
   getTasksByPriority(userId: string, priority: string, date?: string): Promise<Task[]>;
   createTask(task: InsertTask): Promise<Task>;
@@ -293,6 +294,11 @@ export class DatabaseStorage implements IStorage {
     return await db.select().from(tasks).where(and(...conditions));
   }
 
+  async getTask(id: number): Promise<Task | undefined> {
+    const result = await db.select().from(tasks).where(eq(tasks.id, id)).limit(1);
+    return result[0];
+  }
+
   async getTasksByProject(projectId: number): Promise<Task[]> {
     return await db.select().from(tasks).where(eq(tasks.projectId, projectId));
   }
@@ -347,7 +353,7 @@ export class DatabaseStorage implements IStorage {
           and(gte(events.startDate, startDate), lte(events.startDate, endDate)),
           and(gte(events.endDate, startDate), lte(events.endDate, endDate)),
           and(lte(events.startDate, startDate), gte(events.endDate, endDate))
-        )
+        )!
       );
     }
     

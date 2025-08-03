@@ -549,10 +549,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.patch("/api/tasks/:id", async (req, res) => {
+  app.patch("/api/tasks/:id", isAuthenticated, async (req: any, res) => {
     try {
       const id = parseInt(req.params.id);
       const updates = req.body;
+      const userId = req.user.claims.sub;
+      
+      // First check if task exists and belongs to user
+      const existingTask = await storage.getTask(id);
+      if (!existingTask || existingTask.userId !== userId) {
+        return res.status(404).json({ message: "Task not found" });
+      }
+      
+      console.log('Updating task:', id, 'with updates:', updates);
       const task = await storage.updateTask(id, updates);
       
       if (!task) {
@@ -561,13 +570,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json(task);
     } catch (error) {
+      console.error('Task update error:', error);
       res.status(500).json({ message: "Internal server error" });
     }
   });
 
-  app.delete("/api/tasks/:id", async (req, res) => {
+  app.delete("/api/tasks/:id", isAuthenticated, async (req: any, res) => {
     try {
       const id = parseInt(req.params.id);
+      const userId = req.user.claims.sub;
+      
+      // Check if task exists and belongs to user
+      const existingTask = await storage.getTask(id);
+      if (!existingTask || existingTask.userId !== userId) {
+        return res.status(404).json({ message: "Task not found" });
+      }
+      
       const deleted = await storage.deleteTask(id);
       
       if (!deleted) {
@@ -576,15 +594,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json({ success: true });
     } catch (error) {
+      console.error('Task deletion error:', error);
       res.status(500).json({ message: "Internal server error" });
     }
   });
 
   // Task completion route
-  app.patch("/api/tasks/:id/complete", async (req, res) => {
+  app.patch("/api/tasks/:id/complete", isAuthenticated, async (req: any, res) => {
     try {
       const id = parseInt(req.params.id);
       const { completed } = req.body;
+      const userId = req.user.claims.sub;
+      
+      // Check if task exists and belongs to user
+      const existingTask = await storage.getTask(id);
+      if (!existingTask || existingTask.userId !== userId) {
+        return res.status(404).json({ message: "Task not found" });
+      }
+      
       const task = await storage.updateTask(id, { completed });
       
       if (!task) {
@@ -593,6 +620,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json(task);
     } catch (error) {
+      console.error('Task completion error:', error);
       res.status(500).json({ message: "Internal server error" });
     }
   });
