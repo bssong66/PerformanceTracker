@@ -969,7 +969,7 @@ export default function ProjectManagement() {
               새 프로젝트
             </Button>
           </DialogTrigger>
-          <DialogContent className="sm:max-w-md">
+          <DialogContent className="sm:max-w-md max-h-[70vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>
                 {editingProject ? '프로젝트 수정' : '새 프로젝트 만들기'}
@@ -1803,7 +1803,7 @@ export default function ProjectManagement() {
             setIsEditMode(false);
           }
         }}>
-          <DialogContent className="sm:max-w-md">
+          <DialogContent className="sm:max-w-md max-h-[70vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>
                 {isEditMode ? '할일 수정' : '할일 상세'}
@@ -2170,7 +2170,7 @@ export default function ProjectManagement() {
             }
           }
         }}>
-          <DialogContent className="sm:max-w-lg">
+          <DialogContent className="sm:max-w-lg max-h-[70vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>
                 {isEditingProjectDetail ? '프로젝트 수정' : '프로젝트 상세'}

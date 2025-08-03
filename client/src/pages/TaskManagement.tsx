@@ -414,7 +414,7 @@ function TaskManagement() {
         </div>
       </div>
       <Dialog open={showTaskDialog} onOpenChange={setShowTaskDialog}>
-          <DialogContent className="sm:max-w-md">
+          <DialogContent className="sm:max-w-md max-h-[70vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>
                 {editingTask ? '할일 수정' : '새 할일 만들기'}
@@ -728,7 +728,7 @@ function TaskManagement() {
           setViewingTask(null);
           setCurrentImageIndex(0);
         }}>
-          <DialogContent className="sm:max-w-3xl">
+          <DialogContent className="sm:max-w-3xl max-h-[70vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>
                 이미지 보기 ({currentImageIndex + 1} / {viewingTask.imageUrls?.length || 0})
@@ -797,7 +797,7 @@ function TaskManagement() {
             setIsEditMode(false);
           }
         }}>
-          <DialogContent className="sm:max-w-md">
+          <DialogContent className="sm:max-w-md max-h-[70vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>
                 {isEditMode ? '할일 수정' : '할일 상세'}
