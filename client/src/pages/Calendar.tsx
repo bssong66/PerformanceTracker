@@ -67,6 +67,7 @@ export default function Calendar() {
     id: null as number | null,
     title: '',
     description: '',
+    result: '',
     startDate: '',
     endDate: '',
     startTime: '',
@@ -236,6 +237,7 @@ export default function Calendar() {
       id: null,
       title: '',
       description: '',
+      result: '',
       startDate: '',
       endDate: '',
       startTime: '',
@@ -485,6 +487,7 @@ export default function Calendar() {
         id: eventData.id,
         title: eventData.title,
         description: eventData.description || '',
+        result: eventData.result || '',
         startDate: eventData.startDate,
         endDate: eventData.endDate || eventData.startDate,
         startTime: eventData.startTime || '',
@@ -755,7 +758,7 @@ export default function Calendar() {
           setShowEventDialog(open);
           if (!open) resetEventForm();
         }}>
-          <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto" aria-describedby="event-dialog-description">
+          <DialogContent className="max-w-5xl max-h-[80vh] overflow-hidden" aria-describedby="event-dialog-description">
             <DialogHeader>
               <DialogTitle>
                 {isEditing ? '일정 수정' : '새 일정 생성'}
@@ -765,52 +768,54 @@ export default function Calendar() {
               </div>
             </DialogHeader>
             
-            <div className="space-y-4">
-              {/* 제목 */}
-              <div>
-                <Label htmlFor="event-title">일정 제목</Label>
-                <Input
-                  id="event-title"
-                  value={eventForm.title}
-                  onChange={(e) => setEventForm(prev => ({ ...prev, title: e.target.value }))}
-                  placeholder="일정 제목을 입력하세요"
-                />
-              </div>
+            <div className="grid grid-cols-2 gap-6 h-[70vh] overflow-hidden">
+              {/* 왼쪽: 일정 내용 */}
+              <div className="space-y-4 overflow-y-auto pr-4">
+                <h3 className="text-lg font-semibold border-b pb-2">일정 내용</h3>
+                {/* 제목 */}
+                <div>
+                  <Label htmlFor="event-title">일정 제목</Label>
+                  <Input
+                    id="event-title"
+                    value={eventForm.title}
+                    onChange={(e) => setEventForm(prev => ({ ...prev, title: e.target.value }))}
+                    placeholder="일정 제목을 입력하세요"
+                  />
+                </div>
 
-              {/* 설명 */}
-              <div>
-                <Label htmlFor="event-description">일정 내용</Label>
-                <Textarea
-                  id="event-description"
-                  value={eventForm.description}
-                  onChange={(e) => setEventForm(prev => ({ ...prev, description: e.target.value }))}
-                  placeholder="일정에 대한 상세 설명"
-                  rows={3}
-                />
-              </div>
+                {/* 설명 */}
+                <div>
+                  <Label htmlFor="event-description">일정 상세 내용</Label>
+                  <Textarea
+                    id="event-description"
+                    value={eventForm.description}
+                    onChange={(e) => setEventForm(prev => ({ ...prev, description: e.target.value }))}
+                    placeholder="일정에 대한 상세 설명"
+                    rows={4}
+                  />
+                </div>
 
-              {/* 우선순위 */}
-              <div>
-                <Label>중요도</Label>
-                <Select
-                  value={eventForm.priority}
-                  onValueChange={(value: 'high' | 'medium' | 'low') => 
-                    setEventForm(prev => ({ ...prev, priority: value }))
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="high">높음</SelectItem>
-                    <SelectItem value="medium">보통</SelectItem>
-                    <SelectItem value="low">낮음</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+                {/* 우선순위 */}
+                <div>
+                  <Label>중요도</Label>
+                  <Select
+                    value={eventForm.priority}
+                    onValueChange={(value: 'high' | 'medium' | 'low') => 
+                      setEventForm(prev => ({ ...prev, priority: value }))
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="high">높음</SelectItem>
+                      <SelectItem value="medium">보통</SelectItem>
+                      <SelectItem value="low">낮음</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
 
-              {/* 체크박스들 */}
-              <div className="grid grid-cols-2 gap-4">
+                {/* 종일 일정 체크박스 */}
                 <div className="flex items-center space-x-2">
                   <Checkbox
                     id="all-day"
@@ -821,243 +826,262 @@ export default function Calendar() {
                   />
                   <Label htmlFor="all-day">종일 일정</Label>
                 </div>
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="completed"
-                    checked={eventForm.completed}
-                    onCheckedChange={(checked) => 
-                      setEventForm(prev => ({ ...prev, completed: checked as boolean }))
-                    }
-                  />
-                  <Label htmlFor="completed">완료됨</Label>
-                </div>
-              </div>
 
-              {/* 날짜 */}
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <Label htmlFor="start-date">시작일</Label>
-                  <Input
-                    id="start-date"
-                    type="date"
-                    value={eventForm.startDate}
-                    onChange={(e) => setEventForm(prev => ({ ...prev, startDate: e.target.value }))}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="end-date">종료일</Label>
-                  <Input
-                    id="end-date"
-                    type="date"
-                    value={eventForm.endDate}
-                    onChange={(e) => setEventForm(prev => ({ ...prev, endDate: e.target.value }))}
-                  />
-                </div>
-              </div>
-
-              {/* 시간 (종일이 아닌 경우에만) */}
-              {!eventForm.isAllDay && (
+                {/* 날짜 */}
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <Label htmlFor="start-time">시작 시간</Label>
+                    <Label htmlFor="start-date">시작일</Label>
                     <Input
-                      id="start-time"
-                      type="time"
-                      value={eventForm.startTime}
-                      onChange={(e) => setEventForm(prev => ({ ...prev, startTime: e.target.value }))}
+                      id="start-date"
+                      type="date"
+                      value={eventForm.startDate}
+                      onChange={(e) => setEventForm(prev => ({ ...prev, startDate: e.target.value }))}
                     />
                   </div>
                   <div>
-                    <Label htmlFor="end-time">종료 시간</Label>
+                    <Label htmlFor="end-date">종료일</Label>
                     <Input
-                      id="end-time"
-                      type="time"
-                      value={eventForm.endTime}
-                      onChange={(e) => setEventForm(prev => ({ ...prev, endTime: e.target.value }))}
+                      id="end-date"
+                      type="date"
+                      value={eventForm.endDate}
+                      onChange={(e) => setEventForm(prev => ({ ...prev, endDate: e.target.value }))}
                     />
                   </div>
                 </div>
-              )}
 
-              {/* 가치 중심 연결 */}
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label>핵심가치</Label>
-                  <Select
-                    value={eventForm.coreValue}
-                    onValueChange={(value) => setEventForm(prev => ({ ...prev, coreValue: value }))}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="핵심가치 선택" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="none">선택안함</SelectItem>
-                      {(foundation as any)?.coreValue1 && (
-                        <SelectItem value={(foundation as any).coreValue1}>{(foundation as any).coreValue1}</SelectItem>
-                      )}
-                      {(foundation as any)?.coreValue2 && (
-                        <SelectItem value={(foundation as any).coreValue2}>{(foundation as any).coreValue2}</SelectItem>
-                      )}
-                      {(foundation as any)?.coreValue3 && (
-                        <SelectItem value={(foundation as any).coreValue3}>{(foundation as any).coreValue3}</SelectItem>
-                      )}
-                    </SelectContent>
-                  </Select>
-                </div>
+                {/* 시간 (종일이 아닌 경우에만) */}
+                {!eventForm.isAllDay && (
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <Label htmlFor="start-time">시작 시간</Label>
+                      <Input
+                        id="start-time"
+                        type="time"
+                        value={eventForm.startTime}
+                        onChange={(e) => setEventForm(prev => ({ ...prev, startTime: e.target.value }))}
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="end-time">종료 시간</Label>
+                      <Input
+                        id="end-time"
+                        type="time"
+                        value={eventForm.endTime}
+                        onChange={(e) => setEventForm(prev => ({ ...prev, endTime: e.target.value }))}
+                      />
+                    </div>
+                  </div>
+                )}
 
-                <div>
-                  <Label>연간목표</Label>
-                  <Select
-                    value={eventForm.annualGoal}
-                    onValueChange={(value) => setEventForm(prev => ({ ...prev, annualGoal: value }))}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="연간목표 선택" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="none">선택안함</SelectItem>
-                      {(annualGoals as any[]).map((goal: any) => (
-                        <SelectItem key={goal.id} value={goal.title}>
-                          {goal.title}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                {/* 가치 중심 연결 */}
+                <div className="space-y-3">
+                  <div>
+                    <Label>핵심가치</Label>
+                    <Select
+                      value={eventForm.coreValue}
+                      onValueChange={(value) => setEventForm(prev => ({ ...prev, coreValue: value }))}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="핵심가치 선택" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">선택안함</SelectItem>
+                        {(foundation as any)?.coreValue1 && (
+                          <SelectItem value={(foundation as any).coreValue1}>{(foundation as any).coreValue1}</SelectItem>
+                        )}
+                        {(foundation as any)?.coreValue2 && (
+                          <SelectItem value={(foundation as any).coreValue2}>{(foundation as any).coreValue2}</SelectItem>
+                        )}
+                        {(foundation as any)?.coreValue3 && (
+                          <SelectItem value={(foundation as any).coreValue3}>{(foundation as any).coreValue3}</SelectItem>
+                        )}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div>
+                    <Label>연간목표</Label>
+                    <Select
+                      value={eventForm.annualGoal}
+                      onValueChange={(value) => setEventForm(prev => ({ ...prev, annualGoal: value }))}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="연간목표 선택" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">선택안함</SelectItem>
+                        {(annualGoals as any[]).map((goal: any) => (
+                          <SelectItem key={goal.id} value={goal.title}>
+                            {goal.title}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
               </div>
 
-              {/* 반복 설정 */}
-              <div className="space-y-3">
-                <div className="flex items-center space-x-2">
-                  <Repeat className="h-4 w-4" />
-                  <Label>반복 설정</Label>
-                </div>
+              {/* 오른쪽: 일정 결과 및 설정 */}
+              <div className="space-y-4 overflow-y-auto pr-4">
+                <h3 className="text-lg font-semibold border-b pb-2">일정 결과 및 설정</h3>
                 
-                <Select
-                  value={eventForm.repeatType}
-                  onValueChange={(value: 'none' | 'daily' | 'weekly' | 'monthly' | 'yearly') => 
-                    setEventForm(prev => ({ ...prev, repeatType: value }))
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">반복없음</SelectItem>
-                    <SelectItem value="daily">일</SelectItem>
-                    <SelectItem value="weekly">주</SelectItem>
-                    <SelectItem value="monthly">월</SelectItem>
-                    <SelectItem value="yearly">연</SelectItem>
-                  </SelectContent>
-                </Select>
-
-                {eventForm.repeatType !== 'none' && (
-                  <>
-                    <div>
-                      <Label htmlFor="repeat-interval">반복 간격</Label>
-                      <Input
-                        id="repeat-interval"
-                        type="number"
-                        min="1"
-                        value={eventForm.repeatInterval}
-                        onChange={(e) => setEventForm(prev => ({ 
-                          ...prev, 
-                          repeatInterval: parseInt(e.target.value) || 1 
-                        }))}
-                        placeholder={
-                          eventForm.repeatType === 'daily' ? '매 N일' :
-                          eventForm.repeatType === 'weekly' ? '매 N주' :
-                          eventForm.repeatType === 'monthly' ? '매 N개월' :
-                          '매 N년'
-                        }
-                      />
-                    </div>
-
-                    {/* 주간 반복 시 요일 선택 */}
-                    {eventForm.repeatType === 'weekly' && (
-                      <div>
-                        <Label>반복 요일</Label>
-                        <div className="flex space-x-2 mt-2">
-                          {['1', '2', '3', '4', '5', '6', '0'].map((day, index) => {
-                            const dayNames = ['월', '화', '수', '목', '금', '토', '일'];
-                            return (
-                              <button
-                                key={day}
-                                type="button"
-                                onClick={() => toggleWeekday(day)}
-                                className={`w-8 h-8 rounded-full text-xs font-medium transition-colors ${
-                                  eventForm.repeatWeekdays.includes(day)
-                                    ? 'bg-blue-500 text-white'
-                                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                                }`}
-                              >
-                                {dayNames[index]}
-                              </button>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    )}
-
-                    <div>
-                      <Label htmlFor="repeat-end-date">반복 종료일</Label>
-                      <Input
-                        id="repeat-end-date"
-                        type="date"
-                        value={eventForm.repeatEndDate}
-                        onChange={(e) => setEventForm(prev => ({ ...prev, repeatEndDate: e.target.value }))}
-                        placeholder="반복을 언제까지 할지 설정"
-                      />
-                    </div>
-                  </>
-                )}
-              </div>
-
-              {/* 이미지 및 파일 업로드 섹션 */}
-              <div className="space-y-3">
-                <div className="flex items-center space-x-2">
-                  <Label>첨부파일</Label>
+                {/* 완료 상태 및 결과 */}
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <div className="flex items-center space-x-2 mb-3">
+                    <Checkbox
+                      id="completed"
+                      checked={eventForm.completed}
+                      onCheckedChange={(checked) => 
+                        setEventForm(prev => ({ ...prev, completed: checked as boolean }))
+                      }
+                    />
+                    <Label htmlFor="completed" className="font-medium">일정 완료</Label>
+                  </div>
+                  <div>
+                    <Label htmlFor="event-result">일정 결과 및 소감</Label>
+                    <Textarea
+                      id="event-result"
+                      value={eventForm.result || ''}
+                      onChange={(e) => setEventForm(prev => ({ ...prev, result: e.target.value }))}
+                      placeholder="일정을 완료한 후 결과나 소감을 기록해주세요"
+                      rows={4}
+                    />
+                  </div>
                 </div>
-                <UnifiedAttachmentManager
-                  imageUrls={eventForm.imageUrls}
-                  fileUrls={eventForm.fileUrls}
-                  onImagesChange={(imageUrls) => setEventForm(prev => ({ ...prev, imageUrls }))}
-                  onFilesChange={(fileUrls) => setEventForm(prev => ({ ...prev, fileUrls }))}
-                  uploadEndpoint="/api/files/upload"
-                  maxFiles={10}
-                  maxFileSize={10485760}
-                />
-              </div>
 
-              {/* 버튼들 */}
-              <div className="flex space-x-2 pt-4">
-                <Button
-                  onClick={handleSaveEvent}
-                  disabled={createEventMutation.isPending || updateEventMutation.isPending}
-                  className="flex-1"
-                >
-                  <Save className="h-4 w-4 mr-2" />
-                  {isEditing ? '수정' : '생성'}
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={() => setShowEventDialog(false)}
-                  className="flex-1"
-                >
-                  <X className="h-4 w-4 mr-2" />
-                  취소
-                </Button>
-                {isEditing && (
-                  <Button
-                    variant="destructive"
-                    onClick={handleDeleteEvent}
-                    disabled={deleteEventMutation.isPending}
-                    className="px-4"
+                {/* 반복 설정 */}
+                <div className="space-y-3">
+                  <div className="flex items-center space-x-2">
+                    <Repeat className="h-4 w-4" />
+                    <Label>반복 설정</Label>
+                  </div>
+                  
+                  <Select
+                    value={eventForm.repeatType}
+                    onValueChange={(value: 'none' | 'daily' | 'weekly' | 'monthly' | 'yearly') => 
+                      setEventForm(prev => ({ ...prev, repeatType: value }))
+                    }
                   >
-                    삭제
-                  </Button>
-                )}
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">반복없음</SelectItem>
+                      <SelectItem value="daily">일</SelectItem>
+                      <SelectItem value="weekly">주</SelectItem>
+                      <SelectItem value="monthly">월</SelectItem>
+                      <SelectItem value="yearly">연</SelectItem>
+                    </SelectContent>
+                  </Select>
+
+                  {eventForm.repeatType !== 'none' && (
+                    <>
+                      <div>
+                        <Label htmlFor="repeat-interval">반복 간격</Label>
+                        <Input
+                          id="repeat-interval"
+                          type="number"
+                          min="1"
+                          value={eventForm.repeatInterval}
+                          onChange={(e) => setEventForm(prev => ({ 
+                            ...prev, 
+                            repeatInterval: parseInt(e.target.value) || 1 
+                          }))}
+                          placeholder={
+                            eventForm.repeatType === 'daily' ? '매 N일' :
+                            eventForm.repeatType === 'weekly' ? '매 N주' :
+                            eventForm.repeatType === 'monthly' ? '매 N개월' :
+                            '매 N년'
+                          }
+                        />
+                      </div>
+
+                      {/* 주간 반복 시 요일 선택 */}
+                      {eventForm.repeatType === 'weekly' && (
+                        <div>
+                          <Label>반복 요일</Label>
+                          <div className="flex space-x-2 mt-2">
+                            {['1', '2', '3', '4', '5', '6', '0'].map((day, index) => {
+                              const dayNames = ['월', '화', '수', '목', '금', '토', '일'];
+                              return (
+                                <button
+                                  key={day}
+                                  type="button"
+                                  onClick={() => toggleWeekday(day)}
+                                  className={`w-8 h-8 rounded-full text-xs font-medium transition-colors ${
+                                    eventForm.repeatWeekdays.includes(day)
+                                      ? 'bg-blue-500 text-white'
+                                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                  }`}
+                                >
+                                  {dayNames[index]}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
+
+                      <div>
+                        <Label htmlFor="repeat-end-date">반복 종료일</Label>
+                        <Input
+                          id="repeat-end-date"
+                          type="date"
+                          value={eventForm.repeatEndDate}
+                          onChange={(e) => setEventForm(prev => ({ ...prev, repeatEndDate: e.target.value }))}
+                          placeholder="반복을 언제까지 할지 설정"
+                        />
+                      </div>
+                    </>
+                  )}
+                </div>
+
+                {/* 이미지 및 파일 업로드 섹션 */}
+                <div className="space-y-3">
+                  <div className="flex items-center space-x-2">
+                    <Label>첨부파일</Label>
+                  </div>
+                  <UnifiedAttachmentManager
+                    imageUrls={eventForm.imageUrls}
+                    fileUrls={eventForm.fileUrls}
+                    onImagesChange={(imageUrls) => setEventForm(prev => ({ ...prev, imageUrls }))}
+                    onFilesChange={(fileUrls) => setEventForm(prev => ({ ...prev, fileUrls }))}
+                    uploadEndpoint="/api/files/upload"
+                    maxFiles={10}
+                    maxFileSize={10485760}
+                  />
+                </div>
               </div>
+            </div>
+
+            {/* 하단 버튼들 */}
+            <div className="flex space-x-2 pt-6 border-t">
+              <Button
+                onClick={handleSaveEvent}
+                disabled={createEventMutation.isPending || updateEventMutation.isPending}
+                className="flex-1"
+              >
+                <Save className="h-4 w-4 mr-2" />
+                {isEditing ? '수정' : '생성'}
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => setShowEventDialog(false)}
+                className="flex-1"
+              >
+                <X className="h-4 w-4 mr-2" />
+                취소
+              </Button>
+              {isEditing && (
+                <Button
+                  variant="destructive"
+                  onClick={handleDeleteEvent}
+                  disabled={deleteEventMutation.isPending}
+                  className="px-4"
+                >
+                  삭제
+                </Button>
+              )}
             </div>
           </DialogContent>
         </Dialog>
