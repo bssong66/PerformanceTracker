@@ -681,7 +681,6 @@ export default function ProjectManagement() {
       }
 
       createTaskMutation.mutate({
-        userId: MOCK_USER_ID,
         projectId: selectedProjectForTask,
         title: taskForm.title,
         priority: taskForm.priority,
@@ -727,7 +726,6 @@ export default function ProjectManagement() {
 
     const projectData = {
       ...projectForm,
-      userId: MOCK_USER_ID,
       color: priorityColors[projectForm.priority]
     };
 
@@ -860,9 +858,7 @@ export default function ProjectManagement() {
       startDate: taskForm.startDate || null,
       endDate: taskForm.endDate || null,
       imageUrls: taskForm.imageUrls,
-      fileUrls: taskForm.fileUrls,
-      userId: MOCK_USER_ID,
-      projectId: selectedTask.projectId
+      fileUrls: taskForm.fileUrls
     };
 
     updateTaskMutation.mutate({ 

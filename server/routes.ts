@@ -206,9 +206,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ...req.body,
         userId: req.user.claims.sub
       });
+      console.log('Creating project with userId:', req.user.claims.sub, 'data:', projectData);
       const project = await storage.createProject(projectData);
       res.json(project);
     } catch (error) {
+      console.error('Project creation error:', error);
       res.status(400).json({ message: "Invalid project data" });
     }
   });
@@ -542,9 +544,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ...req.body,
         userId: req.user.claims.sub
       });
+      console.log('Creating task with userId:', req.user.claims.sub, 'data:', taskData);
       const task = await storage.createTask(taskData);
       res.json(task);
     } catch (error) {
+      console.error('Task creation error:', error);
       res.status(400).json({ message: "Invalid task data" });
     }
   });
@@ -561,8 +565,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Task not found" });
       }
       
-      console.log('Updating task:', id, 'with updates:', updates);
-      const task = await storage.updateTask(id, updates);
+      // Remove userId from updates to prevent override
+      const { userId: _, ...safeUpdates } = updates;
+      
+      console.log('Updating task:', id, 'with updates:', safeUpdates);
+      const task = await storage.updateTask(id, safeUpdates);
       
       if (!task) {
         return res.status(404).json({ message: "Task not found" });
