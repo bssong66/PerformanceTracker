@@ -239,7 +239,11 @@ export function FileUploader({
             >
               <div className="flex items-center space-x-2 flex-1 min-w-0">
                 {getFileIcon(file.name)}
-                <span className="text-sm truncate" title={file.name}>
+                <span 
+                  className="text-sm truncate cursor-pointer hover:text-blue-600 hover:underline" 
+                  title={file.name}
+                  onClick={() => downloadFile(file)}
+                >
                   {file.name}
                 </span>
               </div>

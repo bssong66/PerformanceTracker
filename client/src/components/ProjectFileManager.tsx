@@ -203,7 +203,11 @@ export function ProjectFileManager({ projectId, projectTitle }: ProjectFileManag
               <div className="flex items-center gap-3 flex-1 min-w-0">
                 {getFileIcon(file.mimeType)}
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium truncate" title={file.originalFileName}>
+                  <p 
+                    className="text-sm font-medium truncate cursor-pointer hover:text-blue-600 hover:underline" 
+                    title={file.originalFileName}
+                    onClick={() => handleView(file)}
+                  >
                     {file.originalFileName}
                   </p>
                   <div className="flex items-center gap-4 text-xs text-gray-500">
@@ -215,15 +219,6 @@ export function ProjectFileManager({ projectId, projectTitle }: ProjectFileManag
                 </div>
               </div>
               <div className="flex items-center gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleView(file)}
-                  className="flex items-center gap-1"
-                >
-                  <Eye className="h-3 w-3" />
-                  보기
-                </Button>
                 <Button
                   variant="outline"
                   size="sm"

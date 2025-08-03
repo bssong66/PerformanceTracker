@@ -1097,20 +1097,14 @@ function TaskManagement() {
                         >
                           <div className="flex items-center space-x-2 flex-1 min-w-0">
                             <FileText className="h-4 w-4 text-gray-500" />
-                            <span className="text-sm truncate" title={file.name}>
+                            <span 
+                              className="text-sm truncate cursor-pointer hover:text-blue-600 hover:underline" 
+                              title={file.name}
+                              onClick={() => window.open(file.url, '_blank')}
+                            >
                               {file.name}
                             </span>
                           </div>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => window.open(file.url, '_blank')}
-                            className="h-8 w-8 p-0 text-blue-500 hover:text-blue-700"
-                            title="다운로드"
-                          >
-                            <FileText className="h-3 w-3" />
-                          </Button>
                         </div>
                       ))}
                     </div>
