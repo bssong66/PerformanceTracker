@@ -73,6 +73,21 @@ const formatFileSize = (bytes: number): string => {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
 };
 
+const truncateFileName = (fileName: string, maxLength: number = 40): string => {
+  if (!fileName || fileName.length <= maxLength) return fileName;
+  
+  const extension = fileName.includes('.') ? fileName.split('.').pop() : '';
+  const nameWithoutExt = fileName.substring(0, fileName.lastIndexOf('.')) || fileName;
+  
+  if (extension) {
+    const maxNameLength = maxLength - extension.length - 4; // 4 for "..." and "."
+    if (maxNameLength <= 0) return `...${extension}`;
+    return `${nameWithoutExt.substring(0, maxNameLength)}...${extension}`;
+  } else {
+    return `${fileName.substring(0, maxLength - 3)}...`;
+  }
+};
+
 export function FileUploader({
   files,
   onFilesChange,
@@ -255,7 +270,7 @@ export function FileUploader({
         >
           {children}
         </Button>
-        <span className="text-sm text-gray-500">
+        <span className="text-sm text-gray-500 dark:text-gray-400">
           {files.length}/{maxFiles}개 파일
         </span>
       </div>
@@ -272,45 +287,45 @@ export function FileUploader({
           {files.map((file, index) => (
             <div
               key={index}
-              className="flex items-center justify-between p-2 bg-gray-50 rounded-lg border"
+              className="flex items-center gap-2 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
             >
-              <div className="flex items-center space-x-2 flex-1 min-w-0">
+              <div className="flex-shrink-0">
                 {getFileIcon(file.name || '')}
-                <div className="flex-1 min-w-0">
-                  <span 
-                    className="text-sm truncate cursor-pointer hover:text-blue-600 hover:underline block" 
-                    title={file.name || 'Unknown file'}
-                    onClick={() => downloadFile(file)}
-                  >
-                    {file.name || 'Unknown file'}
-                  </span>
-                  {file.size && (
-                    <div className="text-xs text-gray-500">
-                      {formatFileSize(file.size)}
-                    </div>
-                  )}
-                </div>
               </div>
-              <div className="flex items-center space-x-1">
+              <div className="flex-1 min-w-0">
+                <div 
+                  className="text-sm font-medium cursor-pointer hover:text-blue-600 dark:hover:text-blue-400 hover:underline transition-colors text-gray-900 dark:text-gray-100" 
+                  title={file.name || 'Unknown file'}
+                  onClick={() => downloadFile(file)}
+                >
+                  {truncateFileName(file.name || 'Unknown file')}
+                </div>
+                {file.size && (
+                  <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                    {formatFileSize(file.size)}
+                  </div>
+                )}
+              </div>
+              <div className="flex items-center space-x-1 flex-shrink-0">
                 <Button
                   type="button"
                   variant="ghost"
                   size="sm"
                   onClick={() => downloadFile(file)}
-                  className="h-6 w-6 p-0"
-                  title="다운로드"
+                  className="h-8 w-8 p-0 hover:bg-blue-100 dark:hover:bg-blue-900/30 text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400"
+                  title="미리보기"
                 >
-                  <Download className="h-3 w-3" />
+                  <Download className="h-4 w-4" />
                 </Button>
                 <Button
                   type="button"
                   variant="ghost"
                   size="sm"
                   onClick={() => removeFile(index)}
-                  className="h-6 w-6 p-0 text-red-500 hover:text-red-700"
+                  className="h-8 w-8 p-0 text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/30 dark:text-red-400 dark:hover:text-red-300"
                   title="삭제"
                 >
-                  <X className="h-3 w-3" />
+                  <X className="h-4 w-4" />
                 </Button>
               </div>
             </div>
@@ -327,7 +342,7 @@ export function FileUploader({
         className="hidden"
       />
       
-      <div className="text-xs text-gray-500">
+      <div className="text-xs text-gray-500 dark:text-gray-400">
         최대 파일 크기: {formatFileSize(maxFileSize)} | 지원 형식: 모든 파일
       </div>
     </div>
