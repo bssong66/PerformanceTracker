@@ -16,6 +16,7 @@ import Review from "@/pages/Review";
 import Landing from "@/pages/Landing";
 import Login from "@/pages/Login";
 import Home from "@/pages/Home";
+import ProjectManagement from "@/pages/ProjectManagement";
 
 import NotFound from "@/pages/not-found";
 
@@ -46,6 +47,7 @@ function Router() {
             <Route path="/foundation" component={Foundation} />
             <Route path="/calendar" component={Calendar} />
             <Route path="/planning" component={Planning} />
+            <Route path="/projects" component={ProjectManagement} />
             <Route path="/daily-planning" component={DailyPlanning} />
             <Route path="/daily" component={DailyPlanning} />
             <Route path="/review" component={Review} />

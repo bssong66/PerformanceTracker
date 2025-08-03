@@ -613,7 +613,8 @@ export default function ProjectManagement() {
       endDate: selectedProject.endDate || '',
       coreValue: selectedProject.coreValue || 'none',
       annualGoal: selectedProject.annualGoal || 'none',
-      imageUrls: selectedProject.imageUrls || []
+      imageUrls: selectedProject.imageUrls || [],
+      fileUrls: selectedProject.fileUrls || []
     });
   };
 
