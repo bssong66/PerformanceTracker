@@ -15,8 +15,7 @@ import { UnifiedAttachmentManager } from '@/components/UnifiedAttachmentManager'
 import { format } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import { ProjectFileManager } from '@/components/ProjectFileManager';
-
-const MOCK_USER_ID = 1;
+import { useAuth } from '@/hooks/useAuth';
 
 const priorityColors = {
   high: '#ef4444',
@@ -42,6 +41,7 @@ interface Project {
 
 export default function ProjectManagement() {
   const { toast } = useToast();
+  const { user } = useAuth();
 
   // Task form state
   const [taskForm, setTaskForm] = useState({
@@ -98,16 +98,17 @@ export default function ProjectManagement() {
 
   // Fetch projects
   const { data: projects = [] } = useQuery({
-    queryKey: ['projects', MOCK_USER_ID],
-    queryFn: () => fetch(`/api/projects/${MOCK_USER_ID}`).then(res => res.json())
+    queryKey: ['projects', user?.id],
+    queryFn: () => fetch(`/api/projects/${user?.id}`).then(res => res.json()),
+    enabled: !!user?.id
   });
 
   // Fetch foundations for core values
   const { data: foundation, error: foundationError, refetch: refetchFoundation } = useQuery({
-    queryKey: ['foundation', MOCK_USER_ID, new Date().getFullYear()],
+    queryKey: ['foundation', user?.id, new Date().getFullYear()],
     queryFn: async () => {
       const currentYear = new Date().getFullYear();
-      const response = await fetch(`/api/foundation/${MOCK_USER_ID}?year=${currentYear}`);
+      const response = await fetch(`/api/foundation/${user?.id}?year=${currentYear}`);
       if (!response.ok && response.status !== 404) {
         throw new Error('Failed to fetch foundation');
       }
@@ -118,15 +119,16 @@ export default function ProjectManagement() {
     },
     retry: 1,
     refetchOnWindowFocus: false,
-    staleTime: 30000 // 30 seconds
+    staleTime: 30000,
+    enabled: !!user?.id
   });
 
   // Fetch annual goals
   const { data: annualGoals = [], error: goalsError } = useQuery({
-    queryKey: ['goals', MOCK_USER_ID, new Date().getFullYear()],
+    queryKey: ['goals', user?.id, new Date().getFullYear()],
     queryFn: async () => {
       const currentYear = new Date().getFullYear();
-      const response = await fetch(`/api/goals/${MOCK_USER_ID}?year=${currentYear}`);
+      const response = await fetch(`/api/goals/${user?.id}?year=${currentYear}`);
       if (!response.ok && response.status !== 404) {
         throw new Error('Failed to fetch goals');
       }
@@ -137,13 +139,15 @@ export default function ProjectManagement() {
     },
     retry: 1,
     refetchOnWindowFocus: false,
-    staleTime: 30000 // 30 seconds
+    staleTime: 30000,
+    enabled: !!user?.id
   });
 
   // Fetch tasks for all projects
   const { data: allTasks = [] } = useQuery({
-    queryKey: ['tasks', MOCK_USER_ID],
-    queryFn: () => fetch(`/api/tasks/${MOCK_USER_ID}`).then(res => res.json())
+    queryKey: ['tasks', user?.id],
+    queryFn: () => fetch(`/api/tasks/${user?.id}`).then(res => res.json()),
+    enabled: !!user?.id
   });
 
   // Create project mutation
@@ -163,7 +167,7 @@ export default function ProjectManagement() {
     },
     onSuccess: (newProject) => {
       // Optimistic update for better UX
-      queryClient.setQueryData(['projects', MOCK_USER_ID], (oldProjects: any) => {
+      queryClient.setQueryData(['projects', user?.id], (oldProjects: any) => {
         return oldProjects ? [...oldProjects, newProject] : [newProject];
       });
       setShowProjectDialog(false);
@@ -196,7 +200,7 @@ export default function ProjectManagement() {
     },
     onSuccess: (updatedProject) => {
       // Optimistic update for better UX
-      queryClient.setQueryData(['projects', MOCK_USER_ID], (oldProjects: any) => {
+      queryClient.setQueryData(['projects', user?.id], (oldProjects: any) => {
         if (!oldProjects) return [updatedProject];
         return oldProjects.map((p: any) => p.id === updatedProject.id ? updatedProject : p);
       });
@@ -227,7 +231,7 @@ export default function ProjectManagement() {
     },
     onSuccess: (_, projectId) => {
       // Optimistic update - remove the project immediately from cache
-      queryClient.setQueryData(['projects', MOCK_USER_ID], (oldProjects: any) => {
+      queryClient.setQueryData(['projects', user?.id], (oldProjects: any) => {
         if (!oldProjects) return [];
         return oldProjects.filter((p: any) => p.id !== projectId);
       });
@@ -258,7 +262,7 @@ export default function ProjectManagement() {
       };
       
       // Add to cache immediately for instant UI update
-      queryClient.setQueryData(['projects', MOCK_USER_ID], (oldProjects: any) => {
+      queryClient.setQueryData(['projects', user?.id], (oldProjects: any) => {
         return oldProjects ? [...oldProjects, optimisticClone] : [optimisticClone];
       });
       
@@ -281,7 +285,7 @@ export default function ProjectManagement() {
       const { project: realClonedProject, tasks: clonedTasks, message } = result;
       
       // Replace optimistic update with real data
-      queryClient.setQueryData(['projects', MOCK_USER_ID], (oldProjects: any) => {
+      queryClient.setQueryData(['projects', user?.id], (oldProjects: any) => {
         if (!oldProjects) return [realClonedProject];
         return oldProjects.map((p: any) => 
           p._isOptimistic && p.title === realClonedProject.title 
@@ -291,8 +295,8 @@ export default function ProjectManagement() {
       });
 
       // Force refresh of tasks cache to show new cloned tasks immediately
-      queryClient.invalidateQueries({ queryKey: ['tasks', MOCK_USER_ID] });
-      queryClient.refetchQueries({ queryKey: ['tasks', MOCK_USER_ID] });
+      queryClient.invalidateQueries({ queryKey: ['tasks', user?.id] });
+      queryClient.refetchQueries({ queryKey: ['tasks', user?.id] });
       
       // Automatically expand the cloned project to show the tasks
       setExpandedProjects(prev => new Set([...Array.from(prev), realClonedProject.id]));
@@ -304,7 +308,7 @@ export default function ProjectManagement() {
     },
     onError: (error: Error) => {
       // Remove optimistic update on error
-      queryClient.setQueryData(['projects', MOCK_USER_ID], (oldProjects: any) => {
+      queryClient.setQueryData(['projects', user?.id], (oldProjects: any) => {
         if (!oldProjects) return [];
         return oldProjects.filter((p: any) => !p._isOptimistic);
       });
@@ -330,7 +334,7 @@ export default function ProjectManagement() {
     },
     onSuccess: (newTask) => {
       // Optimistic update for real-time display
-      queryClient.setQueryData(['tasks', MOCK_USER_ID], (oldTasks: any) => {
+      queryClient.setQueryData(['tasks', user?.id], (oldTasks: any) => {
         return oldTasks ? [...oldTasks, newTask] : [newTask];
       });
       
@@ -366,13 +370,13 @@ export default function ProjectManagement() {
     },
     onMutate: async ({ taskId, completed }) => {
       // Cancel any outgoing refetches (so they don't overwrite our optimistic update)
-      await queryClient.cancelQueries({ queryKey: ['tasks', MOCK_USER_ID] });
+      await queryClient.cancelQueries({ queryKey: ['tasks', user?.id] });
 
       // Snapshot the previous value
-      const previousTasks = queryClient.getQueryData(['tasks', MOCK_USER_ID]);
+      const previousTasks = queryClient.getQueryData(['tasks', user?.id]);
 
       // Optimistically update to the new value
-      queryClient.setQueryData(['tasks', MOCK_USER_ID], (old: any) => {
+      queryClient.setQueryData(['tasks', user?.id], (old: any) => {
         if (!old) return old;
         return old.map((task: any) => 
           task.id === taskId 
@@ -386,7 +390,7 @@ export default function ProjectManagement() {
     },
     onError: (err, variables, context) => {
       // If the mutation fails, use the context returned from onMutate to roll back
-      queryClient.setQueryData(['tasks', MOCK_USER_ID], context?.previousTasks);
+      queryClient.setQueryData(['tasks', user?.id], context?.previousTasks);
       toast({ 
         title: "오류", 
         description: "할일 상태 변경에 실패했습니다.", 
@@ -396,13 +400,13 @@ export default function ProjectManagement() {
     onSuccess: (updatedTask) => {
       // Update project completion status optimistically
       if (updatedTask.projectId) {
-        const allTasks = queryClient.getQueryData(['tasks', MOCK_USER_ID]) as any[];
+        const allTasks = queryClient.getQueryData(['tasks', user?.id]) as any[];
         if (allTasks) {
           const projectTasks = allTasks.filter(task => task.projectId === updatedTask.projectId);
           const allCompleted = projectTasks.length > 0 && projectTasks.every(task => task.completed);
           
           // Update project completion status
-          queryClient.setQueryData(['projects', MOCK_USER_ID], (oldProjects: any) => {
+          queryClient.setQueryData(['projects', user?.id], (oldProjects: any) => {
             if (!oldProjects) return oldProjects;
             return oldProjects.map((project: any) => 
               project.id === updatedTask.projectId 
@@ -415,8 +419,8 @@ export default function ProjectManagement() {
     },
     onSettled: () => {
       // Lighter refetch for data consistency - only invalidate, don't force refetch immediately
-      queryClient.invalidateQueries({ queryKey: ['tasks', MOCK_USER_ID] });
-      queryClient.invalidateQueries({ queryKey: ['projects', MOCK_USER_ID] });
+      queryClient.invalidateQueries({ queryKey: ['tasks', user?.id] });
+      queryClient.invalidateQueries({ queryKey: ['projects', user?.id] });
     }
   });
 
@@ -436,7 +440,7 @@ export default function ProjectManagement() {
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['tasks', MOCK_USER_ID] });
+      queryClient.invalidateQueries({ queryKey: ['tasks', user?.id] });
       setShowTaskDialog(false);
       setShowTaskDetailDialog(false);
       setIsEditMode(false);
@@ -684,7 +688,7 @@ export default function ProjectManagement() {
       annualGoal: projectForm.annualGoal === 'none' ? null : projectForm.annualGoal,
       imageUrls: projectForm.imageUrls,
       fileUrls: projectForm.fileUrls,
-      userId: MOCK_USER_ID
+      userId: user?.id
     };
 
     try {
@@ -872,7 +876,7 @@ export default function ProjectManagement() {
       }
 
       // Optimistic update - remove the task immediately from cache
-      queryClient.setQueryData(['tasks', MOCK_USER_ID], (oldTasks: any) => {
+      queryClient.setQueryData(['tasks', user?.id], (oldTasks: any) => {
         if (!oldTasks) return [];
         return oldTasks.filter((t: any) => t.id !== taskId);
       });

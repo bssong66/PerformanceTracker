@@ -7,13 +7,12 @@ import {
   Zap, Trophy, Rocket
 } from "lucide-react";
 import { api } from "@/lib/api";
+import { useAuth } from "@/hooks/useAuth";
 import { format, startOfWeek, endOfWeek, eachDayOfInterval, isToday } from "date-fns";
 import { ko } from "date-fns/locale";
 
-// Mock user ID for demo - in real app this would come from auth
-const MOCK_USER_ID = 1;
-
 export default function Dashboard() {
+  const { user } = useAuth();
   const today = new Date();
   const todayStr = format(today, 'yyyy-MM-dd');
   const currentYear = today.getFullYear();
@@ -23,46 +22,53 @@ export default function Dashboard() {
 
   // 모든 데이터 쿼리
   const { data: tasks = [], isLoading: tasksLoading } = useQuery({
-    queryKey: ['dashboard-tasks', MOCK_USER_ID],
-    queryFn: () => fetch(api.tasks.list(MOCK_USER_ID)).then(res => res.json()),
+    queryKey: ['dashboard-tasks', user?.id],
+    queryFn: () => fetch(api.tasks.list(user?.id)).then(res => res.json()),
+    enabled: !!user?.id
   });
 
   const { data: projects = [], isLoading: projectsLoading } = useQuery({
-    queryKey: ['dashboard-projects', MOCK_USER_ID],
-    queryFn: () => fetch(`/api/projects/${MOCK_USER_ID}`).then(res => res.json()),
+    queryKey: ['dashboard-projects', user?.id],
+    queryFn: () => fetch(`/api/projects/${user?.id}`).then(res => res.json()),
+    enabled: !!user?.id
   });
 
   const { data: habits = [], isLoading: habitsLoading } = useQuery({
-    queryKey: ['dashboard-habits', MOCK_USER_ID],
-    queryFn: () => fetch(api.habits.list(MOCK_USER_ID)).then(res => res.json()),
+    queryKey: ['dashboard-habits', user?.id],
+    queryFn: () => fetch(api.habits.list(user?.id)).then(res => res.json()),
+    enabled: !!user?.id
   });
 
   const { data: foundation } = useQuery({
-    queryKey: ['dashboard-foundation', MOCK_USER_ID, currentYear],
-    queryFn: () => fetch(api.foundation.get(MOCK_USER_ID, currentYear)).then(res => res.json()),
+    queryKey: ['dashboard-foundation', user?.id, currentYear],
+    queryFn: () => fetch(api.foundation.get(user?.id, currentYear)).then(res => res.json()),
     meta: { errorMessage: "Foundation not found" },
+    enabled: !!user?.id
   });
 
   const { data: goals = [] } = useQuery({
-    queryKey: ['dashboard-goals', MOCK_USER_ID, currentYear],
-    queryFn: () => fetch(api.goals.list(MOCK_USER_ID, currentYear)).then(res => res.json()),
+    queryKey: ['dashboard-goals', user?.id, currentYear],
+    queryFn: () => fetch(api.goals.list(user?.id, currentYear)).then(res => res.json()),
+    enabled: !!user?.id
   });
 
   const { data: events = [] } = useQuery({
-    queryKey: ['dashboard-events', MOCK_USER_ID],
-    queryFn: () => fetch(`/api/events/${MOCK_USER_ID}?startDate=${currentYear}-01-01&endDate=${currentYear}-12-31`).then(res => res.json()),
+    queryKey: ['dashboard-events', user?.id],
+    queryFn: () => fetch(`/api/events/${user?.id}?startDate=${currentYear}-01-01&endDate=${currentYear}-12-31`).then(res => res.json()),
+    enabled: !!user?.id
   });
 
   // 주간 습관 로그 조회
   const { data: weeklyHabitLogs = [] } = useQuery({
-    queryKey: ['dashboard-weekly-habits', MOCK_USER_ID, format(weekStart, 'yyyy-MM-dd')],
+    queryKey: ['dashboard-weekly-habits', user?.id, format(weekStart, 'yyyy-MM-dd')],
     queryFn: async () => {
       const promises = weekDays.map(day => 
-        fetch(api.habitLogs.list(MOCK_USER_ID, format(day, 'yyyy-MM-dd'))).then(res => res.json())
+        fetch(api.habitLogs.list(user?.id, format(day, 'yyyy-MM-dd'))).then(res => res.json())
       );
       const results = await Promise.all(promises);
       return results.flat();
     },
+    enabled: !!user?.id
   });
 
   // 핵심 통계 계산

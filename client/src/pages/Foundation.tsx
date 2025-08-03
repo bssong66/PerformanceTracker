@@ -13,11 +13,10 @@ import { Trash2, Plus, Save, RefreshCw, Database, TrendingUp, Edit2, Check, X, C
 import { useToast } from "@/hooks/use-toast";
 import { api, saveFoundation, createAnnualGoal, deleteAnnualGoal } from "@/lib/api";
 import { queryClient } from "@/lib/queryClient";
-
-// Mock user ID for demo
-const MOCK_USER_ID = 1;
+import { useAuth } from "@/hooks/useAuth";
 
 export default function Foundation() {
+  const { user } = useAuth();
   const { toast } = useToast();
   const currentYear = new Date().getFullYear();
   const [selectedYear, setSelectedYear] = useState(currentYear);
@@ -48,49 +47,51 @@ export default function Foundation() {
   const yearOptions = Array.from({ length: 11 }, (_, i) => currentYear - 5 + i);
 
   const { data: foundation, isLoading: foundationLoading, refetch: refetchFoundation } = useQuery({
-    queryKey: [api.foundation.get(MOCK_USER_ID, selectedYear)],
+    queryKey: [api.foundation.get(user?.id, selectedYear)],
     meta: { errorMessage: "Foundation not found" },
+    enabled: !!user?.id
   });
 
   const { data: goals = [], isLoading: goalsLoading, refetch: refetchGoals } = useQuery({
-    queryKey: [api.goals.list(MOCK_USER_ID, selectedYear)],
+    queryKey: [api.goals.list(user?.id, selectedYear)],
+    enabled: !!user?.id
   });
 
   const { data: allFoundations = [], refetch: refetchAllFoundations } = useQuery({
-    queryKey: [api.foundation.getAll(MOCK_USER_ID)],
-    enabled: showSelectDialog,
+    queryKey: [api.foundation.getAll(user?.id)],
+    enabled: showSelectDialog && !!user?.id,
   });
 
   // Get all tasks for annual progress calculation (only for current year to improve performance)
   const { data: allTasks = [], isLoading: tasksLoading } = useQuery({
-    queryKey: ['tasks', MOCK_USER_ID, selectedYear],
-    queryFn: () => fetch(`/api/tasks/${MOCK_USER_ID}`)
+    queryKey: ['tasks', user?.id, selectedYear],
+    queryFn: () => fetch(`/api/tasks/${user?.id}`)
       .then(res => {
         if (!res.ok) throw new Error('Failed to fetch tasks');
         return res.json();
       })
       .then(data => Array.isArray(data) ? data : [])
       .catch(() => []),
-    enabled: selectedYear === currentYear, // Only load for current year to improve performance
+    enabled: selectedYear === currentYear && !!user?.id, // Only load for current year to improve performance
   });
 
   // Get all projects for annual progress calculation (only for current year)
   const { data: allProjects = [], isLoading: projectsLoading } = useQuery({
-    queryKey: ['projects', MOCK_USER_ID, selectedYear],
-    queryFn: () => fetch(`/api/projects/${MOCK_USER_ID}`)
+    queryKey: ['projects', user?.id, selectedYear],
+    queryFn: () => fetch(`/api/projects/${user?.id}`)
       .then(res => {
         if (!res.ok) throw new Error('Failed to fetch projects');
         return res.json();
       })
       .then(data => Array.isArray(data) ? data : [])
       .catch(() => []),
-    enabled: selectedYear === currentYear, // Only load for current year to improve performance
+    enabled: selectedYear === currentYear && !!user?.id, // Only load for current year to improve performance
   });
 
   // Get all events for annual progress calculation (only for current year)
   const { data: allEvents = [], isLoading: eventsLoading } = useQuery({
-    queryKey: ['events', MOCK_USER_ID, selectedYear],
-    queryFn: () => fetch(`/api/events/${MOCK_USER_ID}?startDate=${selectedYear}-01-01&endDate=${selectedYear}-12-31`)
+    queryKey: ['events', user?.id, selectedYear],
+    queryFn: () => fetch(`/api/events/${user?.id}?startDate=${selectedYear}-01-01&endDate=${selectedYear}-12-31`)
       .then(res => {
         if (!res.ok) {
           throw new Error('Failed to fetch events');
@@ -99,33 +100,33 @@ export default function Foundation() {
       })
       .then(data => Array.isArray(data) ? data : [])
       .catch(() => []), // Return empty array on error
-    enabled: selectedYear === currentYear, // Only load for current year to improve performance
+    enabled: selectedYear === currentYear && !!user?.id, // Only load for current year to improve performance
   });
 
   // Get all habits for annual progress calculation (only for current year)
   const { data: allHabits = [], isLoading: habitsLoading } = useQuery({
-    queryKey: ['habits', MOCK_USER_ID, selectedYear],
-    queryFn: () => fetch(`/api/habits/${MOCK_USER_ID}`)
+    queryKey: ['habits', user?.id, selectedYear],
+    queryFn: () => fetch(`/api/habits/${user?.id}`)
       .then(res => {
         if (!res.ok) throw new Error('Failed to fetch habits');
         return res.json();
       })
       .then(data => Array.isArray(data) ? data : [])
       .catch(() => []),
-    enabled: selectedYear === currentYear, // Only load for current year to improve performance
+    enabled: selectedYear === currentYear && !!user?.id, // Only load for current year to improve performance
   });
 
   // Get habit logs for this year (only for current year)
   const { data: allHabitLogs = [], isLoading: habitLogsLoading } = useQuery({
-    queryKey: ['habit-logs-year', MOCK_USER_ID, selectedYear],
-    queryFn: () => fetch(`/api/habit-logs/${MOCK_USER_ID}/${selectedYear}-01-01?endDate=${selectedYear}-12-31`)
+    queryKey: ['habit-logs-year', user?.id, selectedYear],
+    queryFn: () => fetch(`/api/habit-logs/${user?.id}/${selectedYear}-01-01?endDate=${selectedYear}-12-31`)
       .then(res => {
         if (!res.ok) throw new Error('Failed to fetch habit logs');
         return res.json();
       })
       .then(data => Array.isArray(data) ? data : [])
       .catch(() => []),
-    enabled: selectedYear === currentYear, // Only load for current year to improve performance
+    enabled: selectedYear === currentYear && !!user?.id, // Only load for current year to improve performance
   });
 
   // Overall loading state for progress data
@@ -157,10 +158,10 @@ export default function Foundation() {
     
     // Invalidate and refetch queries for the new year
     queryClient.invalidateQueries({ 
-      queryKey: [api.foundation.get(MOCK_USER_ID, selectedYear)] 
+      queryKey: [api.foundation.get(user?.id, selectedYear)] 
     });
     queryClient.invalidateQueries({ 
-      queryKey: [api.goals.list(MOCK_USER_ID, selectedYear)] 
+      queryKey: [api.goals.list(user?.id, selectedYear)] 
     });
   }, [selectedYear]);
 
@@ -379,8 +380,8 @@ export default function Foundation() {
     mutationFn: saveFoundation,
     onSuccess: () => {
       // Invalidate foundation queries across all pages
-      queryClient.invalidateQueries({ queryKey: [api.foundation.get(MOCK_USER_ID, selectedYear)] });
-      queryClient.invalidateQueries({ queryKey: ['foundation', MOCK_USER_ID, selectedYear] });
+      queryClient.invalidateQueries({ queryKey: [api.foundation.get(user?.id, selectedYear)] });
+      queryClient.invalidateQueries({ queryKey: ['foundation', user?.id, selectedYear] });
       toast({
         title: "저장 완료",
         description: `${selectedYear}년 가치 중심 계획이 저장되었습니다.`,
@@ -400,8 +401,8 @@ export default function Foundation() {
     onSuccess: () => {
       setNewGoal("");
       // Invalidate goals queries across all pages
-      queryClient.invalidateQueries({ queryKey: [api.goals.list(MOCK_USER_ID, selectedYear)] });
-      queryClient.invalidateQueries({ queryKey: ['goals', MOCK_USER_ID, selectedYear] });
+      queryClient.invalidateQueries({ queryKey: [api.goals.list(user?.id, selectedYear)] });
+      queryClient.invalidateQueries({ queryKey: ['goals', user?.id, selectedYear] });
       toast({
         title: "목표 추가",
         description: "새로운 연간 목표가 추가되었습니다.",
@@ -420,8 +421,8 @@ export default function Foundation() {
     mutationFn: deleteAnnualGoal,
     onSuccess: () => {
       // Invalidate goals queries across all pages
-      queryClient.invalidateQueries({ queryKey: [api.goals.list(MOCK_USER_ID, selectedYear)] });
-      queryClient.invalidateQueries({ queryKey: ['goals', MOCK_USER_ID, selectedYear] });
+      queryClient.invalidateQueries({ queryKey: [api.goals.list(user?.id, selectedYear)] });
+      queryClient.invalidateQueries({ queryKey: ['goals', user?.id, selectedYear] });
       toast({
         title: "목표 삭제",
         description: "연간 목표가 삭제되었습니다.",
@@ -440,7 +441,7 @@ export default function Foundation() {
     try {
       // Save Foundation data
       await saveFoundationMutation.mutateAsync({
-        userId: MOCK_USER_ID,
+        userId: user?.id,
         year: selectedYear,
         personalMission: mission,
         coreValue1: values[0],
@@ -452,7 +453,7 @@ export default function Foundation() {
       if (tempGoals.length > 0) {
         const goalPromises = tempGoals.map(tempGoal => 
           addGoalMutation.mutateAsync({
-            userId: MOCK_USER_ID,
+            userId: user?.id,
             title: tempGoal.title,
             year: selectedYear,
             coreValue: tempGoal.coreValue || null,
@@ -526,7 +527,7 @@ export default function Foundation() {
     );
     
     // Update cache with optimistic data
-    queryClient.setQueryData([api.goals.list(MOCK_USER_ID, selectedYear)], optimisticGoals);
+    queryClient.setQueryData([api.goals.list(user?.id, selectedYear)], optimisticGoals);
     
     try {
       const response = await fetch(`/api/goals/${goalId}`, {
@@ -545,7 +546,7 @@ export default function Foundation() {
         });
       } else {
         // Revert optimistic update on failure
-        queryClient.setQueryData([api.goals.list(MOCK_USER_ID, selectedYear)], currentGoals);
+        queryClient.setQueryData([api.goals.list(user?.id, selectedYear)], currentGoals);
         toast({
           title: "변경 실패",
           description: "핵심가치 변경에 실패했습니다.",
@@ -554,7 +555,7 @@ export default function Foundation() {
       }
     } catch (error) {
       // Revert optimistic update on error
-      queryClient.setQueryData([api.goals.list(MOCK_USER_ID, selectedYear)], currentGoals);
+      queryClient.setQueryData([api.goals.list(user?.id, selectedYear)], currentGoals);
       toast({
         title: "변경 실패",
         description: "핵심가치 변경에 실패했습니다.",
@@ -571,7 +572,7 @@ export default function Foundation() {
     );
     
     // Update cache with optimistic data
-    queryClient.setQueryData([api.goals.list(MOCK_USER_ID, selectedYear)], optimisticGoals);
+    queryClient.setQueryData([api.goals.list(user?.id, selectedYear)], optimisticGoals);
     
     try {
       const response = await fetch(`/api/goals/${goalId}`, {
@@ -584,7 +585,7 @@ export default function Foundation() {
       
       if (!response.ok) {
         // Revert optimistic update on failure
-        queryClient.setQueryData([api.goals.list(MOCK_USER_ID, selectedYear)], currentGoals);
+        queryClient.setQueryData([api.goals.list(user?.id, selectedYear)], currentGoals);
         toast({
           title: "변경 실패",
           description: "목표 내용 변경에 실패했습니다.",
@@ -593,7 +594,7 @@ export default function Foundation() {
       }
     } catch (error) {
       // Revert optimistic update on error
-      queryClient.setQueryData([api.goals.list(MOCK_USER_ID, selectedYear)], currentGoals);
+      queryClient.setQueryData([api.goals.list(user?.id, selectedYear)], currentGoals);
       console.error("목표 제목 업데이트 실패:", error);
     }
   };
@@ -605,7 +606,7 @@ export default function Foundation() {
       // First, save Foundation data if it doesn't exist yet (essential for new users)
       if (!foundation) {
         await saveFoundationMutation.mutateAsync({
-          userId: MOCK_USER_ID,
+          userId: user?.id,
           year: selectedYear,
           personalMission: mission || "",
           coreValue1: values[0] || "",
@@ -618,7 +619,7 @@ export default function Foundation() {
       if (tempGoals.length > 0) {
         for (const tempGoal of tempGoals) {
           await createAnnualGoal({
-            userId: MOCK_USER_ID,
+            userId: user?.id,
             year: selectedYear,
             title: tempGoal.title,
             coreValue: tempGoal.coreValue || null,
@@ -676,7 +677,7 @@ export default function Foundation() {
       // First check if there are multiple foundations
       await refetchAllFoundations();
       const foundations = await queryClient.fetchQuery({
-        queryKey: [api.foundation.getAll(MOCK_USER_ID)],
+        queryKey: [api.foundation.getAll(user?.id)],
       });
 
       if (foundations && Array.isArray(foundations) && foundations.length > 1) {

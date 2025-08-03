@@ -12,12 +12,11 @@ import { useToast } from "@/hooks/use-toast";
 import { api, updateTask } from "@/lib/api";
 import { queryClient } from "@/lib/queryClient";
 import { format } from "date-fns";
-
-// Mock user ID for demo
-const MOCK_USER_ID = 1;
+import { useAuth } from "@/hooks/useAuth";
 
 export default function FocusMode() {
   const { toast } = useToast();
+  const { user } = useAuth();
   const today = format(new Date(), 'yyyy-MM-dd');
   
   const [selectedTask, setSelectedTask] = useState<any>(null);
@@ -29,18 +28,19 @@ export default function FocusMode() {
 
   // Get all tasks for focus mode (not just today's)
   const { data: tasks = [], isLoading: tasksLoading } = useQuery({
-    queryKey: ['tasks', 'all', MOCK_USER_ID],
+    queryKey: ['tasks', 'all', user?.id],
     queryFn: async () => {
-      const response = await fetch(api.tasks.list(MOCK_USER_ID));
+      const response = await fetch(api.tasks.list(user?.id));
       return response.json();
     },
+    enabled: !!user?.id,
   });
 
   const updateTaskMutation = useMutation({
     mutationFn: ({ id, updates }: { id: number; updates: any }) => updateTask(id, updates),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['tasks', 'all', MOCK_USER_ID] });
-      queryClient.invalidateQueries({ queryKey: [api.tasks.list(MOCK_USER_ID, today)] });
+      queryClient.invalidateQueries({ queryKey: ['tasks', 'all', user?.id] });
+      queryClient.invalidateQueries({ queryKey: [api.tasks.list(user?.id, today)] });
     },
   });
 

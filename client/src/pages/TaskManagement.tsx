@@ -1,6 +1,7 @@
 import { useState, useRef } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { queryClient, apiRequest } from '@/lib/queryClient';
+import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -18,7 +19,7 @@ import { UnifiedAttachmentManager } from '@/components/UnifiedAttachmentManager'
 import { format } from 'date-fns';
 import { ko } from 'date-fns/locale';
 
-const MOCK_USER_ID = 1;
+
 
 const priorityColors = {
   A: { bg: 'bg-red-100', text: 'text-red-700', border: 'border-red-200' },
@@ -44,6 +45,7 @@ interface Task {
 
 function TaskManagement() {
   const { toast } = useToast();
+  const { user } = useAuth();
   const [showTaskDialog, setShowTaskDialog] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [viewingImage, setViewingImage] = useState<string | null>(null);
@@ -72,15 +74,16 @@ function TaskManagement() {
 
   // Fetch tasks
   const { data: tasks = [] } = useQuery({
-    queryKey: ['tasks', MOCK_USER_ID],
-    queryFn: () => fetch(`/api/tasks/${MOCK_USER_ID}`).then(res => res.json())
+    queryKey: ['tasks', user?.id],
+    queryFn: () => fetch(`/api/tasks/${user?.id}`).then(res => res.json()),
+    enabled: !!user?.id
   });
 
   // Fetch foundations for core values
   const { data: foundation, refetch: refetchFoundation, isLoading: foundationLoading } = useQuery({
-    queryKey: ['foundation', MOCK_USER_ID],
+    queryKey: ['foundation', user?.id],
     queryFn: async () => {
-      const response = await fetch(`/api/foundation/${MOCK_USER_ID}`);
+      const response = await fetch(`/api/foundation/${user?.id}`);
       if (!response.ok && response.status !== 404) {
         throw new Error('Failed to fetch foundation');
       }
@@ -88,19 +91,21 @@ function TaskManagement() {
         return null;
       }
       return response.json();
-    }
+    },
+    enabled: !!user?.id
   });
 
   // Fetch annual goals
   const { data: annualGoals = [], refetch: refetchGoals, isLoading: goalsLoading } = useQuery({
-    queryKey: ['goals', MOCK_USER_ID, new Date().getFullYear()],
+    queryKey: ['goals', user?.id, new Date().getFullYear()],
     queryFn: async () => {
-      const response = await fetch(`/api/goals/${MOCK_USER_ID}?year=${new Date().getFullYear()}`);
+      const response = await fetch(`/api/goals/${user?.id}?year=${new Date().getFullYear()}`);
       if (!response.ok) {
         throw new Error('Failed to fetch goals');
       }
       return response.json();
-    }
+    },
+    enabled: !!user?.id
   });
 
   // Function to refresh foundation and goals data
@@ -128,7 +133,7 @@ function TaskManagement() {
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['tasks', MOCK_USER_ID] });
+      queryClient.invalidateQueries({ queryKey: ['tasks', user?.id] });
       setShowTaskDialog(false);
       resetForm();
       toast({ title: "할일 생성", description: "새 할일이 생성되었습니다." });
@@ -146,7 +151,7 @@ function TaskManagement() {
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['tasks', MOCK_USER_ID] });
+      queryClient.invalidateQueries({ queryKey: ['tasks', user?.id] });
       setShowTaskDialog(false);
       setShowTaskDetailDialog(false);
       setIsEditMode(false);
@@ -164,7 +169,7 @@ function TaskManagement() {
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['tasks', MOCK_USER_ID] });
+      queryClient.invalidateQueries({ queryKey: ['tasks', user?.id] });
       toast({ title: "할일 삭제", description: "할일이 삭제되었습니다." });
     }
   });
@@ -182,13 +187,13 @@ function TaskManagement() {
     },
     onMutate: async (task: Task) => {
       // Cancel any outgoing refetches
-      await queryClient.cancelQueries({ queryKey: ['tasks', MOCK_USER_ID] });
+      await queryClient.cancelQueries({ queryKey: ['tasks', user?.id] });
 
       // Snapshot the previous value
-      const previousTasks = queryClient.getQueryData(['tasks', MOCK_USER_ID]);
+      const previousTasks = queryClient.getQueryData(['tasks', user?.id]);
 
       // Optimistically update to the new value
-      queryClient.setQueryData(['tasks', MOCK_USER_ID], (old: any) => {
+      queryClient.setQueryData(['tasks', user?.id], (old: any) => {
         if (!old) return old;
         return old.map((t: any) => 
           t.id === task.id 
@@ -202,7 +207,7 @@ function TaskManagement() {
     },
     onError: (err, variables, context) => {
       // If the mutation fails, use the context returned from onMutate to roll back
-      queryClient.setQueryData(['tasks', MOCK_USER_ID], context?.previousTasks);
+      queryClient.setQueryData(['tasks', user?.id], context?.previousTasks);
       toast({ 
         title: "오류", 
         description: "할일 상태 변경에 실패했습니다.", 
@@ -211,7 +216,7 @@ function TaskManagement() {
     },
     onSettled: () => {
       // Lighter refetch for data consistency
-      queryClient.invalidateQueries({ queryKey: ['tasks', MOCK_USER_ID] });
+      queryClient.invalidateQueries({ queryKey: ['tasks', user?.id] });
     }
   });
 
@@ -304,7 +309,7 @@ function TaskManagement() {
     
     const taskData = {
       ...taskForm,
-      userId: MOCK_USER_ID,
+      userId: user?.id,
       coreValue: taskForm.coreValue === 'none' ? null : taskForm.coreValue,
       annualGoal: taskForm.annualGoal === 'none' ? null : taskForm.annualGoal
     };
@@ -331,7 +336,7 @@ function TaskManagement() {
 
     const taskData = {
       ...taskForm,
-      userId: MOCK_USER_ID,
+      userId: user?.id,
       completed: false,
       projectId: null, // Ensure tasks are always independent
       coreValue: taskForm.coreValue === 'none' ? null : taskForm.coreValue,

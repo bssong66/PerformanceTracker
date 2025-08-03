@@ -15,8 +15,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Plus, Target, Calendar, CheckCircle, Circle, Trash2, Edit, TrendingUp } from 'lucide-react';
 import { format } from 'date-fns';
 import { ko } from 'date-fns/locale';
-
-const MOCK_USER_ID = 1;
+import { useAuth } from '@/hooks/useAuth';
 
 interface Habit {
   id: number;
@@ -35,6 +34,7 @@ interface HabitLog {
 
 export default function HabitManagement() {
   const { toast } = useToast();
+  const { user } = useAuth();
   const [showHabitDialog, setShowHabitDialog] = useState(false);
   const [editingHabit, setEditingHabit] = useState<Habit | null>(null);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
@@ -52,45 +52,48 @@ export default function HabitManagement() {
 
   // Fetch habits
   const { data: habits = [] } = useQuery({
-    queryKey: ['habits', MOCK_USER_ID],
+    queryKey: ['habits', user?.id],
     queryFn: async () => {
-      const response = await fetch(`/api/habits/${MOCK_USER_ID}`);
+      const response = await fetch(`/api/habits/${user?.id}`);
       if (!response.ok) {
         return [];
       }
       const data = await response.json();
       return Array.isArray(data) ? data : [];
-    }
+    },
+    enabled: !!user?.id,
   });
 
   // Fetch foundation for core values
   const { data: foundation } = useQuery({
-    queryKey: ['foundation', MOCK_USER_ID],
+    queryKey: ['foundation', user?.id],
     queryFn: async () => {
-      const response = await fetch(`/api/foundation/${MOCK_USER_ID}`);
+      const response = await fetch(`/api/foundation/${user?.id}`);
       if (!response.ok) {
         return null;
       }
       return response.json();
-    }
+    },
+    enabled: !!user?.id,
   });
 
   // Fetch annual goals
   const { data: annualGoals = [] } = useQuery({
-    queryKey: ['goals', MOCK_USER_ID],
+    queryKey: ['goals', user?.id],
     queryFn: async () => {
-      const response = await fetch(`/api/goals/${MOCK_USER_ID}`);
+      const response = await fetch(`/api/goals/${user?.id}`);
       if (!response.ok) {
         return [];
       }
       const data = await response.json();
       return Array.isArray(data) ? data : [];
-    }
+    },
+    enabled: !!user?.id,
   });
 
   // Fetch habit logs for the last 7 days
   const { data: habitLogs = [] } = useQuery({
-    queryKey: ['habit-logs', MOCK_USER_ID],
+    queryKey: ['habit-logs', user?.id],
     queryFn: async () => {
       // Get logs for the last 7 days
       const logs = [];
@@ -99,7 +102,7 @@ export default function HabitManagement() {
         date.setDate(date.getDate() - i);
         const dateStr = date.toISOString().split('T')[0];
         
-        const response = await fetch(`/api/habit-logs/${MOCK_USER_ID}/${dateStr}`);
+        const response = await fetch(`/api/habit-logs/${user?.id}/${dateStr}`);
         if (response.ok) {
           const dayLogs = await response.json();
           if (Array.isArray(dayLogs)) {
@@ -122,7 +125,7 @@ export default function HabitManagement() {
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['habits', MOCK_USER_ID] });
+      queryClient.invalidateQueries({ queryKey: ['habits', user?.id] });
       setShowHabitDialog(false);
       resetForm();
       toast({ title: "습관 생성", description: "새 습관이 생성되었습니다." });
@@ -140,7 +143,7 @@ export default function HabitManagement() {
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['habits', MOCK_USER_ID] });
+      queryClient.invalidateQueries({ queryKey: ['habits', user?.id] });
       setShowHabitDialog(false);
       resetForm();
       toast({ title: "습관 수정", description: "습관이 수정되었습니다." });
@@ -156,8 +159,8 @@ export default function HabitManagement() {
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['habits', MOCK_USER_ID] });
-      queryClient.invalidateQueries({ queryKey: ['habit-logs', MOCK_USER_ID, today] });
+      queryClient.invalidateQueries({ queryKey: ['habits', user?.id] });
+      queryClient.invalidateQueries({ queryKey: ['habit-logs', user?.id, today] });
       toast({ title: "습관 삭제", description: "습관이 삭제되었습니다." });
     }
   });
@@ -172,13 +175,13 @@ export default function HabitManagement() {
           habitId,
           date: today,
           completed,
-          userId: MOCK_USER_ID
+          userId: user?.id
         })
       });
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['habit-logs', MOCK_USER_ID] });
+      queryClient.invalidateQueries({ queryKey: ['habit-logs', user?.id] });
     }
   });
 
@@ -224,7 +227,7 @@ export default function HabitManagement() {
       ...habitForm,
       coreValue: habitForm.coreValue === 'none' ? null : habitForm.coreValue,
       annualGoal: habitForm.annualGoal === 'none' ? null : habitForm.annualGoal,
-      userId: MOCK_USER_ID
+      userId: user?.id
     };
 
     if (editingHabit) {

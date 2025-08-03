@@ -13,31 +13,32 @@ import { api, createHabit, updateHabit, deleteHabit, createHabitLog, updateHabit
 import { queryClient } from "@/lib/queryClient";
 import { format, subDays, startOfWeek, endOfWeek } from "date-fns";
 import { ko } from "date-fns/locale";
-
-// Mock user ID for demo
-const MOCK_USER_ID = 1;
+import { useAuth } from "@/hooks/useAuth";
 
 export default function HabitTracking() {
   const { toast } = useToast();
+  const { user } = useAuth();
   const today = format(new Date(), 'yyyy-MM-dd');
   const [newHabit, setNewHabit] = useState({ name: "", description: "" });
 
   const { data: habits = [], isLoading: habitsLoading } = useQuery({
-    queryKey: ['habits', MOCK_USER_ID],
-    queryFn: () => fetch(api.habits.list(MOCK_USER_ID)).then(res => res.json()),
+    queryKey: ['habits', user?.id],
+    queryFn: () => fetch(api.habits.list(user?.id)).then(res => res.json()),
+    enabled: !!user?.id,
   });
 
   const { data: todayLogs = [] } = useQuery({
-    queryKey: ['habitLogs', MOCK_USER_ID, today],
-    queryFn: () => fetch(api.habitLogs.list(MOCK_USER_ID, today)).then(res => res.json()),
+    queryKey: ['habitLogs', user?.id, today],
+    queryFn: () => fetch(api.habitLogs.list(user?.id, today)).then(res => res.json()),
+    enabled: !!user?.id,
   });
 
   const addHabitMutation = useMutation({
     mutationFn: createHabit,
     onSuccess: async () => {
       setNewHabit({ name: "", description: "" });
-      await queryClient.invalidateQueries({ queryKey: ['habits', MOCK_USER_ID] });
-      await queryClient.refetchQueries({ queryKey: ['habits', MOCK_USER_ID] });
+      await queryClient.invalidateQueries({ queryKey: ['habits', user?.id] });
+      await queryClient.refetchQueries({ queryKey: ['habits', user?.id] });
       toast({
         title: "습관 추가",
         description: "새로운 습관이 추가되었습니다.",
@@ -55,7 +56,7 @@ export default function HabitTracking() {
   const deleteHabitMutation = useMutation({
     mutationFn: deleteHabit,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['habits', MOCK_USER_ID] });
+      queryClient.invalidateQueries({ queryKey: ['habits', user?.id] });
       toast({
         title: "습관 삭제",
         description: "습관이 삭제되었습니다.",
@@ -80,16 +81,16 @@ export default function HabitTracking() {
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['habitLogs', MOCK_USER_ID, today] });
+      queryClient.invalidateQueries({ queryKey: ['habitLogs', user?.id, today] });
       // Update habit streak
-      queryClient.invalidateQueries({ queryKey: ['habits', MOCK_USER_ID] });
+      queryClient.invalidateQueries({ queryKey: ['habits', user?.id] });
     },
   });
 
   const handleAddHabit = () => {
     if (newHabit.name.trim()) {
       addHabitMutation.mutate({
-        userId: MOCK_USER_ID,
+        userId: user?.id,
         name: newHabit.name.trim(),
         description: newHabit.description.trim() || undefined,
       });
