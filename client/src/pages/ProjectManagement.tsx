@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { Plus, Folder, Image, Eye, Trash2, Calendar, Edit, ChevronDown, ChevronRight, ChevronLeft, CheckCircle, Circle, Play, X, ImagePlus, Copy, FileText } from 'lucide-react';
+import { Plus, Folder, Image, Eye, Trash2, Calendar, Edit, ChevronDown, ChevronRight, ChevronLeft, CheckCircle, Circle, Play, X, ImagePlus, Copy, FileText, Download, File } from 'lucide-react';
 import { FileUploader } from '@/components/FileUploader';
 import { format } from 'date-fns';
 import { ko } from 'date-fns/locale';
@@ -69,6 +69,7 @@ export default function ProjectManagement() {
   const [deleteTarget, setDeleteTarget] = useState<{type: 'project' | 'task', id: number} | null>(null);
   const [showCloneDialog, setShowCloneDialog] = useState(false);
   const [projectToClone, setProjectToClone] = useState<Project | null>(null);
+  const [previewFile, setPreviewFile] = useState<{url: string, name: string, type: 'image' | 'pdf'} | null>(null);
   
   // Project detail popup states
   const [showProjectDetailDialog, setShowProjectDetailDialog] = useState(false);
@@ -2097,23 +2098,65 @@ export default function ProjectManagement() {
                   <div>
                     <Label className="text-sm font-medium text-gray-600">첨부 파일</Label>
                     <div className="space-y-2 mt-2">
-                      {selectedTask.fileUrls.map((file: any, index: number) => (
-                        <div
-                          key={index}
-                          className="flex items-center justify-between p-2 bg-gray-50 rounded-lg border"
-                        >
-                          <div className="flex items-center space-x-2 flex-1 min-w-0">
-                            <FileText className="h-4 w-4 text-gray-500" />
-                            <span 
-                              className="text-sm truncate cursor-pointer hover:text-blue-600 hover:underline" 
-                              title={file.name}
-                              onClick={() => window.open(file.url, '_blank')}
-                            >
-                              {file.name}
-                            </span>
+                      {selectedTask.fileUrls.map((file: any, index: number) => {
+                        const isImage = file.name?.toLowerCase().match(/\.(jpg|jpeg|png|gif|webp|svg)$/);
+                        const isPdf = file.name?.toLowerCase().endsWith('.pdf');
+                        
+                        return (
+                          <div
+                            key={index}
+                            className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border hover:bg-gray-100 transition-colors"
+                          >
+                            <div className="flex items-center space-x-3 flex-1 min-w-0">
+                              {isImage ? (
+                                <Image className="h-5 w-5 text-blue-500" />
+                              ) : isPdf ? (
+                                <FileText className="h-5 w-5 text-red-500" />
+                              ) : (
+                                <File className="h-5 w-5 text-gray-500" />
+                              )}
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-medium text-gray-900 truncate">{file.name}</p>
+                                {file.size && (
+                                  <p className="text-xs text-gray-500">
+                                    {(file.size / 1024 / 1024).toFixed(2)} MB
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              {(isImage || isPdf) && (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => setPreviewFile({ url: file.url, name: file.name, type: isImage ? 'image' : 'pdf' })}
+                                  className="h-8 px-2"
+                                >
+                                  <Eye className="h-3 w-3" />
+                                  <span className="ml-1 text-xs">미리보기</span>
+                                </Button>
+                              )}
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => {
+                                  const link = document.createElement('a');
+                                  link.href = file.url;
+                                  link.download = file.name || 'download';
+                                  link.target = '_blank';
+                                  document.body.appendChild(link);
+                                  link.click();
+                                  document.body.removeChild(link);
+                                }}
+                                className="h-8 px-2"
+                              >
+                                <Download className="h-3 w-3" />
+                                <span className="ml-1 text-xs">다운로드</span>
+                              </Button>
+                            </div>
                           </div>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   </div>
                 )}
@@ -2131,6 +2174,63 @@ export default function ProjectManagement() {
                 </div>
               </div>
             )}
+          </DialogContent>
+        </Dialog>
+      )}
+
+      {/* File Preview Dialog */}
+      {previewFile && (
+        <Dialog open={!!previewFile} onOpenChange={() => setPreviewFile(null)}>
+          <DialogContent className="sm:max-w-4xl">
+            <DialogHeader>
+              <DialogTitle className="flex items-center justify-between">
+                <span className="truncate">{previewFile.name}</span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    const link = document.createElement('a');
+                    link.href = previewFile.url;
+                    link.download = previewFile.name || 'download';
+                    link.target = '_blank';
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                  }}
+                  className="ml-4"
+                >
+                  <svg className="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                  다운로드
+                </Button>
+              </DialogTitle>
+            </DialogHeader>
+            <div className="mt-4">
+              {previewFile.type === 'image' ? (
+                <div className="flex justify-center">
+                  <img
+                    src={previewFile.url}
+                    alt={previewFile.name}
+                    className="max-w-full max-h-[70vh] object-contain rounded-lg border"
+                  />
+                </div>
+              ) : previewFile.type === 'pdf' ? (
+                <div className="w-full h-[70vh]">
+                  <iframe
+                    src={previewFile.url}
+                    className="w-full h-full border rounded-lg"
+                    title={previewFile.name}
+                  />
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                  <p className="text-gray-600">이 파일 형식은 미리보기를 지원하지 않습니다.</p>
+                  <p className="text-sm text-gray-500 mt-2">다운로드 버튼을 클릭하여 파일을 확인하세요.</p>
+                </div>
+              )}
+            </div>
           </DialogContent>
         </Dialog>
       )}
