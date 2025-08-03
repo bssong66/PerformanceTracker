@@ -1929,6 +1929,21 @@ export default function ProjectManagement() {
                   />
                 </div>
 
+                <div>
+                  <Label>파일 첨부</Label>
+                  <FileUploader
+                    files={taskForm.fileUrls}
+                    onFilesChange={(files) => setTaskForm(prev => ({ ...prev, fileUrls: files }))}
+                    maxFiles={10}
+                    maxFileSize={50 * 1024 * 1024} // 50MB
+                    acceptedTypes={["*/*"]}
+                    uploadEndpoint="/api/files/upload"
+                  >
+                    <FileText className="h-4 w-4" />
+                    <span>파일 추가</span>
+                  </FileUploader>
+                </div>
+
                 <div className="flex justify-end space-x-2 pt-4">
                   <Button
                     type="button"
@@ -2009,6 +2024,31 @@ export default function ProjectManagement() {
                           className="w-16 h-16 object-cover rounded border cursor-pointer hover:opacity-80"
                           onClick={() => setViewingTaskImage(imageUrl)}
                         />
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {selectedTask.fileUrls && selectedTask.fileUrls.length > 0 && (
+                  <div>
+                    <Label className="text-sm font-medium text-gray-600">첨부 파일</Label>
+                    <div className="space-y-2 mt-2">
+                      {selectedTask.fileUrls.map((file: any, index: number) => (
+                        <div
+                          key={index}
+                          className="flex items-center justify-between p-2 bg-gray-50 rounded-lg border"
+                        >
+                          <div className="flex items-center space-x-2 flex-1 min-w-0">
+                            <FileText className="h-4 w-4 text-gray-500" />
+                            <span 
+                              className="text-sm truncate cursor-pointer hover:text-blue-600 hover:underline" 
+                              title={file.name}
+                              onClick={() => window.open(file.url, '_blank')}
+                            >
+                              {file.name}
+                            </span>
+                          </div>
+                        </div>
                       ))}
                     </div>
                   </div>
