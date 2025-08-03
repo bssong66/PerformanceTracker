@@ -491,12 +491,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/events", isAuthenticated, async (req: any, res) => {
     try {
-      console.log('Event creation request body:', JSON.stringify(req.body, null, 2));
       const eventData = insertEventSchema.parse({
         ...req.body,
         userId: req.user.claims.sub
       });
-      console.log('Parsed event data:', JSON.stringify(eventData, null, 2));
       const event = await storage.createEvent(eventData);
       res.json(event);
     } catch (error) {

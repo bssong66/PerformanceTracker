@@ -614,8 +614,6 @@ export default function Calendar() {
       fileUrls: eventForm.fileUrls
     };
 
-    console.log('Sending event data:', JSON.stringify(eventData, null, 2));
-
     // For updates, include the ID
     if (isEditing && eventForm.id) {
       updateEventMutation.mutate({ ...eventData, id: eventForm.id });
