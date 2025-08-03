@@ -2101,80 +2101,84 @@ export default function ProjectManagement() {
                         return (
                           <div
                             key={index}
-                            className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border hover:bg-gray-100 transition-colors"
+                            className="flex items-start gap-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
                           >
-                            <div className="flex items-center space-x-3 flex-1 min-w-0">
+                            <div className="flex-shrink-0 mt-1">
                               {isImage ? (
-                                <Image className="h-5 w-5 text-blue-500" />
+                                <Image className="h-5 w-5 text-blue-500 dark:text-blue-400" />
                               ) : isPdf ? (
-                                <FileText className="h-5 w-5 text-red-500" />
+                                <FileText className="h-5 w-5 text-red-500 dark:text-red-400" />
                               ) : (
-                                <File className="h-5 w-5 text-gray-500" />
+                                <File className="h-5 w-5 text-gray-500 dark:text-gray-400" />
                               )}
+                            </div>
+                            <div className="flex-1 min-w-0">
                               <div 
-                                className="flex-1 min-w-0 cursor-pointer"
+                                className="cursor-pointer"
                                 onClick={() => {
                                   if (isImage || isPdf) {
                                     setPreviewFile({ url: file.url, name: file.name, type: isImage ? 'image' : 'pdf' });
                                   }
                                 }}
                               >
-                                <p className="text-sm font-medium text-gray-900 truncate hover:text-blue-600 transition-colors">
+                                <p className="text-sm font-medium text-gray-900 dark:text-gray-100 break-words hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
                                   {file.name || 'Unknown file'}
                                 </p>
                                 {file.size && (
-                                  <p className="text-xs text-gray-500">
+                                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                                     {(file.size / 1024 / 1024).toFixed(2)} MB
                                   </p>
                                 )}
                               </div>
                             </div>
-                            <div className="flex items-center space-x-2">
-                              {(isImage || isPdf) && (
+                            <div className="flex-shrink-0">
+                              <div className="flex items-center space-x-2">
+                                {(isImage || isPdf) && (
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => setPreviewFile({ url: file.url, name: file.name, type: isImage ? 'image' : 'pdf' })}
+                                    className="h-8 px-2"
+                                  >
+                                    <Eye className="h-3 w-3" />
+                                    <span className="ml-1 text-xs">미리보기</span>
+                                  </Button>
+                                )}
                                 <Button
                                   size="sm"
                                   variant="outline"
-                                  onClick={() => setPreviewFile({ url: file.url, name: file.name, type: isImage ? 'image' : 'pdf' })}
+                                  onClick={async () => {
+                                    try {
+                                      // Fetch the file data
+                                      const response = await fetch(file.url);
+                                      if (!response.ok) throw new Error('파일 다운로드에 실패했습니다.');
+                                      
+                                      const blob = await response.blob();
+                                      const url = window.URL.createObjectURL(blob);
+                                      
+                                      const link = document.createElement('a');
+                                      link.href = url;
+                                      link.download = file.name || 'download';
+                                      document.body.appendChild(link);
+                                      link.click();
+                                      
+                                      // Clean up
+                                      document.body.removeChild(link);
+                                      window.URL.revokeObjectURL(url);
+                                    } catch (error) {
+                                      console.error('Download error:', error);
+                                      // Fallback to direct link
+                                      window.open(file.url, '_blank');
+                                    }
+                                  }}
                                   className="h-8 px-2"
                                 >
-                                  <Eye className="h-3 w-3" />
-                                  <span className="ml-1 text-xs">미리보기</span>
+                                  <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                  </svg>
+                                  <span className="ml-1 text-xs">다운로드</span>
                                 </Button>
-                              )}
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={async () => {
-                                  try {
-                                    // Fetch the file data
-                                    const response = await fetch(file.url);
-                                    if (!response.ok) throw new Error('파일 다운로드에 실패했습니다.');
-                                    
-                                    const blob = await response.blob();
-                                    const url = window.URL.createObjectURL(blob);
-                                    
-                                    const link = document.createElement('a');
-                                    link.href = url;
-                                    link.download = file.name || 'download';
-                                    document.body.appendChild(link);
-                                    link.click();
-                                    
-                                    // Clean up
-                                    document.body.removeChild(link);
-                                    window.URL.revokeObjectURL(url);
-                                  } catch (error) {
-                                    console.error('Download error:', error);
-                                    // Fallback to direct link
-                                    window.open(file.url, '_blank');
-                                  }
-                                }}
-                                className="h-8 px-2"
-                              >
-                                <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                </svg>
-                                <span className="ml-1 text-xs">다운로드</span>
-                              </Button>
+                              </div>
                             </div>
                           </div>
                         );

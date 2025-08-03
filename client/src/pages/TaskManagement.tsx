@@ -12,7 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
-import { Plus, ListTodo, Calendar, Clock, Eye, Trash2, Edit, CheckCircle, Circle, Camera, Image, ArrowLeft, ArrowRight, RefreshCw, FileText } from 'lucide-react';
+import { Plus, ListTodo, Calendar, Clock, Eye, Trash2, Edit, CheckCircle, Circle, Camera, Image, ArrowLeft, ArrowRight, RefreshCw, FileText, Download } from 'lucide-react';
 import { FileUploader } from '@/components/FileUploader';
 import { format } from 'date-fns';
 import { ko } from 'date-fns/locale';
@@ -1093,17 +1093,36 @@ function TaskManagement() {
                       {selectedTask.fileUrls.map((file, index) => (
                         <div
                           key={index}
-                          className="flex items-center justify-between p-2 bg-gray-50 rounded-lg border"
+                          className="flex items-start gap-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
                         >
-                          <div className="flex items-center space-x-2 flex-1 min-w-0">
-                            <FileText className="h-4 w-4 text-gray-500" />
-                            <span 
-                              className="text-sm truncate cursor-pointer hover:text-blue-600 hover:underline" 
+                          <div className="flex-shrink-0 mt-1">
+                            <FileText className="h-4 w-4 text-gray-500 dark:text-gray-400" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div 
+                              className="text-sm font-medium cursor-pointer hover:text-blue-600 dark:hover:text-blue-400 hover:underline transition-colors text-gray-900 dark:text-gray-100 break-words" 
                               title={file.name}
                               onClick={() => window.open(file.url, '_blank')}
                             >
                               {file.name}
-                            </span>
+                            </div>
+                            {file.size && (
+                              <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                {(file.size / 1024 / 1024).toFixed(2)} MB
+                              </div>
+                            )}
+                          </div>
+                          <div className="flex items-center space-x-1 flex-shrink-0">
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => window.open(file.url, '_blank')}
+                              className="h-8 w-8 p-0 hover:bg-blue-100 dark:hover:bg-blue-900/30 text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400"
+                              title="다운로드"
+                            >
+                              <Download className="h-4 w-4" />
+                            </Button>
                           </div>
                         </div>
                       ))}
