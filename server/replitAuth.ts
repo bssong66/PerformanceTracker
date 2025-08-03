@@ -168,10 +168,14 @@ export async function setupAuth(app: Express) {
 
   // Kakao OAuth Strategy
   if (process.env.KAKAO_CLIENT_ID && process.env.KAKAO_CLIENT_SECRET) {
+    const baseUrl = process.env.REPLIT_DEV_DOMAIN 
+      ? `https://${process.env.REPLIT_DEV_DOMAIN}` 
+      : 'http://localhost:5000';
+    
     passport.use(new KakaoStrategy({
       clientID: process.env.KAKAO_CLIENT_ID,
       clientSecret: process.env.KAKAO_CLIENT_SECRET,
-      callbackURL: "/api/auth/kakao/callback"
+      callbackURL: `${baseUrl}/api/auth/kakao/callback`
     }, async (accessToken: string, refreshToken: string, profile: any, done: any) => {
       try {
         const email = profile._json?.kakao_account?.email;
