@@ -758,9 +758,9 @@ export default function Calendar() {
           setShowEventDialog(open);
           if (!open) resetEventForm();
         }}>
-          <DialogContent className="max-w-3xl max-h-[56vh] overflow-hidden" aria-describedby="event-dialog-description">
-            <DialogHeader>
-              <DialogTitle>
+          <DialogContent className="max-w-3xl max-h-[85vh] sm:max-h-[56vh] overflow-hidden" aria-describedby="event-dialog-description">
+            <DialogHeader className="pb-2">
+              <DialogTitle className="text-lg sm:text-xl">
                 {isEditing ? '일정 수정' : '새 일정 생성'}
               </DialogTitle>
               <div id="event-dialog-description" className="sr-only">
@@ -768,7 +768,7 @@ export default function Calendar() {
               </div>
             </DialogHeader>
             
-            <div className="grid grid-cols-2 gap-4 h-[40vh] overflow-hidden">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 h-[65vh] sm:h-[40vh] overflow-hidden">
               {/* 왼쪽: 일정 내용 */}
               <div className="space-y-3 overflow-y-auto pr-2 max-h-full">
                 <h3 className="text-base font-semibold border-b pb-1 sticky top-0 bg-white">일정 내용</h3>
@@ -1055,21 +1055,21 @@ export default function Calendar() {
             </div>
 
             {/* 하단 버튼들 */}
-            <div className="flex space-x-2 pt-3 border-t mt-3">
+            <div className="flex space-x-2 pt-3 border-t mt-3 bg-white sticky bottom-0">
               <Button
                 onClick={handleSaveEvent}
                 disabled={createEventMutation.isPending || updateEventMutation.isPending}
-                className="flex-1"
+                className="flex-1 h-10 text-sm"
               >
-                <Save className="h-4 w-4 mr-2" />
+                <Save className="h-4 w-4 mr-1" />
                 {isEditing ? '수정' : '생성'}
               </Button>
               <Button
                 variant="outline"
                 onClick={() => setShowEventDialog(false)}
-                className="flex-1"
+                className="flex-1 h-10 text-sm"
               >
-                <X className="h-4 w-4 mr-2" />
+                <X className="h-4 w-4 mr-1" />
                 취소
               </Button>
               {isEditing && (
@@ -1077,7 +1077,7 @@ export default function Calendar() {
                   variant="destructive"
                   onClick={handleDeleteEvent}
                   disabled={deleteEventMutation.isPending}
-                  className="px-4"
+                  className="px-3 h-10 text-sm"
                 >
                   삭제
                 </Button>
