@@ -52,6 +52,9 @@
 @layer base {
   * {
     @apply border-border;
+    writing-mode: horizontal-tb !important;
+    text-orientation: mixed !important;
+    direction: ltr !important;
   }
 
   body {
@@ -62,12 +65,18 @@
     text-rendering: optimizeLegibility;
     font-size: 16px;
     line-height: 1.5;
+    writing-mode: horizontal-tb !important;
+    text-orientation: mixed !important;
+    direction: ltr !important;
   }
   
   html {
     font-size: 16px;
     -webkit-text-size-adjust: 100%;
     -ms-text-size-adjust: 100%;
+    writing-mode: horizontal-tb !important;
+    text-orientation: mixed !important;
+    direction: ltr !important;
   }
   
   /* Mobile-specific improvements */
@@ -75,22 +84,47 @@
     body {
       font-size: 16px;
       line-height: 1.6;
+      writing-mode: horizontal-tb !important;
+      text-orientation: mixed !important;
+      direction: ltr !important;
+      unicode-bidi: normal !important;
     }
     
     * {
       -webkit-tap-highlight-color: rgba(0, 0, 0, 0.1);
+      writing-mode: horizontal-tb !important;
+      text-orientation: mixed !important;
+      direction: ltr !important;
+      unicode-bidi: normal !important;
     }
     
     /* Prevent text from being too small on mobile */
-    p, span, div {
+    p, span, div, h1, h2, h3, h4, h5, h6 {
       font-size: inherit;
       line-height: inherit;
+      writing-mode: horizontal-tb !important;
+      text-orientation: mixed !important;
+      direction: ltr !important;
+      unicode-bidi: normal !important;
+      text-align: inherit !important;
+      white-space: normal !important;
+    }
+    
+    /* Force horizontal text layout for Korean text */
+    .text-center, .text-left, .text-right {
+      writing-mode: horizontal-tb !important;
+      text-orientation: mixed !important;
+      direction: ltr !important;
+      unicode-bidi: normal !important;
     }
     
     /* Ensure buttons are large enough for touch */
     button, [role="button"] {
       min-height: 44px;
       min-width: 44px;
+      writing-mode: horizontal-tb !important;
+      text-orientation: mixed !important;
+      direction: ltr !important;
     }
   }
 }
@@ -112,12 +146,19 @@
   .mobile-optimized {
     -webkit-overflow-scrolling: touch;
     scroll-behavior: smooth;
+    writing-mode: horizontal-tb !important;
+    text-orientation: mixed !important;
+    direction: ltr !important;
   }
   
   .mobile-text {
     word-break: keep-all;
     overflow-wrap: break-word;
     hyphens: none;
+    writing-mode: horizontal-tb !important;
+    text-orientation: mixed !important;
+    direction: ltr !important;
+    text-align: center !important;
   }
   
   .prevent-zoom {

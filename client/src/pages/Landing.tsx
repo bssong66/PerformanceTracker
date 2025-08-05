@@ -12,14 +12,14 @@ export default function Landing() {
       {/* Hero Section */}
       <div className="relative">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 sm:pt-20 pb-12 sm:pb-16">
-          <div className="text-center">
-            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 mb-4 sm:mb-6 leading-tight">
-              <span className="block">개인성과 관리의</span>
-              <span className="block text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">
+          <div className="text-center" style={{writingMode: 'horizontal-tb', textOrientation: 'mixed', direction: 'ltr', unicodeBidi: 'normal'}}>
+            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 mb-4 sm:mb-6 leading-tight" style={{writingMode: 'horizontal-tb', textOrientation: 'mixed', direction: 'ltr', unicodeBidi: 'normal', textAlign: 'center', whiteSpace: 'normal'}}>
+              <span className="block" style={{writingMode: 'horizontal-tb', textOrientation: 'mixed', direction: 'ltr', unicodeBidi: 'normal'}}>개인성과 관리의</span>
+              <span className="block text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600" style={{writingMode: 'horizontal-tb', textOrientation: 'mixed', direction: 'ltr', unicodeBidi: 'normal'}}>
                 새로운 기준
               </span>
             </h1>
-            <p className="text-lg sm:text-xl text-gray-600 mb-6 sm:mb-8 max-w-3xl mx-auto leading-relaxed px-2 mobile-text">
+            <p className="text-lg sm:text-xl text-gray-600 mb-6 sm:mb-8 max-w-3xl mx-auto leading-relaxed px-2 mobile-text" style={{writingMode: 'horizontal-tb', textOrientation: 'mixed', direction: 'ltr', unicodeBidi: 'normal', textAlign: 'center', whiteSpace: 'normal'}}>
               Franklin Planner 방법론을 기반으로 한 체계적인 목표 설정, 우선순위 관리, 
               그리고 지속적인 성과 추적을 통해 당신의 잠재력을 최대한 발휘하세요.
             </p>
