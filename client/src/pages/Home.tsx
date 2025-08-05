@@ -67,59 +67,40 @@ export default function Home() {
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
-        <div className="flex justify-between items-center mb-8">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">
-              환영합니다, {(user as any)?.firstName || (user as any)?.email || '사용자'}님!
-            </h1>
-            <p className="text-gray-600">
-              오늘도 목표 달성을 위해 함께 해보아요.
-            </p>
-          </div>
-          <div className="flex items-center space-x-4">
-            {/* Development: User Switch Dropdown */}
-            {import.meta.env.DEV && allUsers && (allUsers as any)?.length > 1 && (
-              <div className="flex items-center space-x-2">
-                <Users className="h-4 w-4 text-gray-500" />
-                <Select
-                  value={(user as any)?.id}
-                  onValueChange={(targetUserId) => {
-                    if (targetUserId !== (user as any)?.id) {
-                      switchUserMutation.mutate(targetUserId);
-                    }
-                  }}
-                  disabled={switchUserMutation.isPending}
-                >
-                  <SelectTrigger className="w-48">
-                    <SelectValue placeholder="사용자 선택" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {(allUsers as any)?.map((u: any) => (
-                      <SelectItem key={u.id} value={u.id}>
-                        {u.firstName || u.email} {u.id === (user as any)?.id && "(현재)"}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
-            
-            {(user as any)?.profileImageUrl && (
-              <img 
-                src={(user as any).profileImageUrl} 
-                alt="Profile" 
-                className="w-10 h-10 rounded-full object-cover"
-              />
-            )}
-            <Button 
-              variant="outline" 
-              onClick={handleLogout}
-              className="flex items-center space-x-2"
-            >
-              <LogOut className="h-4 w-4" />
-              <span>로그아웃</span>
-            </Button>
-          </div>
+        <div className="text-center mb-8">
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+            환영합니다, {(user as any)?.firstName || (user as any)?.email || '사용자'}님!
+          </h1>
+          <p className="text-gray-600">
+            오늘도 목표 달성을 위해 함께 해보아요.
+          </p>
+          
+          {/* Development: User Switch Dropdown - Mobile optimized */}
+          {import.meta.env.DEV && allUsers && (allUsers as any)?.length > 1 && (
+            <div className="flex items-center justify-center space-x-2 mt-4">
+              <Users className="h-4 w-4 text-gray-500" />
+              <Select
+                value={(user as any)?.id}
+                onValueChange={(targetUserId) => {
+                  if (targetUserId !== (user as any)?.id) {
+                    switchUserMutation.mutate(targetUserId);
+                  }
+                }}
+                disabled={switchUserMutation.isPending}
+              >
+                <SelectTrigger className="w-48">
+                  <SelectValue placeholder="사용자 선택" />
+                </SelectTrigger>
+                <SelectContent>
+                  {(allUsers as any)?.map((u: any) => (
+                    <SelectItem key={u.id} value={u.id}>
+                      {u.firstName || u.email} {u.id === (user as any)?.id && "(현재)"}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
         </div>
 
         {/* Quick Access Cards */}
