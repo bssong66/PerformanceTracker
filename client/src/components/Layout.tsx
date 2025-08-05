@@ -56,8 +56,8 @@ export function Layout({ children }: LayoutProps) {
 
   const Sidebar = ({ mobile = false }) => (
     <div className={`flex flex-col ${mobile ? 'h-full' : 'h-screen'} bg-gray-50 border-r border-gray-200`}>
-      <div className="flex items-center flex-shrink-0 px-4 py-5">
-        <h1 className="text-xl font-bold text-gray-900">개인성과 관리</h1>
+      <div className="flex items-center flex-shrink-0 px-4 py-4 sm:py-5">
+        <h1 className="text-lg sm:text-xl font-bold text-gray-900">개인성과 관리</h1>
       </div>
       
       <nav className="mt-5 flex-1 px-2 space-y-1">
@@ -70,14 +70,14 @@ export function Layout({ children }: LayoutProps) {
               onClick={() => mobile && setIsMobileMenuOpen(false)}
             >
               <div
-                className={`group flex items-center px-2 py-2 text-sm font-medium rounded-md transition-colors ${
+                className={`group flex items-center px-3 py-2.5 text-sm sm:text-base font-medium rounded-md transition-colors ${
                   isActive(item.href)
                     ? 'bg-gray-100 text-gray-900'
                     : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
                 }`}
               >
                 <Icon
-                  className={`mr-3 h-4 w-4 ${
+                  className={`mr-3 h-5 w-5 ${
                     isActive(item.href) ? 'text-gray-500' : 'text-gray-400'
                   }`}
                 />
@@ -133,9 +133,9 @@ export function Layout({ children }: LayoutProps) {
             <Button
               variant="ghost"
               size="sm"
-              className="fixed top-2 left-2 z-50 lg:hidden bg-white/90 backdrop-blur-sm border border-gray-200 shadow-sm"
+              className="fixed top-3 left-3 z-50 lg:hidden bg-white/95 backdrop-blur-sm border border-gray-200 shadow-md rounded-lg p-2"
             >
-              <Menu className="h-6 w-6" />
+              <Menu className="h-6 w-6 text-gray-700" />
             </Button>
           </SheetTrigger>
           <SheetContent side="left" className="p-0 w-64">
@@ -146,7 +146,7 @@ export function Layout({ children }: LayoutProps) {
 
       {/* Main Content */}
       <div className="lg:pl-64 flex flex-col flex-1 overflow-hidden">
-        <main className="flex-1 relative overflow-y-auto focus:outline-none pt-14 lg:pt-0">
+        <main className="flex-1 relative overflow-y-auto focus:outline-none pt-16 lg:pt-0 px-2 sm:px-4 lg:px-6">
           {children}
         </main>
       </div>
