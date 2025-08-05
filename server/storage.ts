@@ -207,7 +207,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createAnnualGoal(goal: InsertAnnualGoal): Promise<AnnualGoal> {
-    const result = await db.insert(annualGoals).values(goal).returning();
+    const result = await db.insert(annualGoals).values([goal]).returning();
     return result[0];
   }
 
@@ -236,7 +236,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createProject(project: InsertProject): Promise<Project> {
-    const result = await db.insert(projects).values(project).returning();
+    const result = await db.insert(projects).values([project]).returning();
     return result[0];
   }
 
@@ -314,7 +314,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createTask(task: InsertTask): Promise<Task> {
-    const result = await db.insert(tasks).values(task).returning();
+    const result = await db.insert(tasks).values([task]).returning();
     return result[0];
   }
 
@@ -361,7 +361,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createEvent(event: InsertEvent): Promise<Event> {
-    const result = await db.insert(events).values(event).returning();
+    const result = await db.insert(events).values([event]).returning();
     return result[0];
   }
 
@@ -385,7 +385,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createHabit(habit: InsertHabit): Promise<Habit> {
-    const result = await db.insert(habits).values(habit).returning();
+    const result = await db.insert(habits).values([habit]).returning();
     return result[0];
   }
 
@@ -423,7 +423,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createHabitLog(log: InsertHabitLog): Promise<HabitLog> {
-    const result = await db.insert(habitLogs).values(log).returning();
+    const result = await db.insert(habitLogs).values([log]).returning();
     return result[0];
   }
 
@@ -472,7 +472,7 @@ export class DatabaseStorage implements IStorage {
         .returning();
       return result[0];
     } else {
-      const result = await db.insert(weeklyReviews).values(review).returning();
+      const result = await db.insert(weeklyReviews).values([review]).returning();
       return result[0];
     }
   }
@@ -509,7 +509,7 @@ export class DatabaseStorage implements IStorage {
         .returning();
       return result[0];
     } else {
-      const result = await db.insert(monthlyReviews).values(review).returning();
+      const result = await db.insert(monthlyReviews).values([review]).returning();
       return result[0];
     }
   }
@@ -535,7 +535,7 @@ export class DatabaseStorage implements IStorage {
         .returning();
       return result[0];
     } else {
-      const result = await db.insert(dailyReflections).values(reflection).returning();
+      const result = await db.insert(dailyReflections).values([reflection]).returning();
       return result[0];
     }
   }
@@ -549,7 +549,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createTimeBlock(block: InsertTimeBlock): Promise<TimeBlock> {
-    const result = await db.insert(timeBlocks).values(block).returning();
+    const result = await db.insert(timeBlocks).values([block]).returning();
     return result[0];
   }
 
@@ -588,7 +588,7 @@ export class DatabaseStorage implements IStorage {
         .returning();
       return result[0];
     } else {
-      const result = await db.insert(userSettings).values(settings).returning();
+      const result = await db.insert(userSettings).values([settings]).returning();
       return result[0];
     }
   }
@@ -615,7 +615,7 @@ export class DatabaseStorage implements IStorage {
       };
       
       delete (carriedOverTask as any).id; // Remove id to let DB auto-generate
-      const result = await db.insert(tasks).values(carriedOverTask).returning();
+      const result = await db.insert(tasks).values([carriedOverTask]).returning();
       carriedOverTasks.push(result[0]);
     }
     
