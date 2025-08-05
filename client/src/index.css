@@ -118,6 +118,16 @@
       unicode-bidi: normal !important;
     }
     
+    /* Mobile header optimization - remove any extra elements */
+    .mobile-header-clean {
+      display: flex;
+      justify-content: flex-start;
+      align-items: center;
+      width: 100%;
+      height: auto;
+      min-height: 48px;
+    }
+    
     /* Ensure buttons are large enough for touch */
     button, [role="button"] {
       min-height: 44px;

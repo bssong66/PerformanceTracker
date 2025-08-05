@@ -126,16 +126,16 @@ export function Layout({ children }: LayoutProps) {
         <Sidebar />
       </div>
 
-      {/* Mobile Menu */}
+      {/* Mobile Menu - Only hamburger menu on mobile */}
       <div className="lg:hidden">
         <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
           <SheetTrigger asChild>
             <Button
               variant="ghost"
               size="sm"
-              className="fixed top-3 left-3 z-50 lg:hidden bg-white/95 backdrop-blur-sm border border-gray-200 shadow-md rounded-lg p-2"
+              className="fixed top-2 left-2 z-50 lg:hidden bg-white/95 backdrop-blur-sm border border-gray-200 shadow-md rounded-lg p-2"
             >
-              <Menu className="h-6 w-6 text-gray-700" />
+              <Menu className="h-5 w-5 text-gray-700" />
             </Button>
           </SheetTrigger>
           <SheetContent side="left" className="p-0 w-64">
@@ -146,7 +146,7 @@ export function Layout({ children }: LayoutProps) {
 
       {/* Main Content */}
       <div className="lg:pl-64 flex flex-col flex-1 overflow-hidden">
-        <main className="flex-1 relative overflow-y-auto focus:outline-none pt-16 lg:pt-0 px-2 sm:px-4 lg:px-6">
+        <main className="flex-1 relative overflow-y-auto focus:outline-none pt-12 lg:pt-0 px-2 sm:px-4 lg:px-6">
           {children}
         </main>
       </div>
