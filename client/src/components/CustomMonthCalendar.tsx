@@ -54,13 +54,19 @@ export default function CustomMonthCalendar({
       row: number;
       col: number;
       span: number;
+      layer: number;
     }> = [];
 
-    events.forEach(event => {
+    // 여러 날에 걸친 이벤트만 필터링
+    const multiDayEvents = events.filter(event => 
+      !isSameDay(event.start, event.end)
+    );
+
+    multiDayEvents.forEach(event => {
       const eventStart = event.start > startDate ? event.start : startDate;
       const eventEnd = event.end < endDate ? event.end : endDate;
       
-      let currentDate = eventStart;
+      let currentDate = new Date(eventStart);
       while (currentDate <= eventEnd) {
         const weekStart = startOfWeek(currentDate);
         const weekEnd = endOfWeek(currentDate);
@@ -72,13 +78,25 @@ export default function CustomMonthCalendar({
         const col = daysBetween % 7;
         const span = Math.floor((spanEnd.getTime() - spanStart.getTime()) / (1000 * 60 * 60 * 24)) + 1;
         
+        // 레이어 계산 (겹치는 이벤트 처리)
+        const existingSpansInRow = spans.filter(s => s.row === row);
+        let layer = 0;
+        while (existingSpansInRow.some(s => 
+          s.layer === layer && 
+          s.col < col + span && 
+          s.col + s.span > col
+        )) {
+          layer++;
+        }
+        
         spans.push({
           event,
           startDate: spanStart,
           endDate: spanEnd,
           row,
           col,
-          span
+          span,
+          layer
         });
         
         currentDate = addDays(weekEnd, 1);
@@ -137,7 +155,7 @@ export default function CustomMonthCalendar({
       days.push(
         <div
           key={day.toString()}
-          className={`min-h-[100px] sm:min-h-[120px] border border-gray-200 p-1 sm:p-2 cursor-pointer hover:bg-gray-50 relative ${
+          className={`min-h-[140px] sm:min-h-[160px] border border-gray-200 p-1 sm:p-2 cursor-pointer hover:bg-gray-50 relative ${
             !isSameMonth(day, monthStart) ? "text-gray-400 bg-gray-50" : ""
           } ${isSameDay(day, new Date()) ? "bg-blue-50" : ""}`}
           onClick={() => onDateClick?.(cloneDay)}
@@ -171,17 +189,17 @@ export default function CustomMonthCalendar({
               >
                 {/* 완료 체크박스 */}
                 <button
-                  className="w-3 h-3 bg-white bg-opacity-20 rounded-sm flex items-center justify-center hover:bg-opacity-40"
+                  className="w-4 h-4 bg-white bg-opacity-30 rounded-sm flex items-center justify-center hover:bg-opacity-50 flex-shrink-0"
                   onClick={(e) => {
                     e.stopPropagation();
                     onToggleComplete?.(event);
                   }}
                 >
                   {event.resource?.data?.completed && (
-                    <Check className="w-2 h-2 text-white" />
+                    <Check className="w-3 h-3 text-white" />
                   )}
                 </button>
-                <span className="truncate flex-1">{event.title}</span>
+                <span className="truncate flex-1 ml-1">{event.title}</span>
               </div>
             ))}
             
@@ -206,10 +224,10 @@ export default function CustomMonthCalendar({
         
         {/* 연속 이벤트들을 절대 위치로 표시 */}
         {eventSpans
-          .filter(span => span.row === rows.length && span.span > 1)
+          .filter(span => span.row === rows.length)
           .map((span, idx) => (
             <div
-              key={`span-${span.event.id}-${idx}`}
+              key={`span-${span.event.id}-${span.row}-${span.col}`}
               className="absolute text-xs px-1 sm:px-2 py-1 rounded cursor-pointer truncate flex items-center gap-1 z-10"
               style={{
                 backgroundColor: span.event.resource?.color || '#3B82F6',
@@ -218,9 +236,11 @@ export default function CustomMonthCalendar({
                 fontWeight: 'bold',
                 left: `${(span.col / 7) * 100}%`,
                 width: `${(span.span / 7) * 100}%`,
-                top: `${80 + idx * 20}px`,
-                height: '18px',
-                opacity: span.event.resource?.data?.completed ? 0.6 : 1
+                top: `${60 + span.layer * 22}px`,
+                height: '20px',
+                opacity: span.event.resource?.data?.completed ? 0.6 : 1,
+                marginLeft: '2px',
+                marginRight: '2px'
               }}
               draggable
               onDragStart={(e) => handleDragStart(span.event, e)}
@@ -232,17 +252,17 @@ export default function CustomMonthCalendar({
             >
               {/* 완료 체크박스 */}
               <button
-                className="w-3 h-3 bg-white bg-opacity-20 rounded-sm flex items-center justify-center hover:bg-opacity-40"
+                className="w-4 h-4 bg-white bg-opacity-30 rounded-sm flex items-center justify-center hover:bg-opacity-50 flex-shrink-0"
                 onClick={(e) => {
                   e.stopPropagation();
                   onToggleComplete?.(span.event);
                 }}
               >
                 {span.event.resource?.data?.completed && (
-                  <Check className="w-2 h-2 text-white" />
+                  <Check className="w-3 h-3 text-white" />
                 )}
               </button>
-              <span className="truncate flex-1">{span.event.title}</span>
+              <span className="truncate flex-1 ml-1">{span.event.title}</span>
             </div>
           ))}
       </div>
