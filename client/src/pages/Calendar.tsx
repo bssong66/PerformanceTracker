@@ -185,7 +185,7 @@ const CustomMonthCalendar = ({
       return;
     }
     
-    console.log('Resize started for event:', event.title);
+
     
     setResizeState({
       event,
@@ -200,34 +200,24 @@ const CustomMonthCalendar = ({
     };
 
     const handleMouseUp = (upE: MouseEvent) => {
-      console.log('Mouse up at:', upE.clientX, upE.clientY);
-      
       // Reset cursor
       document.body.style.userSelect = '';
       document.body.style.cursor = '';
       
       // Find calendar cell under mouse
       const elementUnder = document.elementFromPoint(upE.clientX, upE.clientY);
-      console.log('Element under mouse:', elementUnder);
-      
       const calendarDay = elementUnder?.closest('[data-calendar-day]');
-      console.log('Calendar day found:', calendarDay);
       
       if (calendarDay) {
         const dayStr = calendarDay.getAttribute('data-calendar-day');
-        console.log('Day string:', dayStr);
         
-        if (dayStr) {
+        if (dayStr && onEventResize) {
           const targetDate = new Date(dayStr);
           const newEndDate = new Date(targetDate);
           newEndDate.setHours(23, 59, 59, 999);
           
-          console.log('New end date:', newEndDate);
-          console.log('Original start:', new Date(event.start));
-          
           if (newEndDate >= new Date(event.start)) {
-            console.log('Calling handleEventResize');
-            handleEventResize({
+            onEventResize({
               event,
               start: new Date(event.start),
               end: newEndDate
@@ -1460,7 +1450,14 @@ export default function Calendar() {
                     imageUrls={eventForm.imageUrls}
                     fileUrls={eventForm.fileUrls}
                     onImagesChange={(imageUrls) => setEventForm(prev => ({ ...prev, imageUrls }))}
-                    onFilesChange={(fileUrls) => setEventForm(prev => ({ ...prev, fileUrls }))}
+                    onFilesChange={(fileUrls) => setEventForm(prev => ({ 
+                      ...prev, 
+                      fileUrls: fileUrls.map(file => ({
+                        url: file.url,
+                        name: file.name,
+                        size: file.size || 0
+                      }))
+                    }))}
                     uploadEndpoint="/api/files/upload"
                     maxFiles={10}
                     maxFileSize={10485760}
