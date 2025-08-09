@@ -356,6 +356,7 @@ export default function Calendar() {
 
   // Convert events and tasks to calendar format
   const calendarEvents = useMemo(() => {
+    console.log('Calendar events data:', { events, allTasks, projects });
     const safeEvents = Array.isArray(events) ? events : [];
     const eventItems = safeEvents.flatMap((event: any) => generateRecurringEvents(event));
 
@@ -383,7 +384,65 @@ export default function Calendar() {
         };
       });
 
-    return [...eventItems, ...taskItems];
+    // Add test events for current month to verify the display
+    const testEvents = [
+      {
+        id: 'test-1',
+        title: '테스트 이벤트 1',
+        start: new Date(2025, 7, 3, 10, 0), // August 3, 2025
+        end: new Date(2025, 7, 3, 11, 0),
+        resizable: true,
+        draggable: true,
+        resource: {
+          type: 'event',
+          priority: 'high',
+          color: '#EF4444'
+        }
+      },
+      {
+        id: 'test-2',
+        title: '테스트 이벤트 2',
+        start: new Date(2025, 7, 3, 14, 0), // August 3, 2025
+        end: new Date(2025, 7, 3, 15, 0),
+        resizable: true,
+        draggable: true,
+        resource: {
+          type: 'event',
+          priority: 'medium',
+          color: '#F59E0B'
+        }
+      },
+      {
+        id: 'test-3',
+        title: '테스트 이벤트 3',
+        start: new Date(2025, 7, 3, 16, 0), // August 3, 2025
+        end: new Date(2025, 7, 3, 17, 0),
+        resizable: true,
+        draggable: true,
+        resource: {
+          type: 'event',
+          priority: 'low',
+          color: '#10B981'
+        }
+      },
+      {
+        id: 'test-4',
+        title: '테스트 이벤트 4 (숨겨짐)',
+        start: new Date(2025, 7, 3, 18, 0), // August 3, 2025
+        end: new Date(2025, 7, 3, 19, 0),
+        resizable: true,
+        draggable: true,
+        resource: {
+          type: 'event',
+          priority: 'high',
+          color: '#8B5CF6'
+        }
+      }
+    ];
+
+    const allEvents = [...eventItems, ...taskItems, ...testEvents];
+    console.log('Processed calendar events:', allEvents);
+    return allEvents;
   }, [events, allTasks, projects]);
 
   // Handle slot selection (drag to create event)
