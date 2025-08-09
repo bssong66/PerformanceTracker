@@ -70,7 +70,9 @@ const CustomMonthCalendar = ({
   onNavigate,
   onSelectSlot,
   onSelectEvent,
-  onEventRightClick
+  onEventRightClick,
+  onEventResize,
+  onEventDrop
 }: {
   date: Date;
   events: any[];
@@ -78,7 +80,11 @@ const CustomMonthCalendar = ({
   onSelectSlot: (slotInfo: any) => void;
   onSelectEvent: (event: any) => void;
   onEventRightClick: (event: any, e: React.MouseEvent) => void;
+  onEventResize?: (args: any) => void;
+  onEventDrop?: (args: any) => void;
 }) => {
+  const [draggedEvent, setDraggedEvent] = useState<any>(null);
+  const [draggedFromDate, setDraggedFromDate] = useState<Date | null>(null);
   const startOfMonth = new Date(date.getFullYear(), date.getMonth(), 1);
   const endOfMonth = new Date(date.getFullYear(), date.getMonth() + 1, 0);
   const startDate = new Date(startOfMonth);
@@ -114,6 +120,53 @@ const CustomMonthCalendar = ({
       newDate.setMonth(date.getMonth() + 1);
     }
     onNavigate(newDate);
+  };
+
+  // Drag and Drop handlers
+  const handleEventDragStart = (event: any, day: Date, e: React.DragEvent) => {
+    // Only allow dragging of events, not tasks or recurring instances
+    if (event.resource?.type !== 'event' || event.resource?.data?.isRecurring) {
+      e.preventDefault();
+      return;
+    }
+    
+    setDraggedEvent(event);
+    setDraggedFromDate(day);
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', '');
+  };
+
+  const handleDateDragOver = (e: React.DragEvent) => {
+    if (draggedEvent) {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+    }
+  };
+
+  const handleDateDrop = (targetDay: Date, e: React.DragEvent) => {
+    e.preventDefault();
+    
+    if (draggedEvent && draggedFromDate && onEventDrop) {
+      const daysDiff = Math.floor((targetDay.getTime() - draggedFromDate.getTime()) / (1000 * 60 * 60 * 24));
+      
+      const originalStart = new Date(draggedEvent.start);
+      const originalEnd = new Date(draggedEvent.end);
+      
+      const newStart = new Date(originalStart);
+      newStart.setDate(originalStart.getDate() + daysDiff);
+      
+      const newEnd = new Date(originalEnd);
+      newEnd.setDate(originalEnd.getDate() + daysDiff);
+      
+      onEventDrop({
+        event: draggedEvent,
+        start: newStart,
+        end: newEnd
+      });
+    }
+    
+    setDraggedEvent(null);
+    setDraggedFromDate(null);
   };
 
   return (
@@ -161,13 +214,17 @@ const CustomMonthCalendar = ({
                 key={`${weekIndex}-${dayIndex}`}
                 className={`min-h-[120px] border-r border-b last:border-r-0 p-1 cursor-pointer hover:bg-gray-50 ${
                   !isCurrentMonth ? 'bg-gray-50 text-gray-400' : ''
-                } ${isToday ? 'bg-blue-50' : ''}`}
+                } ${isToday ? 'bg-blue-50' : ''} ${
+                  draggedEvent && day.toDateString() !== draggedFromDate?.toDateString() ? 'bg-green-50' : ''
+                }`}
                 onClick={() => onSelectSlot({ 
                   start: day, 
                   end: day,
                   slots: [day],
                   action: 'click'
                 })}
+                onDragOver={handleDateDragOver}
+                onDrop={(e) => handleDateDrop(day, e)}
               >
                 {/* Date number */}
                 <div className={`text-right text-sm p-1 ${isToday ? 'font-bold text-blue-600' : ''}`}>
@@ -176,28 +233,40 @@ const CustomMonthCalendar = ({
 
                 {/* Events */}
                 <div className="space-y-0.5">
-                  {visibleEvents.map((event, index) => (
-                    <div
-                      key={`${event.id}-${index}`}
-                      className="text-xs px-1 py-0.5 rounded truncate cursor-pointer hover:opacity-80"
-                      style={{ 
-                        backgroundColor: event.resource?.color || '#3b82f6',
-                        color: 'white'
-                      }}
-                      title={event.title}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onSelectEvent(event);
-                      }}
-                      onContextMenu={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        onEventRightClick(event, e);
-                      }}
-                    >
-                      {event.title}
-                    </div>
-                  ))}
+                  {visibleEvents.map((event, index) => {
+                    const isDraggable = event.resource?.type === 'event' && !event.resource?.data?.isRecurring;
+                    return (
+                      <div
+                        key={`${event.id}-${index}`}
+                        className={`text-xs px-1 py-0.5 rounded truncate cursor-pointer hover:opacity-80 relative group ${
+                          isDraggable ? 'cursor-move' : 'cursor-default'
+                        }`}
+                        style={{ 
+                          backgroundColor: event.resource?.color || '#3b82f6',
+                          color: 'white'
+                        }}
+                        title={event.title}
+                        draggable={isDraggable}
+                        onDragStart={(e) => isDraggable && handleEventDragStart(event, day, e)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onSelectEvent(event);
+                        }}
+                        onContextMenu={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          onEventRightClick(event, e);
+                        }}
+                      >
+                        {event.title}
+                        {isDraggable && (
+                          <div className="absolute top-0 right-0 w-2 h-2 cursor-se-resize opacity-0 group-hover:opacity-100 bg-white rounded-bl"
+                               title="드래그하여 크기 조정"
+                          />
+                        )}
+                      </div>
+                    );
+                  })}
 
                   {/* +N more button */}
                   {hiddenCount > 0 && (
@@ -923,6 +992,8 @@ export default function Calendar() {
                     onSelectSlot={handleSelectSlot}
                     onSelectEvent={handleSelectEvent}
                     onEventRightClick={handleEventRightClick}
+                    onEventResize={handleEventResize}
+                    onEventDrop={handleEventDrop}
                   />
                 ) : (
                   <div style={{ height: '600px' }}>
