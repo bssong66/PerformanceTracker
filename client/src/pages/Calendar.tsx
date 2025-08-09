@@ -217,11 +217,18 @@ const CustomMonthCalendar = ({
           newEndDate.setHours(23, 59, 59, 999);
           
           if (newEndDate >= new Date(event.start)) {
-            onEventResize({
-              event,
+            // Create a proper resize event with correct format
+            const resizeEvent = {
+              event: event,
               start: new Date(event.start),
               end: newEndDate
-            });
+            };
+            
+            // Call the resize handler
+            onEventResize(resizeEvent);
+            
+            // Force refresh of events data
+            queryClient.invalidateQueries({ queryKey: ['/api/events/1'] });
           }
         }
       }
