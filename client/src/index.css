@@ -182,6 +182,52 @@
   .meeting-task {
     @apply bg-purple-50 text-purple-800 border-purple-200;
   }
+
+  /* React Big Calendar Event Styling - MAXIMUM VISIBILITY OVERRIDE */
+  .rbc-event {
+    background-color: #3B82F6 !important;
+    border: 2px solid #ffffff !important;
+    padding: 4px 8px !important;
+    border-radius: 6px !important;
+    font-size: 12px !important;
+    font-weight: 700 !important;
+    min-height: 22px !important;
+    display: block !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    color: #ffffff !important;
+    opacity: 1 !important;
+    z-index: 100 !important;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3) !important;
+    position: relative !important;
+    margin: 1px !important;
+    line-height: 1.2 !important;
+  }
+
+  .rbc-event-content {
+    font-size: 11px !important;
+    font-weight: 600 !important;
+    color: white !important;
+    line-height: 1.2 !important;
+  }
+
+  /* Override existing show-more styles */
+  .rbc-show-more {
+    background-color: #6B7280 !important;
+    color: white !important;
+    font-weight: 600 !important;
+    border: 1px solid #4B5563 !important;
+    padding: 2px 6px !important;
+    border-radius: 4px !important;
+    font-size: 10px !important;
+    margin-bottom: 1px !important;
+  }
+
+  /* Force event background colors */
+  .rbc-month-view .rbc-event {
+    margin-bottom: 1px !important;
+  }
 }
 
 .line-clamp-2 {
@@ -225,13 +271,7 @@
   color: #9ca3af;
 }
 
-.rbc-event {
-  border-radius: 4px;
-  border: none;
-  padding: 2px 6px;
-  font-size: 12px;
-  font-weight: 500;
-}
+/* Removed duplicate - now handled in utilities layer */
 
 .rbc-selected {
   background-color: #3b82f6 !important;
@@ -332,10 +372,7 @@
   min-height: 100px;
 }
 
-/* Event spacing */
-.rbc-event {
-  margin-bottom: 1px !important;
-}
+/* Event spacing - moved to utilities */
 
 /* Style for "+더보기" events */
 .rbc-event[data-type="more"] {

@@ -714,7 +714,7 @@ export default function Calendar() {
     setContextMenu(null);
   }, []);
 
-  // Event style getter
+  // Event style getter - FIXED with visible colors and styles
   const eventStyleGetter = (event: any) => {
     const backgroundColor = event.resource?.color || '#3174ad';
     const isTask = event.resource?.type === 'task';
@@ -723,14 +723,20 @@ export default function Calendar() {
     
     return {
       style: {
-        backgroundColor: isCompleted ? '#6b7280' : backgroundColor, // Gray for completed events
+        backgroundColor: isCompleted ? '#6b7280' : backgroundColor,
         borderRadius: '4px',
-        opacity: isTask ? 0.7 : (isRecurring ? 0.8 : (isCompleted ? 0.6 : 1)),
-        border: isTask ? '2px dashed rgba(255,255,255,0.8)' : (isRecurring ? '2px solid rgba(255,255,255,0.8)' : 'none'),
+        opacity: 1, // Force full opacity for visibility
+        border: isTask ? '2px dashed #ffffff' : (isRecurring ? '2px solid #ffffff' : '1px solid #ffffff'),
         fontSize: '12px',
-        fontWeight: isTask ? 'normal' : '500',
+        fontWeight: isTask ? 'bold' : '600', // Make text more visible
         fontStyle: isRecurring ? 'italic' : 'normal',
-        textDecoration: isCompleted ? 'line-through' : 'none' // Strikethrough for completed events
+        textDecoration: isCompleted ? 'line-through' : 'none',
+        color: '#ffffff', // Force white text
+        padding: '2px 4px',
+        minHeight: '20px',
+        display: 'flex',
+        alignItems: 'center',
+        zIndex: 10 // Ensure events are above other elements
       }
     };
   };
@@ -869,8 +875,16 @@ export default function Calendar() {
                   draggableAccessor={(event: any) => event.draggable}
                   eventPropGetter={eventStyleGetter}
                   culture="ko"
-                  popup
+                  popup={false}
                   popupOffset={30}
+                  dayPropGetter={(date: Date) => ({
+                    style: {
+                      backgroundColor: 'white',
+                      border: '1px solid #e2e8f0'
+                    }
+                  })}
+                  min={new Date(0, 0, 0, 0, 0, 0)}
+                  max={new Date(0, 0, 0, 23, 59, 59)}
 
                   components={{
                     event: ({ event }: { event: any }) => (
@@ -879,8 +893,16 @@ export default function Calendar() {
                         className={`w-full h-full ${
                           event.resource.type === 'more' 
                             ? 'text-xs text-gray-600 bg-gray-100 border border-gray-300 rounded px-1 text-center font-medium'
-                            : ''
+                            : 'text-white font-semibold text-xs p-1 rounded flex items-center justify-center text-center'
                         }`}
+                        style={{
+                          backgroundColor: event.resource?.color || '#3174ad',
+                          minHeight: '18px',
+                          fontSize: '11px',
+                          lineHeight: '1.2',
+                          overflow: 'hidden',
+                          wordBreak: 'break-word'
+                        }}
                       >
                         {event.title}
                       </div>
