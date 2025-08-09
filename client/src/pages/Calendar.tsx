@@ -262,24 +262,8 @@ export default function Calendar() {
   // Helper function to generate recurring events
   const generateRecurringEvents = (event: any) => {
     const events = [];
-    
-    // Properly construct date-time strings without timezone issues
-    const startDateStr = event.startDate;
-    const endDateStr = event.endDate || event.startDate;
-    
-    let baseStart, baseEnd;
-    
-    if (event.isAllDay) {
-      // For all-day events, use local date without time
-      baseStart = new Date(startDateStr + 'T00:00:00');
-      baseEnd = new Date(endDateStr + 'T23:59:59');
-    } else {
-      // For timed events, properly combine date and time
-      const startTimeStr = event.startTime || '09:00';
-      const endTimeStr = event.endTime || '18:00';
-      baseStart = new Date(startDateStr + 'T' + startTimeStr + ':00');
-      baseEnd = new Date(endDateStr + 'T' + endTimeStr + ':00');
-    }
+    const baseStart = new Date(`${event.startDate}${event.startTime ? `T${event.startTime}` : 'T00:00'}`);
+    const baseEnd = new Date(`${event.endDate || event.startDate}${event.endTime ? `T${event.endTime}` : 'T23:59'}`);
     const duration = baseEnd.getTime() - baseStart.getTime();
     
     // Add the original event
@@ -372,9 +356,6 @@ export default function Calendar() {
 
   // Convert events and tasks to calendar format
   const calendarEvents = useMemo(() => {
-    console.log('Calendar events data:', { events, allTasks, projects });
-    console.log('Current view:', view);
-    console.log('Current date:', date);
     const safeEvents = Array.isArray(events) ? events : [];
     const eventItems = safeEvents.flatMap((event: any) => generateRecurringEvents(event));
 
@@ -402,9 +383,7 @@ export default function Calendar() {
         };
       });
 
-    const allEvents = [...eventItems, ...taskItems];
-    console.log('Processed calendar events:', allEvents);
-    return allEvents;
+    return [...eventItems, ...taskItems];
   }, [events, allTasks, projects]);
 
   // Handle slot selection (drag to create event)
@@ -729,11 +708,62 @@ export default function Calendar() {
                       <div
                         onContextMenu={(e) => handleEventRightClick(event, e)}
                         className="w-full h-full"
-                        title={`${event.title}${view === Views.MONTH ? ' (호버하여 전체 이벤트 보기)' : ''}`}
                       >
                         {event.title}
                       </div>
-                    )
+                    ),
+                    month: {
+                      dateHeader: ({ date, label }: { date: Date; label: string }) => {
+                        const dayEvents = calendarEvents.filter((event: any) => {
+                          const eventDate = new Date(event.start);
+                          return eventDate.toDateString() === date.toDateString();
+                        });
+                        
+                        const maxEvents = window.innerWidth <= 768 ? 2 : 3; // 모바일에서는 2개, 데스크톱에서는 3개
+                        const visibleEvents = dayEvents.slice(0, maxEvents);
+                        const hiddenCount = dayEvents.length - maxEvents;
+                        
+                        return (
+                          <div className="relative">
+                            <span className="absolute top-1 right-1 text-sm font-medium">
+                              {label}
+                            </span>
+                            <div className="mt-6">
+                              {visibleEvents.map((event: any, index: number) => (
+                                <div
+                                  key={`${event.id}-${index}`}
+                                  className="text-xs mb-1 px-1 py-0.5 rounded truncate cursor-pointer"
+                                  style={{
+                                    backgroundColor: event.color || '#3B82F6',
+                                    color: 'white'
+                                  }}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleSelectEvent(event);
+                                  }}
+                                  onContextMenu={(e) => handleEventRightClick(event, e)}
+                                >
+                                  {event.title}
+                                </div>
+                              ))}
+                              {hiddenCount > 0 && (
+                                <div 
+                                  className="more-events-indicator"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    // 해당 날짜로 일 뷰 전환
+                                    setDate(date);
+                                    setView(Views.DAY);
+                                  }}
+                                >
+                                  +{hiddenCount} more
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      }
+                    }
                   }}
                   messages={{
                     next: "다음",

@@ -275,58 +275,9 @@
   color: #333;
 }
 
-/* Month view event limiting with improved approach */
+/* Hide default calendar events in month view when using custom dateHeader */
 .rbc-month-view .rbc-events-container {
-  position: relative;
-  max-height: 84px; /* Allow space for 3 events (28px each) */
-  overflow: hidden;
-}
-
-/* Show overflow indicator */
-.rbc-month-view .rbc-date-cell:not(:hover) .rbc-events-container:after {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 20px;
-  background: linear-gradient(transparent, rgba(255, 255, 255, 0.9));
-  pointer-events: none;
-  display: none; /* Only show when there are hidden events */
-}
-
-/* Show all events on hover with popup effect */
-.rbc-month-view .rbc-date-cell:hover .rbc-events-container {
-  position: absolute;
-  z-index: 1000;
-  max-height: 300px;
-  overflow-y: auto;
-  background: white;
-  border: 1px solid #e2e8f0;
-  border-radius: 4px;
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
-  padding: 4px;
-  width: 200px;
-  min-width: 150px;
-}
-
-.rbc-month-view .rbc-date-cell:hover .rbc-events-container:after {
-  display: none !important;
-}
-
-/* Mobile adjustments */
-@media (max-width: 768px) {
-  .rbc-month-view .rbc-events-container {
-    max-height: 56px; /* Allow space for 2 events */
-  }
-  
-  .rbc-month-view .rbc-date-cell:hover .rbc-events-container {
-    width: 180px;
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-  }
+  display: none;
 }
 
 .rbc-today {
