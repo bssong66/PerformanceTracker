@@ -275,9 +275,45 @@
   color: #333;
 }
 
-/* Hide default calendar events in month view when using custom dateHeader */
+/* Limit events display in month view */
 .rbc-month-view .rbc-events-container {
+  max-height: 72px; /* 약 3개 이벤트 높이 */
+  overflow: hidden;
+  position: relative;
+}
+
+/* Add fade effect for hidden events */
+.rbc-month-view .rbc-events-container::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 16px;
+  background: linear-gradient(transparent, rgba(255, 255, 255, 0.9));
+  pointer-events: none;
+}
+
+/* Show more events indicator when events are cut off */
+.rbc-month-view .rbc-date-cell:hover .rbc-events-container {
+  max-height: none;
+  z-index: 10;
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 4px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  padding: 2px;
+}
+
+.rbc-month-view .rbc-date-cell:hover .rbc-events-container::after {
   display: none;
+}
+
+/* Mobile optimization for events container */
+@media (max-width: 768px) {
+  .rbc-month-view .rbc-events-container {
+    max-height: 48px; /* 약 2개 이벤트 높이 */
+  }
 }
 
 .rbc-today {
