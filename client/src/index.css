@@ -211,10 +211,73 @@
   overflow: hidden;
 }
 
+/* Optimized month view cells with increased height */
+.rbc-month-view .rbc-date-cell {
+  min-height: 140px !important;
+  padding: 4px 6px;
+  text-align: right;
+  border-right: 1px solid #e2e8f0;
+  position: relative;
+  overflow: hidden;
+}
+
 .rbc-date-cell {
   padding: 4px 8px;
   text-align: right;
   border-right: 1px solid #e2e8f0;
+}
+
+/* Optimized event styling for better space usage */
+.rbc-month-view .rbc-event {
+  font-size: 11px !important;
+  line-height: 1.2 !important;
+  padding: 1px 4px !important;
+  margin: 1px 0 !important;
+  border-radius: 3px !important;
+  min-height: 16px !important;
+  max-height: 16px !important;
+  overflow: hidden !important;
+  white-space: nowrap !important;
+  text-overflow: ellipsis !important;
+}
+
+/* Mobile optimization for month view events */
+@media (max-width: 768px) {
+  .rbc-month-view .rbc-event {
+    font-size: 10px !important;
+    padding: 1px 3px !important;
+    min-height: 14px !important;
+    max-height: 14px !important;
+  }
+  
+  .rbc-month-view .rbc-date-cell {
+    min-height: 120px !important;
+    padding: 3px 4px;
+  }
+}
+
+/* More events indicator styling */
+.more-events-indicator {
+  background: rgba(0, 0, 0, 0.1);
+  color: #666;
+  font-size: 10px;
+  text-align: center;
+  padding: 2px 4px;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  margin-top: 2px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.more-events-indicator:hover {
+  background: rgba(0, 0, 0, 0.2);
+  color: #333;
+}
+
+/* Hide default calendar events in month view when using custom dateHeader */
+.rbc-month-view .rbc-events-container {
+  display: none;
 }
 
 .rbc-today {
