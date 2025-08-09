@@ -85,6 +85,12 @@ const CustomMonthCalendar = ({
 }) => {
   const [draggedEvent, setDraggedEvent] = useState<any>(null);
   const [draggedFromDate, setDraggedFromDate] = useState<Date | null>(null);
+  const [resizeState, setResizeState] = useState<{
+    event: any;
+    isResizing: boolean;
+    startDate: Date;
+    originalEndDate: Date;
+  } | null>(null);
   const startOfMonth = new Date(date.getFullYear(), date.getMonth(), 1);
   const endOfMonth = new Date(date.getFullYear(), date.getMonth() + 1, 0);
   const startDate = new Date(startOfMonth);
@@ -169,6 +175,53 @@ const CustomMonthCalendar = ({
     setDraggedFromDate(null);
   };
 
+  // Event resizing handlers
+  const handleResizeStart = (event: any, e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    
+    // Only allow resizing of events, not tasks or recurring instances
+    if (event.resource?.type !== 'event' || event.resource?.data?.isRecurring) {
+      return;
+    }
+    
+    setResizeState({
+      event,
+      isResizing: true,
+      startDate: new Date(event.start),
+      originalEndDate: new Date(event.end)
+    });
+  };
+
+  const handleResizeMove = (targetDay: Date, e: React.MouseEvent) => {
+    if (resizeState?.isResizing) {
+      e.preventDefault();
+      // Prevent default to avoid text selection during resize
+    }
+  };
+
+  const handleResizeEnd = (targetDay: Date, e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    
+    if (resizeState && onEventResize) {
+      // Set new end date to end of target day
+      const newEnd = new Date(targetDay);
+      newEnd.setHours(23, 59, 59, 999);
+      
+      // Ensure end date is not before start date
+      if (newEnd >= resizeState.startDate) {
+        onEventResize({
+          event: resizeState.event,
+          start: resizeState.startDate,
+          end: newEnd
+        });
+      }
+    }
+    
+    setResizeState(null);
+  };
+
   return (
     <div className="bg-white">
       {/* Header */}
@@ -216,6 +269,8 @@ const CustomMonthCalendar = ({
                   !isCurrentMonth ? 'bg-gray-50 text-gray-400' : ''
                 } ${isToday ? 'bg-blue-50' : ''} ${
                   draggedEvent && day.toDateString() !== draggedFromDate?.toDateString() ? 'bg-green-50' : ''
+                } ${
+                  resizeState?.isResizing ? 'bg-yellow-50 border-yellow-300' : ''
                 }`}
                 onClick={() => onSelectSlot({ 
                   start: day, 
@@ -225,6 +280,8 @@ const CustomMonthCalendar = ({
                 })}
                 onDragOver={handleDateDragOver}
                 onDrop={(e) => handleDateDrop(day, e)}
+                onMouseMove={(e) => handleResizeMove(day, e)}
+                onMouseUp={(e) => resizeState?.isResizing && handleResizeEnd(day, e)}
               >
                 {/* Date number */}
                 <div className={`text-right text-sm p-1 ${isToday ? 'font-bold text-blue-600' : ''}`}>
@@ -235,19 +292,24 @@ const CustomMonthCalendar = ({
                 <div className="space-y-0.5">
                   {visibleEvents.map((event, index) => {
                     const isDraggable = event.resource?.type === 'event' && !event.resource?.data?.isRecurring;
+                    const isMultiDay = new Date(event.start).toDateString() !== new Date(event.end).toDateString();
+                    const isBeingResized = resizeState?.event?.id === event.id;
+                    
                     return (
                       <div
                         key={`${event.id}-${index}`}
                         className={`text-xs px-1 py-0.5 rounded truncate cursor-pointer hover:opacity-80 relative group ${
                           isDraggable ? 'cursor-move' : 'cursor-default'
+                        } ${isBeingResized ? 'ring-2 ring-yellow-400' : ''} ${
+                          isMultiDay ? 'border-l-4 border-l-white' : ''
                         }`}
                         style={{ 
                           backgroundColor: event.resource?.color || '#3b82f6',
                           color: 'white'
                         }}
-                        title={event.title}
-                        draggable={isDraggable}
-                        onDragStart={(e) => isDraggable && handleEventDragStart(event, day, e)}
+                        title={`${event.title}${isMultiDay ? ' (여러 날)' : ''}`}
+                        draggable={isDraggable && !isBeingResized}
+                        onDragStart={(e) => isDraggable && !isBeingResized && handleEventDragStart(event, day, e)}
                         onClick={(e) => {
                           e.stopPropagation();
                           onSelectEvent(event);
@@ -259,9 +321,19 @@ const CustomMonthCalendar = ({
                         }}
                       >
                         {event.title}
+                        {isMultiDay && (
+                          <span className="text-[10px] opacity-75 ml-1">
+                            ({Math.ceil((new Date(event.end).getTime() - new Date(event.start).getTime()) / (1000 * 60 * 60 * 24))}일)
+                          </span>
+                        )}
                         {isDraggable && (
-                          <div className="absolute top-0 right-0 w-2 h-2 cursor-se-resize opacity-0 group-hover:opacity-100 bg-white rounded-bl"
-                               title="드래그하여 크기 조정"
+                          <div 
+                            className={`absolute top-0 right-0 w-2 h-2 cursor-se-resize opacity-0 group-hover:opacity-100 bg-white rounded-bl ${
+                              isBeingResized ? 'opacity-100 ring-1 ring-yellow-400' : ''
+                            }`}
+                            title="드래그하여 크기 조정"
+                            onMouseDown={(e) => handleResizeStart(event, e)}
+                            draggable={false}
                           />
                         )}
                       </div>
