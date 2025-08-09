@@ -274,34 +274,40 @@ export default function Calendar() {
     const startTimeStr = event.startTime || '00:00';
     const endTimeStr = event.endTime || '23:59';
     
-    // Fix timezone issue - create dates in local timezone
+    // Fix timezone issue - create dates that React Big Calendar can handle properly
     const [startYear, startMonth, startDay] = startDateStr.split('-').map(Number);
     const [startHour, startMinute] = startTimeStr.split(':').map(Number);
     const [endYear, endMonth, endDay] = endDateStr.split('-').map(Number);
     const [endHour, endMinute] = endTimeStr.split(':').map(Number);
     
+    // Create dates with UTC offset compensation (UTC+9 for Korea)
     const baseStart = new Date(startYear, startMonth - 1, startDay, startHour, startMinute);
     const baseEnd = new Date(endYear, endMonth - 1, endDay, endHour, endMinute);
     
+    // Adjust for timezone offset to prevent shifting
+    const timezoneOffset = baseStart.getTimezoneOffset() * 60000;
+    const correctedStart = new Date(baseStart.getTime() - timezoneOffset);
+    const correctedEnd = new Date(baseEnd.getTime() - timezoneOffset);
+    
     // Validate dates
-    if (isNaN(baseStart.getTime()) || isNaN(baseEnd.getTime())) {
+    if (isNaN(correctedStart.getTime()) || isNaN(correctedEnd.getTime())) {
       console.error('Invalid date created:', { startDateStr, endDateStr, startTimeStr, endTimeStr });
       return [];
     }
     
     // If times are the same, make it a 1 hour event
-    if (baseStart.getTime() === baseEnd.getTime()) {
-      baseEnd.setHours(baseStart.getHours() + 1);
+    if (correctedStart.getTime() === correctedEnd.getTime()) {
+      correctedEnd.setHours(correctedStart.getHours() + 1);
     }
     
-    const duration = baseEnd.getTime() - baseStart.getTime();
+    const duration = correctedEnd.getTime() - correctedStart.getTime();
     
     // Add the original event
     events.push({
       id: event.id,
       title: event.title,
-      start: baseStart,
-      end: baseEnd,
+      start: correctedStart,
+      end: correctedEnd,
       resizable: true,
       draggable: true,
       resource: {
@@ -401,15 +407,20 @@ export default function Calendar() {
         const taskStartDate = task.startDate || task.endDate;
         const taskEndDate = task.endDate || task.startDate;
         
-        // Fix timezone issue for tasks
+        // Fix timezone issue for tasks - same approach as events
         const [taskStartYear, taskStartMonth, taskStartDay] = taskStartDate.split('-').map(Number);
         const [taskEndYear, taskEndMonth, taskEndDay] = taskEndDate.split('-').map(Number);
         
         const taskStart = new Date(taskStartYear, taskStartMonth - 1, taskStartDay, 0, 0);
         const taskEnd = new Date(taskEndYear, taskEndMonth - 1, taskEndDay, 23, 59);
         
+        // Apply timezone correction for tasks too
+        const taskTimezoneOffset = taskStart.getTimezoneOffset() * 60000;
+        const correctedTaskStart = new Date(taskStart.getTime() - taskTimezoneOffset);
+        const correctedTaskEnd = new Date(taskEnd.getTime() - taskTimezoneOffset);
+        
         // Validate task dates
-        if (isNaN(taskStart.getTime()) || isNaN(taskEnd.getTime())) {
+        if (isNaN(correctedTaskStart.getTime()) || isNaN(correctedTaskEnd.getTime())) {
           console.error('Invalid task date:', { taskStartDate, taskEndDate });
           return null; // Skip invalid tasks
         }
@@ -417,8 +428,8 @@ export default function Calendar() {
         return {
           id: `task-${task.id}`,
           title: `[할일] ${task.title}`,
-          start: taskStart,
-          end: taskEnd,
+          start: correctedTaskStart,
+          end: correctedTaskEnd,
           resizable: false, // Tasks cannot be resized
           draggable: false, // Tasks cannot be dragged
           resource: {
@@ -497,13 +508,14 @@ export default function Calendar() {
       return eventMonth === currentViewMonth;
     }) || [];
     
-    console.log('Calendar Debug TIMEZONE FIXED:', {
+    console.log('Calendar Debug FINAL:', {
       events: events?.length || 0,
       tasks: allTasks?.length || 0,
       totalProcessed: allEvents?.length || 0,
       limitedEventsCount: limitedEvents?.length || 0,
       currentViewMonth,
       eventsInCurrentMonth: eventsInCurrentMonth.length,
+      limitedEventsPassedToCalendar: limitedEvents,
       eventsInCurrentMonthDetails: eventsInCurrentMonth.map(e => ({
         title: e.title,
         date: format(e.start, 'yyyy-MM-dd'),
@@ -839,7 +851,7 @@ export default function Calendar() {
               >
                 <DnDCalendar
                   localizer={localizer}
-                  events={calendarEvents}
+                  events={calendarEvents || []}
                   startAccessor={(event: any) => event.start}
                   endAccessor={(event: any) => event.end}
                   views={[Views.MONTH, Views.WEEK, Views.DAY]}
