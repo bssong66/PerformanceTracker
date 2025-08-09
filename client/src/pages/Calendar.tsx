@@ -851,6 +851,20 @@ export default function Calendar() {
               </CardTitle>
             </CardHeader>
             <CardContent>
+              {/* DEBUG: Show events data */}
+              <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded text-xs">
+                <div className="font-semibold mb-2">🔍 이벤트 디버그 정보:</div>
+                <div>총 이벤트: {calendarEvents?.length || 0}개</div>
+                {calendarEvents?.slice(0, 3).map((event: any, idx: number) => (
+                  <div key={idx} className="mt-1 text-gray-700">
+                    {idx + 1}. {event.title} ({format(event.start, 'MM/dd HH:mm')} - {format(event.end, 'MM/dd HH:mm')})
+                  </div>
+                ))}
+                {(calendarEvents?.length || 0) > 3 && (
+                  <div className="text-gray-500">... 그리고 {(calendarEvents?.length || 0) - 3}개 더</div>
+                )}
+              </div>
+
               <div 
                 style={{ height: '600px', position: 'relative' }} 
                 onClick={handleCloseContextMenu}
@@ -858,8 +872,8 @@ export default function Calendar() {
                 <DnDCalendar
                   localizer={localizer}
                   events={calendarEvents || []}
-                  startAccessor={(event: any) => event.start}
-                  endAccessor={(event: any) => event.end}
+                  startAccessor="start"
+                  endAccessor="end"
                   views={[Views.MONTH, Views.WEEK, Views.DAY]}
                   view={view}
                   onView={setView}
@@ -875,33 +889,28 @@ export default function Calendar() {
                   draggableAccessor={(event: any) => event.draggable}
                   eventPropGetter={eventStyleGetter}
                   culture="ko"
-                  popup={false}
+                  popup={true}
                   popupOffset={30}
-                  dayPropGetter={(date: Date) => ({
-                    style: {
-                      backgroundColor: 'white',
-                      border: '1px solid #e2e8f0'
-                    }
-                  })}
-                  min={new Date(0, 0, 0, 0, 0, 0)}
-                  max={new Date(0, 0, 0, 23, 59, 59)}
 
                   components={{
                     event: ({ event }: { event: any }) => (
                       <div
                         onContextMenu={(e) => handleEventRightClick(event, e)}
-                        className={`w-full h-full ${
-                          event.resource.type === 'more' 
-                            ? 'text-xs text-gray-600 bg-gray-100 border border-gray-300 rounded px-1 text-center font-medium'
-                            : 'text-white font-semibold text-xs p-1 rounded flex items-center justify-center text-center'
-                        }`}
                         style={{
-                          backgroundColor: event.resource?.color || '#3174ad',
-                          minHeight: '18px',
+                          backgroundColor: event.resource?.color || '#3B82F6',
+                          color: 'white',
+                          padding: '2px 4px',
+                          borderRadius: '3px',
                           fontSize: '11px',
-                          lineHeight: '1.2',
+                          fontWeight: 'bold',
+                          border: '1px solid white',
+                          boxShadow: '0 1px 3px rgba(0,0,0,0.3)',
+                          minHeight: '16px',
+                          display: 'flex',
+                          alignItems: 'center',
                           overflow: 'hidden',
-                          wordBreak: 'break-word'
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap'
                         }}
                       >
                         {event.title}
