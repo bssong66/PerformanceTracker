@@ -15,9 +15,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
-import { CalendarIcon, Clock, Repeat, Save, X, Check, MousePointer2 } from "lucide-react";
+import { CalendarIcon, Clock, Repeat, Save, X, Check, MousePointer2, Plus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient } from "@/lib/queryClient";
 import { format } from "date-fns";
@@ -42,6 +43,211 @@ const taskPriorityColors = {
   A: '#EF4444',    // 빨간색
   B: '#F59E0B',    // 주황색
   C: '#10B981'     // 초록색
+};
+
+// Custom Month View Components
+const MAX_VISIBLE_EVENTS = 3;
+
+const CustomMonthEvent = ({ event }: { event: any }) => {
+  return (
+    <div 
+      className="text-xs px-1 py-0.5 rounded truncate"
+      style={{ 
+        backgroundColor: event.resource?.color || '#3b82f6',
+        color: 'white'
+      }}
+      title={event.title}
+    >
+      {event.title}
+    </div>
+  );
+};
+
+// Custom Month Calendar Component
+const CustomMonthCalendar = ({ 
+  date,
+  events,
+  onNavigate,
+  onSelectSlot,
+  onSelectEvent,
+  onEventRightClick
+}: {
+  date: Date;
+  events: any[];
+  onNavigate: (date: Date) => void;
+  onSelectSlot: (slotInfo: any) => void;
+  onSelectEvent: (event: any) => void;
+  onEventRightClick: (event: any, e: React.MouseEvent) => void;
+}) => {
+  const startOfMonth = new Date(date.getFullYear(), date.getMonth(), 1);
+  const endOfMonth = new Date(date.getFullYear(), date.getMonth() + 1, 0);
+  const startDate = new Date(startOfMonth);
+  startDate.setDate(startDate.getDate() - startOfMonth.getDay());
+  
+  const endDate = new Date(endOfMonth);
+  endDate.setDate(endDate.getDate() + (6 - endOfMonth.getDay()));
+
+  const weeks = [];
+  const currentDate = new Date(startDate);
+  
+  while (currentDate <= endDate) {
+    const week = [];
+    for (let i = 0; i < 7; i++) {
+      week.push(new Date(currentDate));
+      currentDate.setDate(currentDate.getDate() + 1);
+    }
+    weeks.push(week);
+  }
+
+  const getDayEvents = (day: Date) => {
+    return events.filter(event => {
+      const eventDate = new Date(event.start);
+      return eventDate.toDateString() === day.toDateString();
+    });
+  };
+
+  const navigateMonth = (direction: 'prev' | 'next') => {
+    const newDate = new Date(date);
+    if (direction === 'prev') {
+      newDate.setMonth(date.getMonth() - 1);
+    } else {
+      newDate.setMonth(date.getMonth() + 1);
+    }
+    onNavigate(newDate);
+  };
+
+  return (
+    <div className="bg-white">
+      {/* Header */}
+      <div className="flex items-center justify-between p-4 border-b">
+        <button
+          onClick={() => navigateMonth('prev')}
+          className="p-2 hover:bg-gray-100 rounded"
+        >
+          ←
+        </button>
+        <h2 className="text-lg font-semibold">
+          {format(date, 'yyyy년 M월', { locale: ko })}
+        </h2>
+        <button
+          onClick={() => navigateMonth('next')}
+          className="p-2 hover:bg-gray-100 rounded"
+        >
+          →
+        </button>
+      </div>
+
+      {/* Days of week */}
+      <div className="grid grid-cols-7 border-b">
+        {['일', '월', '화', '수', '목', '금', '토'].map(day => (
+          <div key={day} className="p-2 text-center text-sm font-medium text-gray-600 border-r last:border-r-0">
+            {day}
+          </div>
+        ))}
+      </div>
+
+      {/* Calendar grid */}
+      <div className="grid grid-cols-7">
+        {weeks.map((week, weekIndex) => 
+          week.map((day, dayIndex) => {
+            const dayEvents = getDayEvents(day);
+            const visibleEvents = dayEvents.slice(0, MAX_VISIBLE_EVENTS);
+            const hiddenCount = dayEvents.length - MAX_VISIBLE_EVENTS;
+            const isCurrentMonth = day.getMonth() === date.getMonth();
+            const isToday = day.toDateString() === new Date().toDateString();
+
+            return (
+              <div
+                key={`${weekIndex}-${dayIndex}`}
+                className={`min-h-[120px] border-r border-b last:border-r-0 p-1 cursor-pointer hover:bg-gray-50 ${
+                  !isCurrentMonth ? 'bg-gray-50 text-gray-400' : ''
+                } ${isToday ? 'bg-blue-50' : ''}`}
+                onClick={() => onSelectSlot({ 
+                  start: day, 
+                  end: day,
+                  slots: [day],
+                  action: 'click'
+                })}
+              >
+                {/* Date number */}
+                <div className={`text-right text-sm p-1 ${isToday ? 'font-bold text-blue-600' : ''}`}>
+                  {day.getDate()}
+                </div>
+
+                {/* Events */}
+                <div className="space-y-0.5">
+                  {visibleEvents.map((event, index) => (
+                    <div
+                      key={`${event.id}-${index}`}
+                      className="text-xs px-1 py-0.5 rounded truncate cursor-pointer hover:opacity-80"
+                      style={{ 
+                        backgroundColor: event.resource?.color || '#3b82f6',
+                        color: 'white'
+                      }}
+                      title={event.title}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onSelectEvent(event);
+                      }}
+                      onContextMenu={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        onEventRightClick(event, e);
+                      }}
+                    >
+                      {event.title}
+                    </div>
+                  ))}
+
+                  {/* +N more button */}
+                  {hiddenCount > 0 && (
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <button
+                          className="text-xs text-gray-600 hover:text-gray-800 hover:bg-gray-100 px-1 py-0.5 rounded w-full text-left"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                          }}
+                        >
+                          +{hiddenCount} more
+                        </button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-64 p-2" side="right">
+                        <div className="space-y-1">
+                          <div className="font-medium text-sm mb-2">
+                            {format(day, 'M월 d일', { locale: ko })} 일정
+                          </div>
+                          {dayEvents.map((event, index) => (
+                            <div
+                              key={`${event.id}-popover-${index}`}
+                              className="text-xs px-2 py-1 rounded cursor-pointer hover:opacity-80"
+                              style={{ 
+                                backgroundColor: event.resource?.color || '#3b82f6',
+                                color: 'white'
+                              }}
+                              onClick={() => {
+                                onSelectEvent(event);
+                              }}
+                              onContextMenu={(e) => {
+                                e.preventDefault();
+                                onEventRightClick(event, e);
+                              }}
+                            >
+                              {event.title}
+                            </div>
+                          ))}
+                        </div>
+                      </PopoverContent>
+                    </Popover>
+                  )}
+                </div>
+              </div>
+            );
+          })
+        )}
+      </div>
+    </div>
+  );
 };
 
 export default function Calendar() {
@@ -680,54 +886,93 @@ export default function Calendar() {
             </CardHeader>
             <CardContent>
               <div 
-                style={{ height: '600px', position: 'relative' }} 
+                style={{ minHeight: '600px', position: 'relative' }} 
                 onClick={handleCloseContextMenu}
               >
-                <DnDCalendar
-                  localizer={localizer}
-                  events={calendarEvents}
-                  startAccessor={(event: any) => event.start}
-                  endAccessor={(event: any) => event.end}
-                  views={[Views.MONTH, Views.WEEK, Views.DAY]}
-                  view={view}
-                  onView={setView}
-                  date={date}
-                  onNavigate={setDate}
-                  onSelectSlot={handleSelectSlot}
-                  onSelectEvent={handleSelectEvent}
-                  onEventResize={handleEventResize}
-                  onEventDrop={handleEventDrop}
-                  selectable
-                  resizable
-                  resizableAccessor={(event: any) => event.resizable}
-                  draggableAccessor={(event: any) => event.draggable}
-                  eventPropGetter={eventStyleGetter}
-                  culture="ko"
-                  components={{
-                    event: ({ event }: { event: any }) => (
-                      <div
-                        onContextMenu={(e) => handleEventRightClick(event, e)}
-                        className="w-full h-full"
-                      >
-                        {event.title}
-                      </div>
-                    )
-                  }}
-                  messages={{
-                    next: "다음",
-                    previous: "이전",
-                    today: "오늘",
-                    month: "월",
-                    week: "주",
-                    day: "일",
-                    agenda: "일정",
-                    date: "날짜",
-                    time: "시간",
-                    event: "이벤트",
-                    noEventsInRange: "이 범위에는 일정이 없습니다.",
-                    allDay: "종일"
-                  }}
-                />
+                {/* View selector */}
+                <div className="flex justify-end mb-4 space-x-2">
+                  <Button
+                    variant={view === Views.MONTH ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setView(Views.MONTH)}
+                  >
+                    월
+                  </Button>
+                  <Button
+                    variant={view === Views.WEEK ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setView(Views.WEEK)}
+                  >
+                    주
+                  </Button>
+                  <Button
+                    variant={view === Views.DAY ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setView(Views.DAY)}
+                  >
+                    일
+                  </Button>
+                </div>
+
+                {/* Custom Month View or react-big-calendar */}
+                {view === Views.MONTH ? (
+                  <CustomMonthCalendar
+                    date={date}
+                    events={calendarEvents}
+                    onNavigate={setDate}
+                    onSelectSlot={handleSelectSlot}
+                    onSelectEvent={handleSelectEvent}
+                    onEventRightClick={handleEventRightClick}
+                  />
+                ) : (
+                  <div style={{ height: '600px' }}>
+                    <DnDCalendar
+                      localizer={localizer}
+                      events={calendarEvents}
+                      startAccessor={(event: any) => event.start}
+                      endAccessor={(event: any) => event.end}
+                      views={[Views.WEEK, Views.DAY]}
+                      view={view}
+                      onView={setView}
+                      date={date}
+                      onNavigate={setDate}
+                      onSelectSlot={handleSelectSlot}
+                      onSelectEvent={handleSelectEvent}
+                      onEventResize={handleEventResize}
+                      onEventDrop={handleEventDrop}
+                      selectable
+                      resizable
+                      resizableAccessor={(event: any) => event.resizable}
+                      draggableAccessor={(event: any) => event.draggable}
+                      eventPropGetter={eventStyleGetter}
+                      culture="ko"
+                      components={{
+                        event: ({ event }: { event: any }) => (
+                          <div
+                            onContextMenu={(e) => handleEventRightClick(event, e)}
+                            className="w-full h-full"
+                          >
+                            {event.title}
+                          </div>
+                        )
+                      }}
+                      messages={{
+                        next: "다음",
+                        previous: "이전",
+                        today: "오늘",
+                        month: "월",
+                        week: "주",
+                        day: "일",
+                        agenda: "일정",
+                        date: "날짜",
+                        time: "시간",
+                        event: "이벤트",
+                        noEventsInRange: "이 범위에는 일정이 없습니다.",
+                        allDay: "종일"
+                      }}
+                    />
+                  </div>
+                )}
                 
                 {/* Context Menu */}
                 {contextMenu && (
