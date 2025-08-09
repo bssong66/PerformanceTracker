@@ -3,7 +3,6 @@ import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { 
   Home, 
   Sprout, 
@@ -16,63 +15,27 @@ import {
   BarChart3,
   Focus,
   LogOut,
-  User,
-  Users
+  User
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/queryClient";
-import { useToast } from "@/hooks/use-toast";
 
 interface LayoutProps {
   children: React.ReactNode;
 }
 
 const navigation = [
-  { name: '홈', href: '/', icon: Home },
-  { name: '대시보드', href: '/dashboard', icon: BarChart3 },
+  { name: '대시보드', href: '/', icon: Home },
   { name: '가치중심계획', href: '/foundation', icon: Sprout },
   { name: '일정관리', href: '/calendar', icon: CalendarDays },
   { name: '계획관리', href: '/planning', icon: FolderOpen },
   { name: '일일관리', href: '/daily', icon: Calendar },
-  { name: '리뷰', href: '/review', icon: Target },
+  { name: '리뷰', href: '/review', icon: BarChart3 },
 ];
 
 export function Layout({ children }: LayoutProps) {
   const [location] = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { user } = useAuth();
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
-
-  // Development: Get all users for switching
-  const { data: allUsers } = useQuery({
-    queryKey: ['/api/dev/users'],
-    enabled: import.meta.env.DEV,
-  });
-
-  // Development: Switch user mutation
-  const switchUserMutation = useMutation({
-    mutationFn: async (targetUserId: string) => {
-      return await apiRequest('POST', '/api/dev/switch-user', { targetUserId });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/auth/user'] });
-      toast({
-        title: "사용자 전환 완료",
-        description: "성공적으로 사용자가 전환되었습니다.",
-      });
-      // 페이지 새로고침으로 완전한 상태 초기화
-      window.location.reload();
-    },
-    onError: (error) => {
-      toast({
-        title: "사용자 전환 실패",
-        description: "사용자 전환 중 오류가 발생했습니다.",
-        variant: "destructive",
-      });
-    },
-  });
 
   const handleLogout = async () => {
     try {
@@ -127,35 +90,6 @@ export function Layout({ children }: LayoutProps) {
       
       {/* User Profile & Logout Section */}
       <div className="flex-shrink-0 p-4 border-t border-gray-200">
-        {/* Development: User Switch Dropdown */}
-        {import.meta.env.DEV && allUsers && (allUsers as any)?.length > 1 ? (
-          <div className="mb-3 pb-3 border-b border-gray-100">
-            <div className="flex items-center space-x-2">
-              <Users className="h-4 w-4 text-gray-500" />
-              <Select
-                value={(user as any)?.id}
-                onValueChange={(targetUserId) => {
-                  if (targetUserId !== (user as any)?.id) {
-                    switchUserMutation.mutate(targetUserId);
-                  }
-                }}
-                disabled={switchUserMutation.isPending}
-              >
-                <SelectTrigger className="w-full text-xs">
-                  <SelectValue placeholder="사용자 선택" />
-                </SelectTrigger>
-                <SelectContent>
-                  {(allUsers as any)?.map((u: any) => (
-                    <SelectItem key={u.id} value={u.id}>
-                      {u.firstName || u.email} {u.id === (user as any)?.id ? " (현재)" : ""}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-        ) : null}
-        
         <div className="flex items-center">
           <Avatar className="h-8 w-8 mr-3">
             <AvatarImage src={(user as any)?.profileImageUrl} alt={(user as any)?.firstName || (user as any)?.email || '사용자'} />

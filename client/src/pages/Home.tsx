@@ -1,11 +1,17 @@
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { LogOut, User, Settings, BarChart } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { LogOut, User, Settings, BarChart, Users } from "lucide-react";
 import { Link } from "wouter";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 
 export default function Home() {
   const { user, isLoading } = useAuth();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   const handleLogout = async () => {
     try {
@@ -16,6 +22,35 @@ export default function Home() {
       window.location.href = '/api/logout';
     }
   };
+
+  // Development: Get all users for switching
+  const { data: allUsers } = useQuery({
+    queryKey: ['/api/dev/users'],
+    enabled: import.meta.env.DEV,
+  });
+
+  // Development: Switch user mutation
+  const switchUserMutation = useMutation({
+    mutationFn: async (targetUserId: string) => {
+      return await apiRequest('POST', '/api/dev/switch-user', { targetUserId });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/auth/user'] });
+      toast({
+        title: "사용자 전환 완료",
+        description: "성공적으로 사용자가 전환되었습니다.",
+      });
+      // 페이지 새로고침으로 완전한 상태 초기화
+      window.location.reload();
+    },
+    onError: (error) => {
+      toast({
+        title: "사용자 전환 실패",
+        description: "사용자 전환 중 오류가 발생했습니다.",
+        variant: "destructive",
+      });
+    },
+  });
 
   if (isLoading) {
     return (
@@ -37,10 +72,35 @@ export default function Home() {
             환영합니다, {(user as any)?.firstName || (user as any)?.email || '사용자'}님!
           </h1>
           <p className="text-gray-600">
-            오늘도 목표를 향해 달려가요, 당신의 노력이 더 큰 꿈을 이루는 발판이 될 거예요!
+            오늘도 목표 달성을 위해 함께 해보아요.
           </p>
           
-
+          {/* Development: User Switch Dropdown - Mobile optimized */}
+          {import.meta.env.DEV && allUsers && (allUsers as any)?.length > 1 && (
+            <div className="flex items-center justify-center space-x-2 mt-4">
+              <Users className="h-4 w-4 text-gray-500" />
+              <Select
+                value={(user as any)?.id}
+                onValueChange={(targetUserId) => {
+                  if (targetUserId !== (user as any)?.id) {
+                    switchUserMutation.mutate(targetUserId);
+                  }
+                }}
+                disabled={switchUserMutation.isPending}
+              >
+                <SelectTrigger className="w-48">
+                  <SelectValue placeholder="사용자 선택" />
+                </SelectTrigger>
+                <SelectContent>
+                  {(allUsers as any)?.map((u: any) => (
+                    <SelectItem key={u.id} value={u.id}>
+                      {u.firstName || u.email} {u.id === (user as any)?.id && "(현재)"}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
         </div>
 
         {/* Quick Access Cards */}

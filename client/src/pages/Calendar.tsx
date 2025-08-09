@@ -15,10 +15,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
-import { CalendarIcon, Clock, Repeat, Save, X, Check, MousePointer2, Plus } from "lucide-react";
+import { CalendarIcon, Clock, Repeat, Save, X, Check, MousePointer2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient } from "@/lib/queryClient";
 import { format } from "date-fns";
@@ -43,380 +42,6 @@ const taskPriorityColors = {
   A: '#EF4444',    // 빨간색
   B: '#F59E0B',    // 주황색
   C: '#10B981'     // 초록색
-};
-
-// Custom Month View Components
-const MAX_VISIBLE_EVENTS = 3;
-
-const CustomMonthEvent = ({ event }: { event: any }) => {
-  return (
-    <div 
-      className="text-xs px-1 py-0.5 rounded truncate"
-      style={{ 
-        backgroundColor: event.resource?.color || '#3b82f6',
-        color: 'white'
-      }}
-      title={event.title}
-    >
-      {event.title}
-    </div>
-  );
-};
-
-// Custom Month Calendar Component
-const CustomMonthCalendar = ({ 
-  date,
-  events,
-  onNavigate,
-  onSelectSlot,
-  onSelectEvent,
-  onEventRightClick,
-  onEventResize,
-  onEventDrop
-}: {
-  date: Date;
-  events: any[];
-  onNavigate: (date: Date) => void;
-  onSelectSlot: (slotInfo: any) => void;
-  onSelectEvent: (event: any) => void;
-  onEventRightClick: (event: any, e: React.MouseEvent) => void;
-  onEventResize?: (args: any) => void;
-  onEventDrop?: (args: any) => void;
-}) => {
-  const [draggedEvent, setDraggedEvent] = useState<any>(null);
-  const [draggedFromDate, setDraggedFromDate] = useState<Date | null>(null);
-  const [resizeState, setResizeState] = useState<{
-    event: any;
-    isResizing: boolean;
-    startDate: Date;
-    originalEndDate: Date;
-  } | null>(null);
-  const startOfMonth = new Date(date.getFullYear(), date.getMonth(), 1);
-  const endOfMonth = new Date(date.getFullYear(), date.getMonth() + 1, 0);
-  const startDate = new Date(startOfMonth);
-  startDate.setDate(startDate.getDate() - startOfMonth.getDay());
-  
-  const endDate = new Date(endOfMonth);
-  endDate.setDate(endDate.getDate() + (6 - endOfMonth.getDay()));
-
-  const weeks = [];
-  const currentDate = new Date(startDate);
-  
-  while (currentDate <= endDate) {
-    const week = [];
-    for (let i = 0; i < 7; i++) {
-      week.push(new Date(currentDate));
-      currentDate.setDate(currentDate.getDate() + 1);
-    }
-    weeks.push(week);
-  }
-
-  const getDayEvents = (day: Date) => {
-    return events.filter(event => {
-      const eventDate = new Date(event.start);
-      return eventDate.toDateString() === day.toDateString();
-    });
-  };
-
-  const navigateMonth = (direction: 'prev' | 'next') => {
-    const newDate = new Date(date);
-    if (direction === 'prev') {
-      newDate.setMonth(date.getMonth() - 1);
-    } else {
-      newDate.setMonth(date.getMonth() + 1);
-    }
-    onNavigate(newDate);
-  };
-
-  // Drag and Drop handlers
-  const handleEventDragStart = (event: any, day: Date, e: React.DragEvent) => {
-    // Only allow dragging of events, not tasks or recurring instances
-    if (event.resource?.type !== 'event' || event.resource?.data?.isRecurring) {
-      e.preventDefault();
-      return;
-    }
-    
-    setDraggedEvent(event);
-    setDraggedFromDate(day);
-    e.dataTransfer.effectAllowed = 'move';
-    e.dataTransfer.setData('text/plain', '');
-  };
-
-  const handleDateDragOver = (e: React.DragEvent) => {
-    if (draggedEvent) {
-      e.preventDefault();
-      e.dataTransfer.dropEffect = 'move';
-    }
-  };
-
-  const handleDateDrop = (targetDay: Date, e: React.DragEvent) => {
-    e.preventDefault();
-    
-    if (draggedEvent && draggedFromDate && onEventDrop) {
-      const daysDiff = Math.floor((targetDay.getTime() - draggedFromDate.getTime()) / (1000 * 60 * 60 * 24));
-      
-      const originalStart = new Date(draggedEvent.start);
-      const originalEnd = new Date(draggedEvent.end);
-      
-      const newStart = new Date(originalStart);
-      newStart.setDate(originalStart.getDate() + daysDiff);
-      
-      const newEnd = new Date(originalEnd);
-      newEnd.setDate(originalEnd.getDate() + daysDiff);
-      
-      onEventDrop({
-        event: draggedEvent,
-        start: newStart,
-        end: newEnd
-      });
-    }
-    
-    setDraggedEvent(null);
-    setDraggedFromDate(null);
-  };
-
-  // Event resizing handlers
-  const handleResizeStart = (event: any, e: React.MouseEvent) => {
-    e.stopPropagation();
-    e.preventDefault();
-    
-    // Only allow resizing of events, not tasks or recurring instances
-    if (event.resource?.type !== 'event' || event.resource?.data?.isRecurring) {
-      return;
-    }
-    
-
-    
-    setResizeState({
-      event,
-      isResizing: true,
-      startDate: new Date(event.start),
-      originalEndDate: new Date(event.end)
-    });
-
-    const handleMouseMove = (moveE: MouseEvent) => {
-      document.body.style.userSelect = 'none';
-      document.body.style.cursor = 'ew-resize';
-    };
-
-    const handleMouseUp = (upE: MouseEvent) => {
-      // Reset cursor
-      document.body.style.userSelect = '';
-      document.body.style.cursor = '';
-      
-      // Find calendar cell under mouse
-      const elementUnder = document.elementFromPoint(upE.clientX, upE.clientY);
-      const calendarDay = elementUnder?.closest('[data-calendar-day]');
-      
-      if (calendarDay) {
-        const dayStr = calendarDay.getAttribute('data-calendar-day');
-        
-        if (dayStr && onEventResize) {
-          const targetDate = new Date(dayStr);
-          const newEndDate = new Date(targetDate);
-          newEndDate.setHours(23, 59, 59, 999);
-          
-          if (newEndDate >= new Date(event.start)) {
-            // Create a proper resize event with correct format
-            const resizeEvent = {
-              event: event,
-              start: new Date(event.start),
-              end: newEndDate
-            };
-            
-            // Call the resize handler
-            onEventResize(resizeEvent);
-            
-            // Force refresh of events data and clear any cache
-            queryClient.invalidateQueries({ queryKey: ['/api/events/1'] });
-            queryClient.refetchQueries({ queryKey: ['/api/events/1'] });
-          }
-        }
-      }
-      
-      setResizeState(null);
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
-    };
-
-    document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseup', handleMouseUp);
-  };
-
-  return (
-    <div className="bg-white">
-      {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b">
-        <button
-          onClick={() => navigateMonth('prev')}
-          className="p-2 hover:bg-gray-100 rounded"
-        >
-          ←
-        </button>
-        <h2 className="text-lg font-semibold">
-          {format(date, 'yyyy년 M월', { locale: ko })}
-        </h2>
-        <button
-          onClick={() => navigateMonth('next')}
-          className="p-2 hover:bg-gray-100 rounded"
-        >
-          →
-        </button>
-      </div>
-
-      {/* Days of week */}
-      <div className="grid grid-cols-7 border-b">
-        {['일', '월', '화', '수', '목', '금', '토'].map(day => (
-          <div key={day} className="p-2 text-center text-sm font-medium text-gray-600 border-r last:border-r-0">
-            {day}
-          </div>
-        ))}
-      </div>
-
-      {/* Calendar grid */}
-      <div className="grid grid-cols-7">
-        {weeks.map((week, weekIndex) => 
-          week.map((day, dayIndex) => {
-            const dayEvents = getDayEvents(day);
-            const visibleEvents = dayEvents.slice(0, MAX_VISIBLE_EVENTS);
-            const hiddenCount = dayEvents.length - MAX_VISIBLE_EVENTS;
-            const isCurrentMonth = day.getMonth() === date.getMonth();
-            const isToday = day.toDateString() === new Date().toDateString();
-
-            return (
-              <div
-                key={`${weekIndex}-${dayIndex}`}
-                data-calendar-day={day.toISOString()}
-                className={`min-h-[120px] border-r border-b last:border-r-0 p-1 cursor-pointer hover:bg-gray-50 ${
-                  !isCurrentMonth ? 'bg-gray-50 text-gray-400' : ''
-                } ${isToday ? 'bg-blue-50' : ''} ${
-                  draggedEvent && day.toDateString() !== draggedFromDate?.toDateString() ? 'bg-green-50' : ''
-                } ${
-                  resizeState?.isResizing ? 'bg-yellow-50 border-yellow-300' : ''
-                }`}
-                onClick={() => onSelectSlot({ 
-                  start: day, 
-                  end: day,
-                  slots: [day],
-                  action: 'click'
-                })}
-                onDragOver={handleDateDragOver}
-                onDrop={(e) => handleDateDrop(day, e)}
-              >
-                {/* Date number */}
-                <div className={`text-right text-sm p-1 ${isToday ? 'font-bold text-blue-600' : ''}`}>
-                  {day.getDate()}
-                </div>
-
-                {/* Events */}
-                <div className="space-y-0.5">
-                  {visibleEvents.map((event, index) => {
-                    const isDraggable = event.resource?.type === 'event' && !event.resource?.data?.isRecurring;
-                    const eventStart = new Date(event.start);
-                    const eventEnd = new Date(event.end);
-                    const isMultiDay = eventStart.toDateString() !== eventEnd.toDateString();
-                    const daysDuration = Math.ceil((eventEnd.getTime() - eventStart.getTime()) / (1000 * 60 * 60 * 24));
-                    const isBeingResized = resizeState?.event?.id === event.id;
-                    
-                    return (
-                      <div
-                        key={`${event.id}-${index}`}
-                        className={`text-xs px-1 py-0.5 rounded truncate cursor-pointer hover:opacity-80 relative group ${
-                          isDraggable ? 'cursor-move' : 'cursor-default'
-                        } ${isBeingResized ? 'ring-2 ring-yellow-400' : ''} ${
-                          isMultiDay ? 'border-l-4 border-l-white' : ''
-                        }`}
-                        style={{ 
-                          backgroundColor: event.resource?.color || '#3b82f6',
-                          color: 'white'
-                        }}
-                        title={`${event.title}${isMultiDay ? ' (여러 날)' : ''}`}
-                        draggable={isDraggable && !isBeingResized}
-                        onDragStart={(e) => isDraggable && !isBeingResized && handleEventDragStart(event, day, e)}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onSelectEvent(event);
-                        }}
-                        onContextMenu={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          onEventRightClick(event, e);
-                        }}
-                      >
-                        {event.title}
-                        {isMultiDay && (
-                          <span className="text-[10px] opacity-75 ml-1">
-                            ({daysDuration}일)
-                          </span>
-                        )}
-                        {isDraggable && (
-                          <div 
-                            className={`absolute top-1/2 right-0 transform -translate-y-1/2 w-3 h-5 cursor-ew-resize opacity-0 group-hover:opacity-100 flex justify-center items-center bg-black bg-opacity-30 rounded border border-white ${
-                              isBeingResized ? 'opacity-100 bg-yellow-400' : ''
-                            }`}
-                            title="드래그하여 크기 조정"
-                            onMouseDown={(e) => handleResizeStart(event, e)}
-                            draggable={false}
-                          >
-                            <div className="flex space-x-0.5">
-                              <div className="w-0.5 h-4 bg-white rounded-sm"></div>
-                              <div className="w-0.5 h-4 bg-white rounded-sm"></div>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
-
-                  {/* +N more button */}
-                  {hiddenCount > 0 && (
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <button
-                          className="text-xs text-gray-600 hover:text-gray-800 hover:bg-gray-100 px-1 py-0.5 rounded w-full text-left"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                          }}
-                        >
-                          +{hiddenCount} more
-                        </button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-64 p-2" side="right">
-                        <div className="space-y-1">
-                          <div className="font-medium text-sm mb-2">
-                            {format(day, 'M월 d일', { locale: ko })} 일정
-                          </div>
-                          {dayEvents.map((event, index) => (
-                            <div
-                              key={`${event.id}-popover-${index}`}
-                              className="text-xs px-2 py-1 rounded cursor-pointer hover:opacity-80"
-                              style={{ 
-                                backgroundColor: event.resource?.color || '#3b82f6',
-                                color: 'white'
-                              }}
-                              onClick={() => {
-                                onSelectEvent(event);
-                              }}
-                              onContextMenu={(e) => {
-                                e.preventDefault();
-                                onEventRightClick(event, e);
-                              }}
-                            >
-                              {event.title}
-                            </div>
-                          ))}
-                        </div>
-                      </PopoverContent>
-                    </Popover>
-                  )}
-                </div>
-              </div>
-            );
-          })
-        )}
-      </div>
-    </div>
-  );
 };
 
 export default function Calendar() {
@@ -1055,95 +680,54 @@ export default function Calendar() {
             </CardHeader>
             <CardContent>
               <div 
-                style={{ minHeight: '600px', position: 'relative' }} 
+                style={{ height: '600px', position: 'relative' }} 
                 onClick={handleCloseContextMenu}
               >
-                {/* View selector */}
-                <div className="flex justify-end mb-4 space-x-2">
-                  <Button
-                    variant={view === Views.MONTH ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => setView(Views.MONTH)}
-                  >
-                    월
-                  </Button>
-                  <Button
-                    variant={view === Views.WEEK ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => setView(Views.WEEK)}
-                  >
-                    주
-                  </Button>
-                  <Button
-                    variant={view === Views.DAY ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => setView(Views.DAY)}
-                  >
-                    일
-                  </Button>
-                </div>
-
-                {/* Custom Month View or react-big-calendar */}
-                {view === Views.MONTH ? (
-                  <CustomMonthCalendar
-                    date={date}
-                    events={calendarEvents}
-                    onNavigate={setDate}
-                    onSelectSlot={handleSelectSlot}
-                    onSelectEvent={handleSelectEvent}
-                    onEventRightClick={handleEventRightClick}
-                    onEventResize={handleEventResize}
-                    onEventDrop={handleEventDrop}
-                  />
-                ) : (
-                  <div style={{ height: '600px' }}>
-                    <DnDCalendar
-                      localizer={localizer}
-                      events={calendarEvents}
-                      startAccessor={(event: any) => event.start}
-                      endAccessor={(event: any) => event.end}
-                      views={[Views.WEEK, Views.DAY]}
-                      view={view}
-                      onView={setView}
-                      date={date}
-                      onNavigate={setDate}
-                      onSelectSlot={handleSelectSlot}
-                      onSelectEvent={handleSelectEvent}
-                      onEventResize={handleEventResize}
-                      onEventDrop={handleEventDrop}
-                      selectable
-                      resizable
-                      resizableAccessor={(event: any) => event.resizable}
-                      draggableAccessor={(event: any) => event.draggable}
-                      eventPropGetter={eventStyleGetter}
-                      culture="ko"
-                      components={{
-                        event: ({ event }: { event: any }) => (
-                          <div
-                            onContextMenu={(e) => handleEventRightClick(event, e)}
-                            className="w-full h-full"
-                          >
-                            {event.title}
-                          </div>
-                        )
-                      }}
-                      messages={{
-                        next: "다음",
-                        previous: "이전",
-                        today: "오늘",
-                        month: "월",
-                        week: "주",
-                        day: "일",
-                        agenda: "일정",
-                        date: "날짜",
-                        time: "시간",
-                        event: "이벤트",
-                        noEventsInRange: "이 범위에는 일정이 없습니다.",
-                        allDay: "종일"
-                      }}
-                    />
-                  </div>
-                )}
+                <DnDCalendar
+                  localizer={localizer}
+                  events={calendarEvents}
+                  startAccessor={(event: any) => event.start}
+                  endAccessor={(event: any) => event.end}
+                  views={[Views.MONTH, Views.WEEK, Views.DAY]}
+                  view={view}
+                  onView={setView}
+                  date={date}
+                  onNavigate={setDate}
+                  onSelectSlot={handleSelectSlot}
+                  onSelectEvent={handleSelectEvent}
+                  onEventResize={handleEventResize}
+                  onEventDrop={handleEventDrop}
+                  selectable
+                  resizable
+                  resizableAccessor={(event: any) => event.resizable}
+                  draggableAccessor={(event: any) => event.draggable}
+                  eventPropGetter={eventStyleGetter}
+                  culture="ko"
+                  components={{
+                    event: ({ event }: { event: any }) => (
+                      <div
+                        onContextMenu={(e) => handleEventRightClick(event, e)}
+                        className="w-full h-full"
+                      >
+                        {event.title}
+                      </div>
+                    )
+                  }}
+                  messages={{
+                    next: "다음",
+                    previous: "이전",
+                    today: "오늘",
+                    month: "월",
+                    week: "주",
+                    day: "일",
+                    agenda: "일정",
+                    date: "날짜",
+                    time: "시간",
+                    event: "이벤트",
+                    noEventsInRange: "이 범위에는 일정이 없습니다.",
+                    allDay: "종일"
+                  }}
+                />
                 
                 {/* Context Menu */}
                 {contextMenu && (
@@ -1461,14 +1045,7 @@ export default function Calendar() {
                     imageUrls={eventForm.imageUrls}
                     fileUrls={eventForm.fileUrls}
                     onImagesChange={(imageUrls) => setEventForm(prev => ({ ...prev, imageUrls }))}
-                    onFilesChange={(fileUrls) => setEventForm(prev => ({ 
-                      ...prev, 
-                      fileUrls: fileUrls.map(file => ({
-                        url: file.url,
-                        name: file.name,
-                        size: file.size || 0
-                      }))
-                    }))}
+                    onFilesChange={(fileUrls) => setEventForm(prev => ({ ...prev, fileUrls }))}
                     uploadEndpoint="/api/files/upload"
                     maxFiles={10}
                     maxFileSize={10485760}
