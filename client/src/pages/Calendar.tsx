@@ -509,21 +509,7 @@ export default function Calendar() {
       return eventMonth === currentViewMonth;
     }) || [];
     
-    console.log('Calendar Debug FINAL:', {
-      events: events?.length || 0,
-      tasks: allTasks?.length || 0,
-      totalProcessed: allEvents?.length || 0,
-      limitedEventsCount: limitedEvents?.length || 0,
-      currentViewMonth,
-      eventsInCurrentMonth: eventsInCurrentMonth.length,
-      limitedEventsPassedToCalendar: limitedEvents,
-      eventsInCurrentMonthDetails: eventsInCurrentMonth.map(e => ({
-        title: e.title,
-        date: format(e.start, 'yyyy-MM-dd'),
-        time: format(e.start, 'HH:mm'),
-        type: e.resource?.type
-      }))
-    });
+
 
     return limitedEvents;
   }, [events, allTasks, projects]);
@@ -824,47 +810,19 @@ export default function Calendar() {
                   <span>달력</span>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    onClick={() => setDate(new Date('2025-07-26'))}
-                    className="text-xs"
-                  >
-                    7월로 이동 (일정 확인)
-                  </Button>
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    onClick={() => setDate(new Date('2025-08-09'))}
-                    className="text-xs"
-                  >
-                    8월로 이동 (할일 확인)
-                  </Button>
                   <Badge variant="outline" className="bg-blue-50">
                     <div className="w-3 h-3 bg-blue-500 rounded mr-2" />
                     일정 (드래그 가능)
                   </Badge>
                   <Badge variant="outline" className="bg-orange-50">
                     <div className="w-3 h-3 bg-orange-500 rounded mr-2 border-2 border-dashed border-white" />
-                    할일 (읽기 전용)
+                    할일 (체크박스로 완료)
                   </Badge>
                 </div>
               </CardTitle>
             </CardHeader>
             <CardContent>
-              {/* DEBUG: Show events data */}
-              <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded text-xs">
-                <div className="font-semibold mb-2">✅ 커스텀 달력으로 전환:</div>
-                <div>총 이벤트: {calendarEvents?.length || 0}개 | 현재 뷰: {format(date, 'yyyy년 MM월')}</div>
-                {calendarEvents?.slice(0, 3).map((event: any, idx: number) => (
-                  <div key={idx} className="mt-1 text-gray-700">
-                    {idx + 1}. {event.title} ({format(event.start, 'MM/dd HH:mm')} - {format(event.end, 'MM/dd HH:mm')})
-                  </div>
-                ))}
-                {(calendarEvents?.length || 0) > 3 && (
-                  <div className="text-gray-500">... 그리고 {(calendarEvents?.length || 0) - 3}개 더</div>
-                )}
-              </div>
+
 
               {/* 뷰 선택 버튼 */}
               <div className="mb-4 flex gap-2">
@@ -905,6 +863,13 @@ export default function Calendar() {
                     endOfDay.setHours(10, 0, 0, 0);
                     handleSelectSlot({ start: startOfDay, end: endOfDay });
                   }}
+                  onEventDrop={(event, newStart, newEnd) => {
+                    handleEventDrop({ event, start: newStart, end: newEnd });
+                  }}
+                  onToggleComplete={(event) => {
+                    setContextMenu({ x: 0, y: 0, item: event, type: 'event' });
+                    handleContextMenuAction('complete');
+                  }}
                 />
               ) : (
                 <div 
@@ -914,8 +879,8 @@ export default function Calendar() {
                   <DnDCalendar
                     localizer={localizer}
                     events={calendarEvents || []}
-                    startAccessor="start"
-                    endAccessor="end"
+                    startAccessor={(event: any) => event.start}
+                    endAccessor={(event: any) => event.end}
                     views={[Views.WEEK, Views.DAY]}
                     view={view}
                     onView={setView}
