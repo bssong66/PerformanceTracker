@@ -267,8 +267,33 @@ export default function Calendar() {
   // Helper function to generate recurring events
   const generateRecurringEvents = (event: any) => {
     const events = [];
-    const baseStart = new Date(`${event.startDate}${event.startTime ? `T${event.startTime}` : 'T00:00'}`);
-    const baseEnd = new Date(`${event.endDate || event.startDate}${event.endTime ? `T${event.endTime}` : 'T23:59'}`);
+    
+    // Fix date parsing - handle timezone properly
+    const startDateStr = event.startDate;
+    const endDateStr = event.endDate || event.startDate;
+    const startTimeStr = event.startTime || '00:00';
+    const endTimeStr = event.endTime || '23:59';
+    
+    // Fix timezone issue - create dates in local timezone
+    const [startYear, startMonth, startDay] = startDateStr.split('-').map(Number);
+    const [startHour, startMinute] = startTimeStr.split(':').map(Number);
+    const [endYear, endMonth, endDay] = endDateStr.split('-').map(Number);
+    const [endHour, endMinute] = endTimeStr.split(':').map(Number);
+    
+    const baseStart = new Date(startYear, startMonth - 1, startDay, startHour, startMinute);
+    const baseEnd = new Date(endYear, endMonth - 1, endDay, endHour, endMinute);
+    
+    // Validate dates
+    if (isNaN(baseStart.getTime()) || isNaN(baseEnd.getTime())) {
+      console.error('Invalid date created:', { startDateStr, endDateStr, startTimeStr, endTimeStr });
+      return [];
+    }
+    
+    // If times are the same, make it a 1 hour event
+    if (baseStart.getTime() === baseEnd.getTime()) {
+      baseEnd.setHours(baseStart.getHours() + 1);
+    }
+    
     const duration = baseEnd.getTime() - baseStart.getTime();
     
     // Add the original event
@@ -371,11 +396,29 @@ export default function Calendar() {
       .filter((task: any) => task.startDate || task.endDate)
       .map((task: any) => {
         const project = safeProjects.find((p: any) => p.id === task.projectId);
+        
+        // Fix task date parsing
+        const taskStartDate = task.startDate || task.endDate;
+        const taskEndDate = task.endDate || task.startDate;
+        
+        // Fix timezone issue for tasks
+        const [taskStartYear, taskStartMonth, taskStartDay] = taskStartDate.split('-').map(Number);
+        const [taskEndYear, taskEndMonth, taskEndDay] = taskEndDate.split('-').map(Number);
+        
+        const taskStart = new Date(taskStartYear, taskStartMonth - 1, taskStartDay, 0, 0);
+        const taskEnd = new Date(taskEndYear, taskEndMonth - 1, taskEndDay, 23, 59);
+        
+        // Validate task dates
+        if (isNaN(taskStart.getTime()) || isNaN(taskEnd.getTime())) {
+          console.error('Invalid task date:', { taskStartDate, taskEndDate });
+          return null; // Skip invalid tasks
+        }
+        
         return {
           id: `task-${task.id}`,
           title: `[할일] ${task.title}`,
-          start: new Date(`${task.startDate || task.endDate}T00:00`),
-          end: new Date(`${task.endDate || task.startDate}T23:59`),
+          start: taskStart,
+          end: taskEnd,
           resizable: false, // Tasks cannot be resized
           draggable: false, // Tasks cannot be dragged
           resource: {
@@ -447,19 +490,26 @@ export default function Calendar() {
       }
     });
 
-    // Debug logging
-    console.log('Calendar Debug:', {
+    // Debug logging - timezone fixed
+    const currentViewMonth = format(date, 'yyyy-MM');
+    const eventsInCurrentMonth = allEvents?.filter(e => {
+      const eventMonth = format(e.start, 'yyyy-MM');
+      return eventMonth === currentViewMonth;
+    }) || [];
+    
+    console.log('Calendar Debug TIMEZONE FIXED:', {
       events: events?.length || 0,
       tasks: allTasks?.length || 0,
-      projects: projects?.length || 0,
-      limitedEvents: limitedEvents?.length || 0,
-      sampleEvent: events?.[0],
-      sampleTask: allTasks?.[0],
-      allEventsRaw: allEvents?.slice(0, 3),
-      eventsByDateKeys: Object.keys(eventsByDate),
-      currentDate: date,
-      currentMonth: format(date, 'yyyy-MM'),
-      eventDates: allEvents?.map(e => e.start ? format(e.start, 'yyyy-MM-dd') : 'invalid')
+      totalProcessed: allEvents?.length || 0,
+      limitedEventsCount: limitedEvents?.length || 0,
+      currentViewMonth,
+      eventsInCurrentMonth: eventsInCurrentMonth.length,
+      eventsInCurrentMonthDetails: eventsInCurrentMonth.map(e => ({
+        title: e.title,
+        date: format(e.start, 'yyyy-MM-dd'),
+        time: format(e.start, 'HH:mm'),
+        type: e.resource?.type
+      }))
     });
 
     return limitedEvents;
