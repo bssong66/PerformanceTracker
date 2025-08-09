@@ -37,7 +37,7 @@ export default function Home() {
             환영합니다, {(user as any)?.firstName || (user as any)?.email || '사용자'}님!
           </h1>
           <p className="text-gray-600">
-            오늘도 목표 달성을 위해 함께 해보아요.
+            오늘도 목표를 향해 달려가요, 당신의 노력이 더 큰 꿈을 이루는 발판이 될 거예요!
           </p>
           
 
