@@ -275,47 +275,76 @@
 }
 
 /* Limit events to 3 per day in month view */
-.rbc-row-content {
-  overflow: hidden;
+.rbc-date-cell {
+  min-height: 100px;
+  vertical-align: top;
+  position: relative;
 }
 
-.rbc-month-view .rbc-row .rbc-row-content .rbc-row-segment:nth-child(n+4) {
+.rbc-row-segment {
+  position: relative;
+  z-index: 1;
+}
+
+.rbc-date-cell .rbc-row-content {
+  max-height: 75px;
+  overflow: hidden;
+  position: relative;
+}
+
+/* Hide events after the 3rd one */
+.rbc-date-cell .rbc-row-content .rbc-row-segment:nth-child(n+4) {
   display: none;
 }
 
+/* Show more button styling */
 .rbc-show-more {
-  background: #f3f4f6;
-  border: 1px solid #d1d5db;
-  border-radius: 4px;
-  padding: 2px 6px;
-  font-size: 11px;
-  font-weight: 500;
-  color: #6b7280;
-  cursor: pointer;
-  margin-top: 2px;
-  display: block;
-  text-align: center;
+  background: #f3f4f6 !important;
+  border: 1px solid #d1d5db !important;
+  border-radius: 4px !important;
+  padding: 2px 6px !important;
+  font-size: 11px !important;
+  font-weight: 500 !important;
+  color: #6b7280 !important;
+  cursor: pointer !important;
+  margin-top: 2px !important;
+  display: block !important;
+  text-align: center !important;
+  position: absolute !important;
+  bottom: 2px !important;
+  left: 2px !important;
+  right: 2px !important;
+  z-index: 10 !important;
 }
 
 .rbc-show-more:hover {
-  background: #e5e7eb;
-  color: #374151;
+  background: #e5e7eb !important;
+  color: #374151 !important;
 }
 
-/* Ensure day cells have proper height to show 3 events */
-.rbc-date-cell {
-  min-height: 80px;
-  vertical-align: top;
+/* Month view specific adjustments */
+.rbc-month-view .rbc-date-cell {
+  height: 100px;
+  padding: 2px;
 }
 
-.rbc-month-view .rbc-date-cell .rbc-row-content {
-  max-height: 72px;
-  overflow: hidden;
+.rbc-month-view .rbc-row {
+  min-height: 100px;
 }
 
-/* Style for event overflow indicator */
-.rbc-event + .rbc-event + .rbc-event + .rbc-show-more {
-  margin-top: 2px;
+/* Event spacing */
+.rbc-event {
+  margin-bottom: 1px !important;
+}
+
+/* Style for "+더보기" events */
+.rbc-event[data-type="more"] {
+  background: #f3f4f6 !important;
+  border: 1px solid #d1d5db !important;
+  color: #6b7280 !important;
+  font-size: 11px !important;
+  text-align: center !important;
+  cursor: pointer !important;
 }
 
 .rbc-slot-selection {

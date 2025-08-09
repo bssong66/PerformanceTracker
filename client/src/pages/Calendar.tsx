@@ -383,7 +383,66 @@ export default function Calendar() {
         };
       });
 
-    return [...eventItems, ...taskItems];
+    // Combine all events and limit to 3 per day
+    const allEvents = [...eventItems, ...taskItems];
+    const eventsByDate: { [key: string]: any[] } = {};
+    const limitedEvents: any[] = [];
+
+    // Group events by date
+    allEvents.forEach(event => {
+      const dateKey = format(event.start, 'yyyy-MM-dd');
+      if (!eventsByDate[dateKey]) {
+        eventsByDate[dateKey] = [];
+      }
+      eventsByDate[dateKey].push(event);
+    });
+
+    // Process each date to limit to 3 events max
+    Object.keys(eventsByDate).forEach(dateKey => {
+      const dayEvents = eventsByDate[dateKey];
+      
+      // Sort by priority (high > medium > low) and start time
+      const sortedEvents = dayEvents.sort((a, b) => {
+        const priorityOrder = { high: 3, medium: 2, low: 1 };
+        const aPriority = a.resource?.priority || a.resource?.data?.priority || 'low';
+        const bPriority = b.resource?.priority || b.resource?.data?.priority || 'low';
+        
+        if (priorityOrder[aPriority as keyof typeof priorityOrder] !== priorityOrder[bPriority as keyof typeof priorityOrder]) {
+          return priorityOrder[bPriority as keyof typeof priorityOrder] - priorityOrder[aPriority as keyof typeof priorityOrder];
+        }
+        
+        return a.start.getTime() - b.start.getTime();
+      });
+
+      // Add the first 3 events
+      limitedEvents.push(...sortedEvents.slice(0, 3));
+
+      // Add "+N 더보기" event if there are more than 3
+      if (sortedEvents.length > 3) {
+        const moreCount = sortedEvents.length - 3;
+        const hiddenEvents = sortedEvents.slice(3);
+        
+        limitedEvents.push({
+          id: `more-${dateKey}`,
+          title: `+${moreCount} 더보기`,
+          start: new Date(`${dateKey}T23:58:00`),
+          end: new Date(`${dateKey}T23:59:00`),
+          resizable: false,
+          draggable: false,
+          resource: {
+            type: 'more',
+            data: { 
+              moreCount, 
+              hiddenEvents,
+              date: dateKey 
+            },
+            color: '#f3f4f6'
+          }
+        });
+      }
+    });
+
+    return limitedEvents;
   }, [events, allTasks, projects]);
 
   // Handle slot selection (drag to create event)
@@ -511,6 +570,15 @@ export default function Calendar() {
       toast({ 
         title: "할일 정보", 
         description: `${event.resource.data.title} (${event.resource.data.priority}급 우선순위)` 
+      });
+    } else if (event.resource.type === 'more') {
+      // Handle "more" events - show popup with hidden events
+      const { hiddenEvents, moreCount, date } = event.resource.data;
+      const eventTitles = hiddenEvents.map((e: any) => `• ${e.title}`).join('\n');
+      
+      toast({
+        title: `${date} 추가 일정 (${moreCount}개)`,
+        description: eventTitles,
       });
     }
   }, [toast]);
@@ -705,21 +773,20 @@ export default function Calendar() {
                   culture="ko"
                   popup
                   popupOffset={30}
-                  max={3}
+
                   components={{
                     event: ({ event }: { event: any }) => (
                       <div
                         onContextMenu={(e) => handleEventRightClick(event, e)}
-                        className="w-full h-full"
+                        className={`w-full h-full ${
+                          event.resource.type === 'more' 
+                            ? 'text-xs text-gray-600 bg-gray-100 border border-gray-300 rounded px-1 text-center font-medium'
+                            : ''
+                        }`}
                       >
                         {event.title}
                       </div>
-                    ),
-                    month: {
-                      dateHeader: ({ date, label }: { date: Date; label: string }) => (
-                        <span className="rbc-date-header">{label}</span>
-                      )
-                    }
+                    )
                   }}
                   messages={{
                     next: "다음",
