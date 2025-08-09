@@ -227,8 +227,9 @@ const CustomMonthCalendar = ({
             // Call the resize handler
             onEventResize(resizeEvent);
             
-            // Force refresh of events data
+            // Force refresh of events data and clear any cache
             queryClient.invalidateQueries({ queryKey: ['/api/events/1'] });
+            queryClient.refetchQueries({ queryKey: ['/api/events/1'] });
           }
         }
       }
@@ -311,7 +312,10 @@ const CustomMonthCalendar = ({
                 <div className="space-y-0.5">
                   {visibleEvents.map((event, index) => {
                     const isDraggable = event.resource?.type === 'event' && !event.resource?.data?.isRecurring;
-                    const isMultiDay = new Date(event.start).toDateString() !== new Date(event.end).toDateString();
+                    const eventStart = new Date(event.start);
+                    const eventEnd = new Date(event.end);
+                    const isMultiDay = eventStart.toDateString() !== eventEnd.toDateString();
+                    const daysDuration = Math.ceil((eventEnd.getTime() - eventStart.getTime()) / (1000 * 60 * 60 * 24));
                     const isBeingResized = resizeState?.event?.id === event.id;
                     
                     return (
@@ -342,7 +346,7 @@ const CustomMonthCalendar = ({
                         {event.title}
                         {isMultiDay && (
                           <span className="text-[10px] opacity-75 ml-1">
-                            ({Math.ceil((new Date(event.end).getTime() - new Date(event.start).getTime()) / (1000 * 60 * 60 * 24))}일)
+                            ({daysDuration}일)
                           </span>
                         )}
                         {isDraggable && (
