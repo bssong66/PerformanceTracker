@@ -191,16 +191,35 @@ const CustomMonthCalendar = ({
       startDate: new Date(event.start),
       originalEndDate: new Date(event.end)
     });
+
+    // Add global mouse events for resize
+    const handleGlobalMouseMove = (globalE: MouseEvent) => {
+      // Visual feedback during resize
+      document.body.style.userSelect = 'none';
+      document.body.style.cursor = 'ew-resize';
+    };
+
+    const handleGlobalMouseUp = (globalE: MouseEvent) => {
+      document.body.style.userSelect = '';
+      document.body.style.cursor = '';
+      document.removeEventListener('mousemove', handleGlobalMouseMove);
+      document.removeEventListener('mouseup', handleGlobalMouseUp);
+    };
+
+    document.addEventListener('mousemove', handleGlobalMouseMove);
+    document.addEventListener('mouseup', handleGlobalMouseUp);
   };
 
   const handleResizeMove = (targetDay: Date, e: React.MouseEvent) => {
     if (resizeState?.isResizing) {
       e.preventDefault();
-      // Prevent default to avoid text selection during resize
+      // Visual feedback for target day during resize
     }
   };
 
   const handleResizeEnd = (targetDay: Date, e: React.MouseEvent) => {
+    if (!resizeState?.isResizing) return;
+    
     e.stopPropagation();
     e.preventDefault();
     
@@ -328,13 +347,18 @@ const CustomMonthCalendar = ({
                         )}
                         {isDraggable && (
                           <div 
-                            className={`absolute top-0 right-0 w-2 h-2 cursor-se-resize opacity-0 group-hover:opacity-100 bg-white rounded-bl ${
-                              isBeingResized ? 'opacity-100 ring-1 ring-yellow-400' : ''
+                            className={`absolute top-1/2 right-0 transform -translate-y-1/2 w-1 h-3 cursor-ew-resize opacity-0 group-hover:opacity-100 flex justify-center items-center ${
+                              isBeingResized ? 'opacity-100' : ''
                             }`}
                             title="드래그하여 크기 조정"
                             onMouseDown={(e) => handleResizeStart(event, e)}
                             draggable={false}
-                          />
+                          >
+                            <div className="flex space-x-0.5">
+                              <div className="w-px h-2 bg-white shadow-sm"></div>
+                              <div className="w-px h-2 bg-white shadow-sm"></div>
+                            </div>
+                          </div>
                         )}
                       </div>
                     );
