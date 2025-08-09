@@ -6,7 +6,6 @@ import { DndProvider } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
 import moment from "moment";
 import "moment/locale/ko";
-import CustomMonthCalendar from "@/components/CustomMonthCalendar";
 import "react-big-calendar/lib/css/react-big-calendar.css";
 import "react-big-calendar/lib/addons/dragAndDrop/styles.css";
 import { Button } from "@/components/ui/button";
@@ -88,40 +87,35 @@ export default function Calendar() {
 
   // Fetch events
   const { data: events = [] } = useQuery({
-    queryKey: [`/api/events/${user?.id || '1'}`],
+    queryKey: ['/api/events/1'],
     retry: false,
-    enabled: !!user?.id,
   });
 
   // Fetch all tasks to display on calendar
   const { data: allTasks = [] } = useQuery({
-    queryKey: [`/api/tasks/${user?.id || '1'}`],
+    queryKey: ['/api/tasks/1'],
     retry: false,
-    enabled: !!user?.id,
   });
 
   // Fetch projects for task context
   const { data: projects = [] } = useQuery({
-    queryKey: [`/api/projects/${user?.id || '1'}`],
+    queryKey: ['/api/projects/1'],
     retry: false,
-    enabled: !!user?.id,
   });
 
   // Fetch foundation (core values) for dropdown
   const { data: foundation = null } = useQuery({
-    queryKey: [`/api/foundation/${user?.id || '1'}`],
+    queryKey: ['/api/foundation/1'],
     retry: false,
     refetchInterval: 5000, // 5초마다 자동 새로고침
-    enabled: !!user?.id,
   });
 
   // Fetch annual goals for dropdown
   const { data: annualGoals = [] } = useQuery({
-    queryKey: [`/api/goals/${user?.id || '1'}`],
+    queryKey: ['/api/goals/1'],
     retry: false,
     refetchOnWindowFocus: true,
     refetchInterval: 5000, // 5초마다 자동 새로고침
-    enabled: !!user?.id,
   });
 
   // Create event mutation
@@ -141,7 +135,7 @@ export default function Calendar() {
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [`/api/events/${user?.id || '1'}`] });
+      queryClient.invalidateQueries({ queryKey: ['/api/events/1'] });
       setShowEventDialog(false);
       resetEventForm();
       toast({ title: "일정 생성", description: "새 일정이 생성되었습니다." });
@@ -172,7 +166,7 @@ export default function Calendar() {
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [`/api/events/${user?.id || '1'}`] });
+      queryClient.invalidateQueries({ queryKey: ['/api/events/1'] });
       setShowEventDialog(false);
       resetEventForm();
       toast({ title: "일정 수정", description: "일정이 수정되었습니다." });
@@ -195,7 +189,7 @@ export default function Calendar() {
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [`/api/events/${user?.id || '1'}`] });
+      queryClient.invalidateQueries({ queryKey: ['/api/events/1'] });
       setShowEventDialog(false);
       resetEventForm();
       toast({ title: "일정 삭제", description: "일정이 삭제되었습니다." });
@@ -214,7 +208,7 @@ export default function Calendar() {
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [`/api/events/${user?.id || '1'}`] });
+      queryClient.invalidateQueries({ queryKey: ['/api/events/1'] });
       setContextMenu(null);
       toast({ title: "일정 완료 상태가 변경되었습니다" });
     }
@@ -232,7 +226,7 @@ export default function Calendar() {
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [`/api/tasks/${user?.id || '1'}`] });
+      queryClient.invalidateQueries({ queryKey: ['/api/tasks/1'] });
       setContextMenu(null);
       toast({ title: "할일 완료 상태가 변경되었습니다" });
     }
@@ -268,47 +262,16 @@ export default function Calendar() {
   // Helper function to generate recurring events
   const generateRecurringEvents = (event: any) => {
     const events = [];
-    
-    // Fix date parsing - handle timezone properly
-    const startDateStr = event.startDate;
-    const endDateStr = event.endDate || event.startDate;
-    const startTimeStr = event.startTime || '00:00';
-    const endTimeStr = event.endTime || '23:59';
-    
-    // Fix timezone issue - create dates that React Big Calendar can handle properly
-    const [startYear, startMonth, startDay] = startDateStr.split('-').map(Number);
-    const [startHour, startMinute] = startTimeStr.split(':').map(Number);
-    const [endYear, endMonth, endDay] = endDateStr.split('-').map(Number);
-    const [endHour, endMinute] = endTimeStr.split(':').map(Number);
-    
-    // Create dates with UTC offset compensation (UTC+9 for Korea)
-    const baseStart = new Date(startYear, startMonth - 1, startDay, startHour, startMinute);
-    const baseEnd = new Date(endYear, endMonth - 1, endDay, endHour, endMinute);
-    
-    // Adjust for timezone offset to prevent shifting
-    const timezoneOffset = baseStart.getTimezoneOffset() * 60000;
-    const correctedStart = new Date(baseStart.getTime() - timezoneOffset);
-    const correctedEnd = new Date(baseEnd.getTime() - timezoneOffset);
-    
-    // Validate dates
-    if (isNaN(correctedStart.getTime()) || isNaN(correctedEnd.getTime())) {
-      console.error('Invalid date created:', { startDateStr, endDateStr, startTimeStr, endTimeStr });
-      return [];
-    }
-    
-    // If times are the same, make it a 1 hour event
-    if (correctedStart.getTime() === correctedEnd.getTime()) {
-      correctedEnd.setHours(correctedStart.getHours() + 1);
-    }
-    
-    const duration = correctedEnd.getTime() - correctedStart.getTime();
+    const baseStart = new Date(`${event.startDate}${event.startTime ? `T${event.startTime}` : 'T00:00'}`);
+    const baseEnd = new Date(`${event.endDate || event.startDate}${event.endTime ? `T${event.endTime}` : 'T23:59'}`);
+    const duration = baseEnd.getTime() - baseStart.getTime();
     
     // Add the original event
     events.push({
       id: event.id,
       title: event.title,
-      start: correctedStart,
-      end: correctedEnd,
+      start: baseStart,
+      end: baseEnd,
       resizable: true,
       draggable: true,
       resource: {
@@ -403,34 +366,11 @@ export default function Calendar() {
       .filter((task: any) => task.startDate || task.endDate)
       .map((task: any) => {
         const project = safeProjects.find((p: any) => p.id === task.projectId);
-        
-        // Fix task date parsing
-        const taskStartDate = task.startDate || task.endDate;
-        const taskEndDate = task.endDate || task.startDate;
-        
-        // Fix timezone issue for tasks - same approach as events
-        const [taskStartYear, taskStartMonth, taskStartDay] = taskStartDate.split('-').map(Number);
-        const [taskEndYear, taskEndMonth, taskEndDay] = taskEndDate.split('-').map(Number);
-        
-        const taskStart = new Date(taskStartYear, taskStartMonth - 1, taskStartDay, 0, 0);
-        const taskEnd = new Date(taskEndYear, taskEndMonth - 1, taskEndDay, 23, 59);
-        
-        // Apply timezone correction for tasks too
-        const taskTimezoneOffset = taskStart.getTimezoneOffset() * 60000;
-        const correctedTaskStart = new Date(taskStart.getTime() - taskTimezoneOffset);
-        const correctedTaskEnd = new Date(taskEnd.getTime() - taskTimezoneOffset);
-        
-        // Validate task dates
-        if (isNaN(correctedTaskStart.getTime()) || isNaN(correctedTaskEnd.getTime())) {
-          console.error('Invalid task date:', { taskStartDate, taskEndDate });
-          return null; // Skip invalid tasks
-        }
-        
         return {
           id: `task-${task.id}`,
           title: `[할일] ${task.title}`,
-          start: correctedTaskStart,
-          end: correctedTaskEnd,
+          start: new Date(`${task.startDate || task.endDate}T00:00`),
+          end: new Date(`${task.endDate || task.startDate}T23:59`),
           resizable: false, // Tasks cannot be resized
           draggable: false, // Tasks cannot be dragged
           resource: {
@@ -443,75 +383,7 @@ export default function Calendar() {
         };
       });
 
-    // Combine all events and limit to 3 per day
-    const allEvents = [...eventItems, ...taskItems];
-    const eventsByDate: { [key: string]: any[] } = {};
-    const limitedEvents: any[] = [];
-
-    // Group events by date
-    allEvents.forEach(event => {
-      const dateKey = format(event.start, 'yyyy-MM-dd');
-      if (!eventsByDate[dateKey]) {
-        eventsByDate[dateKey] = [];
-      }
-      eventsByDate[dateKey].push(event);
-    });
-
-    // Process each date to limit to 3 events max
-    Object.keys(eventsByDate).forEach(dateKey => {
-      const dayEvents = eventsByDate[dateKey];
-      
-      // Sort by priority (high > medium > low) and start time
-      const sortedEvents = dayEvents.sort((a, b) => {
-        const priorityOrder = { high: 3, medium: 2, low: 1 };
-        const aPriority = a.resource?.priority || a.resource?.data?.priority || 'low';
-        const bPriority = b.resource?.priority || b.resource?.data?.priority || 'low';
-        
-        if (priorityOrder[aPriority as keyof typeof priorityOrder] !== priorityOrder[bPriority as keyof typeof priorityOrder]) {
-          return priorityOrder[bPriority as keyof typeof priorityOrder] - priorityOrder[aPriority as keyof typeof priorityOrder];
-        }
-        
-        return a.start.getTime() - b.start.getTime();
-      });
-
-      // Add the first 3 events
-      limitedEvents.push(...sortedEvents.slice(0, 3));
-
-      // Add "+N 더보기" event if there are more than 3
-      if (sortedEvents.length > 3) {
-        const moreCount = sortedEvents.length - 3;
-        const hiddenEvents = sortedEvents.slice(3);
-        
-        limitedEvents.push({
-          id: `more-${dateKey}`,
-          title: `+${moreCount} 더보기`,
-          start: new Date(`${dateKey}T23:58:00`),
-          end: new Date(`${dateKey}T23:59:00`),
-          resizable: false,
-          draggable: false,
-          resource: {
-            type: 'more',
-            data: { 
-              moreCount, 
-              hiddenEvents,
-              date: dateKey 
-            },
-            color: '#f3f4f6'
-          }
-        });
-      }
-    });
-
-    // Debug logging - timezone fixed
-    const currentViewMonth = format(date, 'yyyy-MM');
-    const eventsInCurrentMonth = allEvents?.filter(e => {
-      const eventMonth = format(e.start, 'yyyy-MM');
-      return eventMonth === currentViewMonth;
-    }) || [];
-    
-
-
-    return limitedEvents;
+    return [...eventItems, ...taskItems];
   }, [events, allTasks, projects]);
 
   // Handle slot selection (drag to create event)
@@ -640,15 +512,6 @@ export default function Calendar() {
         title: "할일 정보", 
         description: `${event.resource.data.title} (${event.resource.data.priority}급 우선순위)` 
       });
-    } else if (event.resource.type === 'more') {
-      // Handle "more" events - show popup with hidden events
-      const { hiddenEvents, moreCount, date } = event.resource.data;
-      const eventTitles = hiddenEvents.map((e: any) => `• ${e.title}`).join('\n');
-      
-      toast({
-        title: `${date} 추가 일정 (${moreCount}개)`,
-        description: eventTitles,
-      });
     }
   }, [toast]);
 
@@ -701,7 +564,7 @@ export default function Calendar() {
     setContextMenu(null);
   }, []);
 
-  // Event style getter - FIXED with visible colors and styles
+  // Event style getter
   const eventStyleGetter = (event: any) => {
     const backgroundColor = event.resource?.color || '#3174ad';
     const isTask = event.resource?.type === 'task';
@@ -710,20 +573,14 @@ export default function Calendar() {
     
     return {
       style: {
-        backgroundColor: isCompleted ? '#6b7280' : backgroundColor,
+        backgroundColor: isCompleted ? '#6b7280' : backgroundColor, // Gray for completed events
         borderRadius: '4px',
-        opacity: 1, // Force full opacity for visibility
-        border: isTask ? '2px dashed #ffffff' : (isRecurring ? '2px solid #ffffff' : '1px solid #ffffff'),
+        opacity: isTask ? 0.7 : (isRecurring ? 0.8 : (isCompleted ? 0.6 : 1)),
+        border: isTask ? '2px dashed rgba(255,255,255,0.8)' : (isRecurring ? '2px solid rgba(255,255,255,0.8)' : 'none'),
         fontSize: '12px',
-        fontWeight: isTask ? 'bold' : '600', // Make text more visible
+        fontWeight: isTask ? 'normal' : '500',
         fontStyle: isRecurring ? 'italic' : 'normal',
-        textDecoration: isCompleted ? 'line-through' : 'none',
-        color: '#ffffff', // Force white text
-        padding: '2px 4px',
-        minHeight: '20px',
-        display: 'flex',
-        alignItems: 'center',
-        zIndex: 10 // Ensure events are above other elements
+        textDecoration: isCompleted ? 'line-through' : 'none' // Strikethrough for completed events
       }
     };
   };
@@ -816,108 +673,63 @@ export default function Calendar() {
                   </Badge>
                   <Badge variant="outline" className="bg-orange-50">
                     <div className="w-3 h-3 bg-orange-500 rounded mr-2 border-2 border-dashed border-white" />
-                    할일 (체크박스로 완료)
+                    할일 (읽기 전용)
                   </Badge>
                 </div>
               </CardTitle>
             </CardHeader>
             <CardContent>
-
-
-              {/* 뷰 선택 버튼 */}
-              <div className="mb-4 flex gap-2">
-                <Button 
-                  variant={view === Views.MONTH ? "default" : "outline"} 
-                  size="sm"
-                  onClick={() => setView(Views.MONTH)}
-                >
-                  월
-                </Button>
-                <Button 
-                  variant={view === Views.WEEK ? "default" : "outline"} 
-                  size="sm"
-                  onClick={() => setView(Views.WEEK)}
-                >
-                  주
-                </Button>
-                <Button 
-                  variant={view === Views.DAY ? "default" : "outline"} 
-                  size="sm"
-                  onClick={() => setView(Views.DAY)}
-                >
-                  일
-                </Button>
-              </div>
-
-              {/* 커스텀 월 달력 또는 React Big Calendar */}
-              {view === Views.MONTH ? (
-                <CustomMonthCalendar
-                  events={calendarEvents || []}
-                  currentDate={date}
-                  onDateChange={setDate}
-                  onEventClick={handleSelectEvent}
-                  onDateClick={(clickedDate) => {
-                    const startOfDay = new Date(clickedDate);
-                    startOfDay.setHours(9, 0, 0, 0);
-                    const endOfDay = new Date(clickedDate);
-                    endOfDay.setHours(10, 0, 0, 0);
-                    handleSelectSlot({ start: startOfDay, end: endOfDay });
+              <div 
+                style={{ height: '600px', position: 'relative' }} 
+                onClick={handleCloseContextMenu}
+              >
+                <DnDCalendar
+                  localizer={localizer}
+                  events={calendarEvents}
+                  startAccessor={(event: any) => event.start}
+                  endAccessor={(event: any) => event.end}
+                  views={[Views.MONTH, Views.WEEK, Views.DAY]}
+                  view={view}
+                  onView={setView}
+                  date={date}
+                  onNavigate={setDate}
+                  onSelectSlot={handleSelectSlot}
+                  onSelectEvent={handleSelectEvent}
+                  onEventResize={handleEventResize}
+                  onEventDrop={handleEventDrop}
+                  selectable
+                  resizable
+                  resizableAccessor={(event: any) => event.resizable}
+                  draggableAccessor={(event: any) => event.draggable}
+                  eventPropGetter={eventStyleGetter}
+                  culture="ko"
+                  components={{
+                    event: ({ event }: { event: any }) => (
+                      <div
+                        onContextMenu={(e) => handleEventRightClick(event, e)}
+                        className="w-full h-full"
+                      >
+                        {event.title}
+                      </div>
+                    )
                   }}
-                  onEventDrop={(event, newStart, newEnd) => {
-                    handleEventDrop({ event, start: newStart, end: newEnd });
-                  }}
-                  onToggleComplete={(event) => {
-                    setContextMenu({ x: 0, y: 0, item: event, type: 'event' });
-                    handleContextMenuAction('complete');
+                  messages={{
+                    next: "다음",
+                    previous: "이전",
+                    today: "오늘",
+                    month: "월",
+                    week: "주",
+                    day: "일",
+                    agenda: "일정",
+                    date: "날짜",
+                    time: "시간",
+                    event: "이벤트",
+                    noEventsInRange: "이 범위에는 일정이 없습니다.",
+                    allDay: "종일"
                   }}
                 />
-              ) : (
-                <div 
-                  style={{ height: '600px', position: 'relative' }} 
-                  onClick={handleCloseContextMenu}
-                >
-                  <DnDCalendar
-                    localizer={localizer}
-                    events={calendarEvents || []}
-                    startAccessor={(event: any) => event.start}
-                    endAccessor={(event: any) => event.end}
-                    views={[Views.WEEK, Views.DAY]}
-                    view={view}
-                    onView={setView}
-                    date={date}
-                    onNavigate={setDate}
-                    onSelectSlot={handleSelectSlot}
-                    onSelectEvent={handleSelectEvent}
-                    onEventResize={handleEventResize}
-                    onEventDrop={handleEventDrop}
-                    selectable
-                    resizable
-                    resizableAccessor={(event: any) => event.resizable}
-                    draggableAccessor={(event: any) => event.draggable}
-                    eventPropGetter={eventStyleGetter}
-                    culture="ko"
-                    popup={true}
-                    popupOffset={30}
-                    messages={{
-                      next: "다음",
-                      previous: "이전",
-                      today: "오늘",
-                      month: "월",
-                      week: "주",
-                      day: "일",
-                      agenda: "일정",
-                      date: "날짜",
-                      time: "시간",
-                      event: "이벤트",
-                      noEventsInRange: "이 범위에는 일정이 없습니다.",
-                      allDay: "종일",
-                      showMore: (total: number) => `+${total} 더보기`
-                    }}
-                  />
-                </div>
-              )}
-              
-              {/* Context Menu */}
+                
+                {/* Context Menu */}
                 {contextMenu && (
                   <div
                     className="fixed bg-white border border-gray-200 rounded-md shadow-lg py-1 z-50"
@@ -937,6 +749,7 @@ export default function Calendar() {
                     </button>
                   </div>
                 )}
+              </div>
             </CardContent>
           </Card>
 
