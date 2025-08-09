@@ -6,6 +6,7 @@ import { DndProvider } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
 import moment from "moment";
 import "moment/locale/ko";
+import CustomMonthCalendar from "@/components/CustomMonthCalendar";
 import "react-big-calendar/lib/css/react-big-calendar.css";
 import "react-big-calendar/lib/addons/dragAndDrop/styles.css";
 import { Button } from "@/components/ui/button";
@@ -852,8 +853,8 @@ export default function Calendar() {
             </CardHeader>
             <CardContent>
               {/* DEBUG: Show events data */}
-              <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded text-xs">
-                <div className="font-semibold mb-2">🔍 이벤트 디버그 정보:</div>
+              <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded text-xs">
+                <div className="font-semibold mb-2">✅ 커스텀 달력으로 전환:</div>
                 <div>총 이벤트: {calendarEvents?.length || 0}개 | 현재 뷰: {format(date, 'yyyy년 MM월')}</div>
                 {calendarEvents?.slice(0, 3).map((event: any, idx: number) => (
                   <div key={idx} className="mt-1 text-gray-700">
@@ -863,86 +864,95 @@ export default function Calendar() {
                 {(calendarEvents?.length || 0) > 3 && (
                   <div className="text-gray-500">... 그리고 {(calendarEvents?.length || 0) - 3}개 더</div>
                 )}
-                <div className="mt-2 text-blue-600 font-semibold">
-                  💡 이벤트는 7월에 있습니다. "7월로 이동" 버튼을 클릭하거나 "주" 또는 "일" 뷰로 변경해보세요.
-                </div>
               </div>
 
-              <div 
-                style={{ height: '600px', position: 'relative' }} 
-                onClick={handleCloseContextMenu}
-              >
-                <DnDCalendar
-                  localizer={localizer}
-                  events={calendarEvents || []}
-                  startAccessor="start"
-                  endAccessor="end"
-                  views={[Views.MONTH, Views.WEEK, Views.DAY]}
-                  view={view}
-                  onView={setView}
-                  date={date}
-                  onNavigate={setDate}
-                  onSelectSlot={handleSelectSlot}
-                  onSelectEvent={handleSelectEvent}
-                  onEventResize={handleEventResize}
-                  onEventDrop={handleEventDrop}
-                  selectable
-                  resizable
-                  resizableAccessor={(event: any) => event.resizable}
-                  draggableAccessor={(event: any) => event.draggable}
-                  eventPropGetter={eventStyleGetter}
-                  culture="ko"
-                  popup={true}
-                  popupOffset={30}
+              {/* 뷰 선택 버튼 */}
+              <div className="mb-4 flex gap-2">
+                <Button 
+                  variant={view === Views.MONTH ? "default" : "outline"} 
+                  size="sm"
+                  onClick={() => setView(Views.MONTH)}
+                >
+                  월
+                </Button>
+                <Button 
+                  variant={view === Views.WEEK ? "default" : "outline"} 
+                  size="sm"
+                  onClick={() => setView(Views.WEEK)}
+                >
+                  주
+                </Button>
+                <Button 
+                  variant={view === Views.DAY ? "default" : "outline"} 
+                  size="sm"
+                  onClick={() => setView(Views.DAY)}
+                >
+                  일
+                </Button>
+              </div>
 
-                  components={{
-                    event: ({ event }: { event: any }) => (
-                      <div
-                        onContextMenu={(e) => handleEventRightClick(event, e)}
-                        style={{
-                          backgroundColor: '#FF0000', // 빨간색으로 변경하여 확실히 보이도록
-                          color: 'white',
-                          padding: '4px 6px',
-                          borderRadius: '4px',
-                          fontSize: '12px',
-                          fontWeight: 'bold',
-                          border: '2px solid white',
-                          boxShadow: '0 2px 5px rgba(0,0,0,0.5)',
-                          minHeight: '20px',
-                          display: 'block',
-                          width: '100%',
-                          position: 'relative',
-                          zIndex: 9999,
-                          overflow: 'visible',
-                          textOverflow: 'ellipsis',
-                          whiteSpace: 'nowrap',
-                          margin: '2px 0',
-                          opacity: 1,
-                          visibility: 'visible'
-                        }}
-                      >
-                        🔥 {event.title}
-                      </div>
-                    )
-                  }}
-                  messages={{
-                    next: "다음",
-                    previous: "이전",
-                    today: "오늘",
-                    month: "월",
-                    week: "주",
-                    day: "일",
-                    agenda: "일정",
-                    date: "날짜",
-                    time: "시간",
-                    event: "이벤트",
-                    noEventsInRange: "이 범위에는 일정이 없습니다.",
-                    allDay: "종일",
-                    showMore: (total: number) => `+${total} 더보기`
+              {/* 커스텀 월 달력 또는 React Big Calendar */}
+              {view === Views.MONTH ? (
+                <CustomMonthCalendar
+                  events={calendarEvents || []}
+                  currentDate={date}
+                  onDateChange={setDate}
+                  onEventClick={handleSelectEvent}
+                  onDateClick={(clickedDate) => {
+                    const startOfDay = new Date(clickedDate);
+                    startOfDay.setHours(9, 0, 0, 0);
+                    const endOfDay = new Date(clickedDate);
+                    endOfDay.setHours(10, 0, 0, 0);
+                    handleSelectSlot({ start: startOfDay, end: endOfDay });
                   }}
                 />
-                
-                {/* Context Menu */}
+              ) : (
+                <div 
+                  style={{ height: '600px', position: 'relative' }} 
+                  onClick={handleCloseContextMenu}
+                >
+                  <DnDCalendar
+                    localizer={localizer}
+                    events={calendarEvents || []}
+                    startAccessor="start"
+                    endAccessor="end"
+                    views={[Views.WEEK, Views.DAY]}
+                    view={view}
+                    onView={setView}
+                    date={date}
+                    onNavigate={setDate}
+                    onSelectSlot={handleSelectSlot}
+                    onSelectEvent={handleSelectEvent}
+                    onEventResize={handleEventResize}
+                    onEventDrop={handleEventDrop}
+                    selectable
+                    resizable
+                    resizableAccessor={(event: any) => event.resizable}
+                    draggableAccessor={(event: any) => event.draggable}
+                    eventPropGetter={eventStyleGetter}
+                    culture="ko"
+                    popup={true}
+                    popupOffset={30}
+                    messages={{
+                      next: "다음",
+                      previous: "이전",
+                      today: "오늘",
+                      month: "월",
+                      week: "주",
+                      day: "일",
+                      agenda: "일정",
+                      date: "날짜",
+                      time: "시간",
+                      event: "이벤트",
+                      noEventsInRange: "이 범위에는 일정이 없습니다.",
+                      allDay: "종일",
+                      showMore: (total: number) => `+${total} 더보기`
+                    }}
+                  />
+                </div>
+              )}
+              
+              {/* Context Menu */}
                 {contextMenu && (
                   <div
                     className="fixed bg-white border border-gray-200 rounded-md shadow-lg py-1 z-50"
@@ -962,7 +972,6 @@ export default function Calendar() {
                     </button>
                   </div>
                 )}
-              </div>
             </CardContent>
           </Card>
 
