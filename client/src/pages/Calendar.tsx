@@ -854,7 +854,7 @@ export default function Calendar() {
               {/* DEBUG: Show events data */}
               <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded text-xs">
                 <div className="font-semibold mb-2">🔍 이벤트 디버그 정보:</div>
-                <div>총 이벤트: {calendarEvents?.length || 0}개</div>
+                <div>총 이벤트: {calendarEvents?.length || 0}개 | 현재 뷰: {format(date, 'yyyy년 MM월')}</div>
                 {calendarEvents?.slice(0, 3).map((event: any, idx: number) => (
                   <div key={idx} className="mt-1 text-gray-700">
                     {idx + 1}. {event.title} ({format(event.start, 'MM/dd HH:mm')} - {format(event.end, 'MM/dd HH:mm')})
@@ -863,6 +863,9 @@ export default function Calendar() {
                 {(calendarEvents?.length || 0) > 3 && (
                   <div className="text-gray-500">... 그리고 {(calendarEvents?.length || 0) - 3}개 더</div>
                 )}
+                <div className="mt-2 text-blue-600 font-semibold">
+                  💡 이벤트는 7월에 있습니다. "7월로 이동" 버튼을 클릭하거나 "주" 또는 "일" 뷰로 변경해보세요.
+                </div>
               </div>
 
               <div 

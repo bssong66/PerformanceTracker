@@ -314,27 +314,32 @@
   color: #111827;
 }
 
-/* Limit events to 3 per day in month view */
+/* FORCE SHOW ALL EVENTS IN MONTH VIEW */
 .rbc-date-cell {
-  min-height: 100px;
-  vertical-align: top;
-  position: relative;
+  min-height: 120px !important;
+  vertical-align: top !important;
+  position: relative !important;
+  padding: 4px !important;
 }
 
 .rbc-row-segment {
-  position: relative;
-  z-index: 1;
+  position: relative !important;
+  z-index: 10 !important;
+  margin-bottom: 2px !important;
+  display: block !important;
 }
 
 .rbc-date-cell .rbc-row-content {
-  max-height: 75px;
-  overflow: hidden;
-  position: relative;
+  overflow: visible !important;
+  position: relative !important;
+  min-height: 80px !important;
 }
 
-/* Hide events after the 3rd one */
-.rbc-date-cell .rbc-row-content .rbc-row-segment:nth-child(n+4) {
-  display: none;
+/* FORCE SHOW ALL EVENTS - REMOVE HIDING */
+.rbc-date-cell .rbc-row-content .rbc-row-segment {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
 }
 
 /* Show more button styling */
@@ -362,14 +367,20 @@
   color: #374151 !important;
 }
 
-/* Month view specific adjustments */
+/* Month view specific adjustments - FORCE EVENT VISIBILITY */
 .rbc-month-view .rbc-date-cell {
-  height: 100px;
-  padding: 2px;
+  height: 120px !important;
+  padding: 4px !important;
+  overflow: visible !important;
 }
 
 .rbc-month-view .rbc-row {
-  min-height: 100px;
+  min-height: 120px !important;
+}
+
+.rbc-month-view .rbc-row-content {
+  overflow: visible !important;
+  height: auto !important;
 }
 
 /* Event spacing - moved to utilities */
