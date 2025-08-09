@@ -454,7 +454,12 @@ export default function Calendar() {
       projects: projects?.length || 0,
       limitedEvents: limitedEvents?.length || 0,
       sampleEvent: events?.[0],
-      sampleTask: allTasks?.[0]
+      sampleTask: allTasks?.[0],
+      allEventsRaw: allEvents?.slice(0, 3),
+      eventsByDateKeys: Object.keys(eventsByDate),
+      currentDate: date,
+      currentMonth: format(date, 'yyyy-MM'),
+      eventDates: allEvents?.map(e => e.start ? format(e.start, 'yyyy-MM-dd') : 'invalid')
     });
 
     return limitedEvents;
@@ -750,6 +755,22 @@ export default function Calendar() {
                   <span>달력</span>
                 </div>
                 <div className="flex items-center space-x-2">
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => setDate(new Date('2025-07-26'))}
+                    className="text-xs"
+                  >
+                    7월로 이동 (일정 확인)
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => setDate(new Date('2025-08-09'))}
+                    className="text-xs"
+                  >
+                    8월로 이동 (할일 확인)
+                  </Button>
                   <Badge variant="outline" className="bg-blue-50">
                     <div className="w-3 h-3 bg-blue-500 rounded mr-2" />
                     일정 (드래그 가능)
