@@ -900,23 +900,28 @@ export default function Calendar() {
                       <div
                         onContextMenu={(e) => handleEventRightClick(event, e)}
                         style={{
-                          backgroundColor: event.resource?.color || '#3B82F6',
+                          backgroundColor: '#FF0000', // 빨간색으로 변경하여 확실히 보이도록
                           color: 'white',
-                          padding: '2px 4px',
-                          borderRadius: '3px',
-                          fontSize: '11px',
+                          padding: '4px 6px',
+                          borderRadius: '4px',
+                          fontSize: '12px',
                           fontWeight: 'bold',
-                          border: '1px solid white',
-                          boxShadow: '0 1px 3px rgba(0,0,0,0.3)',
-                          minHeight: '16px',
-                          display: 'flex',
-                          alignItems: 'center',
-                          overflow: 'hidden',
+                          border: '2px solid white',
+                          boxShadow: '0 2px 5px rgba(0,0,0,0.5)',
+                          minHeight: '20px',
+                          display: 'block',
+                          width: '100%',
+                          position: 'relative',
+                          zIndex: 9999,
+                          overflow: 'visible',
                           textOverflow: 'ellipsis',
-                          whiteSpace: 'nowrap'
+                          whiteSpace: 'nowrap',
+                          margin: '2px 0',
+                          opacity: 1,
+                          visibility: 'visible'
                         }}
                       >
-                        {event.title}
+                        🔥 {event.title}
                       </div>
                     )
                   }}
