@@ -87,35 +87,40 @@ export default function Calendar() {
 
   // Fetch events
   const { data: events = [] } = useQuery({
-    queryKey: ['/api/events/1'],
+    queryKey: [`/api/events/${user?.id || '1'}`],
     retry: false,
+    enabled: !!user?.id,
   });
 
   // Fetch all tasks to display on calendar
   const { data: allTasks = [] } = useQuery({
-    queryKey: ['/api/tasks/1'],
+    queryKey: [`/api/tasks/${user?.id || '1'}`],
     retry: false,
+    enabled: !!user?.id,
   });
 
   // Fetch projects for task context
   const { data: projects = [] } = useQuery({
-    queryKey: ['/api/projects/1'],
+    queryKey: [`/api/projects/${user?.id || '1'}`],
     retry: false,
+    enabled: !!user?.id,
   });
 
   // Fetch foundation (core values) for dropdown
   const { data: foundation = null } = useQuery({
-    queryKey: ['/api/foundation/1'],
+    queryKey: [`/api/foundation/${user?.id || '1'}`],
     retry: false,
     refetchInterval: 5000, // 5초마다 자동 새로고침
+    enabled: !!user?.id,
   });
 
   // Fetch annual goals for dropdown
   const { data: annualGoals = [] } = useQuery({
-    queryKey: ['/api/goals/1'],
+    queryKey: [`/api/goals/${user?.id || '1'}`],
     retry: false,
     refetchOnWindowFocus: true,
     refetchInterval: 5000, // 5초마다 자동 새로고침
+    enabled: !!user?.id,
   });
 
   // Create event mutation
@@ -135,7 +140,7 @@ export default function Calendar() {
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/events/1'] });
+      queryClient.invalidateQueries({ queryKey: [`/api/events/${user?.id || '1'}`] });
       setShowEventDialog(false);
       resetEventForm();
       toast({ title: "일정 생성", description: "새 일정이 생성되었습니다." });
@@ -166,7 +171,7 @@ export default function Calendar() {
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/events/1'] });
+      queryClient.invalidateQueries({ queryKey: [`/api/events/${user?.id || '1'}`] });
       setShowEventDialog(false);
       resetEventForm();
       toast({ title: "일정 수정", description: "일정이 수정되었습니다." });
@@ -189,7 +194,7 @@ export default function Calendar() {
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/events/1'] });
+      queryClient.invalidateQueries({ queryKey: [`/api/events/${user?.id || '1'}`] });
       setShowEventDialog(false);
       resetEventForm();
       toast({ title: "일정 삭제", description: "일정이 삭제되었습니다." });
@@ -208,7 +213,7 @@ export default function Calendar() {
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/events/1'] });
+      queryClient.invalidateQueries({ queryKey: [`/api/events/${user?.id || '1'}`] });
       setContextMenu(null);
       toast({ title: "일정 완료 상태가 변경되었습니다" });
     }
@@ -226,7 +231,7 @@ export default function Calendar() {
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/tasks/1'] });
+      queryClient.invalidateQueries({ queryKey: [`/api/tasks/${user?.id || '1'}`] });
       setContextMenu(null);
       toast({ title: "할일 완료 상태가 변경되었습니다" });
     }
@@ -440,6 +445,16 @@ export default function Calendar() {
           }
         });
       }
+    });
+
+    // Debug logging
+    console.log('Calendar Debug:', {
+      events: events?.length || 0,
+      tasks: allTasks?.length || 0,
+      projects: projects?.length || 0,
+      limitedEvents: limitedEvents?.length || 0,
+      sampleEvent: events?.[0],
+      sampleTask: allTasks?.[0]
     });
 
     return limitedEvents;
