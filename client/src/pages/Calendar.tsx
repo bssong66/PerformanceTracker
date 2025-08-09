@@ -185,6 +185,8 @@ const CustomMonthCalendar = ({
       return;
     }
     
+    console.log('Resize started for event:', event.title);
+    
     setResizeState({
       event,
       isResizing: true,
@@ -192,47 +194,55 @@ const CustomMonthCalendar = ({
       originalEndDate: new Date(event.end)
     });
 
-    // Global mouse move and up handlers
-    const handleGlobalMouseMove = (globalE: MouseEvent) => {
-      // Prevent text selection during resize
+    const handleMouseMove = (moveE: MouseEvent) => {
       document.body.style.userSelect = 'none';
       document.body.style.cursor = 'ew-resize';
     };
 
-    const handleGlobalMouseUp = (globalE: MouseEvent) => {
-      // Reset styles
+    const handleMouseUp = (upE: MouseEvent) => {
+      console.log('Mouse up at:', upE.clientX, upE.clientY);
+      
+      // Reset cursor
       document.body.style.userSelect = '';
       document.body.style.cursor = '';
       
-      // Find the element under mouse cursor
-      const elementUnderMouse = document.elementFromPoint(globalE.clientX, globalE.clientY);
-      const calendarCell = elementUnderMouse?.closest('[data-calendar-day]');
+      // Find calendar cell under mouse
+      const elementUnder = document.elementFromPoint(upE.clientX, upE.clientY);
+      console.log('Element under mouse:', elementUnder);
       
-      if (calendarCell) {
-        const dayData = calendarCell.getAttribute('data-calendar-day');
-        if (dayData && onEventResize && resizeState) {
-          const targetDay = new Date(dayData);
-          const newEnd = new Date(targetDay);
-          newEnd.setHours(23, 59, 59, 999);
+      const calendarDay = elementUnder?.closest('[data-calendar-day]');
+      console.log('Calendar day found:', calendarDay);
+      
+      if (calendarDay) {
+        const dayStr = calendarDay.getAttribute('data-calendar-day');
+        console.log('Day string:', dayStr);
+        
+        if (dayStr) {
+          const targetDate = new Date(dayStr);
+          const newEndDate = new Date(targetDate);
+          newEndDate.setHours(23, 59, 59, 999);
           
-          // Ensure end date is not before start date
-          if (newEnd >= resizeState.startDate) {
-            onEventResize({
-              event: resizeState.event,
-              start: resizeState.startDate,
-              end: newEnd
+          console.log('New end date:', newEndDate);
+          console.log('Original start:', new Date(event.start));
+          
+          if (newEndDate >= new Date(event.start)) {
+            console.log('Calling handleEventResize');
+            handleEventResize({
+              event,
+              start: new Date(event.start),
+              end: newEndDate
             });
           }
         }
       }
       
       setResizeState(null);
-      document.removeEventListener('mousemove', handleGlobalMouseMove);
-      document.removeEventListener('mouseup', handleGlobalMouseUp);
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
     };
 
-    document.addEventListener('mousemove', handleGlobalMouseMove);
-    document.addEventListener('mouseup', handleGlobalMouseUp);
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
   };
 
   return (
@@ -340,16 +350,16 @@ const CustomMonthCalendar = ({
                         )}
                         {isDraggable && (
                           <div 
-                            className={`absolute top-1/2 right-0 transform -translate-y-1/2 w-2 h-4 cursor-ew-resize opacity-0 group-hover:opacity-100 flex justify-center items-center bg-gray-800 bg-opacity-20 rounded-sm ${
-                              isBeingResized ? 'opacity-100' : ''
+                            className={`absolute top-1/2 right-0 transform -translate-y-1/2 w-3 h-5 cursor-ew-resize opacity-0 group-hover:opacity-100 flex justify-center items-center bg-black bg-opacity-30 rounded border border-white ${
+                              isBeingResized ? 'opacity-100 bg-yellow-400' : ''
                             }`}
                             title="드래그하여 크기 조정"
                             onMouseDown={(e) => handleResizeStart(event, e)}
                             draggable={false}
                           >
-                            <div className="flex space-x-px">
-                              <div className="w-px h-3 bg-white shadow-sm"></div>
-                              <div className="w-px h-3 bg-white shadow-sm"></div>
+                            <div className="flex space-x-0.5">
+                              <div className="w-0.5 h-4 bg-white rounded-sm"></div>
+                              <div className="w-0.5 h-4 bg-white rounded-sm"></div>
                             </div>
                           </div>
                         )}
