@@ -703,6 +703,9 @@ export default function Calendar() {
                   draggableAccessor={(event: any) => event.draggable}
                   eventPropGetter={eventStyleGetter}
                   culture="ko"
+                  popup
+                  popupOffset={30}
+                  max={3}
                   components={{
                     event: ({ event }: { event: any }) => (
                       <div
@@ -711,7 +714,12 @@ export default function Calendar() {
                       >
                         {event.title}
                       </div>
-                    )
+                    ),
+                    month: {
+                      dateHeader: ({ date, label }: { date: Date; label: string }) => (
+                        <span className="rbc-date-header">{label}</span>
+                      )
+                    }
                   }}
                   messages={{
                     next: "다음",
@@ -725,7 +733,8 @@ export default function Calendar() {
                     time: "시간",
                     event: "이벤트",
                     noEventsInRange: "이 범위에는 일정이 없습니다.",
-                    allDay: "종일"
+                    allDay: "종일",
+                    showMore: (total: number) => `+${total} 더보기`
                   }}
                 />
                 
