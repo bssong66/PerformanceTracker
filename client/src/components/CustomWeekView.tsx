@@ -298,7 +298,7 @@ export const CustomWeekView: React.FC<CustomWeekViewProps> = ({
                 </div>
                 
                 {/* Single-day events section */}
-                <div className="p-1 space-y-1 min-h-[80px] bg-gray-50">
+                <div className="p-1 space-y-1 min-h-[95px] bg-gray-50">
                   {visibleSingleEvents.map((event, index) => {
                     const isCompleted = event.resource?.data?.completed || false;
                     const isTask = event.resource?.type === 'task';
