@@ -356,8 +356,8 @@ export const CustomWeekView: React.FC<CustomWeekViewProps> = ({
           })}
         </div>
 
-        {/* Multi-day events overlay */}
-        <div className="relative">
+        {/* Multi-day events overlay - positioned in header area */}
+        <div className="absolute top-0 left-0 right-0 pointer-events-none">
           {getMultiDayEventsForWeek().map((multiDayEvent, index) => {
             const isCompleted = multiDayEvent.event.resource?.data?.completed || false;
             const isTask = multiDayEvent.event.resource?.type === 'task';
@@ -365,12 +365,12 @@ export const CustomWeekView: React.FC<CustomWeekViewProps> = ({
             return (
               <div
                 key={`multiday-${multiDayEvent.event.id}-${index}`}
-                className="absolute text-xs px-2 py-1 rounded text-white cursor-pointer flex items-center gap-1 z-10"
+                className="absolute text-xs px-2 py-1 rounded text-white cursor-pointer flex items-center gap-1 z-20 pointer-events-auto"
                 style={{
                   backgroundColor: multiDayEvent.event.resource.color,
                   left: `${12.5 + (multiDayEvent.startCol - 1) * 12.5}%`,
                   right: `${12.5 * (8 - multiDayEvent.endCol)}%`,
-                  top: `${index * 24 + 4}px`,
+                  top: `${34 + index * 24}px`, // Position below date header (34px) + row spacing
                   height: '20px'
                 }}
                 onClick={() => onSelectEvent(multiDayEvent.event)}
