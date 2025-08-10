@@ -682,43 +682,71 @@ export default function Calendar() {
                   <CalendarIcon className="h-5 w-5" />
                   <span>달력</span>
                 </div>
-                <div className="flex items-center space-x-4">
-                  <div className="flex items-center space-x-2 text-sm">
-                    <span className="font-medium">일정:</span>
-                    <div className="flex items-center space-x-1">
-                      <div className="w-3 h-3 rounded" style={{ backgroundColor: eventColors.high }} />
-                      <span className="text-xs">높음</span>
-                    </div>
-                    <div className="flex items-center space-x-1">
-                      <div className="w-3 h-3 rounded" style={{ backgroundColor: eventColors.medium }} />
-                      <span className="text-xs">보통</span>
-                    </div>
-                    <div className="flex items-center space-x-1">
-                      <div className="w-3 h-3 rounded" style={{ backgroundColor: eventColors.low }} />
-                      <span className="text-xs">낮음</span>
-                    </div>
+                
+                {/* View Selection Buttons */}
+                <div className="flex items-center space-x-1">
+                  <Button 
+                    variant={view === 'month' ? 'default' : 'outline'} 
+                    size="sm" 
+                    onClick={() => setView(Views.MONTH)}
+                  >
+                    월
+                  </Button>
+                  <Button 
+                    variant={view === 'week' ? 'default' : 'outline'} 
+                    size="sm" 
+                    onClick={() => setView(Views.WEEK)}
+                  >
+                    주
+                  </Button>
+                  <Button 
+                    variant={view === 'day' ? 'default' : 'outline'} 
+                    size="sm" 
+                    onClick={() => setView(Views.DAY)}
+                  >
+                    일
+                  </Button>
+                </div>
+
+              </CardTitle>
+              
+              {/* Legend moved to second row */}
+              <div className="flex items-center justify-center space-x-6 text-sm pb-2 border-b">
+                <div className="flex items-center space-x-2">
+                  <span className="font-medium">일정:</span>
+                  <div className="flex items-center space-x-1">
+                    <div className="w-3 h-3 rounded" style={{ backgroundColor: eventColors.high }} />
+                    <span className="text-xs">높음</span>
                   </div>
-                  <div className="flex items-center space-x-2 text-sm">
-                    <span className="font-medium">할일:</span>
-                    <div className="flex items-center space-x-1">
-                      <div className="w-3 h-3 rounded" style={{ backgroundColor: taskColors.A }} />
-                      <span className="text-xs">A급</span>
-                    </div>
-                    <div className="flex items-center space-x-1">
-                      <div className="w-3 h-3 rounded" style={{ backgroundColor: taskColors.B }} />
-                      <span className="text-xs">B급</span>
-                    </div>
-                    <div className="flex items-center space-x-1">
-                      <div className="w-3 h-3 rounded" style={{ backgroundColor: taskColors.C }} />
-                      <span className="text-xs">C급</span>
-                    </div>
+                  <div className="flex items-center space-x-1">
+                    <div className="w-3 h-3 rounded" style={{ backgroundColor: eventColors.medium }} />
+                    <span className="text-xs">보통</span>
+                  </div>
+                  <div className="flex items-center space-x-1">
+                    <div className="w-3 h-3 rounded" style={{ backgroundColor: eventColors.low }} />
+                    <span className="text-xs">낮음</span>
                   </div>
                 </div>
-              </CardTitle>
+                <div className="flex items-center space-x-2">
+                  <span className="font-medium">할일:</span>
+                  <div className="flex items-center space-x-1">
+                    <div className="w-3 h-3 rounded" style={{ backgroundColor: taskColors.A }} />
+                    <span className="text-xs">A급</span>
+                  </div>
+                  <div className="flex items-center space-x-1">
+                    <div className="w-3 h-3 rounded" style={{ backgroundColor: taskColors.B }} />
+                    <span className="text-xs">B급</span>
+                  </div>
+                  <div className="flex items-center space-x-1">
+                    <div className="w-3 h-3 rounded" style={{ backgroundColor: taskColors.C }} />
+                    <span className="text-xs">C급</span>
+                  </div>
+                </div>
+              </div>
             </CardHeader>
             <CardContent>
               <div 
-                style={{ height: '720px', position: 'relative' }} 
+                style={{ height: '800px', position: 'relative' }} 
                 onClick={handleCloseContextMenu}
               >
                 {view === 'week' ? (
@@ -728,7 +756,6 @@ export default function Calendar() {
                     onSelectEvent={handleSelectEvent}
                     onSelectSlot={handleSelectSlot}
                     onNavigate={setDate}
-                    onViewChange={(newView) => setView(newView as View)}
                   />
                 ) : (
                   <DnDCalendar

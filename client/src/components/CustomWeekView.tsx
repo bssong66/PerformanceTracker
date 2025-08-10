@@ -24,10 +24,9 @@ interface CustomWeekViewProps {
   onSelectEvent: (event: Event) => void;
   onSelectSlot: (slot: { start: Date; end: Date }) => void;
   onNavigate: (date: Date) => void;
-  onViewChange?: (view: string) => void;
 }
 
-export default function CustomWeekView({ date, events, onSelectEvent, onSelectSlot, onNavigate, onViewChange }: CustomWeekViewProps) {
+export default function CustomWeekView({ date, events, onSelectEvent, onSelectSlot, onNavigate }: CustomWeekViewProps) {
   const [showMoreDialog, setShowMoreDialog] = useState<{
     open: boolean;
     day: Date;
@@ -63,9 +62,9 @@ export default function CustomWeekView({ date, events, onSelectEvent, onSelectSl
   };
 
   return (
-    <div className="custom-week-view bg-white border rounded-lg overflow-hidden">
+    <div className="custom-week-view bg-white rounded-lg overflow-hidden" style={{ height: '100%' }}>
       {/* Navigation Toolbar */}
-      <div className="flex items-center justify-between p-4 border-b bg-gray-50">
+      <div className="flex items-center justify-between p-3 border-b bg-gray-50">
         <div className="flex items-center space-x-2">
           <Button variant="outline" size="sm" onClick={() => onNavigate(subWeeks(date, 1))}>
             <ChevronLeft className="h-4 w-4" />
@@ -84,25 +83,7 @@ export default function CustomWeekView({ date, events, onSelectEvent, onSelectSl
           {format(weekStart, 'yyyy년 M월 d일', { locale: ko })} - {format(weekEnd, 'M월 d일', { locale: ko })}
         </h2>
         
-        <div className="flex items-center space-x-1">
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={() => onViewChange?.('month')}
-          >
-            월
-          </Button>
-          <Button variant="default" size="sm">
-            주
-          </Button>
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={() => onViewChange?.('day')}
-          >
-            일
-          </Button>
-        </div>
+        <div className="w-32"></div> {/* Spacer for balance */}
       </div>
 
       {/* Header with days */}
