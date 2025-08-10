@@ -747,8 +747,53 @@ export default function Calendar() {
                   timeslots={1}
                   min={new Date(0, 0, 0, 6, 0, 0)}
                   max={new Date(0, 0, 0, 22, 0, 0)}
-                  eventLimit={3}
+                  dayLayoutAlgorithm="no-overlap"
                   components={{
+                    week: {
+                      header: ({ date, localizer }: { date: Date; localizer: any }) => {
+                        const dayEvents = calendarEvents.filter(event => {
+                          const eventStart = new Date(event.start);
+                          return eventStart.toDateString() === date.toDateString();
+                        });
+                        
+                        const visibleEvents = dayEvents.slice(0, 3);
+                        const hiddenCount = dayEvents.length - 3;
+                        
+                        return (
+                          <div className="rbc-header-content">
+                            <div className="text-sm font-medium mb-1">
+                              {localizer.format(date, 'dd')} {localizer.format(date, 'ddd')}
+                            </div>
+                            <div className="space-y-1">
+                              {visibleEvents.map((event, index) => (
+                                <div
+                                  key={`${event.id}-${index}`}
+                                  className="text-xs px-2 py-1 rounded text-white truncate"
+                                  style={{ backgroundColor: event.resource.color }}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleSelectEvent(event);
+                                  }}
+                                >
+                                  {event.title}
+                                </div>
+                              ))}
+                              {hiddenCount > 0 && (
+                                <div 
+                                  className="text-xs text-blue-600 cursor-pointer font-medium px-2"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    // Show popup with all events for this day
+                                  }}
+                                >
+                                  +{hiddenCount} more
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      }
+                    },
                     event: ({ event }: { event: any }) => {
                       const isCompleted = event.resource?.data?.completed || false;
                       const isTask = event.resource?.type === 'task';
