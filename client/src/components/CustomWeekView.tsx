@@ -582,7 +582,9 @@ export const CustomWeekView: React.FC<CustomWeekViewProps> = ({
           </DialogHeader>
 
           <div className="space-y-2 mt-4">
-            {showAllDayDialog.events.map((event, index) => {
+            {events.filter(event => 
+              showAllDayDialog.events.some(dialogEvent => dialogEvent.id === event.id)
+            ).map((event, index) => {
               const isCompleted = event.resource?.data?.completed || false;
               const isTask = event.resource?.type === 'task';
 
