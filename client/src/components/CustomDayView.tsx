@@ -339,7 +339,9 @@ export const CustomDayView: React.FC<CustomDayViewProps> = ({
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-2 max-h-96 overflow-y-auto">
-            {showAllEventsDialog.events.map((event, index) => {
+            {events.filter(event => 
+              showAllEventsDialog.events.some(dialogEvent => dialogEvent.id === event.id)
+            ).map((event, index) => {
               const isCompleted = event.resource?.data?.completed || false;
               const isTask = event.resource?.type === 'task';
 
