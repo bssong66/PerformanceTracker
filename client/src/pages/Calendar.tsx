@@ -849,8 +849,8 @@ export default function Calendar() {
                     }
                   }}
                   messages={{
-                    next: "다음",
-                    previous: "이전",
+                    next: "다음 >",
+                    previous: "< 이전",
                     today: "오늘",
                     month: "월",
                     week: "주",
