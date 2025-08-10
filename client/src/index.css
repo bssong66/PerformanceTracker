@@ -280,7 +280,7 @@
 }
 
 .rbc-time-header-content {
-  height: 90px !important;
+  height: 180px !important;
   overflow: hidden;
 }
 
@@ -360,39 +360,7 @@
   z-index: 10;
 }
 
-/* 주뷰 맞춤형 헤더 */
-.rbc-time-view .rbc-header {
-  height: 90px !important;
-  overflow: hidden !important;
-  padding: 4px !important;
-  border-bottom: 1px solid #e2e8f0 !important;
-}
 
-.rbc-header-content {
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-}
-
-.rbc-header-content .space-y-1 > * + * {
-  margin-top: 2px;
-}
-
-/* 주간/일간 뷰에서 이벤트 텍스트 잘림 방지 */
-.rbc-time-view .rbc-event {
-  font-size: 10px !important;
-  padding: 1px 4px !important;
-  line-height: 1.1 !important;
-  white-space: nowrap !important;
-  overflow: hidden !important;
-  text-overflow: ellipsis !important;
-  min-height: 15px !important;
-}
-
-.rbc-time-view .rbc-event-content {
-  font-size: 10px !important;
-  line-height: 1.1 !important;
-}
 
 .rbc-selected {
   background-color: #3b82f6 !important;
