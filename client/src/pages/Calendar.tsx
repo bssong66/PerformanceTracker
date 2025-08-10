@@ -37,8 +37,8 @@ const DnDCalendar = withDragAndDrop(BigCalendar);
 // 기존 우선순위 색상 시스템은 아이콘으로 대체됨
 
 // Sophisticated and muted color scheme - only two colors
-const EVENT_COLOR = '#64748B';  // 차분한 그레이 블루 - 일정
-const TASK_COLOR = '#94A3B8';   // 부드러운 그레이 - 할일
+const EVENT_COLOR = '#64748B';  // 차분한 그레이 블루 - 일정 (현재와 동일)
+const TASK_COLOR = 'rgba(59, 130, 246, 0.3)';   // 청색 반투명 - 할일
 
 // Priority indicator mapping
 const getPriorityIndicator = (priority: string, type: 'event' | 'task') => {
@@ -831,7 +831,7 @@ export default function Calendar() {
                         <div
                           onContextMenu={(e) => handleEventRightClick(event, e)}
                           onClick={handleTaskClick}
-                          className={`w-full h-full text-xs flex items-center gap-1 p-1 ${isTask ? 'cursor-pointer hover:opacity-80' : ''}`}
+                          className={`w-full h-full text-xs flex items-center gap-1 p-1 ${isTask ? 'cursor-pointer hover:opacity-80 text-black' : 'text-white'}`}
                         >
                           <input
                             type="checkbox"
