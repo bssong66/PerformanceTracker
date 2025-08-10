@@ -184,16 +184,47 @@ export default function CustomWeekView({ date, events, onSelectEvent, onSelectSl
               </div>
               
               <div className="space-y-1">
-                {visibleEvents.map((event, index) => (
-                  <div
-                    key={`${event.id}-${index}`}
-                    className="text-xs px-2 py-1 rounded text-white cursor-pointer truncate"
-                    style={{ backgroundColor: event.resource.color }}
-                    onClick={() => onSelectEvent(event)}
-                  >
-                    {event.title}
-                  </div>
-                ))}
+                {visibleEvents.map((event, index) => {
+                  const isCompleted = event.resource?.data?.completed || false;
+                  const isTask = event.resource?.type === 'task';
+                  
+                  const handleCheckboxClick = (e: React.MouseEvent) => {
+                    e.stopPropagation();
+                    e.preventDefault();
+                    
+                    if (isTask) {
+                      completeTaskMutation.mutate({
+                        id: event.resource.data.id,
+                        completed: !isCompleted
+                      });
+                    } else {
+                      completeEventMutation.mutate({
+                        id: event.resource.data.id,
+                        completed: !isCompleted
+                      });
+                    }
+                  };
+
+                  return (
+                    <div
+                      key={`${event.id}-${index}`}
+                      className="text-xs px-1 py-1 rounded text-white cursor-pointer flex items-center gap-1"
+                      style={{ backgroundColor: event.resource.color }}
+                      onClick={() => onSelectEvent(event)}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={isCompleted}
+                        onChange={() => {}}
+                        onClick={handleCheckboxClick}
+                        className="w-3 h-3 flex-shrink-0"
+                      />
+                      <span className={`truncate flex-1 ${isCompleted ? 'line-through opacity-60' : ''}`}>
+                        {event.title}
+                      </span>
+                    </div>
+                  );
+                })}
                 
                 {hiddenCount > 0 && (
                   <div 
@@ -234,19 +265,50 @@ export default function CustomWeekView({ date, events, onSelectEvent, onSelectSl
                     onSelectSlot({ start: slotStart, end: slotEnd });
                   }}
                 >
-                  {hourEvents.map((event, index) => (
-                    <div
-                      key={`${event.id}-${index}`}
-                      className="text-xs px-2 py-1 rounded text-white cursor-pointer truncate mb-1"
-                      style={{ backgroundColor: event.resource.color }}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onSelectEvent(event);
-                      }}
-                    >
-                      {event.title}
-                    </div>
-                  ))}
+                  {hourEvents.map((event, index) => {
+                    const isCompleted = event.resource?.data?.completed || false;
+                    const isTask = event.resource?.type === 'task';
+                    
+                    const handleCheckboxClick = (e: React.MouseEvent) => {
+                      e.stopPropagation();
+                      e.preventDefault();
+                      
+                      if (isTask) {
+                        completeTaskMutation.mutate({
+                          id: event.resource.data.id,
+                          completed: !isCompleted
+                        });
+                      } else {
+                        completeEventMutation.mutate({
+                          id: event.resource.data.id,
+                          completed: !isCompleted
+                        });
+                      }
+                    };
+
+                    return (
+                      <div
+                        key={`${event.id}-${index}`}
+                        className="text-xs px-1 py-1 rounded text-white cursor-pointer mb-1 flex items-center gap-1"
+                        style={{ backgroundColor: event.resource.color }}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onSelectEvent(event);
+                        }}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={isCompleted}
+                          onChange={() => {}}
+                          onClick={handleCheckboxClick}
+                          className="w-3 h-3 flex-shrink-0"
+                        />
+                        <span className={`truncate flex-1 ${isCompleted ? 'line-through opacity-60' : ''}`}>
+                          {event.title}
+                        </span>
+                      </div>
+                    );
+                  })}
                 </div>
               );
             })}
