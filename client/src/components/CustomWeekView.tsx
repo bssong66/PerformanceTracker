@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { format, startOfWeek, endOfWeek, eachDayOfInterval, addWeeks, subWeeks, isSameDay } from 'date-fns';
 import { ko } from 'date-fns/locale';
-import { ChevronLeft, ChevronRight, AlertTriangle, Circle, ChevronDown } from 'lucide-react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader } from '@/components/ui/dialog';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -150,47 +150,39 @@ export const CustomWeekView: React.FC<CustomWeekViewProps> = ({
 
   const timeSlots = Array.from({ length: 16 }, (_, i) => i + 6); // 6AM to 10PM
 
-  // Helper function to get single-day all-day events for a specific day
+  // Get all-day events for a specific day (single day events only)
   const getAllDayEventsForDay = (day: Date) => {
     return events.filter(event => {
       const eventStart = new Date(event.start);
       const eventEnd = new Date(event.end);
       
-      // Only include all-day events
-      const isAllDay = event.resource.data.isAllDay || event.allDay;
+      // Must be all-day event
+      const isAllDay = event.resource?.data?.isAllDay || event.allDay;
       if (!isAllDay) return false;
       
-      // Only include single-day events (multi-day events are shown in the overlay)
-      const startDate = new Date(eventStart);
-      startDate.setHours(0, 0, 0, 0);
-      const endDate = new Date(eventEnd);
-      endDate.setHours(0, 0, 0, 0);
+      // Check if it's a single-day event
+      const startDateOnly = new Date(eventStart);
+      startDateOnly.setHours(0, 0, 0, 0);
+      const endDateOnly = new Date(eventEnd);
+      endDateOnly.setHours(0, 0, 0, 0);
       
-      const isSingleDay = startDate.getTime() === endDate.getTime();
+      const isSingleDay = startDateOnly.getTime() === endDateOnly.getTime();
       
       return isSameDay(eventStart, day) && isSingleDay;
     });
   };
 
-  // Helper function to get timed events for a specific day
-  const getTimedEventsForDay = (day: Date) => {
-    return events.filter(event => {
-      const eventDate = new Date(event.start);
-      return isSameDay(eventDate, day) && !event.resource.data.isAllDay && !event.allDay;
-    });
-  };
-
+  // Get timed events for time slots
   const getEventsForTimeSlot = (day: Date, hour: number) => {
     return events.filter(event => {
       const eventStart = new Date(event.start);
       const eventHour = eventStart.getHours();
       
-      // Only show timed events (NOT all-day events) in time slots
-      if (!event.resource?.data?.isAllDay && !event.allDay) {
-        return isSameDay(eventStart, day) && eventHour === hour;
-      }
+      // Only include timed events (exclude all-day events completely)
+      const isAllDay = event.resource?.data?.isAllDay || event.allDay;
+      if (isAllDay) return false;
       
-      return false; // Exclude all-day events from time slots
+      return isSameDay(eventStart, day) && eventHour === hour;
     });
   };
 
@@ -287,15 +279,72 @@ export const CustomWeekView: React.FC<CustomWeekViewProps> = ({
         <div className="w-32"></div> {/* Spacer for balance */}
       </div>
 
-      {/* Header with days and events */}
+      {/* Header with day names and all-day events */}
       <div className="relative">
-        {/* Day headers with all-day events section */}
+        {/* Multi-day events overlay (positioned at top) */}
+        <div className="relative bg-gray-50 border-b" style={{ minHeight: getMultiDayEventsForWeek().length > 0 ? `${getMultiDayEventsForWeek().length * 26 + 8}px` : '4px' }}>
+          {getMultiDayEventsForWeek().map((event, index) => {
+            const isCompleted = event.resource?.data?.completed || false;
+            const isTask = event.resource?.type === 'task';
+            
+            const handleCheckboxClick = (e: React.MouseEvent) => {
+              e.stopPropagation();
+              e.preventDefault();
+              
+              if (isTask) {
+                completeTaskMutation.mutate({
+                  id: event.resource.data.id,
+                  completed: !isCompleted
+                });
+              } else {
+                completeEventMutation.mutate({
+                  id: event.resource.data.id,
+                  completed: !isCompleted
+                });
+              }
+            };
+
+            // Calculate position: 12.5% for time column, then 12.5% per day
+            const leftOffset = `${12.5 + (event.startDayIndex * 12.5)}%`;
+            const width = `${(event.spanDays * 12.5) - 0.5}%`;
+
+            return (
+              <div
+                key={`multi-${event.id}-${index}`}
+                className="absolute text-xs px-2 py-1 rounded text-white cursor-pointer flex items-center gap-1 z-10"
+                style={{
+                  backgroundColor: event.resource.color,
+                  left: leftOffset,
+                  width: width,
+                  top: `${index * 26 + 4}px`,
+                  height: '22px',
+                  minWidth: '60px'
+                }}
+                onClick={() => onSelectEvent(event)}
+              >
+                <input
+                  type="checkbox"
+                  checked={isCompleted}
+                  onChange={() => {}}
+                  onClick={handleCheckboxClick}
+                  className="w-3 h-3 flex-shrink-0"
+                />
+                {getPriorityIndicator(event.resource?.priority || 'medium', event.resource?.type || 'event')}
+                <span className={`truncate flex-1 ${isCompleted ? 'line-through opacity-60' : ''}`}>
+                  {event.title}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Day headers with single-day all-day events */}
         <div className="grid grid-cols-8 border-b">
           <div className="p-2 border-r bg-gray-50 text-sm text-gray-500">시간</div>
           {weekDays.map(day => {
             const allDayEvents = getAllDayEventsForDay(day);
             const visibleAllDayEvents = allDayEvents.slice(0, 3);
-            const hiddenAllDayCount = allDayEvents.length - 3;
+            const hiddenAllDayCount = Math.max(0, allDayEvents.length - 3);
 
             return (
               <div key={day.toISOString()} className="border-r bg-gray-50">
@@ -303,7 +352,7 @@ export const CustomWeekView: React.FC<CustomWeekViewProps> = ({
                   {format(day, 'M월 d일 (E)', { locale: ko })}
                 </div>
                 
-                {/* All-day events section */}
+                {/* Single-day all-day events section */}
                 <div className="p-1 space-y-1 min-h-[80px] bg-gray-50">
                   {visibleAllDayEvents.map((event, index) => {
                     const isCompleted = event.resource?.data?.completed || false;
@@ -328,7 +377,7 @@ export const CustomWeekView: React.FC<CustomWeekViewProps> = ({
 
                     return (
                       <div
-                        key={`${event.id}-${index}`}
+                        key={`allday-${event.id}-${index}`}
                         className="text-xs px-2 py-1 rounded text-white cursor-pointer flex items-center gap-1"
                         style={{ backgroundColor: event.resource.color }}
                         onClick={() => onSelectEvent(event)}
@@ -361,64 +410,7 @@ export const CustomWeekView: React.FC<CustomWeekViewProps> = ({
             );
           })}
         </div>
-      
-      {/* Multi-day events overlay - positioned above all-day events */}
-      <div className="relative bg-gray-50 border-b" style={{ minHeight: '32px' }}>
-        {getMultiDayEventsForWeek().map((event, index) => {
-          const isCompleted = event.resource?.data?.completed || false;
-          const isTask = event.resource?.type === 'task';
-          
-          const handleCheckboxClick = (e: React.MouseEvent) => {
-            e.stopPropagation();
-            e.preventDefault();
-            
-            if (isTask) {
-              completeTaskMutation.mutate({
-                id: event.resource.data.id,
-                completed: !isCompleted
-              });
-            } else {
-              completeEventMutation.mutate({
-                id: event.resource.data.id,
-                completed: !isCompleted
-              });
-            }
-          };
-
-          // Calculate position: 12.5% for time column, then 12.5% per day
-          const leftOffset = `${12.5 + (event.startDayIndex * 12.5)}%`;
-          const width = `${(event.spanDays * 12.5) - 0.5}%`; // Slight margin for visual separation
-
-          return (
-            <div
-              key={`multi-${event.id}-${index}`}
-              className="absolute text-xs px-2 py-1 rounded text-white cursor-pointer flex items-center gap-1 z-10"
-              style={{
-                backgroundColor: event.resource.color,
-                left: leftOffset,
-                width: width,
-                top: `${index * 26 + 4}px`,
-                height: '22px',
-                minWidth: '60px'
-              }}
-              onClick={() => onSelectEvent(event)}
-            >
-              <input
-                type="checkbox"
-                checked={isCompleted}
-                onChange={() => {}}
-                onClick={handleCheckboxClick}
-                className="w-3 h-3 flex-shrink-0"
-              />
-              {getPriorityIndicator(event.resource?.priority || 'medium', event.resource?.type || 'event')}
-              <span className={`truncate flex-1 ${isCompleted ? 'line-through opacity-60' : ''}`}>
-                {event.title}
-              </span>
-            </div>
-          );
-        })}
       </div>
-    </div>
 
       {/* Time grid */}
       <div className="grid grid-cols-8">
