@@ -126,25 +126,47 @@ export default function CustomWeekView({ date, events, onSelectEvent, onSelectSl
       const eventStart = new Date(event.start);
       const eventEnd = new Date(event.end);
       
-      // For multi-day events, show on all days between start and end
-      return day >= eventStart && day <= eventEnd;
+      // Only show all-day events in header
+      if (event.resource?.data?.isAllDay) {
+        return day >= eventStart && day <= eventEnd;
+      }
+      
+      return false; // Don't show timed events in header
     });
   };
 
   const getEventsForTimeSlot = (day: Date, hour: number) => {
     return events.filter(event => {
       const eventStart = new Date(event.start);
-      const eventEnd = new Date(event.end);
       const eventHour = eventStart.getHours();
       
-      // For multi-day events, show on all days between start and end
-      // For timed events, only show at the specific hour on the start day
-      if (event.resource?.data?.isAllDay) {
-        return day >= eventStart && day <= eventEnd;
-      } else {
+      // Only show timed events in time slots, only on the start day
+      if (!event.resource?.data?.isAllDay) {
         return isSameDay(eventStart, day) && eventHour === hour;
       }
+      
+      return false; // Don't show all-day events in time slots
     });
+  };
+
+  // Get unique multi-day events for header display
+  const getMultiDayEventsForWeek = () => {
+    const multiDayEvents = events.filter(event => {
+      const eventStart = new Date(event.start);
+      const eventEnd = new Date(event.end);
+      return event.resource?.data?.isAllDay && !isSameDay(eventStart, eventEnd);
+    });
+
+    // Group events by their unique ID to avoid duplicates
+    const uniqueEvents = new Map();
+    multiDayEvents.forEach(event => {
+      const key = `${event.resource.data.id}-${event.resource.type}`;
+      if (!uniqueEvents.has(key)) {
+        uniqueEvents.set(key, event);
+      }
+    });
+
+    return Array.from(uniqueEvents.values());
   };
 
   const handleShowMore = (day: Date, dayEvents: Event[]) => {
@@ -249,6 +271,133 @@ export default function CustomWeekView({ date, events, onSelectEvent, onSelectSl
             </div>
           );
         })}
+      </div>
+
+      {/* Multi-day events row */}
+      <div className="grid grid-cols-8 border-b">
+        <div className="p-2 border-r bg-gray-100 text-xs text-gray-500">종일일정</div>
+        <div className="col-span-7 p-2 bg-gray-100">
+          <div className="space-y-1">
+            {getMultiDayEventsForWeek().map((event, index) => {
+              const eventStart = new Date(event.start);
+              const eventEnd = new Date(event.end);
+              const startDay = Math.max(0, Math.floor((eventStart.getTime() - weekStart.getTime()) / (1000 * 60 * 60 * 24)));
+              const endDay = Math.min(6, Math.floor((eventEnd.getTime() - weekStart.getTime()) / (1000 * 60 * 60 * 24)));
+              
+              const isCompleted = event.resource?.data?.completed || false;
+              const isTask = event.resource?.type === 'task';
+              
+              const handleCheckboxClick = (e: React.MouseEvent) => {
+                e.stopPropagation();
+                e.preventDefault();
+                
+                if (isTask) {
+                  completeTaskMutation.mutate({
+                    id: event.resource.data.id,
+                    completed: !isCompleted
+                  });
+                } else {
+                  completeEventMutation.mutate({
+                    id: event.resource.data.id,
+                    completed: !isCompleted
+                  });
+                }
+              };
+
+              return (
+                <div
+                  key={`multiday-${event.id}-${index}`}
+                  className="relative grid grid-cols-7 gap-1"
+                >
+                  <div
+                    className="text-xs px-2 py-1 rounded text-white cursor-pointer flex items-center gap-1"
+                    style={{ 
+                      backgroundColor: event.resource.color,
+                      gridColumnStart: startDay + 1,
+                      gridColumnEnd: endDay + 2
+                    }}
+                    onClick={() => onSelectEvent(event)}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={isCompleted}
+                      onChange={() => {}}
+                      onClick={handleCheckboxClick}
+                      className="w-3 h-3 flex-shrink-0"
+                    />
+                    <span className={`truncate flex-1 ${isCompleted ? 'line-through opacity-60' : ''}`}>
+                      {event.title} ({format(eventStart, 'M/d', { locale: ko })} - {format(eventEnd, 'M/d', { locale: ko })})
+                    </span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+
+      {/* Multi-day events row */}
+      <div className="grid grid-cols-8 border-b">
+        <div className="p-2 border-r bg-gray-100 text-xs text-gray-500">종일일정</div>
+        <div className="col-span-7 p-2 bg-gray-100">
+          <div className="space-y-1">
+            {getMultiDayEventsForWeek().map((event, index) => {
+              const eventStart = new Date(event.start);
+              const eventEnd = new Date(event.end);
+              const startDay = Math.max(0, Math.floor((eventStart.getTime() - weekStart.getTime()) / (1000 * 60 * 60 * 24)));
+              const endDay = Math.min(6, Math.floor((eventEnd.getTime() - weekStart.getTime()) / (1000 * 60 * 60 * 24)));
+              const spanDays = endDay - startDay + 1;
+              
+              const isCompleted = event.resource?.data?.completed || false;
+              const isTask = event.resource?.type === 'task';
+              
+              const handleCheckboxClick = (e: React.MouseEvent) => {
+                e.stopPropagation();
+                e.preventDefault();
+                
+                if (isTask) {
+                  completeTaskMutation.mutate({
+                    id: event.resource.data.id,
+                    completed: !isCompleted
+                  });
+                } else {
+                  completeEventMutation.mutate({
+                    id: event.resource.data.id,
+                    completed: !isCompleted
+                  });
+                }
+              };
+
+              return (
+                <div
+                  key={`multiday-${event.id}-${index}`}
+                  className="relative grid grid-cols-7 gap-1"
+                >
+                  <div
+                    className="text-xs px-2 py-1 rounded text-white cursor-pointer flex items-center gap-1"
+                    style={{ 
+                      backgroundColor: event.resource.color,
+                      gridColumnStart: startDay + 1,
+                      gridColumnEnd: endDay + 2
+                    }}
+                    onClick={() => onSelectEvent(event)}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={isCompleted}
+                      onChange={() => {}}
+                      onClick={handleCheckboxClick}
+                      className="w-3 h-3 flex-shrink-0"
+                    />
+                    <span className={`truncate flex-1 ${isCompleted ? 'line-through opacity-60' : ''}`}>
+                      {event.title} ({format(eventStart, 'M/d', { locale: ko })} - {format(eventEnd, 'M/d', { locale: ko })})
+                    </span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
       </div>
 
       {/* Time grid */}
