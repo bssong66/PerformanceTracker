@@ -280,7 +280,7 @@
 }
 
 .rbc-time-header-content {
-  height: 80px !important;
+  height: 100px !important;
   overflow: hidden;
 }
 
@@ -315,7 +315,8 @@
   display: block !important;
   width: 80px !important;
   background: #f8fafc !important;
-  border-right: 2px solid #e2e8f0 !important;
+  border-right: 1px solid #e2e8f0 !important;
+  flex-shrink: 0 !important;
 }
 
 .rbc-time-view .rbc-time-gutter .rbc-timeslot-group {
@@ -332,10 +333,11 @@
   display: block !important;
   visibility: visible !important;
   opacity: 1 !important;
-  font-size: 12px !important;
+  font-size: 11px !important;
   color: #6b7280 !important;
-  padding: 4px 8px !important;
+  padding: 2px 6px !important;
   text-align: right !important;
+  font-weight: 500 !important;
 }
 
 .rbc-time-slot {
@@ -360,14 +362,23 @@
 
 /* 주간뷰 날짜 헤더 이벤트 컨테이너 */
 .rbc-header {
-  height: 200px !important;
+  height: 100px !important;
   overflow: hidden;
-  padding: 0px;
+  padding: 4px;
+}
+
+/* "+N more" 기능을 위한 이벤트 개수 제한 */
+.rbc-header .rbc-event:nth-child(n+4) {
+  display: none !important;
+}
+
+.rbc-day-slot .rbc-events-container .rbc-event:nth-child(n+4) {
+  display: none !important;
 }
 
 /* 일간뷰 전체 날짜 헤더 이벤트 컨테이너 */
 .rbc-day-slot .rbc-events-container {
-  height: 200px !important;
+  height: 100px !important;
   overflow: hidden;
 }
 
