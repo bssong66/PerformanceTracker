@@ -773,7 +773,7 @@ export default function Calendar() {
             </CardHeader>
             <CardContent>
               <div 
-                style={{ height: '800px', position: 'relative' }} 
+                style={{ height: '880px', position: 'relative' }} 
                 onClick={handleCloseContextMenu}
               >
                 {view === 'week' ? (
