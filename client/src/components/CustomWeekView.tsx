@@ -84,6 +84,8 @@ export const CustomWeekView: React.FC<CustomWeekViewProps> = ({
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/tasks'] });
+      // Force refresh of all calendar data
+      queryClient.invalidateQueries({ queryKey: ['/api/events'] });
     }
   });
 
@@ -99,6 +101,8 @@ export const CustomWeekView: React.FC<CustomWeekViewProps> = ({
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/events'] });
+      // Force refresh of all calendar data
+      queryClient.invalidateQueries({ queryKey: ['/api/tasks'] });
     }
   });
 
