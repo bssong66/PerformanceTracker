@@ -218,8 +218,8 @@ export const CustomWeekView: React.FC<CustomWeekViewProps> = ({
           const hiddenCount = dayEvents.length - 3;
 
           return (
-            <div key={day.toISOString()} className="p-2 border-r min-h-[120px] bg-gray-50">
-              <div className="text-sm font-semibold text-center mb-2">
+            <div key={day.toISOString()} className="p-2 border-r min-h-[80px] bg-gray-50">
+              <div className="text-sm font-semibold text-center mb-1">
                 {format(day, 'M월 d일 (E)', { locale: ko })}
               </div>
               
@@ -283,8 +283,8 @@ export const CustomWeekView: React.FC<CustomWeekViewProps> = ({
       {/* Multi-day events row */}
       {getMultiDayEventsForWeek().length > 0 && (
         <div className="grid grid-cols-8 border-b">
-          <div className="p-2 border-r bg-gray-100 text-xs text-gray-500">종일일정</div>
-          <div className="col-span-7 p-2 bg-gray-100">
+          <div className="px-2 py-1 border-r bg-gray-100 text-xs text-gray-500">종일일정</div>
+          <div className="col-span-7 px-2 py-1 bg-gray-100">
             <div className="space-y-1">
               {getMultiDayEventsForWeek().map((event, index) => {
                 const eventStart = new Date(event.start);
