@@ -748,15 +748,6 @@ export default function Calendar() {
                     week: 3,
                     day: 3
                   } as any}
-                  step={60}
-                  timeslots={1}
-                  dayPropGetter={(date: Date) => ({ 
-                    style: { 
-                      minHeight: view === 'week' || view === 'day' ? '60px' : undefined 
-                    } 
-                  })}
-                  min={new Date(new Date().setHours(6, 0, 0, 0))}
-                  scrollToTime={new Date(new Date().setHours(9, 0, 0, 0))}
                   components={{
                     event: ({ event }: { event: any }) => {
                       const isCompleted = event.resource?.data?.completed || false;
