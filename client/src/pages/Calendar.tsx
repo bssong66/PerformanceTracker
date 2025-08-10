@@ -280,17 +280,29 @@ export default function Calendar() {
   // Helper function to generate recurring events
   const generateRecurringEvents = (event: any) => {
     const events = [];
-    const baseStart = new Date(`${event.startDate}${event.startTime ? `T${event.startTime}` : 'T00:00'}`);
-    const baseEnd = new Date(`${event.endDate || event.startDate}${event.endTime ? `T${event.endTime}` : 'T23:59'}`);
+    
+    // For all-day events, use proper all-day date handling
+    let baseStart, baseEnd;
+    if (event.isAllDay) {
+      // All-day events should span from midnight to midnight of the next day
+      baseStart = new Date(`${event.startDate}T00:00:00`);
+      baseEnd = new Date(`${event.endDate || event.startDate}T23:59:59`);
+    } else {
+      // Regular timed events
+      baseStart = new Date(`${event.startDate}${event.startTime ? `T${event.startTime}` : 'T00:00'}`);
+      baseEnd = new Date(`${event.endDate || event.startDate}${event.endTime ? `T${event.endTime}` : 'T23:59'}`);
+    }
+    
     const duration = baseEnd.getTime() - baseStart.getTime();
     
-    // Add the original event
+    // Add the original event with proper all-day flag
     events.push({
       id: event.id,
       title: event.title,
       start: baseStart,
       end: baseEnd,
-      resizable: true,
+      allDay: event.isAllDay || false, // Important: Set allDay property for React Big Calendar
+      resizable: !event.isAllDay, // All-day events shouldn't be resizable
       draggable: true,
       resource: {
         type: 'event' as const,
@@ -353,6 +365,7 @@ export default function Calendar() {
             title: `🔄 ${event.title}`,
             start: nextDate,
             end: nextEnd,
+            allDay: event.isAllDay || false, // Important: Set allDay property for recurring events too
             resizable: false, // Recurring instances can't be resized individually
             draggable: false, // Recurring instances can't be moved individually
             resource: {
@@ -389,6 +402,7 @@ export default function Calendar() {
           title: task.title,
           start: new Date(`${task.startDate || task.endDate}T00:00`),
           end: new Date(`${task.endDate || task.startDate}T23:59`),
+          allDay: true, // Tasks are always treated as all-day events
           resizable: false, // Tasks cannot be resized
           draggable: false, // Tasks cannot be dragged
           resource: {
@@ -757,6 +771,7 @@ export default function Calendar() {
                   events={calendarEvents}
                   startAccessor={(event: any) => event.start}
                   endAccessor={(event: any) => event.end}
+                  allDayAccessor={(event: any) => event.allDay} // Important: Tell React Big Calendar which events are all-day
                   views={[Views.MONTH, Views.WEEK, Views.DAY]}
                   view={view}
                   onView={setView}

@@ -176,48 +176,82 @@
   
   /* React Big Calendar custom styles for all-day events */
   .rbc-allday-cell {
-    min-height: 40px !important;
+    min-height: 60px !important;
+    border-bottom: 1px solid #e5e7eb !important;
   }
   
   .rbc-row-content {
     min-height: 40px !important;
+    padding: 4px !important;
   }
   
   .rbc-row-segment {
     padding: 2px 4px !important;
+    margin: 1px 0 !important;
+    border-radius: 4px !important;
   }
   
   /* Ensure all-day events appear in the header area */
+  .rbc-month-view .rbc-allday-cell {
+    background-color: #f9fafb !important;
+    min-height: 60px !important;
+  }
+  
   .rbc-month-view .rbc-allday-cell .rbc-row-content {
     display: flex;
-    flex-wrap: wrap;
+    flex-direction: column;
     gap: 2px;
+    padding: 4px;
   }
   
   .rbc-event-allday {
     background-color: inherit !important;
     border-radius: 4px !important;
     margin: 1px 0 !important;
-    padding: 2px 4px !important;
+    padding: 2px 6px !important;
     font-size: 11px !important;
-    line-height: 1.2 !important;
+    line-height: 1.3 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
   }
   
   /* Calendar event text styling */
   .rbc-event-content {
     font-size: 11px !important;
-    line-height: 1.2 !important;
+    line-height: 1.3 !important;
     overflow: hidden !important;
     text-overflow: ellipsis !important;
+    white-space: nowrap !important;
   }
   
-  /* Multi-day event styling in week view */
+  /* Week view improvements */
   .rbc-week-view .rbc-header {
-    min-height: 60px !important;
+    min-height: 40px !important;
+    border-bottom: 1px solid #e5e7eb !important;
   }
   
   .rbc-week-view .rbc-allday-cell {
-    min-height: 50px !important;
+    min-height: 80px !important;
+    background-color: #f9fafb !important;
+    border-bottom: 2px solid #e5e7eb !important;
+  }
+  
+  .rbc-week-view .rbc-time-content {
+    border-top: 2px solid #e5e7eb !important;
+  }
+  
+  /* Day view improvements */
+  .rbc-day-view .rbc-allday-cell {
+    min-height: 80px !important;
+    background-color: #f9fafb !important;
+    border-bottom: 2px solid #e5e7eb !important;
+  }
+  
+  /* Make sure all-day events are visually separated from timed events */
+  .rbc-time-view .rbc-allday-cell {
+    background-color: #f9fafb !important;
+    border-bottom: 2px solid #d1d5db !important;
   }
   
   /* Mobile optimization utilities */
