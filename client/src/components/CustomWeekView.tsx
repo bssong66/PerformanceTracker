@@ -171,30 +171,34 @@ export default function CustomWeekView({ date, events, onSelectEvent, onSelectSl
         ))}
       </div>
 
-      {/* More Events Dialog */}
+      {/* More Events Dialog - styled like React Big Calendar popup */}
       <Dialog open={showMoreDialog.open} onOpenChange={(open) => setShowMoreDialog(prev => ({ ...prev, open }))}>
-        <DialogContent className="max-w-md" aria-describedby="more-events-description">
-          <DialogHeader>
-            <DialogTitle>
-              {format(showMoreDialog.day, 'M월 d일 (E)', { locale: ko })} 일정
-            </DialogTitle>
+        <DialogContent className="max-w-sm p-0 bg-white border border-gray-300 shadow-lg rounded-md" aria-describedby="more-events-description">
+          <div className="bg-gray-100 px-3 py-2 border-b border-gray-200">
+            <div className="font-medium text-sm text-gray-800">
+              {format(showMoreDialog.day, 'M월 d일 (E)', { locale: ko })}
+            </div>
             <div id="more-events-description" className="sr-only">
               선택한 날짜의 모든 일정을 확인할 수 있습니다.
             </div>
-          </DialogHeader>
-          <div className="space-y-2 max-h-96 overflow-y-auto">
+          </div>
+          <div className="max-h-64 overflow-y-auto">
             {showMoreDialog.events.map((event, index) => (
               <div
                 key={`${event.id}-${index}`}
-                className="p-2 rounded cursor-pointer hover:bg-gray-50 border"
-                style={{ borderLeftColor: event.resource.color, borderLeftWidth: '4px' }}
+                className="px-3 py-2 border-b border-gray-100 last:border-b-0 cursor-pointer hover:bg-gray-50 text-xs"
                 onClick={() => {
                   onSelectEvent(event);
                   setShowMoreDialog(prev => ({ ...prev, open: false }));
                 }}
               >
-                <div className="font-medium text-sm">{event.title}</div>
-                <div className="text-xs text-gray-500">
+                <div 
+                  className="px-2 py-1 rounded text-white font-medium mb-1"
+                  style={{ backgroundColor: event.resource.color }}
+                >
+                  {event.title}
+                </div>
+                <div className="text-gray-600 px-2">
                   {format(event.start, 'HH:mm')} - {format(event.end, 'HH:mm')}
                 </div>
               </div>
