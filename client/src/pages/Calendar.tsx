@@ -686,11 +686,11 @@ export default function Calendar() {
                 {/* View Selection Buttons */}
                 <div className="flex items-center space-x-1">
                   <Button 
-                    variant={view === 'month' ? 'default' : 'outline'} 
+                    variant={view === 'day' ? 'default' : 'outline'} 
                     size="sm" 
-                    onClick={() => setView(Views.MONTH)}
+                    onClick={() => setView(Views.DAY)}
                   >
-                    월
+                    일
                   </Button>
                   <Button 
                     variant={view === 'week' ? 'default' : 'outline'} 
@@ -700,11 +700,11 @@ export default function Calendar() {
                     주
                   </Button>
                   <Button 
-                    variant={view === 'day' ? 'default' : 'outline'} 
+                    variant={view === 'month' ? 'default' : 'outline'} 
                     size="sm" 
-                    onClick={() => setView(Views.DAY)}
+                    onClick={() => setView(Views.MONTH)}
                   >
-                    일
+                    월
                   </Button>
                 </div>
 
@@ -766,6 +766,7 @@ export default function Calendar() {
                   views={[Views.MONTH, Views.WEEK, Views.DAY]}
                   view={view}
                   onView={setView}
+                  toolbar={false}
                   date={date}
                   onNavigate={setDate}
                   onSelectSlot={handleSelectSlot}
