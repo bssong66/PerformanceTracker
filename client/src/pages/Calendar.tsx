@@ -712,11 +712,37 @@ export default function Calendar() {
           {/* Calendar */}
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center">
+              <CardTitle className="flex items-center justify-between">
                 <div className="flex items-center space-x-2">
                   <CalendarIcon className="h-5 w-5" />
                   <span>달력</span>
                 </div>
+                
+                {/* View Selection Buttons */}
+                <div className="flex items-center space-x-1">
+                  <Button 
+                    variant={view === 'day' ? 'default' : 'outline'} 
+                    size="sm" 
+                    onClick={() => setView(Views.DAY)}
+                  >
+                    일
+                  </Button>
+                  <Button 
+                    variant={view === 'week' ? 'default' : 'outline'} 
+                    size="sm" 
+                    onClick={() => setView(Views.WEEK)}
+                  >
+                    주
+                  </Button>
+                  <Button 
+                    variant={view === 'month' ? 'default' : 'outline'} 
+                    size="sm" 
+                    onClick={() => setView(Views.MONTH)}
+                  >
+                    월
+                  </Button>
+                </div>
+
               </CardTitle>
               
               {/* Legend moved to second row */}
