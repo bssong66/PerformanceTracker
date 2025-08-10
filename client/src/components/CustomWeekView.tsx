@@ -59,16 +59,16 @@ export const CustomWeekView: React.FC<CustomWeekViewProps> = ({
   onSelectSlot,
 }) => {
   console.log('CustomWeekView received events:', events.length);
-  
+
   // Debug: Check all-day events
   const allDayEventCount = events.filter(e => e.resource?.data?.isAllDay || e.allDay).length;
   console.log('All-day events count:', allDayEventCount);
   events.slice(0, 5).forEach(event => {
     console.log(`Event: ${event.title}, allDay: ${event.allDay}, data.isAllDay: ${event.resource?.data?.isAllDay}`);
   });
-  
+
   const queryClient = useQueryClient();
-  
+
   // Mutations for completion
   const completeTaskMutation = useMutation({
     mutationFn: async ({ id, completed }: { id: number; completed: boolean }) => {
@@ -99,7 +99,7 @@ export const CustomWeekView: React.FC<CustomWeekViewProps> = ({
       queryClient.invalidateQueries({ queryKey: ['/api/events'] });
     }
   });
-  
+
   const [showMoreDialog, setShowMoreDialog] = useState<{
     open: boolean;
     day: Date;
@@ -132,27 +132,27 @@ export const CustomWeekView: React.FC<CustomWeekViewProps> = ({
     const filtered = events.filter(event => {
       const eventStart = new Date(event.start);
       const eventEnd = new Date(event.end);
-      
+
       // Must be all-day event
       const isAllDay = event.resource?.data?.isAllDay || event.allDay;
       if (!isAllDay) return false;
-      
+
       // Check if it's a single-day event that occurs on this day
       const eventStartStr = format(eventStart, 'yyyy-MM-dd');
       const eventEndStr = format(eventEnd, 'yyyy-MM-dd');
-      
+
       // Debug log for first few events
       if (events.indexOf(event) < 5) {
         console.log(`Event "${event.title}": start=${eventStartStr}, end=${eventEndStr}, isAllDay=${isAllDay}, dayStr=${dayStr}`);
       }
-      
+
       // Single day event: start and end on the same day
       const isSingleDay = eventStartStr === eventEndStr;
       const isOnThisDay = eventStartStr === dayStr;
-      
+
       return isSingleDay && isOnThisDay;
     });
-    
+
     console.log(`getSingleDayEventsForDay for ${dayStr}:`, filtered.length, filtered.map(e => e.title));
     return filtered;
   };
@@ -172,18 +172,18 @@ export const CustomWeekView: React.FC<CustomWeekViewProps> = ({
     events.forEach(event => {
       const eventStart = new Date(event.start);
       const eventEnd = new Date(event.end);
-      
+
       // Must be all-day event
       const isAllDay = event.resource?.data?.isAllDay || event.allDay;
       if (!isAllDay) return;
-      
+
       const eventStartStr = format(eventStart, 'yyyy-MM-dd');
       const eventEndStr = format(eventEnd, 'yyyy-MM-dd');
-      
+
       // Check if it's a multi-day event
       const isMultiDay = eventStartStr !== eventEndStr;
       if (!isMultiDay) return;
-      
+
       // Check if event overlaps with this week
       const overlapsWeek = eventStartStr <= weekEndStr && eventEndStr >= weekStartStr;
       if (!overlapsWeek) return;
@@ -191,7 +191,7 @@ export const CustomWeekView: React.FC<CustomWeekViewProps> = ({
       // Calculate start and end columns (1-based, 1 = first day column)
       const daysDiff = Math.floor((eventStart.getTime() - weekStart.getTime()) / (24 * 60 * 60 * 1000));
       const eventStartCol = Math.max(1, daysDiff + 1);
-      
+
       const endDaysDiff = Math.floor((eventEnd.getTime() - weekStart.getTime()) / (24 * 60 * 60 * 1000));
       const eventEndCol = Math.min(7, endDaysDiff + 1);
 
@@ -212,11 +212,11 @@ export const CustomWeekView: React.FC<CustomWeekViewProps> = ({
     return events.filter(event => {
       const eventStart = new Date(event.start);
       const eventHour = eventStart.getHours();
-      
+
       // Only include timed events (exclude all-day events completely)
       const isAllDay = event.resource?.data?.isAllDay || event.allDay;
       if (isAllDay) return false;
-      
+
       return isSameDay(eventStart, day) && eventHour === hour;
     });
   };
@@ -227,15 +227,15 @@ export const CustomWeekView: React.FC<CustomWeekViewProps> = ({
     return events.filter(event => {
       const eventStart = new Date(event.start);
       const eventEnd = new Date(event.end);
-      
+
       // Must be all-day event
       const isAllDay = event.resource?.data?.isAllDay || event.allDay;
       if (!isAllDay) return false;
-      
+
       // Check if event overlaps with this day
       const eventStartStr = format(eventStart, 'yyyy-MM-dd');
       const eventEndStr = format(eventEnd, 'yyyy-MM-dd');
-      
+
       return eventStartStr <= dayStr && eventEndStr >= dayStr;
     });
   };
@@ -273,11 +273,11 @@ export const CustomWeekView: React.FC<CustomWeekViewProps> = ({
             <ChevronRight className="h-4 w-4" />
           </Button>
         </div>
-        
+
         <h2 className="text-lg font-semibold">
           {format(weekStart, 'yyyy년 M월 d일', { locale: ko })} - {format(weekEnd, 'M월 d일', { locale: ko })}
         </h2>
-        
+
         <div className="w-32"></div> {/* Spacer for balance */}
       </div>
 
@@ -296,17 +296,17 @@ export const CustomWeekView: React.FC<CustomWeekViewProps> = ({
                 <div className="text-sm font-semibold text-center py-2 border-b border-gray-200">
                   {format(day, 'M월 d일 (E)', { locale: ko })}
                 </div>
-                
+
                 {/* Single-day events section */}
                 <div className="p-1 space-y-1 min-h-[95px] bg-gray-50">
                   {visibleSingleEvents.map((event, index) => {
                     const isCompleted = event.resource?.data?.completed || false;
                     const isTask = event.resource?.type === 'task';
-                    
+
                     const handleCheckboxClick = (e: React.MouseEvent) => {
                       e.stopPropagation();
                       e.preventDefault();
-                      
+
                       if (isTask) {
                         completeTaskMutation.mutate({
                           id: event.resource.data.id,
@@ -341,9 +341,9 @@ export const CustomWeekView: React.FC<CustomWeekViewProps> = ({
                       </div>
                     );
                   })}
-                  
+
                   {hiddenSingleCount > 0 && (
-                    <div 
+                    <div
                       className="text-xs text-blue-600 cursor-pointer font-medium px-1 hover:underline"
                       onClick={() => handleShowAllDayMore(day, getAllEventsForDay(day))}
                     >
@@ -361,7 +361,7 @@ export const CustomWeekView: React.FC<CustomWeekViewProps> = ({
           {getMultiDayEventsForWeek().slice(0, 3).map((multiDayEvent, index) => {
             const isCompleted = multiDayEvent.event.resource?.data?.completed || false;
             const isTask = multiDayEvent.event.resource?.type === 'task';
-            
+
             return (
               <div
                 key={`multiday-${multiDayEvent.event.id}-${index}`}
@@ -382,7 +382,7 @@ export const CustomWeekView: React.FC<CustomWeekViewProps> = ({
                   onClick={(e) => {
                     e.stopPropagation();
                     e.preventDefault();
-                    
+
                     if (isTask) {
                       completeTaskMutation.mutate({
                         id: multiDayEvent.event.resource.data.id,
@@ -404,7 +404,7 @@ export const CustomWeekView: React.FC<CustomWeekViewProps> = ({
               </div>
             );
           })}
-          
+
           {/* Show +N more button if there are more than 3 multi-day events */}
           {getMultiDayEventsForWeek().length > 3 && (
             <div
@@ -438,11 +438,11 @@ export const CustomWeekView: React.FC<CustomWeekViewProps> = ({
             <div className="p-2 border-r border-b bg-gray-50 text-sm text-gray-600 text-right">
               {hour === 12 ? '12 PM' : hour > 12 ? `${hour - 12} PM` : `${hour} AM`}
             </div>
-            
+
             {/* Day columns */}
             {weekDays.map(day => {
               const hourEvents = getEventsForTimeSlot(day, hour);
-              
+
               return (
                 <div
                   key={`${day.toISOString()}-${hour}`}
@@ -458,11 +458,11 @@ export const CustomWeekView: React.FC<CustomWeekViewProps> = ({
                   {hourEvents.map((event, index) => {
                     const isCompleted = event.resource?.data?.completed || false;
                     const isTask = event.resource?.type === 'task';
-                    
+
                     const handleCheckboxClick = (e: React.MouseEvent) => {
                       e.stopPropagation();
                       e.preventDefault();
-                      
+
                       if (isTask) {
                         completeTaskMutation.mutate({
                           id: event.resource.data.id,
@@ -522,11 +522,11 @@ export const CustomWeekView: React.FC<CustomWeekViewProps> = ({
             {showMoreDialog.events.map((event, index) => {
               const isCompleted = event.resource?.data?.completed || false;
               const isTask = event.resource?.type === 'task';
-              
+
               const handleCheckboxClick = (e: React.MouseEvent) => {
                 e.stopPropagation();
                 e.preventDefault();
-                
+
                 if (isTask) {
                   completeTaskMutation.mutate({
                     id: event.resource.data.id,
@@ -582,16 +582,16 @@ export const CustomWeekView: React.FC<CustomWeekViewProps> = ({
               {format(showAllDayDialog.day, 'M월 d일 종일 일정', { locale: ko })}
             </h2>
           </DialogHeader>
-          
+
           <div className="space-y-2 mt-4">
             {showAllDayDialog.events.map((event, index) => {
               const isCompleted = event.resource?.data?.completed || false;
               const isTask = event.resource?.type === 'task';
-              
+
               const handleCheckboxClick = (e: React.MouseEvent) => {
                 e.stopPropagation();
                 e.preventDefault();
-                
+
                 if (isTask) {
                   completeTaskMutation.mutate({
                     id: event.resource.data.id,
@@ -623,7 +623,7 @@ export const CustomWeekView: React.FC<CustomWeekViewProps> = ({
                     onClick={handleCheckboxClick}
                     className="w-4 h-4 flex-shrink-0"
                   />
-                  
+
                   <div className="flex items-center gap-2 flex-1">
                     <div
                       className="w-3 h-3 rounded-full flex-shrink-0"
@@ -634,7 +634,7 @@ export const CustomWeekView: React.FC<CustomWeekViewProps> = ({
                       {event.title}
                     </span>
                   </div>
-                  
+
                   <div className="text-sm text-gray-500">
                     {isTask ? '할일' : '일정'}
                   </div>
