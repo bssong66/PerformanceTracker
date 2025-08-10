@@ -100,7 +100,7 @@ export const CustomDayView: React.FC<CustomDayViewProps> = ({
     events: []
   });
 
-  const timeSlots = Array.from({ length: 16 }, (_, i) => i + 6); // 6AM to 10PM
+  const timeSlots = Array.from({ length: 24 }, (_, i) => i); // 0AM to 11PM (24 hours)
 
   // Get all-day events for the current day
   const getAllDayEvents = () => {
@@ -245,8 +245,8 @@ export const CustomDayView: React.FC<CustomDayViewProps> = ({
         </div>
       </div>
 
-      {/* Time slots section */}
-      <div className="flex-1 overflow-y-auto">
+      {/* Time slots section with scroll */}
+      <div className="flex-1 overflow-y-auto max-h-[calc(100vh-200px)]">
         <div className="grid grid-cols-8">
           {/* Time column */}
           <div className="col-span-1 border-r">
