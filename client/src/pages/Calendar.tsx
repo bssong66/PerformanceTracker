@@ -22,7 +22,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { CalendarIcon, Clock, Repeat, Save, X, Check, MousePointer2, AlertTriangle, Circle, ChevronDown } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient } from "@/lib/queryClient";
-import { format } from "date-fns";
+import { format, startOfWeek, endOfWeek } from "date-fns";
 import { ko } from "date-fns/locale";
 import { UnifiedAttachmentManager } from "@/components/UnifiedAttachmentManager";
 import { useAuth } from "@/hooks/useAuth";
@@ -385,38 +385,58 @@ export default function Calendar() {
     return events;
   };
 
-  // Convert events and tasks to calendar format
+  // Convert events and tasks to calendar format with week filtering
   const calendarEvents = useMemo(() => {
     const safeEvents = Array.isArray(events) ? events : [];
-    const eventItems = safeEvents.flatMap((event: any) => generateRecurringEvents(event));
-
     const safeTasks = Array.isArray(allTasks) ? allTasks : [];
     const safeProjects = Array.isArray(projects) ? projects : [];
     
-    const taskItems = safeTasks
-      .filter((task: any) => task.startDate || task.endDate)
-      .map((task: any) => {
-        const project = safeProjects.find((p: any) => p.id === task.projectId);
-        return {
-          id: `task-${task.id}`,
-          title: task.title,
-          start: new Date(`${task.startDate || task.endDate}T00:00`),
-          end: new Date(`${task.endDate || task.startDate}T23:59`),
-          allDay: true, // Tasks are always treated as all-day events
-          resizable: false, // Tasks cannot be resized
-          draggable: false, // Tasks cannot be dragged
-          resource: {
-            type: 'task' as const,
-            data: task,
-            project: project,
-            priority: task.priority,
-            color: TASK_COLOR
-          }
-        };
-      });
+    // Get current week boundaries for filtering
+    const weekStart = startOfWeek(date, { locale: ko });
+    const weekEnd = endOfWeek(date, { locale: ko });
+    
+    // Filter and generate event items
+    const filteredEvents = view === 'week' 
+      ? safeEvents.filter((event: any) => {
+          const eventStart = new Date(event.startDate);
+          const eventEnd = new Date(event.endDate);
+          return eventStart <= weekEnd && eventEnd >= weekStart;
+        })
+      : safeEvents;
+    
+    const eventItems = filteredEvents.flatMap((event: any) => generateRecurringEvents(event));
+    
+    // Filter and generate task items
+    const filteredTasks = view === 'week'
+      ? safeTasks.filter((task: any) => {
+          if (!task.startDate && !task.endDate) return false;
+          const taskDate = new Date(task.startDate || task.endDate);
+          return taskDate >= weekStart && taskDate <= weekEnd;
+        })
+      : safeTasks.filter((task: any) => task.startDate || task.endDate);
+    
+    const taskItems = filteredTasks.map((task: any) => {
+      const project = safeProjects.find((p: any) => p.id === task.projectId);
+      return {
+        id: `task-${task.id}`,
+        title: task.title,
+        start: new Date(`${task.startDate || task.endDate}T00:00`),
+        end: new Date(`${task.endDate || task.startDate}T23:59`),
+        allDay: true,
+        resizable: false,
+        draggable: false,
+        resource: {
+          type: 'task' as const,
+          data: task,
+          project: project,
+          priority: task.priority,
+          color: TASK_COLOR
+        }
+      };
+    });
 
     return [...eventItems, ...taskItems];
-  }, [events, allTasks, projects]);
+  }, [events, allTasks, projects, date, view]);
 
   // Handle slot selection (drag to create event)
   const handleSelectSlot = useCallback(({ start, end }: { start: Date; end: Date }) => {

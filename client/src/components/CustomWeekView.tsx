@@ -186,13 +186,13 @@ export const CustomWeekView: React.FC<CustomWeekViewProps> = ({
     });
   };
 
-  // Get unique multi-day events for header display
-  const getMultiDayEventsForWeek = () => {
-    const multiDayEvents = events.filter(event => {
+  // Get multi-day events that span across a specific day
+  const getMultiDayEventsForDay = (day: Date) => {
+    return events.filter(event => {
       const eventStart = new Date(event.start);
       const eventEnd = new Date(event.end);
       
-      // Check if it's an all-day event that spans multiple days
+      // Must be all-day event
       const isAllDay = event.resource?.data?.isAllDay || event.allDay;
       if (!isAllDay) return false;
       
@@ -202,39 +202,16 @@ export const CustomWeekView: React.FC<CustomWeekViewProps> = ({
       const endDate = new Date(eventEnd);
       endDate.setHours(0, 0, 0, 0);
       
-      return startDate.getTime() !== endDate.getTime();
-    });
-
-    // Group events by their unique ID to avoid duplicates
-    const uniqueEvents = new Map();
-    multiDayEvents.forEach(event => {
-      const key = `${event.resource.data.id}-${event.resource.type}`;
-      if (!uniqueEvents.has(key)) {
-        uniqueEvents.set(key, event);
-      }
-    });
-
-    return Array.from(uniqueEvents.values()).map(event => {
-      const eventStart = new Date(event.start);
-      const eventEnd = new Date(event.end);
+      const isMultiDay = startDate.getTime() !== endDate.getTime();
+      if (!isMultiDay) return false;
       
-      // Calculate which days this event spans within the current week
-      const weekStartDate = startOfWeek(date, { locale: ko });
-      const weekEndDate = endOfWeek(date, { locale: ko });
+      // Check if the event spans across the given day
+      const dayStart = new Date(day);
+      dayStart.setHours(0, 0, 0, 0);
+      const dayEnd = new Date(day);
+      dayEnd.setHours(23, 59, 59, 999);
       
-      // Ensure we're working with the visible week range
-      const eventStartInWeek = eventStart < weekStartDate ? weekStartDate : eventStart;
-      const eventEndInWeek = eventEnd > weekEndDate ? weekEndDate : eventEnd;
-      
-      const startDayIndex = Math.max(0, Math.floor((eventStartInWeek.getTime() - weekStartDate.getTime()) / (1000 * 60 * 60 * 24)));
-      const endDayIndex = Math.min(6, Math.floor((eventEndInWeek.getTime() - weekStartDate.getTime()) / (1000 * 60 * 60 * 24)));
-      
-      return {
-        ...event,
-        startDayIndex,
-        endDayIndex,
-        spanDays: endDayIndex - startDayIndex + 1
-      };
+      return (eventStart <= dayEnd && eventEnd >= dayStart);
     });
   };
 
@@ -281,70 +258,14 @@ export const CustomWeekView: React.FC<CustomWeekViewProps> = ({
 
       {/* Header with day names and all-day events */}
       <div className="relative">
-        {/* Multi-day events overlay (positioned at top) */}
-        <div className="relative bg-gray-50 border-b" style={{ minHeight: getMultiDayEventsForWeek().length > 0 ? `${getMultiDayEventsForWeek().length * 26 + 8}px` : '4px' }}>
-          {getMultiDayEventsForWeek().map((event, index) => {
-            const isCompleted = event.resource?.data?.completed || false;
-            const isTask = event.resource?.type === 'task';
-            
-            const handleCheckboxClick = (e: React.MouseEvent) => {
-              e.stopPropagation();
-              e.preventDefault();
-              
-              if (isTask) {
-                completeTaskMutation.mutate({
-                  id: event.resource.data.id,
-                  completed: !isCompleted
-                });
-              } else {
-                completeEventMutation.mutate({
-                  id: event.resource.data.id,
-                  completed: !isCompleted
-                });
-              }
-            };
-
-            // Calculate position: 12.5% for time column, then 12.5% per day
-            const leftOffset = `${12.5 + (event.startDayIndex * 12.5)}%`;
-            const width = `${(event.spanDays * 12.5) - 0.5}%`;
-
-            return (
-              <div
-                key={`multi-${event.id}-${index}`}
-                className="absolute text-xs px-2 py-1 rounded text-white cursor-pointer flex items-center gap-1 z-10"
-                style={{
-                  backgroundColor: event.resource.color,
-                  left: leftOffset,
-                  width: width,
-                  top: `${index * 26 + 4}px`,
-                  height: '22px',
-                  minWidth: '60px'
-                }}
-                onClick={() => onSelectEvent(event)}
-              >
-                <input
-                  type="checkbox"
-                  checked={isCompleted}
-                  onChange={() => {}}
-                  onClick={handleCheckboxClick}
-                  className="w-3 h-3 flex-shrink-0"
-                />
-                {getPriorityIndicator(event.resource?.priority || 'medium', event.resource?.type || 'event')}
-                <span className={`truncate flex-1 ${isCompleted ? 'line-through opacity-60' : ''}`}>
-                  {event.title}
-                </span>
-              </div>
-            );
-          })}
-        </div>
-
-        {/* Day headers with single-day all-day events */}
+        {/* Day headers with all-day events section */}
         <div className="grid grid-cols-8 border-b">
           <div className="p-2 border-r bg-gray-50 text-sm text-gray-500">시간</div>
           {weekDays.map(day => {
             const allDayEvents = getAllDayEventsForDay(day);
-            const visibleAllDayEvents = allDayEvents.slice(0, 3);
-            const hiddenAllDayCount = Math.max(0, allDayEvents.length - 3);
+            const allEventsForDay = allDayEvents;
+            const visibleEvents = allEventsForDay.slice(0, 3);
+            const hiddenCount = Math.max(0, allEventsForDay.length - 3);
 
             return (
               <div key={day.toISOString()} className="border-r bg-gray-50">
@@ -352,9 +273,9 @@ export const CustomWeekView: React.FC<CustomWeekViewProps> = ({
                   {format(day, 'M월 d일 (E)', { locale: ko })}
                 </div>
                 
-                {/* Single-day all-day events section */}
+                {/* All-day events section (both single and multi-day) */}
                 <div className="p-1 space-y-1 min-h-[80px] bg-gray-50">
-                  {visibleAllDayEvents.map((event, index) => {
+                  {visibleEvents.map((event, index) => {
                     const isCompleted = event.resource?.data?.completed || false;
                     const isTask = event.resource?.type === 'task';
                     
@@ -397,12 +318,12 @@ export const CustomWeekView: React.FC<CustomWeekViewProps> = ({
                     );
                   })}
                   
-                  {hiddenAllDayCount > 0 && (
+                  {hiddenCount > 0 && (
                     <div 
                       className="text-xs text-blue-600 cursor-pointer font-medium px-1 hover:underline"
-                      onClick={() => handleShowAllDayMore(day, allDayEvents)}
+                      onClick={() => handleShowAllDayMore(day, allEventsForDay)}
                     >
-                      +{hiddenAllDayCount} more
+                      +{hiddenCount} more
                     </div>
                   )}
                 </div>
