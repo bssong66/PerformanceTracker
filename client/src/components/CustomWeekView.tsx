@@ -124,15 +124,26 @@ export default function CustomWeekView({ date, events, onSelectEvent, onSelectSl
   const getEventsForDay = (day: Date) => {
     return events.filter(event => {
       const eventStart = new Date(event.start);
-      return isSameDay(eventStart, day);
+      const eventEnd = new Date(event.end);
+      
+      // For multi-day events, show on all days between start and end
+      return day >= eventStart && day <= eventEnd;
     });
   };
 
   const getEventsForTimeSlot = (day: Date, hour: number) => {
     return events.filter(event => {
       const eventStart = new Date(event.start);
+      const eventEnd = new Date(event.end);
       const eventHour = eventStart.getHours();
-      return isSameDay(eventStart, day) && eventHour === hour;
+      
+      // For multi-day events, show on all days between start and end
+      // For timed events, only show at the specific hour on the start day
+      if (event.resource?.data?.isAllDay) {
+        return day >= eventStart && day <= eventEnd;
+      } else {
+        return isSameDay(eventStart, day) && eventHour === hour;
+      }
     });
   };
 
