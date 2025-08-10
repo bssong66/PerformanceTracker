@@ -282,14 +282,14 @@ export const CustomWeekView: React.FC<CustomWeekViewProps> = ({
 
         <div className="flex items-center space-x-1">
           <Button 
-            variant="outline" 
+            variant="default" 
             size="sm"
             onClick={() => onViewChange?.('month')}
           >
             월
           </Button>
           <Button 
-            variant="default" 
+            variant="outline" 
             size="sm"
           >
             주
