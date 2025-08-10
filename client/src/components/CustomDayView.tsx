@@ -169,9 +169,8 @@ export const CustomDayView: React.FC<CustomDayViewProps> = ({
       const duration = (endHour - startHour) + (endMinutes - startMinutes) / 60;
       const blockHeight = Math.max(duration * HOUR_HEIGHT, 20); // Minimum 20px height
 
-      // Find available column by checking for overlaps
-      let column = 0;
-      const existingBlocks = eventBlocks.filter(block => {
+      // Find overlapping blocks
+      const overlappingBlocks = eventBlocks.filter(block => {
         const blockStart = block.top;
         const blockEnd = block.top + block.height;
         const newStart = topOffset;
@@ -179,15 +178,25 @@ export const CustomDayView: React.FC<CustomDayViewProps> = ({
         return !(newEnd <= blockStart || newStart >= blockEnd); // Check overlap
       });
 
+      // Calculate total overlapping events (including this one)
+      const totalOverlapping = overlappingBlocks.length + 1;
+      
       // Find first available column
-      while (column < MAX_COLUMNS) {
-        const columnTaken = existingBlocks.some(block => block.column === column);
+      let column = 0;
+      while (column < MAX_COLUMNS && column < totalOverlapping) {
+        const columnTaken = overlappingBlocks.some(block => block.column === column);
         if (!columnTaken) break;
         column++;
       }
 
-      const columnWidth = 100 / Math.max(existingBlocks.length + 1, MAX_COLUMNS);
+      // Calculate width and position based on total overlapping events
+      const columnWidth = 100 / totalOverlapping;
       const leftOffset = column * columnWidth;
+
+      // Update existing overlapping blocks to use new width calculation
+      overlappingBlocks.forEach(block => {
+        block.width = columnWidth - 1; // Small gap between columns
+      });
 
       eventBlocks.push({
         event,
