@@ -680,7 +680,7 @@ export default function Calendar() {
             </CardHeader>
             <CardContent>
               <div 
-                style={{ height: '600px', position: 'relative' }} 
+                style={{ height: '720px', position: 'relative' }} 
                 onClick={handleCloseContextMenu}
               >
                 <DnDCalendar
