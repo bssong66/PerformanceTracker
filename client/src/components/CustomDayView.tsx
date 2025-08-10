@@ -140,17 +140,20 @@ export const CustomDayView: React.FC<CustomDayViewProps> = ({
     });
   };
 
-  // Calculate event positions and dimensions for overlapping block display
+  // Calculate event positions and dimensions for block display
   const calculateEventLayout = () => {
     const dayEvents = getDayTimedEvents();
     const eventBlocks: Array<{
       event: Event;
       top: number;
       height: number;
-      zIndex: number;
+      left: number;
+      width: number;
+      column: number;
     }> = [];
 
     const HOUR_HEIGHT = 64; // 16 * 4 (h-16 = 4rem = 64px)
+    const MAX_COLUMNS = 3;
 
     dayEvents.forEach((event, index) => {
       const eventStart = new Date(event.start);
@@ -166,16 +169,33 @@ export const CustomDayView: React.FC<CustomDayViewProps> = ({
       const duration = (endHour - startHour) + (endMinutes - startMinutes) / 60;
       const blockHeight = Math.max(duration * HOUR_HEIGHT, 20); // Minimum 20px height
 
-      // Higher priority events get higher z-index (appear on top)
-      const priorityOrder = { high: 30, medium: 20, low: 10 };
-      const priority = event.resource?.priority as keyof typeof priorityOrder || 'medium';
-      const zIndex = priorityOrder[priority] + index; // Add index to ensure unique z-index
+      // Find available column by checking for overlaps
+      let column = 0;
+      const existingBlocks = eventBlocks.filter(block => {
+        const blockStart = block.top;
+        const blockEnd = block.top + block.height;
+        const newStart = topOffset;
+        const newEnd = topOffset + blockHeight;
+        return !(newEnd <= blockStart || newStart >= blockEnd); // Check overlap
+      });
+
+      // Find first available column
+      while (column < MAX_COLUMNS) {
+        const columnTaken = existingBlocks.some(block => block.column === column);
+        if (!columnTaken) break;
+        column++;
+      }
+
+      const columnWidth = 100 / Math.max(existingBlocks.length + 1, MAX_COLUMNS);
+      const leftOffset = column * columnWidth;
 
       eventBlocks.push({
         event,
         top: topOffset,
         height: blockHeight,
-        zIndex
+        left: leftOffset,
+        width: columnWidth - 1, // Small gap between columns
+        column
       });
     });
 
@@ -318,9 +338,9 @@ export const CustomDayView: React.FC<CustomDayViewProps> = ({
               />
             ))}
 
-            {/* Event blocks positioned absolutely - overlapping */}
+            {/* Event blocks positioned absolutely */}
             {calculateEventLayout().map((block, index) => {
-              const { event, top, height, zIndex } = block;
+              const { event, top, height, left, width } = block;
               const isCompleted = event.resource?.data?.completed || false;
               const isTask = event.resource?.type === 'task';
 
@@ -344,16 +364,14 @@ export const CustomDayView: React.FC<CustomDayViewProps> = ({
               return (
                 <div
                   key={`block-${event.id}-${index}`}
-                  className="absolute text-xs px-2 py-1 rounded text-white cursor-pointer flex flex-col gap-1 border border-white border-opacity-30"
+                  className="absolute text-xs px-2 py-1 rounded text-white cursor-pointer flex flex-col gap-1 z-10 border border-white border-opacity-30"
                   style={{
                     backgroundColor: event.resource.color,
                     top: `${top}px`,
                     height: `${height}px`,
-                    left: '4px', // Small margin from left
-                    right: '4px', // Small margin from right
-                    zIndex: zIndex,
-                    minHeight: '20px',
-                    opacity: 0.85 // Slight transparency to show overlaps
+                    left: `${left}%`,
+                    width: `${width}%`,
+                    minHeight: '20px'
                   }}
                   onClick={(e) => {
                     e.stopPropagation();
