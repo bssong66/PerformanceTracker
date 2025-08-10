@@ -121,28 +121,85 @@ export const CustomDayView: React.FC<CustomDayViewProps> = ({
     });
   };
 
-  // Get timed events for a specific time slot
-  const getEventsForTimeSlot = (hour: number) => {
-    return events.filter(event => {
+  // Get unique timed events for the entire day
+  const getDayTimedEvents = () => {
+    const dayEvents = events.filter(event => {
+      const eventStart = new Date(event.start);
+      const isAllDay = event.resource?.data?.isAllDay || event.allDay;
+      return !isAllDay && isSameDay(eventStart, date);
+    });
+
+    // Sort by priority (high -> medium -> low) then by start time
+    return dayEvents.sort((a, b) => {
+      const priorityOrder = { high: 3, medium: 2, low: 1 };
+      const aPriority = priorityOrder[a.resource?.priority as keyof typeof priorityOrder] || 2;
+      const bPriority = priorityOrder[b.resource?.priority as keyof typeof priorityOrder] || 2;
+      
+      if (aPriority !== bPriority) return bPriority - aPriority; // Higher priority first
+      return new Date(a.start).getTime() - new Date(b.start).getTime(); // Then by start time
+    });
+  };
+
+  // Calculate event positions and dimensions for block display
+  const calculateEventLayout = () => {
+    const dayEvents = getDayTimedEvents();
+    const eventBlocks: Array<{
+      event: Event;
+      top: number;
+      height: number;
+      left: number;
+      width: number;
+      column: number;
+    }> = [];
+
+    const HOUR_HEIGHT = 64; // 16 * 4 (h-16 = 4rem = 64px)
+    const MAX_COLUMNS = 3;
+
+    dayEvents.forEach((event, index) => {
       const eventStart = new Date(event.start);
       const eventEnd = new Date(event.end);
+      
+      const startHour = eventStart.getHours();
+      const startMinutes = eventStart.getMinutes();
+      const endHour = eventEnd.getHours();
+      const endMinutes = eventEnd.getMinutes();
 
-      // Only include timed events (exclude all-day events)
-      const isAllDay = event.resource?.data?.isAllDay || event.allDay;
-      if (isAllDay) return false;
+      // Calculate position
+      const topOffset = (startHour * HOUR_HEIGHT) + (startMinutes / 60 * HOUR_HEIGHT);
+      const duration = (endHour - startHour) + (endMinutes - startMinutes) / 60;
+      const blockHeight = Math.max(duration * HOUR_HEIGHT, 20); // Minimum 20px height
 
-      // Check if event is on the same day
-      if (!isSameDay(eventStart, date)) return false;
+      // Find available column by checking for overlaps
+      let column = 0;
+      const existingBlocks = eventBlocks.filter(block => {
+        const blockStart = block.top;
+        const blockEnd = block.top + block.height;
+        const newStart = topOffset;
+        const newEnd = topOffset + blockHeight;
+        return !(newEnd <= blockStart || newStart >= blockEnd); // Check overlap
+      });
 
-      // Check if the event overlaps with this hour slot
-      const slotStart = new Date(date);
-      slotStart.setHours(hour, 0, 0, 0);
-      const slotEnd = new Date(date);
-      slotEnd.setHours(hour + 1, 0, 0, 0);
+      // Find first available column
+      while (column < MAX_COLUMNS) {
+        const columnTaken = existingBlocks.some(block => block.column === column);
+        if (!columnTaken) break;
+        column++;
+      }
 
-      // Event overlaps if it starts before slot ends and ends after slot starts
-      return eventStart < slotEnd && eventEnd > slotStart;
+      const columnWidth = 100 / Math.max(existingBlocks.length + 1, MAX_COLUMNS);
+      const leftOffset = column * columnWidth;
+
+      eventBlocks.push({
+        event,
+        top: topOffset,
+        height: blockHeight,
+        left: leftOffset,
+        width: columnWidth - 1, // Small gap between columns
+        column
+      });
     });
+
+    return eventBlocks;
   };
 
   const handleSlotClick = (hour: number) => {
@@ -270,67 +327,70 @@ export const CustomDayView: React.FC<CustomDayViewProps> = ({
             ))}
           </div>
 
-          {/* Events column */}
-          <div className="col-span-7">
-            {timeSlots.map(hour => {
-              const hourEvents = getEventsForTimeSlot(hour);
-              
+          {/* Events column with block layout */}
+          <div className="col-span-7 relative">
+            {/* Time grid background */}
+            {timeSlots.map(hour => (
+              <div
+                key={hour}
+                className="h-16 border-b border-r cursor-pointer hover:bg-gray-50 transition-colors"
+                onClick={() => handleSlotClick(hour)}
+              />
+            ))}
+
+            {/* Event blocks positioned absolutely */}
+            {calculateEventLayout().map((block, index) => {
+              const { event, top, height, left, width } = block;
+              const isCompleted = event.resource?.data?.completed || false;
+              const isTask = event.resource?.type === 'task';
+
+              const handleCheckboxClick = (e: React.MouseEvent) => {
+                e.stopPropagation();
+                e.preventDefault();
+
+                if (isTask) {
+                  completeTaskMutation.mutate({
+                    id: event.resource.data.id,
+                    completed: !isCompleted
+                  });
+                } else {
+                  completeEventMutation.mutate({
+                    id: event.resource.data.id,
+                    completed: !isCompleted
+                  });
+                }
+              };
+
               return (
                 <div
-                  key={hour}
-                  className="h-16 border-b border-r cursor-pointer hover:bg-gray-50 transition-colors relative"
-                  onClick={() => handleSlotClick(hour)}
+                  key={`block-${event.id}-${index}`}
+                  className="absolute text-xs px-2 py-1 rounded text-white cursor-pointer flex flex-col gap-1 z-10 border border-white border-opacity-30"
+                  style={{
+                    backgroundColor: event.resource.color,
+                    top: `${top}px`,
+                    height: `${height}px`,
+                    left: `${left}%`,
+                    width: `${width}%`,
+                    minHeight: '20px'
+                  }}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onSelectEvent(event);
+                  }}
                 >
-                  {/* Events for this time slot */}
-                  {hourEvents.map((event, index) => {
-                    const isCompleted = event.resource?.data?.completed || false;
-                    const isTask = event.resource?.type === 'task';
-
-                    const handleCheckboxClick = (e: React.MouseEvent) => {
-                      e.stopPropagation();
-                      e.preventDefault();
-
-                      if (isTask) {
-                        completeTaskMutation.mutate({
-                          id: event.resource.data.id,
-                          completed: !isCompleted
-                        });
-                      } else {
-                        completeEventMutation.mutate({
-                          id: event.resource.data.id,
-                          completed: !isCompleted
-                        });
-                      }
-                    };
-
-                    return (
-                      <div
-                        key={`timed-${event.id}-${index}`}
-                        className="absolute left-1 right-1 text-xs px-2 py-1 rounded text-white cursor-pointer flex items-center gap-1 z-10"
-                        style={{ 
-                          backgroundColor: event.resource.color,
-                          top: `${index * 22}px`,
-                          height: '20px'
-                        }}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onSelectEvent(event);
-                        }}
-                      >
-                        <input
-                          type="checkbox"
-                          checked={isCompleted}
-                          onChange={() => {}}
-                          onClick={handleCheckboxClick}
-                          className="w-3 h-3 flex-shrink-0"
-                        />
-                        {getPriorityIndicator(event.resource?.priority || 'medium', event.resource?.type || 'event')}
-                        <span className={`truncate flex-1 ${isCompleted ? 'line-through opacity-60' : ''}`}>
-                          {event.title}
-                        </span>
-                      </div>
-                    );
-                  })}
+                  <div className="flex items-center gap-1">
+                    <input
+                      type="checkbox"
+                      checked={isCompleted}
+                      onChange={() => {}}
+                      onClick={handleCheckboxClick}
+                      className="w-3 h-3 flex-shrink-0"
+                    />
+                    {getPriorityIndicator(event.resource?.priority || 'medium', event.resource?.type || 'event')}
+                  </div>
+                  <span className={`text-xs leading-tight ${isCompleted ? 'line-through opacity-60' : ''}`}>
+                    {event.title}
+                  </span>
                 </div>
               );
             })}
