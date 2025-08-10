@@ -744,8 +744,15 @@ export default function Calendar() {
                   popupOffset={30}
                   showAllEvents={false}
                   max={{
-                    month: 3
+                    month: 3,
+                    week: 3,
+                    day: 3
                   } as any}
+                  step={30}
+                  timeslots={2}
+                  min={new Date(0, 0, 0, 6, 0, 0)}
+                  max={new Date(0, 0, 0, 22, 0, 0)}
+                  scrollToTime={new Date(0, 0, 0, 9, 0, 0)}
                   components={{
                     event: ({ event }: { event: any }) => {
                       const isCompleted = event.resource?.data?.completed || false;
