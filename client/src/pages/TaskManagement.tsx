@@ -76,21 +76,6 @@ function TaskManagement({ highlightTaskId }: TaskManagementProps) {
     annualGoal: ''
   });
 
-  // Add highlighting effect for navigated task
-  useEffect(() => {
-    if (highlightTaskId) {
-      // Find and scroll to the highlighted task, add visual emphasis
-      const taskElement = document.querySelector(`[data-task-id="${highlightTaskId}"]`);
-      if (taskElement) {
-        taskElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        taskElement.classList.add('ring-2', 'ring-blue-500', 'ring-opacity-75');
-        setTimeout(() => {
-          taskElement.classList.remove('ring-2', 'ring-blue-500', 'ring-opacity-75');
-        }, 3000);
-      }
-    }
-  }, [highlightTaskId, tasks]);
-
   // Fetch tasks
   const { data: tasks = [] } = useQuery({
     queryKey: ['tasks', user?.id],
@@ -126,6 +111,23 @@ function TaskManagement({ highlightTaskId }: TaskManagementProps) {
     },
     enabled: !!user?.id
   });
+
+  // Add highlighting effect for navigated task
+  useEffect(() => {
+    if (highlightTaskId && tasks && tasks.length > 0) {
+      // Small delay to ensure DOM is rendered
+      setTimeout(() => {
+        const taskElement = document.querySelector(`[data-task-id="${highlightTaskId}"]`);
+        if (taskElement) {
+          taskElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          taskElement.classList.add('ring-2', 'ring-blue-500', 'ring-opacity-75');
+          setTimeout(() => {
+            taskElement.classList.remove('ring-2', 'ring-blue-500', 'ring-opacity-75');
+          }, 3000);
+        }
+      }, 100);
+    }
+  }, [highlightTaskId, tasks]);
 
   // Function to refresh foundation and goals data
   const handleRefreshData = async () => {
