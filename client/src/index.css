@@ -152,6 +152,74 @@
     @apply bg-green-50 text-green-800 border-green-200;
   }
   
+  /* Priority indicators for calendar events - ensure they are visible */
+  .priority-indicator {
+    display: inline-block !important;
+    font-weight: bold !important;
+    font-size: 10px !important;
+    margin-right: 2px !important;
+    line-height: 1 !important;
+    vertical-align: middle !important;
+  }
+  
+  .priority-high {
+    color: #ef4444 !important; /* Red */
+  }
+  
+  .priority-medium {
+    color: #eab308 !important; /* Yellow */
+  }
+  
+  .priority-low {
+    color: #3b82f6 !important; /* Blue */
+  }
+  
+  /* React Big Calendar custom styles for all-day events */
+  .rbc-allday-cell {
+    min-height: 40px !important;
+  }
+  
+  .rbc-row-content {
+    min-height: 40px !important;
+  }
+  
+  .rbc-row-segment {
+    padding: 2px 4px !important;
+  }
+  
+  /* Ensure all-day events appear in the header area */
+  .rbc-month-view .rbc-allday-cell .rbc-row-content {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2px;
+  }
+  
+  .rbc-event-allday {
+    background-color: inherit !important;
+    border-radius: 4px !important;
+    margin: 1px 0 !important;
+    padding: 2px 4px !important;
+    font-size: 11px !important;
+    line-height: 1.2 !important;
+  }
+  
+  /* Calendar event text styling */
+  .rbc-event-content {
+    font-size: 11px !important;
+    line-height: 1.2 !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
+  
+  /* Multi-day event styling in week view */
+  .rbc-week-view .rbc-header {
+    min-height: 60px !important;
+  }
+  
+  .rbc-week-view .rbc-allday-cell {
+    min-height: 50px !important;
+  }
+  
   /* Mobile optimization utilities */
   .mobile-optimized {
     -webkit-overflow-scrolling: touch;

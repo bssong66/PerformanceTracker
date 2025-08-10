@@ -27,17 +27,17 @@ interface Event {
 const getPriorityIndicator = (priority: string, type: 'event' | 'task') => {
   if (type === 'event') {
     switch (priority) {
-      case 'high': return <span className="text-red-500 font-bold">!!!</span>;
-      case 'medium': return <span className="text-yellow-500 font-bold">!!</span>;
-      case 'low': return <span className="text-blue-500 font-bold">!</span>;
-      default: return <span className="text-yellow-500 font-bold">!!</span>;
+      case 'high': return <span className="priority-indicator priority-high">!!!</span>;
+      case 'medium': return <span className="priority-indicator priority-medium">!!</span>;
+      case 'low': return <span className="priority-indicator priority-low">!</span>;
+      default: return <span className="priority-indicator priority-medium">!!</span>;
     }
   } else {
     switch (priority) {
-      case 'A': return <span className="text-red-500 font-bold">!!!</span>;
-      case 'B': return <span className="text-yellow-500 font-bold">!!</span>;
-      case 'C': return <span className="text-blue-500 font-bold">!</span>;
-      default: return <span className="text-yellow-500 font-bold">!!</span>;
+      case 'A': return <span className="priority-indicator priority-high">!!!</span>;
+      case 'B': return <span className="priority-indicator priority-medium">!!</span>;
+      case 'C': return <span className="priority-indicator priority-low">!</span>;
+      default: return <span className="priority-indicator priority-medium">!!</span>;
     }
   }
 };
@@ -324,7 +324,7 @@ export const CustomWeekView: React.FC<CustomWeekViewProps> = ({
       </div>
       
       {/* Multi-day events overlay */}
-      <div className="relative">
+      <div className="relative" style={{ marginBottom: '8px' }}>
         {getMultiDayEventsForWeek().map((event, index) => {
           const isCompleted = event.resource?.data?.completed || false;
           const isTask = event.resource?.type === 'task';
@@ -346,8 +346,8 @@ export const CustomWeekView: React.FC<CustomWeekViewProps> = ({
             }
           };
 
-          const leftOffset = `${(event.startDayIndex / 7 * 100) + (100/7 * 0.125)}%`;
-          const width = `${(event.spanDays / 7 * 100) - (100/7 * 0.25)}%`;
+          const leftOffset = `${12.5 + (event.startDayIndex * 12.5)}%`;
+          const width = `${(event.spanDays * 12.5) - 1}%`;
 
           return (
             <div

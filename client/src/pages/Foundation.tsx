@@ -50,19 +50,34 @@ export default function Foundation() {
     queryKey: ['foundation', user?.id, selectedYear],
     queryFn: () => fetch(api.foundation.get(user?.id, selectedYear)).then(res => res.json()),
     meta: { errorMessage: "Foundation not found" },
-    enabled: !!user?.id
+    enabled: !!user?.id,
+    staleTime: Infinity, // Never refetch automatically
+    gcTime: Infinity, // Never garbage collect
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false
   });
 
   const { data: goals = [], isLoading: goalsLoading, refetch: refetchGoals } = useQuery({
     queryKey: ['goals', user?.id, selectedYear],
     queryFn: () => fetch(api.goals.list(user?.id, selectedYear)).then(res => res.json()),
-    enabled: !!user?.id
+    enabled: !!user?.id,
+    staleTime: Infinity, // Never refetch automatically
+    gcTime: Infinity, // Never garbage collect
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false
   });
 
   const { data: allFoundations = [], refetch: refetchAllFoundations } = useQuery({
     queryKey: ['all-foundations', user?.id],
     queryFn: () => fetch(api.foundation.getAll(user?.id)).then(res => res.json()),
     enabled: showSelectDialog && !!user?.id,
+    staleTime: Infinity,
+    gcTime: Infinity,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false
   });
 
   // Get all tasks for annual progress calculation (only for current year to improve performance)
@@ -148,7 +163,7 @@ export default function Foundation() {
     }
   }, [foundation, editingValues, editingMission]);
 
-  // Effect to clear edit modes and refresh data when year changes
+  // Effect to clear edit modes when year changes
   useEffect(() => {
     // Clear temporary goals when year changes (unsaved data is lost)
     setTempGoals([]);
@@ -158,40 +173,35 @@ export default function Foundation() {
     setEditingMission(false);
     setEditingValues(false);
     setEditingGoals(false);
-    
-    // Invalidate and refetch queries for the new year
-    queryClient.invalidateQueries({ 
-      queryKey: ['foundation', user?.id, selectedYear] 
-    });
-    queryClient.invalidateQueries({ 
-      queryKey: ['goals', user?.id, selectedYear] 
-    });
   }, [selectedYear]);
 
-  // Effect to automatically enter edit modes for future years
+  // Effect to automatically enter edit modes for future years or when no foundation data exists
   useEffect(() => {
-    if (isFutureYear && !foundation) {
-      setEditingMission(true);
-      setEditingValues(true);
-      setEditingGoals(true);
+    // Prevent running too often - only when foundation/loading state actually changes
+    const hasFoundationData = !!foundation;
+    
+    if (!editingMission && !editingValues && !editingGoals && !foundationLoading) {
+      // For future years without foundation data
+      if (isFutureYear && !hasFoundationData) {
+        setEditingMission(true);
+        setEditingValues(true);
+        setEditingGoals(true);
+      }
+      // For new users or years without foundation data (but not past years)
+      else if (!hasFoundationData && !isPastYear) {
+        setEditingMission(true);
+        setEditingValues(true);
+        setEditingGoals(true);
+      }
     }
-  }, [isFutureYear, foundation]);
+  }, [isFutureYear, !!foundation, foundationLoading, isPastYear]);
 
   // Effect to automatically enter edit mode for goals when no goals exist
   useEffect(() => {
-    if (!goalsLoading && goals && (goals as any[]).length === 0 && tempGoals.length === 0 && !isPastYear) {
+    if (!editingGoals && !goalsLoading && Array.isArray(goals) && goals.length === 0 && tempGoals.length === 0 && !isPastYear) {
       setEditingGoals(true);
     }
-  }, [goals, goalsLoading, tempGoals, isPastYear]);
-
-  // Effect to automatically enter edit modes when no foundation data exists (for new users or years)
-  useEffect(() => {
-    if (!foundationLoading && !foundation && !editingMission && !editingValues && !editingGoals && !isPastYear) {
-      setEditingMission(true);
-      setEditingValues(true);
-      setEditingGoals(true);
-    }
-  }, [foundation, foundationLoading, editingMission, editingValues, editingGoals, isPastYear]);
+  }, [goals?.length, goalsLoading, tempGoals.length, isPastYear]);
 
   // Calculate annual progress for each core value
   const calculateAnnualProgress = (coreValue: string) => {

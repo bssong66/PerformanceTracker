@@ -44,17 +44,17 @@ const TASK_COLOR = '#EF4444';   // 빨간색 - 할일
 const getPriorityIndicator = (priority: string, type: 'event' | 'task') => {
   if (type === 'event') {
     switch (priority) {
-      case 'high': return <span className="text-red-500 font-bold">!!!</span>;
-      case 'medium': return <span className="text-yellow-500 font-bold">!!</span>;
-      case 'low': return <span className="text-blue-500 font-bold">!</span>;
-      default: return <span className="text-yellow-500 font-bold">!!</span>;
+      case 'high': return <span className="priority-indicator priority-high">!!!</span>;
+      case 'medium': return <span className="priority-indicator priority-medium">!!</span>;
+      case 'low': return <span className="priority-indicator priority-low">!</span>;
+      default: return <span className="priority-indicator priority-medium">!!</span>;
     }
   } else {
     switch (priority) {
-      case 'A': return <span className="text-red-500 font-bold">!!!</span>;
-      case 'B': return <span className="text-yellow-500 font-bold">!!</span>;
-      case 'C': return <span className="text-blue-500 font-bold">!</span>;
-      default: return <span className="text-yellow-500 font-bold">!!</span>;
+      case 'A': return <span className="priority-indicator priority-high">!!!</span>;
+      case 'B': return <span className="priority-indicator priority-medium">!!</span>;
+      case 'C': return <span className="priority-indicator priority-low">!</span>;
+      default: return <span className="priority-indicator priority-medium">!!</span>;
     }
   }
 };
@@ -103,35 +103,37 @@ export default function Calendar() {
 
   // Fetch events
   const { data: events = [] } = useQuery({
-    queryKey: ['/api/events/1'],
+    queryKey: ['/api/events', user?.id || '1'],
+    enabled: !!user?.id,
     retry: false,
   });
 
   // Fetch all tasks to display on calendar
   const { data: allTasks = [] } = useQuery({
-    queryKey: ['/api/tasks/1'],
+    queryKey: ['/api/tasks', user?.id || '1'],
+    enabled: !!user?.id,
     retry: false,
   });
 
   // Fetch projects for task context
   const { data: projects = [] } = useQuery({
-    queryKey: ['/api/projects/1'],
+    queryKey: ['/api/projects', user?.id || '1'],
+    enabled: !!user?.id,
     retry: false,
   });
 
   // Fetch foundation (core values) for dropdown
   const { data: foundation = null } = useQuery({
-    queryKey: ['/api/foundation/1'],
+    queryKey: ['/api/foundation', user?.id || '1'],
+    enabled: !!user?.id,
     retry: false,
-    refetchInterval: 5000, // 5초마다 자동 새로고침
   });
 
   // Fetch annual goals for dropdown
   const { data: annualGoals = [] } = useQuery({
-    queryKey: ['/api/goals/1'],
+    queryKey: ['/api/goals', user?.id || '1'],
+    enabled: !!user?.id,
     retry: false,
-    refetchOnWindowFocus: true,
-    refetchInterval: 5000, // 5초마다 자동 새로고침
   });
 
   // Create event mutation
@@ -151,7 +153,7 @@ export default function Calendar() {
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/events/1'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/events'] });
       setShowEventDialog(false);
       resetEventForm();
       toast({ title: "일정 생성", description: "새 일정이 생성되었습니다." });
@@ -182,7 +184,7 @@ export default function Calendar() {
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/events/1'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/events'] });
       setShowEventDialog(false);
       resetEventForm();
       toast({ title: "일정 수정", description: "일정이 수정되었습니다." });
@@ -205,7 +207,7 @@ export default function Calendar() {
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/events/1'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/events'] });
       setShowEventDialog(false);
       resetEventForm();
       toast({ title: "일정 삭제", description: "일정이 삭제되었습니다." });
@@ -224,7 +226,7 @@ export default function Calendar() {
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/events/1'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/events'] });
       setContextMenu(null);
       toast({ title: "일정 완료 상태가 변경되었습니다" });
     }
@@ -242,7 +244,7 @@ export default function Calendar() {
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/tasks/1'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/tasks'] });
       setContextMenu(null);
       toast({ title: "할일 완료 상태가 변경되었습니다" });
     }
@@ -291,7 +293,7 @@ export default function Calendar() {
       resizable: true,
       draggable: true,
       resource: {
-        type: 'event',
+        type: 'event' as const,
         data: event,
         priority: event.priority,
         color: EVENT_COLOR
@@ -354,7 +356,7 @@ export default function Calendar() {
             resizable: false, // Recurring instances can't be resized individually
             draggable: false, // Recurring instances can't be moved individually
             resource: {
-              type: 'event',
+              type: 'event' as const,
               data: { ...event, isRecurring: true, originalId: event.id },
               priority: event.priority,
               color: EVENT_COLOR
@@ -390,7 +392,7 @@ export default function Calendar() {
           resizable: false, // Tasks cannot be resized
           draggable: false, // Tasks cannot be dragged
           resource: {
-            type: 'task',
+            type: 'task' as const,
             data: task,
             project: project,
             priority: task.priority,
