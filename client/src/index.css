@@ -360,14 +360,14 @@
 
 /* 주간뷰 날짜 헤더 이벤트 컨테이너 */
 .rbc-header {
-  height: 80px !important;
+  height: 200px !important;
   overflow: hidden;
-  padding: 4px;
+  padding: 0px;
 }
 
 /* 일간뷰 전체 날짜 헤더 이벤트 컨테이너 */
 .rbc-day-slot .rbc-events-container {
-  height: 80px !important;
+  height: 200px !important;
   overflow: hidden;
 }
 
