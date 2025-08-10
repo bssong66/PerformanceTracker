@@ -263,12 +263,12 @@ export const CustomWeekView: React.FC<CustomWeekViewProps> = ({
       {/* Navigation Toolbar */}
       <div className="flex items-center px-4 py-0 border-b bg-gray-50" style={{ minHeight: '20px' }}>
         <div className="flex items-center space-x-2">
+          <Button variant="outline" size="sm" onClick={() => onNavigate(new Date())}>
+            오늘
+          </Button>
           <Button variant="outline" size="sm" onClick={() => onNavigate(subWeeks(date, 1))}>
             <ChevronLeft className="h-4 w-4" />
             이전
-          </Button>
-          <Button variant="outline" size="sm" onClick={() => onNavigate(new Date())}>
-            오늘
           </Button>
           <Button variant="outline" size="sm" onClick={() => onNavigate(addWeeks(date, 1))}>
             다음
@@ -280,7 +280,7 @@ export const CustomWeekView: React.FC<CustomWeekViewProps> = ({
           {format(weekStart, 'yyyy년 M월 d일', { locale: ko })} - {format(weekEnd, 'M월 d일', { locale: ko })}
         </h2>
 
-        <div className="rbc-btn-group" style={{ marginRight: '50px' }}>
+          <div className="rbc-btn-group" style={{ marginRight: '-14px' }}>
           <button 
             className="rbc-btn"
             onClick={() => onViewChange?.('month')}
