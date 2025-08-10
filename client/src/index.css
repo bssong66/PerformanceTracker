@@ -212,11 +212,11 @@
 }
 
 .rbc-month-row {
-  min-height: 132px; /* Increased from default ~100px by 10% */
+  min-height: 135px; /* Increased from default ~100px by 10% */
 }
 
 .rbc-day-bg {
-  min-height: 132px; /* Increased from default ~100px by 10% */
+  min-height: 135px; /* Increased from default ~100px by 10% */
 }
 
 .rbc-date-cell {
@@ -236,8 +236,8 @@
 .rbc-event {
   border-radius: 4px;
   border: none;
-  padding: 2px 6px;
-  font-size: 12px;
+  padding: 0.5px 6px;
+  font-size: 11px;
   font-weight: 500;
 }
 

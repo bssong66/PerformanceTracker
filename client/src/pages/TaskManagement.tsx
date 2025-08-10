@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { queryClient, apiRequest } from '@/lib/queryClient';
 import { useAuth } from '@/hooks/useAuth';
@@ -43,7 +43,11 @@ interface Task {
 
 
 
-function TaskManagement() {
+interface TaskManagementProps {
+  highlightTaskId?: number;
+}
+
+function TaskManagement({ highlightTaskId }: TaskManagementProps) {
   const { toast } = useToast();
   const { user } = useAuth();
   const [showTaskDialog, setShowTaskDialog] = useState(false);
@@ -71,6 +75,21 @@ function TaskManagement() {
     coreValue: '',
     annualGoal: ''
   });
+
+  // Add highlighting effect for navigated task
+  useEffect(() => {
+    if (highlightTaskId) {
+      // Find and scroll to the highlighted task, add visual emphasis
+      const taskElement = document.querySelector(`[data-task-id="${highlightTaskId}"]`);
+      if (taskElement) {
+        taskElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        taskElement.classList.add('ring-2', 'ring-blue-500', 'ring-opacity-75');
+        setTimeout(() => {
+          taskElement.classList.remove('ring-2', 'ring-blue-500', 'ring-opacity-75');
+        }, 3000);
+      }
+    }
+  }, [highlightTaskId, tasks]);
 
   // Fetch tasks
   const { data: tasks = [] } = useQuery({
@@ -604,6 +623,7 @@ function TaskManagement() {
               {tasksByPriority[priority].map((task: Task) => (
                 <div
                   key={task.id}
+                  data-task-id={task.id}
                   className={`p-3 rounded-lg border ${task.completed ? 'bg-gray-50 opacity-75' : 'bg-white'} transition-all`}
                 >
                   <div className="flex items-start justify-between mb-2">

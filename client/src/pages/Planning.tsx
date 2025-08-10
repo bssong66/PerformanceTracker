@@ -1,10 +1,22 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { FolderOpen, List, Target } from "lucide-react";
+import { useEffect, useState } from "react";
+import { useLocation } from "wouter";
 import ProjectManagement from './ProjectManagement';
 import TaskManagement from './TaskManagement';
 import HabitManagement from './HabitManagement';
 
 export default function Planning() {
+  const [location] = useLocation();
+  const [activeTab, setActiveTab] = useState("projects");
+  
+  useEffect(() => {
+    const urlParams = new URLSearchParams(location.split('?')[1] || '');
+    const tab = urlParams.get('tab');
+    if (tab === 'tasks') {
+      setActiveTab('tasks');
+    }
+  }, [location]);
   return (
     <div className="p-6">
       <div className="mb-6">
@@ -12,7 +24,7 @@ export default function Planning() {
         <p className="text-gray-600">프로젝트, 할일, 습관을 통합적으로 관리하세요</p>
       </div>
 
-      <Tabs defaultValue="projects" className="space-y-4">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
         <TabsList className="grid w-full max-w-md grid-cols-3">
           <TabsTrigger value="projects" className="flex items-center space-x-2">
             <FolderOpen className="h-4 w-4" />
@@ -33,7 +45,7 @@ export default function Planning() {
         </TabsContent>
 
         <TabsContent value="tasks" className="space-y-4">
-          <TaskManagement />
+          <TaskManagement highlightTaskId={location.includes('taskId=') ? parseInt(new URLSearchParams(location.split('?')[1] || '').get('taskId') || '0') : undefined} />
         </TabsContent>
 
         <TabsContent value="habits" className="space-y-4">

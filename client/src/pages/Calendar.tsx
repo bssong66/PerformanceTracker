@@ -1,5 +1,6 @@
 import { useState, useCallback, useMemo } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
+import { useLocation } from "wouter";
 import { Calendar as BigCalendar, momentLocalizer, View, Views } from "react-big-calendar";
 import withDragAndDrop from "react-big-calendar/lib/addons/dragAndDrop";
 import { DndProvider } from "react-dnd";
@@ -60,6 +61,7 @@ const taskColors = {
 export default function Calendar() {
   const { toast } = useToast();
   const { user } = useAuth();
+  const [, setLocation] = useLocation();
   const [view, setView] = useState<View>(Views.MONTH);
   const [date, setDate] = useState(new Date());
   const [showEventDialog, setShowEventDialog] = useState(false);
@@ -760,10 +762,26 @@ export default function Calendar() {
                         }
                       };
 
+                      const handleTaskClick = (e: React.MouseEvent) => {
+                        // Only handle click on task title area, not checkbox
+                        if (e.target === e.currentTarget.querySelector('input[type="checkbox"]')) {
+                          return;
+                        }
+                        
+                        if (isTask) {
+                          e.stopPropagation();
+                          e.preventDefault();
+                          // Navigate to Planning page with tasks tab active
+                          // Use URL parameter to specify which task to highlight
+                          setLocation(`/planning?tab=tasks&taskId=${event.resource.data.id}`);
+                        }
+                      };
+
                       return (
                         <div
                           onContextMenu={(e) => handleEventRightClick(event, e)}
-                          className="w-full h-full text-xs flex items-center gap-1 p-1"
+                          onClick={handleTaskClick}
+                          className={`w-full h-full text-xs flex items-center gap-1 p-1 ${isTask ? 'cursor-pointer hover:opacity-80' : ''}`}
                         >
                           <input
                             type="checkbox"
