@@ -346,10 +346,10 @@
 
 .rbc-btn.rbc-active,
 .rbc-btn:active {
-  background-color: #e6e6e6;
-  border-color: #adadad;
+  background-color: #0079f2 !important;
+  border-color: #0079f2 !important;
   box-shadow: inset 0 3px 5px rgba(0, 0, 0, 0.125);
-  color: #333;
+  color: #ffffff !important;
 }
 
 .rbc-btn:focus {
