@@ -518,7 +518,9 @@ export const CustomWeekView: React.FC<CustomWeekViewProps> = ({
             </div>
           </div>
           <div className="max-h-64 overflow-y-auto">
-            {showMoreDialog.events.map((event, index) => {
+            {events.filter(event => 
+              showMoreDialog.events.some(dialogEvent => dialogEvent.id === event.id)
+            ).map((event, index) => {
               const isCompleted = event.resource?.data?.completed || false;
               const isTask = event.resource?.type === 'task';
 
