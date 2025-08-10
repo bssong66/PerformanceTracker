@@ -212,14 +212,20 @@
 }
 
 .rbc-month-row {
-  min-height: 110px;
-  max-height: 110px;
+  min-height: 120px;
+  max-height: 120px;
   overflow: hidden;
 }
 
 .rbc-day-bg {
-  min-height: 110px;
-  max-height: 110px;
+  min-height: 120px;
+  max-height: 120px;
+}
+
+/* 이벤트가 표시되는 컨테이너 높이 조정 */
+.rbc-row-content {
+  height: 95px !important;
+  overflow: hidden;
 }
 
 .rbc-date-cell {
@@ -242,8 +248,22 @@
   padding: 1px 6px;
   font-size: 11px;
   font-weight: 500;
-  line-height: 1.2;
+  line-height: 1.1;
   margin-bottom: 1px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+}
+
+/* +N more 링크 스타일 조정 */
+.rbc-show-more {
+  font-size: 10px;
+  color: #3b82f6;
+  background: transparent;
+  border: none;
+  padding: 2px 4px;
+  text-decoration: underline;
+  cursor: pointer;
 }
 
 .rbc-selected {

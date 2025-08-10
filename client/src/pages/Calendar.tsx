@@ -743,6 +743,9 @@ export default function Calendar() {
                   popup={true}
                   popupOffset={30}
                   showAllEvents={false}
+                  max={{
+                    month: 3
+                  }}
                   components={{
                     event: ({ event }: { event: any }) => {
                       const isCompleted = event.resource?.data?.completed || false;
