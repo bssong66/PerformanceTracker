@@ -278,7 +278,11 @@ export const CustomWeekView: React.FC<CustomWeekViewProps> = ({
           {format(weekStart, 'yyyy년 M월 d일', { locale: ko })} - {format(weekEnd, 'M월 d일', { locale: ko })}
         </h2>
 
-        <div className="w-32"></div> {/* Spacer for balance */}
+        <div className="flex items-center space-x-1">
+          <Button variant="outline" size="sm">월</Button>
+          <Button variant="default" size="sm">주</Button>
+          <Button variant="outline" size="sm">일</Button>
+        </div>
       </div>
 
       {/* Header with day names and all-day events */}
