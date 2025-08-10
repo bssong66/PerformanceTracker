@@ -267,12 +267,10 @@ export const CustomWeekView: React.FC<CustomWeekViewProps> = ({
             오늘
           </Button>
           <Button variant="outline" size="sm" onClick={() => onNavigate(subWeeks(date, 1))}>
-            <ChevronLeft className="h-4 w-4" />
-            이전
+            &lt; 이전
           </Button>
           <Button variant="outline" size="sm" onClick={() => onNavigate(addWeeks(date, 1))}>
-            다음
-            <ChevronRight className="h-4 w-4" />
+            다음 &gt;
           </Button>
         </div>
 
