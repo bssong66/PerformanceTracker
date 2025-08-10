@@ -740,6 +740,9 @@ export default function Calendar() {
                   draggableAccessor={(event: any) => event.draggable}
                   eventPropGetter={eventStyleGetter}
                   culture="ko"
+                  popup={true}
+                  popupOffset={30}
+                  showAllEvents={false}
                   components={{
                     event: ({ event }: { event: any }) => {
                       const isCompleted = event.resource?.data?.completed || false;

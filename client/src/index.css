@@ -212,11 +212,14 @@
 }
 
 .rbc-month-row {
-  min-height: 135px; /* Increased from default ~100px by 10% */
+  min-height: 100px;
+  max-height: 100px;
+  overflow: hidden;
 }
 
 .rbc-day-bg {
-  min-height: 135px; /* Increased from default ~100px by 10% */
+  min-height: 100px;
+  max-height: 100px;
 }
 
 .rbc-date-cell {
