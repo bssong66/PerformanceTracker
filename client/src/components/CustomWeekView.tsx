@@ -58,7 +58,40 @@ export const CustomWeekView: React.FC<CustomWeekViewProps> = ({
   onSelectEvent,
   onSelectSlot,
 }) => {
+  console.log('CustomWeekView received events:', events.length);
   const queryClient = useQueryClient();
+  
+  // Mutations for completion
+  const completeTaskMutation = useMutation({
+    mutationFn: async ({ id, completed }: { id: number; completed: boolean }) => {
+      const response = await fetch(`/api/tasks/${id}/complete`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ completed })
+      });
+      if (!response.ok) throw new Error('Failed to update task');
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/tasks'] });
+    }
+  });
+
+  const completeEventMutation = useMutation({
+    mutationFn: async ({ id, completed }: { id: number; completed: boolean }) => {
+      const response = await fetch(`/api/events/${id}/complete`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ completed })
+      });
+      if (!response.ok) throw new Error('Failed to update event');
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/events'] });
+    }
+  });
+  
   const [showMoreDialog, setShowMoreDialog] = useState<{
     open: boolean;
     day: Date;
@@ -79,71 +112,6 @@ export const CustomWeekView: React.FC<CustomWeekViewProps> = ({
     events: []
   });
 
-  const completeTaskMutation = useMutation({
-    mutationFn: async ({ id, completed }: { id: number; completed: boolean }) => {
-      const response = await fetch(`/api/tasks/${id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ completed })
-      });
-      if (!response.ok) throw new Error('Failed to update task');
-      return response.json();
-    },
-    onSuccess: (data, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['/api/tasks'] });
-      // Force refresh the dialog events
-      const updatedEvents = showMoreDialog.events.map(evt => {
-        if (evt.resource.data.id === variables.id) {
-          return {
-            ...evt,
-            resource: {
-              ...evt.resource,
-              data: {
-                ...evt.resource.data,
-                completed: variables.completed
-              }
-            }
-          };
-        }
-        return evt;
-      });
-      setShowMoreDialog(prev => ({ ...prev, events: updatedEvents }));
-    }
-  });
-
-  const completeEventMutation = useMutation({
-    mutationFn: async ({ id, completed }: { id: number; completed: boolean }) => {
-      const response = await fetch(`/api/events/${id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ completed })
-      });
-      if (!response.ok) throw new Error('Failed to update event');
-      return response.json();
-    },
-    onSuccess: (data, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['/api/events'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/tasks'] });
-      // Force refresh the dialog events
-      const updatedEvents = showMoreDialog.events.map(evt => {
-        if (evt.resource.data.id === variables.id) {
-          return {
-            ...evt,
-            resource: {
-              ...evt.resource,
-              data: {
-                ...evt.resource.data,
-                completed: variables.completed
-              }
-            }
-          };
-        }
-        return evt;
-      });
-      setShowMoreDialog(prev => ({ ...prev, events: updatedEvents }));
-    }
-  });
-
   const weekStart = startOfWeek(date, { locale: ko });
   const weekEnd = endOfWeek(date, { locale: ko });
   const weekDays = eachDayOfInterval({ start: weekStart, end: weekEnd });
@@ -152,7 +120,8 @@ export const CustomWeekView: React.FC<CustomWeekViewProps> = ({
 
   // Get all-day events for a specific day (single day events only)
   const getAllDayEventsForDay = (day: Date) => {
-    return events.filter(event => {
+    const dayStr = format(day, 'yyyy-MM-dd');
+    const filtered = events.filter(event => {
       const eventStart = new Date(event.start);
       const eventEnd = new Date(event.end);
       
@@ -160,16 +129,17 @@ export const CustomWeekView: React.FC<CustomWeekViewProps> = ({
       const isAllDay = event.resource?.data?.isAllDay || event.allDay;
       if (!isAllDay) return false;
       
-      // Check if it's a single-day event
-      const startDateOnly = new Date(eventStart);
-      startDateOnly.setHours(0, 0, 0, 0);
-      const endDateOnly = new Date(eventEnd);
-      endDateOnly.setHours(0, 0, 0, 0);
+      // Check if event overlaps with this day
+      const eventStartStr = format(eventStart, 'yyyy-MM-dd');
+      const eventEndStr = format(eventEnd, 'yyyy-MM-dd');
       
-      const isSingleDay = startDateOnly.getTime() === endDateOnly.getTime();
+      const overlaps = eventStartStr <= dayStr && eventEndStr >= dayStr;
       
-      return isSameDay(eventStart, day) && isSingleDay;
+      return overlaps;
     });
+    
+    console.log(`getAllDayEventsForDay for ${dayStr}:`, filtered.length, filtered.map(e => e.title));
+    return filtered;
   };
 
   // Get timed events for time slots
@@ -266,6 +236,7 @@ export const CustomWeekView: React.FC<CustomWeekViewProps> = ({
             const allEventsForDay = allDayEvents;
             const visibleEvents = allEventsForDay.slice(0, 3);
             const hiddenCount = Math.max(0, allEventsForDay.length - 3);
+            console.log(`Rendering day ${format(day, 'yyyy-MM-dd')}: ${allEventsForDay.length} events, ${visibleEvents.length} visible`);
 
             return (
               <div key={day.toISOString()} className="border-r bg-gray-50">

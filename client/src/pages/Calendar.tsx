@@ -103,36 +103,36 @@ export default function Calendar() {
 
   // Fetch events
   const { data: events = [] } = useQuery({
-    queryKey: ['/api/events', user?.id || '1'],
-    enabled: !!user?.id,
+    queryKey: ['/api/events', (user as any)?.id || '1'],
+    enabled: !!(user as any)?.id,
     retry: false,
   });
 
   // Fetch all tasks to display on calendar
   const { data: allTasks = [] } = useQuery({
-    queryKey: ['/api/tasks', user?.id || '1'],
-    enabled: !!user?.id,
+    queryKey: ['/api/tasks', (user as any)?.id || '1'],
+    enabled: !!(user as any)?.id,
     retry: false,
   });
 
   // Fetch projects for task context
   const { data: projects = [] } = useQuery({
-    queryKey: ['/api/projects', user?.id || '1'],
-    enabled: !!user?.id,
+    queryKey: ['/api/projects', (user as any)?.id || '1'],
+    enabled: !!(user as any)?.id,
     retry: false,
   });
 
   // Fetch foundation (core values) for dropdown
   const { data: foundation = null } = useQuery({
-    queryKey: ['/api/foundation', user?.id || '1'],
-    enabled: !!user?.id,
+    queryKey: ['/api/foundation', (user as any)?.id || '1'],
+    enabled: !!(user as any)?.id,
     retry: false,
   });
 
   // Fetch annual goals for dropdown
   const { data: annualGoals = [] } = useQuery({
-    queryKey: ['/api/goals', user?.id || '1'],
-    enabled: !!user?.id,
+    queryKey: ['/api/goals', (user as any)?.id || '1'],
+    enabled: !!(user as any)?.id,
     retry: false,
   });
 
@@ -432,7 +432,9 @@ export default function Calendar() {
       };
     });
 
-    return [...eventItems, ...taskItems];
+    const finalItems = [...eventItems, ...taskItems];
+    console.log('Final calendar items:', finalItems.length, finalItems.slice(0, 3));
+    return finalItems;
   }, [events, allTasks, projects, date, view]);
 
   // Handle slot selection (drag to create event)
