@@ -44,6 +44,19 @@ const taskPriorityColors = {
   C: '#10B981'     // 초록색
 };
 
+// Color scheme for events vs tasks
+const eventColors = {
+  high: '#3B82F6',    // 파란색 계열
+  medium: '#6366F1',  // 인디고
+  low: '#8B5CF6'      // 보라색
+};
+
+const taskColors = {
+  A: '#EF4444',    // 빨간색 계열  
+  B: '#F59E0B',    // 주황색
+  C: '#10B981'     // 초록색
+};
+
 export default function Calendar() {
   const { toast } = useToast();
   const { user } = useAuth();
@@ -278,7 +291,7 @@ export default function Calendar() {
         type: 'event',
         data: event,
         priority: event.priority,
-        color: priorityColors[event.priority as keyof typeof priorityColors]
+        color: eventColors[event.priority as keyof typeof eventColors]
       }
     });
 
@@ -341,7 +354,7 @@ export default function Calendar() {
               type: 'event',
               data: { ...event, isRecurring: true, originalId: event.id },
               priority: event.priority,
-              color: priorityColors[event.priority as keyof typeof priorityColors]
+              color: eventColors[event.priority as keyof typeof eventColors]
             }
           });
         }
@@ -368,7 +381,7 @@ export default function Calendar() {
         const project = safeProjects.find((p: any) => p.id === task.projectId);
         return {
           id: `task-${task.id}`,
-          title: `[할일] ${task.title}`,
+          title: task.title,
           start: new Date(`${task.startDate || task.endDate}T00:00`),
           end: new Date(`${task.endDate || task.startDate}T23:59`),
           resizable: false, // Tasks cannot be resized
@@ -378,7 +391,7 @@ export default function Calendar() {
             data: task,
             project: project,
             priority: task.priority,
-            color: project?.color || taskPriorityColors[task.priority as keyof typeof taskPriorityColors]
+            color: taskColors[task.priority as keyof typeof taskColors]
           }
         };
       });
@@ -666,15 +679,37 @@ export default function Calendar() {
                   <CalendarIcon className="h-5 w-5" />
                   <span>달력</span>
                 </div>
-                <div className="flex items-center space-x-2">
-                  <Badge variant="outline" className="bg-blue-50">
-                    <div className="w-3 h-3 bg-blue-500 rounded mr-2" />
-                    일정 (드래그 가능)
-                  </Badge>
-                  <Badge variant="outline" className="bg-orange-50">
-                    <div className="w-3 h-3 bg-orange-500 rounded mr-2 border-2 border-dashed border-white" />
-                    할일 (읽기 전용)
-                  </Badge>
+                <div className="flex items-center space-x-4">
+                  <div className="flex items-center space-x-2 text-sm">
+                    <span className="font-medium">일정:</span>
+                    <div className="flex items-center space-x-1">
+                      <div className="w-3 h-3 rounded" style={{ backgroundColor: eventColors.high }} />
+                      <span className="text-xs">높음</span>
+                    </div>
+                    <div className="flex items-center space-x-1">
+                      <div className="w-3 h-3 rounded" style={{ backgroundColor: eventColors.medium }} />
+                      <span className="text-xs">보통</span>
+                    </div>
+                    <div className="flex items-center space-x-1">
+                      <div className="w-3 h-3 rounded" style={{ backgroundColor: eventColors.low }} />
+                      <span className="text-xs">낮음</span>
+                    </div>
+                  </div>
+                  <div className="flex items-center space-x-2 text-sm">
+                    <span className="font-medium">할일:</span>
+                    <div className="flex items-center space-x-1">
+                      <div className="w-3 h-3 rounded" style={{ backgroundColor: taskColors.A }} />
+                      <span className="text-xs">A급</span>
+                    </div>
+                    <div className="flex items-center space-x-1">
+                      <div className="w-3 h-3 rounded" style={{ backgroundColor: taskColors.B }} />
+                      <span className="text-xs">B급</span>
+                    </div>
+                    <div className="flex items-center space-x-1">
+                      <div className="w-3 h-3 rounded" style={{ backgroundColor: taskColors.C }} />
+                      <span className="text-xs">C급</span>
+                    </div>
+                  </div>
                 </div>
               </CardTitle>
             </CardHeader>
@@ -704,14 +739,45 @@ export default function Calendar() {
                   eventPropGetter={eventStyleGetter}
                   culture="ko"
                   components={{
-                    event: ({ event }: { event: any }) => (
-                      <div
-                        onContextMenu={(e) => handleEventRightClick(event, e)}
-                        className="w-full h-full text-xs"
-                      >
-                        {event.title}
-                      </div>
-                    )
+                    event: ({ event }: { event: any }) => {
+                      const isCompleted = event.resource?.data?.completed || false;
+                      const isTask = event.resource?.type === 'task';
+                      
+                      const handleCheckboxClick = (e: React.MouseEvent) => {
+                        e.stopPropagation();
+                        e.preventDefault();
+                        
+                        if (isTask) {
+                          completeTaskMutation.mutate({
+                            id: event.resource.data.id,
+                            completed: !isCompleted
+                          });
+                        } else {
+                          completeEventMutation.mutate({
+                            id: event.resource.data.id,
+                            completed: !isCompleted
+                          });
+                        }
+                      };
+
+                      return (
+                        <div
+                          onContextMenu={(e) => handleEventRightClick(event, e)}
+                          className="w-full h-full text-xs flex items-center gap-1 p-1"
+                        >
+                          <input
+                            type="checkbox"
+                            checked={isCompleted}
+                            onChange={() => {}}
+                            onClick={handleCheckboxClick}
+                            className="w-3 h-3 flex-shrink-0"
+                          />
+                          <span className={`flex-1 truncate ${isCompleted ? 'line-through opacity-60' : ''}`}>
+                            {event.title}
+                          </span>
+                        </div>
+                      );
+                    }
                   }}
                   messages={{
                     next: "다음",
@@ -1045,7 +1111,14 @@ export default function Calendar() {
                     imageUrls={eventForm.imageUrls}
                     fileUrls={eventForm.fileUrls}
                     onImagesChange={(imageUrls) => setEventForm(prev => ({ ...prev, imageUrls }))}
-                    onFilesChange={(fileUrls) => setEventForm(prev => ({ ...prev, fileUrls }))}
+                    onFilesChange={(fileUrls) => setEventForm(prev => ({ 
+                      ...prev, 
+                      fileUrls: fileUrls.map(file => ({
+                        url: file.url,
+                        name: file.name,
+                        size: file.size || 0
+                      }))
+                    }))}
                     uploadEndpoint="/api/files/upload"
                     maxFiles={10}
                     maxFileSize={10485760}
