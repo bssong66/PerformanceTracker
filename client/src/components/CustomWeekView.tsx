@@ -53,9 +53,26 @@ export default function CustomWeekView({ date, events, onSelectEvent, onSelectSl
       
       return response.json();
     },
-    onSuccess: () => {
+    onSuccess: (data, variables) => {
       queryClient.invalidateQueries({ queryKey: ['/api/tasks'] });
       queryClient.invalidateQueries({ queryKey: ['/api/events'] });
+      // Force refresh the dialog events
+      const updatedEvents = showMoreDialog.events.map(evt => {
+        if (evt.resource.data.id === variables.id) {
+          return {
+            ...evt,
+            resource: {
+              ...evt.resource,
+              data: {
+                ...evt.resource.data,
+                completed: variables.completed
+              }
+            }
+          };
+        }
+        return evt;
+      });
+      setShowMoreDialog(prev => ({ ...prev, events: updatedEvents }));
     }
   });
 
@@ -76,9 +93,26 @@ export default function CustomWeekView({ date, events, onSelectEvent, onSelectSl
       
       return response.json();
     },
-    onSuccess: () => {
+    onSuccess: (data, variables) => {
       queryClient.invalidateQueries({ queryKey: ['/api/events'] });
       queryClient.invalidateQueries({ queryKey: ['/api/tasks'] });
+      // Force refresh the dialog events
+      const updatedEvents = showMoreDialog.events.map(evt => {
+        if (evt.resource.data.id === variables.id) {
+          return {
+            ...evt,
+            resource: {
+              ...evt.resource,
+              data: {
+                ...evt.resource.data,
+                completed: variables.completed
+              }
+            }
+          };
+        }
+        return evt;
+      });
+      setShowMoreDialog(prev => ({ ...prev, events: updatedEvents }));
     }
   });
   const weekStart = startOfWeek(date, { locale: ko });
@@ -235,6 +269,8 @@ export default function CustomWeekView({ date, events, onSelectEvent, onSelectSl
             {showMoreDialog.events.map((event, index) => {
               const isCompleted = event.resource?.data?.completed || false;
               const isTask = event.resource?.type === 'task';
+              
+
               
               const handleCheckboxClick = (e: React.MouseEvent) => {
                 e.stopPropagation();
