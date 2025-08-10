@@ -77,6 +77,17 @@ export default function Calendar() {
     item: any;
     type: 'event' | 'task';
   } | null>(null);
+
+  // More events dialog state
+  const [showMoreDialog, setShowMoreDialog] = useState<{
+    open: boolean;
+    day: Date;
+    events: any[];
+  }>({
+    open: false,
+    day: new Date(),
+    events: []
+  });
   
   // Event form state
   const [eventForm, setEventForm] = useState({
@@ -797,7 +808,168 @@ export default function Calendar() {
                   max={new Date(0, 0, 0, 22, 0, 0)}
                   dayLayoutAlgorithm="no-overlap"
                   components={{
+                    month: {
+                      dateHeader: ({ date, label }: { date: Date; label: string }) => {
+                        const dayEvents = calendarEvents.filter((event: any) => {
+                          const eventDate = new Date(event.start);
+                          return event.allDay && 
+                                 eventDate.getFullYear() === date.getFullYear() &&
+                                 eventDate.getMonth() === date.getMonth() &&
+                                 eventDate.getDate() === date.getDate();
+                        });
+
+                        const visibleEvents = dayEvents.slice(0, 3);
+                        const hiddenCount = dayEvents.length - 3;
+
+                        return (
+                          <div className="w-full h-full">
+                            <div className="text-right p-1 font-medium">
+                              {label}
+                            </div>
+                            {visibleEvents.length > 0 && (
+                              <div className="px-1 pb-1">
+                                {visibleEvents.map((event: any) => {
+                                  const isCompleted = event.resource?.data?.completed || false;
+                                  const isTask = event.resource?.type === 'task';
+                                  
+                                  return (
+                                    <div
+                                      key={event.id}
+                                      className="mb-1 px-1 py-0.5 rounded text-xs cursor-pointer hover:opacity-80 truncate"
+                                      style={{ backgroundColor: event.resource?.color || '#3B82F6', color: 'white' }}
+                                      onClick={() => handleSelectEvent(event)}
+                                    >
+                                      <div className="flex items-center gap-1">
+                                        <input
+                                          type="checkbox"
+                                          checked={isCompleted}
+                                          onChange={() => {}}
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            if (isTask) {
+                                              completeTaskMutation.mutate({
+                                                id: event.resource.data.id,
+                                                completed: !isCompleted
+                                              });
+                                            } else {
+                                              completeEventMutation.mutate({
+                                                id: event.resource.data.id,
+                                                completed: !isCompleted
+                                              });
+                                            }
+                                          }}
+                                          className="w-2 h-2 flex-shrink-0"
+                                        />
+                                        {getPriorityIndicator(event.resource?.priority || 'medium', event.resource?.type || 'event')}
+                                        <span className={`flex-1 truncate ${isCompleted ? 'line-through opacity-60' : ''}`}>
+                                          {event.title}
+                                        </span>
+                                      </div>
+                                    </div>
+                                  );
+                                })}
+                                {hiddenCount > 0 && (
+                                  <button
+                                    className="w-full text-xs text-blue-600 hover:text-blue-800 py-0.5 bg-white rounded border border-blue-200"
+                                    onClick={() => {
+                                      setShowMoreDialog({
+                                        open: true,
+                                        day: date,
+                                        events: dayEvents
+                                      });
+                                    }}
+                                  >
+                                    +{hiddenCount} more
+                                  </button>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      }
+                    },
+                    week: {
+                      header: ({ date, label }: { date: Date; label: string }) => {
+                        const dayEvents = calendarEvents.filter((event: any) => {
+                          const eventDate = new Date(event.start);
+                          return event.allDay && 
+                                 eventDate.getFullYear() === date.getFullYear() &&
+                                 eventDate.getMonth() === date.getMonth() &&
+                                 eventDate.getDate() === date.getDate();
+                        });
+
+                        const visibleEvents = dayEvents.slice(0, 3);
+                        const hiddenCount = dayEvents.length - 3;
+
+                        return (
+                          <div className="flex flex-col h-full min-h-[120px]">
+                            <div className="text-center py-2 border-b font-medium bg-white">
+                              {label}
+                            </div>
+                            <div className="flex-1 p-1 bg-gray-50 min-h-[80px]">
+                              {visibleEvents.map((event: any) => {
+                                const isCompleted = event.resource?.data?.completed || false;
+                                const isTask = event.resource?.type === 'task';
+                                
+                                return (
+                                  <div
+                                    key={event.id}
+                                    className="mb-1 p-1 rounded text-xs cursor-pointer hover:opacity-80"
+                                    style={{ backgroundColor: event.resource?.color || '#3B82F6', color: 'white' }}
+                                    onClick={() => handleSelectEvent(event)}
+                                  >
+                                    <div className="flex items-center gap-1">
+                                      <input
+                                        type="checkbox"
+                                        checked={isCompleted}
+                                        onChange={() => {}}
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          if (isTask) {
+                                            completeTaskMutation.mutate({
+                                              id: event.resource.data.id,
+                                              completed: !isCompleted
+                                            });
+                                          } else {
+                                            completeEventMutation.mutate({
+                                              id: event.resource.data.id,
+                                              completed: !isCompleted
+                                            });
+                                          }
+                                        }}
+                                        className="w-3 h-3 flex-shrink-0"
+                                      />
+                                      {getPriorityIndicator(event.resource?.priority || 'medium', event.resource?.type || 'event')}
+                                      <span className={`flex-1 truncate ${isCompleted ? 'line-through opacity-60' : ''}`}>
+                                        {event.title}
+                                      </span>
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                              {hiddenCount > 0 && (
+                                <button
+                                  className="w-full text-xs text-blue-600 hover:text-blue-800 py-1 bg-white rounded border border-blue-200"
+                                  onClick={() => {
+                                    setShowMoreDialog({
+                                      open: true,
+                                      day: date,
+                                      events: dayEvents
+                                    });
+                                  }}
+                                >
+                                  +{hiddenCount} more
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      }
+                    },
                     event: ({ event }: { event: any }) => {
+                      // Only render timed events here, all-day events are handled in header
+                      if (event.allDay) return null;
+                      
                       const isCompleted = event.resource?.data?.completed || false;
                       const isTask = event.resource?.type === 'task';
                       
@@ -1231,6 +1403,66 @@ export default function Calendar() {
                   삭제
                 </Button>
               )}
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* More Events Dialog */}
+        <Dialog open={showMoreDialog.open} onOpenChange={(open) => {
+          setShowMoreDialog(prev => ({ ...prev, open }));
+        }}>
+          <DialogContent className="max-w-md max-h-[80vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>
+                {format(showMoreDialog.day, 'M월 d일 (E)', { locale: ko })} 종일 일정
+              </DialogTitle>
+            </DialogHeader>
+            <div className="space-y-2 mt-4">
+              {showMoreDialog.events.map((event: any) => {
+                const isCompleted = event.resource?.data?.completed || false;
+                const isTask = event.resource?.type === 'task';
+                
+                return (
+                  <div
+                    key={event.id}
+                    className="p-3 rounded border cursor-pointer hover:bg-gray-50"
+                    style={{ borderLeftColor: event.resource?.color || '#3B82F6', borderLeftWidth: '4px' }}
+                    onClick={() => handleSelectEvent(event)}
+                  >
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        checked={isCompleted}
+                        onChange={() => {}}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (isTask) {
+                            completeTaskMutation.mutate({
+                              id: event.resource.data.id,
+                              completed: !isCompleted
+                            });
+                          } else {
+                            completeEventMutation.mutate({
+                              id: event.resource.data.id,
+                              completed: !isCompleted
+                            });
+                          }
+                        }}
+                        className="w-4 h-4 flex-shrink-0"
+                      />
+                      {getPriorityIndicator(event.resource?.priority || 'medium', event.resource?.type || 'event')}
+                      <span className={`flex-1 ${isCompleted ? 'line-through opacity-60' : ''}`}>
+                        {event.title}
+                      </span>
+                    </div>
+                    {event.resource?.data?.description && (
+                      <p className="text-sm text-gray-600 mt-1 ml-6">
+                        {event.resource.data.description}
+                      </p>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           </DialogContent>
         </Dialog>
