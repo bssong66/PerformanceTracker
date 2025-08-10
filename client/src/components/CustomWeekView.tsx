@@ -288,7 +288,7 @@ export const CustomWeekView: React.FC<CustomWeekViewProps> = ({
             월
           </button>
           <button 
-            className="rbc-active rbc-btn"
+            className="rbc-active rbc-btn bg-[#0079f2] text-[#ffffff]"
           >
             주
           </button>
@@ -300,7 +300,6 @@ export const CustomWeekView: React.FC<CustomWeekViewProps> = ({
           </button>
         </div>
       </div>
-
       {/* Header with day names and all-day events */}
       <div className="relative">
         {/* Day headers with all-day events section */}
@@ -449,7 +448,6 @@ export const CustomWeekView: React.FC<CustomWeekViewProps> = ({
           )}
         </div>
       </div>
-
       {/* Time grid */}
       <div className="grid grid-cols-8">
         {timeSlots.map(hour => (
@@ -526,7 +524,6 @@ export const CustomWeekView: React.FC<CustomWeekViewProps> = ({
           </div>
         ))}
       </div>
-
       {/* More Events Dialog - styled like React Big Calendar popup */}
       <Dialog open={showMoreDialog.open} onOpenChange={(open) => setShowMoreDialog(prev => ({ ...prev, open }))}>
         <DialogContent className="max-w-sm p-0 bg-white border border-gray-300 shadow-lg rounded-md" aria-describedby="more-events-description">
@@ -589,7 +586,6 @@ export const CustomWeekView: React.FC<CustomWeekViewProps> = ({
           </div>
         </DialogContent>
       </Dialog>
-
       {/* All-day events dialog */}
       <Dialog open={showAllDayDialog.open} onOpenChange={(open) => {
         if (!open) {
