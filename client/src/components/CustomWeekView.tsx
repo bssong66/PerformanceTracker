@@ -193,7 +193,27 @@ export const CustomWeekView: React.FC<CustomWeekViewProps> = ({
       }
     });
 
-    return Array.from(uniqueEvents.values());
+    return Array.from(uniqueEvents.values()).map(event => {
+      const eventStart = new Date(event.start);
+      const eventEnd = new Date(event.end);
+      
+      // Calculate which days this event spans within the current week
+      const weekStartDate = startOfWeek(date, { locale: ko });
+      const weekEndDate = endOfWeek(date, { locale: ko });
+      
+      const eventStartInWeek = eventStart < weekStartDate ? weekStartDate : eventStart;
+      const eventEndInWeek = eventEnd > weekEndDate ? weekEndDate : eventEnd;
+      
+      const startDayIndex = Math.max(0, Math.floor((eventStartInWeek.getTime() - weekStartDate.getTime()) / (1000 * 60 * 60 * 24)));
+      const endDayIndex = Math.min(6, Math.floor((eventEndInWeek.getTime() - weekStartDate.getTime()) / (1000 * 60 * 60 * 24)));
+      
+      return {
+        ...event,
+        startDayIndex,
+        endDayIndex,
+        spanDays: endDayIndex - startDayIndex + 1
+      };
+    });
   };
 
   const handleShowMore = (day: Date, dayEvents: Event[]) => {
@@ -230,19 +250,14 @@ export const CustomWeekView: React.FC<CustomWeekViewProps> = ({
       </div>
 
       {/* Header with days and events */}
-      <div className="grid grid-cols-8 border-b">
-        <div className="p-2 border-r bg-gray-50 text-sm text-gray-500">시간</div>
-        {weekDays.map(day => {
-          const dayEvents = getEventsForDay(day);
-          const multiDayEvents = getMultiDayEventsForWeek().filter(event => {
-            const eventStart = new Date(event.start);
-            const eventEnd = new Date(event.end);
-            return eventStart <= day && eventEnd >= day;
-          });
-          
-          const allEvents = [...dayEvents, ...multiDayEvents];
-          const visibleEvents = allEvents.slice(0, 3);
-          const hiddenCount = allEvents.length - 3;
+      <div className="relative">
+        {/* Day headers */}
+        <div className="grid grid-cols-8 border-b">
+          <div className="p-2 border-r bg-gray-50 text-sm text-gray-500">시간</div>
+          {weekDays.map(day => {
+            const dayEvents = getEventsForDay(day);
+            const visibleEvents = dayEvents.slice(0, 3);
+            const hiddenCount = dayEvents.length - 3;
 
           return (
             <div key={day.toISOString()} className="border-r bg-gray-50">
@@ -297,7 +312,7 @@ export const CustomWeekView: React.FC<CustomWeekViewProps> = ({
                 {hiddenCount > 0 && (
                   <div 
                     className="text-xs text-blue-600 cursor-pointer font-medium px-1 hover:underline"
-                    onClick={() => handleShowMore(day, allEvents)}
+                    onClick={() => handleShowMore(day, dayEvents)}
                   >
                     +{hiddenCount} more
                   </div>
@@ -307,6 +322,62 @@ export const CustomWeekView: React.FC<CustomWeekViewProps> = ({
           );
         })}
       </div>
+      
+      {/* Multi-day events overlay */}
+      <div className="relative">
+        {getMultiDayEventsForWeek().map((event, index) => {
+          const isCompleted = event.resource?.data?.completed || false;
+          const isTask = event.resource?.type === 'task';
+          
+          const handleCheckboxClick = (e: React.MouseEvent) => {
+            e.stopPropagation();
+            e.preventDefault();
+            
+            if (isTask) {
+              completeTaskMutation.mutate({
+                id: event.resource.data.id,
+                completed: !isCompleted
+              });
+            } else {
+              completeEventMutation.mutate({
+                id: event.resource.data.id,
+                completed: !isCompleted
+              });
+            }
+          };
+
+          const leftOffset = `${(event.startDayIndex / 7 * 100) + (100/7 * 0.125)}%`;
+          const width = `${(event.spanDays / 7 * 100) - (100/7 * 0.25)}%`;
+
+          return (
+            <div
+              key={`multi-${event.id}-${index}`}
+              className="absolute text-xs px-2 py-1 rounded text-white cursor-pointer flex items-center gap-1 z-10"
+              style={{
+                backgroundColor: event.resource.color,
+                left: leftOffset,
+                width: width,
+                top: `${index * 24 + 4}px`,
+                height: '20px'
+              }}
+              onClick={() => onSelectEvent(event)}
+            >
+              <input
+                type="checkbox"
+                checked={isCompleted}
+                onChange={() => {}}
+                onClick={handleCheckboxClick}
+                className="w-3 h-3 flex-shrink-0"
+              />
+              {getPriorityIndicator(event.resource?.priority || 'medium', event.resource?.type || 'event')}
+              <span className={`truncate flex-1 ${isCompleted ? 'line-through opacity-60' : ''}`}>
+                {event.title}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+    </div>
 
       {/* Time grid */}
       <div className="grid grid-cols-8">

@@ -47,18 +47,21 @@ export default function Foundation() {
   const yearOptions = Array.from({ length: 11 }, (_, i) => currentYear - 5 + i);
 
   const { data: foundation, isLoading: foundationLoading, refetch: refetchFoundation } = useQuery({
-    queryKey: [api.foundation.get(user?.id, selectedYear)],
+    queryKey: ['foundation', user?.id, selectedYear],
+    queryFn: () => fetch(api.foundation.get(user?.id, selectedYear)).then(res => res.json()),
     meta: { errorMessage: "Foundation not found" },
     enabled: !!user?.id
   });
 
   const { data: goals = [], isLoading: goalsLoading, refetch: refetchGoals } = useQuery({
-    queryKey: [api.goals.list(user?.id, selectedYear)],
+    queryKey: ['goals', user?.id, selectedYear],
+    queryFn: () => fetch(api.goals.list(user?.id, selectedYear)).then(res => res.json()),
     enabled: !!user?.id
   });
 
   const { data: allFoundations = [], refetch: refetchAllFoundations } = useQuery({
-    queryKey: [api.foundation.getAll(user?.id)],
+    queryKey: ['all-foundations', user?.id],
+    queryFn: () => fetch(api.foundation.getAll(user?.id)).then(res => res.json()),
     enabled: showSelectDialog && !!user?.id,
   });
 
@@ -158,10 +161,10 @@ export default function Foundation() {
     
     // Invalidate and refetch queries for the new year
     queryClient.invalidateQueries({ 
-      queryKey: [api.foundation.get(user?.id, selectedYear)] 
+      queryKey: ['foundation', user?.id, selectedYear] 
     });
     queryClient.invalidateQueries({ 
-      queryKey: [api.goals.list(user?.id, selectedYear)] 
+      queryKey: ['goals', user?.id, selectedYear] 
     });
   }, [selectedYear]);
 
@@ -380,7 +383,6 @@ export default function Foundation() {
     mutationFn: saveFoundation,
     onSuccess: () => {
       // Invalidate foundation queries across all pages
-      queryClient.invalidateQueries({ queryKey: [api.foundation.get(user?.id, selectedYear)] });
       queryClient.invalidateQueries({ queryKey: ['foundation', user?.id, selectedYear] });
       toast({
         title: "저장 완료",
@@ -401,7 +403,6 @@ export default function Foundation() {
     onSuccess: () => {
       setNewGoal("");
       // Invalidate goals queries across all pages
-      queryClient.invalidateQueries({ queryKey: [api.goals.list(user?.id, selectedYear)] });
       queryClient.invalidateQueries({ queryKey: ['goals', user?.id, selectedYear] });
       toast({
         title: "목표 추가",
@@ -421,7 +422,6 @@ export default function Foundation() {
     mutationFn: deleteAnnualGoal,
     onSuccess: () => {
       // Invalidate goals queries across all pages
-      queryClient.invalidateQueries({ queryKey: [api.goals.list(user?.id, selectedYear)] });
       queryClient.invalidateQueries({ queryKey: ['goals', user?.id, selectedYear] });
       toast({
         title: "목표 삭제",
@@ -527,7 +527,7 @@ export default function Foundation() {
     );
     
     // Update cache with optimistic data
-    queryClient.setQueryData([api.goals.list(user?.id, selectedYear)], optimisticGoals);
+    queryClient.setQueryData(['goals', user?.id, selectedYear], optimisticGoals);
     
     try {
       const response = await fetch(`/api/goals/${goalId}`, {
@@ -546,7 +546,7 @@ export default function Foundation() {
         });
       } else {
         // Revert optimistic update on failure
-        queryClient.setQueryData([api.goals.list(user?.id, selectedYear)], currentGoals);
+        queryClient.setQueryData(['goals', user?.id, selectedYear], currentGoals);
         toast({
           title: "변경 실패",
           description: "핵심가치 변경에 실패했습니다.",
@@ -555,7 +555,7 @@ export default function Foundation() {
       }
     } catch (error) {
       // Revert optimistic update on error
-      queryClient.setQueryData([api.goals.list(user?.id, selectedYear)], currentGoals);
+      queryClient.setQueryData(['goals', user?.id, selectedYear], currentGoals);
       toast({
         title: "변경 실패",
         description: "핵심가치 변경에 실패했습니다.",
@@ -572,7 +572,7 @@ export default function Foundation() {
     );
     
     // Update cache with optimistic data
-    queryClient.setQueryData([api.goals.list(user?.id, selectedYear)], optimisticGoals);
+    queryClient.setQueryData(['goals', user?.id, selectedYear], optimisticGoals);
     
     try {
       const response = await fetch(`/api/goals/${goalId}`, {
@@ -585,7 +585,7 @@ export default function Foundation() {
       
       if (!response.ok) {
         // Revert optimistic update on failure
-        queryClient.setQueryData([api.goals.list(user?.id, selectedYear)], currentGoals);
+        queryClient.setQueryData(['goals', user?.id, selectedYear], currentGoals);
         toast({
           title: "변경 실패",
           description: "목표 내용 변경에 실패했습니다.",
@@ -594,7 +594,7 @@ export default function Foundation() {
       }
     } catch (error) {
       // Revert optimistic update on error
-      queryClient.setQueryData([api.goals.list(user?.id, selectedYear)], currentGoals);
+      queryClient.setQueryData(['goals', user?.id, selectedYear], currentGoals);
       console.error("목표 제목 업데이트 실패:", error);
     }
   };
