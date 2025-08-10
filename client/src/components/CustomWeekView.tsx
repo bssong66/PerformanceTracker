@@ -59,6 +59,14 @@ export const CustomWeekView: React.FC<CustomWeekViewProps> = ({
   onSelectSlot,
 }) => {
   console.log('CustomWeekView received events:', events.length);
+  
+  // Debug: Check all-day events
+  const allDayEventCount = events.filter(e => e.resource?.data?.isAllDay || e.allDay).length;
+  console.log('All-day events count:', allDayEventCount);
+  events.slice(0, 5).forEach(event => {
+    console.log(`Event: ${event.title}, allDay: ${event.allDay}, data.isAllDay: ${event.resource?.data?.isAllDay}`);
+  });
+  
   const queryClient = useQueryClient();
   
   // Mutations for completion
@@ -118,8 +126,8 @@ export const CustomWeekView: React.FC<CustomWeekViewProps> = ({
 
   const timeSlots = Array.from({ length: 16 }, (_, i) => i + 6); // 6AM to 10PM
 
-  // Get all-day events for a specific day (single day events only)
-  const getAllDayEventsForDay = (day: Date) => {
+  // Get single-day all-day events for a specific day
+  const getSingleDayEventsForDay = (day: Date) => {
     const dayStr = format(day, 'yyyy-MM-dd');
     const filtered = events.filter(event => {
       const eventStart = new Date(event.start);
@@ -129,17 +137,74 @@ export const CustomWeekView: React.FC<CustomWeekViewProps> = ({
       const isAllDay = event.resource?.data?.isAllDay || event.allDay;
       if (!isAllDay) return false;
       
-      // Check if event overlaps with this day
+      // Check if it's a single-day event that occurs on this day
       const eventStartStr = format(eventStart, 'yyyy-MM-dd');
       const eventEndStr = format(eventEnd, 'yyyy-MM-dd');
       
-      const overlaps = eventStartStr <= dayStr && eventEndStr >= dayStr;
+      // Debug log for first few events
+      if (events.indexOf(event) < 5) {
+        console.log(`Event "${event.title}": start=${eventStartStr}, end=${eventEndStr}, isAllDay=${isAllDay}, dayStr=${dayStr}`);
+      }
       
-      return overlaps;
+      // Single day event: start and end on the same day
+      const isSingleDay = eventStartStr === eventEndStr;
+      const isOnThisDay = eventStartStr === dayStr;
+      
+      return isSingleDay && isOnThisDay;
     });
     
-    console.log(`getAllDayEventsForDay for ${dayStr}:`, filtered.length, filtered.map(e => e.title));
+    console.log(`getSingleDayEventsForDay for ${dayStr}:`, filtered.length, filtered.map(e => e.title));
     return filtered;
+  };
+
+  // Get multi-day events and their positions for the week
+  const getMultiDayEventsForWeek = () => {
+    const multiDayEvents: Array<{
+      event: any;
+      startCol: number;
+      endCol: number;
+      row: number;
+    }> = [];
+
+    const weekStartStr = format(weekStart, 'yyyy-MM-dd');
+    const weekEndStr = format(weekEnd, 'yyyy-MM-dd');
+
+    events.forEach(event => {
+      const eventStart = new Date(event.start);
+      const eventEnd = new Date(event.end);
+      
+      // Must be all-day event
+      const isAllDay = event.resource?.data?.isAllDay || event.allDay;
+      if (!isAllDay) return;
+      
+      const eventStartStr = format(eventStart, 'yyyy-MM-dd');
+      const eventEndStr = format(eventEnd, 'yyyy-MM-dd');
+      
+      // Check if it's a multi-day event
+      const isMultiDay = eventStartStr !== eventEndStr;
+      if (!isMultiDay) return;
+      
+      // Check if event overlaps with this week
+      const overlapsWeek = eventStartStr <= weekEndStr && eventEndStr >= weekStartStr;
+      if (!overlapsWeek) return;
+
+      // Calculate start and end columns (1-based, 1 = first day column)
+      const daysDiff = Math.floor((eventStart.getTime() - weekStart.getTime()) / (24 * 60 * 60 * 1000));
+      const eventStartCol = Math.max(1, daysDiff + 1);
+      
+      const endDaysDiff = Math.floor((eventEnd.getTime() - weekStart.getTime()) / (24 * 60 * 60 * 1000));
+      const eventEndCol = Math.min(7, endDaysDiff + 1);
+
+      multiDayEvents.push({
+        event,
+        startCol: eventStartCol,
+        endCol: eventEndCol,
+        row: 0 // Will be calculated for positioning
+      });
+    });
+
+    console.log('Multi-day events:', multiDayEvents);
+    return multiDayEvents;
   };
 
   // Get timed events for time slots
@@ -156,8 +221,9 @@ export const CustomWeekView: React.FC<CustomWeekViewProps> = ({
     });
   };
 
-  // Get multi-day events that span across a specific day
-  const getMultiDayEventsForDay = (day: Date) => {
+  // Get all events (single and multi-day) for a specific day - used for "show more" dialog
+  const getAllEventsForDay = (day: Date) => {
+    const dayStr = format(day, 'yyyy-MM-dd');
     return events.filter(event => {
       const eventStart = new Date(event.start);
       const eventEnd = new Date(event.end);
@@ -166,22 +232,11 @@ export const CustomWeekView: React.FC<CustomWeekViewProps> = ({
       const isAllDay = event.resource?.data?.isAllDay || event.allDay;
       if (!isAllDay) return false;
       
-      // Check if event spans multiple days
-      const startDate = new Date(eventStart);
-      startDate.setHours(0, 0, 0, 0);
-      const endDate = new Date(eventEnd);
-      endDate.setHours(0, 0, 0, 0);
+      // Check if event overlaps with this day
+      const eventStartStr = format(eventStart, 'yyyy-MM-dd');
+      const eventEndStr = format(eventEnd, 'yyyy-MM-dd');
       
-      const isMultiDay = startDate.getTime() !== endDate.getTime();
-      if (!isMultiDay) return false;
-      
-      // Check if the event spans across the given day
-      const dayStart = new Date(day);
-      dayStart.setHours(0, 0, 0, 0);
-      const dayEnd = new Date(day);
-      dayEnd.setHours(23, 59, 59, 999);
-      
-      return (eventStart <= dayEnd && eventEnd >= dayStart);
+      return eventStartStr <= dayStr && eventEndStr >= dayStr;
     });
   };
 
@@ -232,11 +287,9 @@ export const CustomWeekView: React.FC<CustomWeekViewProps> = ({
         <div className="grid grid-cols-8 border-b">
           <div className="p-2 border-r bg-gray-50 text-sm text-gray-500">시간</div>
           {weekDays.map(day => {
-            const allDayEvents = getAllDayEventsForDay(day);
-            const allEventsForDay = allDayEvents;
-            const visibleEvents = allEventsForDay.slice(0, 3);
-            const hiddenCount = Math.max(0, allEventsForDay.length - 3);
-            console.log(`Rendering day ${format(day, 'yyyy-MM-dd')}: ${allEventsForDay.length} events, ${visibleEvents.length} visible`);
+            const singleDayEvents = getSingleDayEventsForDay(day);
+            const visibleSingleEvents = singleDayEvents.slice(0, 2); // Reserve space for multi-day
+            const hiddenSingleCount = Math.max(0, singleDayEvents.length - 2);
 
             return (
               <div key={day.toISOString()} className="border-r bg-gray-50">
@@ -244,9 +297,9 @@ export const CustomWeekView: React.FC<CustomWeekViewProps> = ({
                   {format(day, 'M월 d일 (E)', { locale: ko })}
                 </div>
                 
-                {/* All-day events section (both single and multi-day) */}
+                {/* Single-day events section */}
                 <div className="p-1 space-y-1 min-h-[80px] bg-gray-50">
-                  {visibleEvents.map((event, index) => {
+                  {visibleSingleEvents.map((event, index) => {
                     const isCompleted = event.resource?.data?.completed || false;
                     const isTask = event.resource?.type === 'task';
                     
@@ -269,7 +322,7 @@ export const CustomWeekView: React.FC<CustomWeekViewProps> = ({
 
                     return (
                       <div
-                        key={`allday-${event.id}-${index}`}
+                        key={`single-${event.id}-${index}`}
                         className="text-xs px-2 py-1 rounded text-white cursor-pointer flex items-center gap-1"
                         style={{ backgroundColor: event.resource.color }}
                         onClick={() => onSelectEvent(event)}
@@ -289,15 +342,65 @@ export const CustomWeekView: React.FC<CustomWeekViewProps> = ({
                     );
                   })}
                   
-                  {hiddenCount > 0 && (
+                  {hiddenSingleCount > 0 && (
                     <div 
                       className="text-xs text-blue-600 cursor-pointer font-medium px-1 hover:underline"
-                      onClick={() => handleShowAllDayMore(day, allEventsForDay)}
+                      onClick={() => handleShowAllDayMore(day, getAllEventsForDay(day))}
                     >
-                      +{hiddenCount} more
+                      +{hiddenSingleCount} more
                     </div>
                   )}
                 </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Multi-day events overlay */}
+        <div className="relative">
+          {getMultiDayEventsForWeek().map((multiDayEvent, index) => {
+            const isCompleted = multiDayEvent.event.resource?.data?.completed || false;
+            const isTask = multiDayEvent.event.resource?.type === 'task';
+            
+            return (
+              <div
+                key={`multiday-${multiDayEvent.event.id}-${index}`}
+                className="absolute text-xs px-2 py-1 rounded text-white cursor-pointer flex items-center gap-1 z-10"
+                style={{
+                  backgroundColor: multiDayEvent.event.resource.color,
+                  left: `${12.5 + (multiDayEvent.startCol - 1) * 12.5}%`,
+                  right: `${12.5 * (8 - multiDayEvent.endCol)}%`,
+                  top: `${index * 24 + 4}px`,
+                  height: '20px'
+                }}
+                onClick={() => onSelectEvent(multiDayEvent.event)}
+              >
+                <input
+                  type="checkbox"
+                  checked={isCompleted}
+                  onChange={() => {}}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    e.preventDefault();
+                    
+                    if (isTask) {
+                      completeTaskMutation.mutate({
+                        id: multiDayEvent.event.resource.data.id,
+                        completed: !isCompleted
+                      });
+                    } else {
+                      completeEventMutation.mutate({
+                        id: multiDayEvent.event.resource.data.id,
+                        completed: !isCompleted
+                      });
+                    }
+                  }}
+                  className="w-3 h-3 flex-shrink-0"
+                />
+                {getPriorityIndicator(multiDayEvent.event.resource?.priority || 'medium', multiDayEvent.event.resource?.type || 'event')}
+                <span className={`truncate flex-1 ${isCompleted ? 'line-through opacity-60' : ''}`}>
+                  {multiDayEvent.event.title}
+                </span>
               </div>
             );
           })}
