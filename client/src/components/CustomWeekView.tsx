@@ -215,33 +215,15 @@ export const CustomWeekView: React.FC<CustomWeekViewProps> = ({
 
   // Get timed events for time slots
   const getEventsForTimeSlot = (day: Date, hour: number) => {
-    const timeSlotEvents = events.filter(event => {
+    return events.filter(event => {
       const eventStart = new Date(event.start);
-      const eventEnd = new Date(event.end);
+      const eventHour = eventStart.getHours();
 
       // Only include timed events (exclude all-day events completely)
       const isAllDay = event.resource?.data?.isAllDay || event.allDay;
       if (isAllDay) return false;
 
-      // Check if event overlaps with this hour slot
-      if (!isSameDay(eventStart, day)) return false;
-      
-      const slotStart = new Date(day);
-      slotStart.setHours(hour, 0, 0, 0);
-      const slotEnd = new Date(day);
-      slotEnd.setHours(hour + 1, 0, 0, 0);
-
-      return eventStart < slotEnd && eventEnd > slotStart;
-    });
-
-    // Sort by priority (high -> medium -> low) then by start time
-    return timeSlotEvents.sort((a, b) => {
-      const priorityOrder = { high: 3, medium: 2, low: 1, A: 3, B: 2, C: 1 };
-      const aPriority = priorityOrder[a.resource?.priority as keyof typeof priorityOrder] || 2;
-      const bPriority = priorityOrder[b.resource?.priority as keyof typeof priorityOrder] || 2;
-      
-      if (aPriority !== bPriority) return bPriority - aPriority; // Higher priority first
-      return new Date(a.start).getTime() - new Date(b.start).getTime(); // Then by start time
+      return isSameDay(eventStart, day) && eventHour === hour;
     });
   };
 
@@ -477,15 +459,6 @@ export const CustomWeekView: React.FC<CustomWeekViewProps> = ({
                   {hourEvents.map((event, index) => {
                     const isCompleted = event.resource?.data?.completed || false;
                     const isTask = event.resource?.type === 'task';
-                    
-                    // Calculate opacity based on priority and position
-                    const priorityOrder = { high: 3, medium: 2, low: 1, A: 3, B: 2, C: 1 };
-                    const eventPriority = event.resource?.priority || 'medium';
-                    const priorityValue = priorityOrder[eventPriority as keyof typeof priorityOrder] || 2;
-                    
-                    // First event (highest priority) is fully opaque, others get progressively more transparent
-                    const opacity = index === 0 ? 1.0 : Math.max(0.4, 0.9 - (index * 0.2));
-                    const zIndex = 10 - index; // Higher priority events on top
 
                     const handleCheckboxClick = (e: React.MouseEvent) => {
                       e.stopPropagation();
@@ -507,16 +480,8 @@ export const CustomWeekView: React.FC<CustomWeekViewProps> = ({
                     return (
                       <div
                         key={`${event.id}-${index}`}
-                        className="absolute text-xs px-1 py-1 rounded text-white cursor-pointer flex items-center gap-1 border border-white border-opacity-30"
-                        style={{ 
-                          backgroundColor: event.resource.color,
-                          opacity: opacity,
-                          zIndex: zIndex,
-                          top: `${index * 2}px`, // Slight vertical offset to show stacking
-                          left: `${index * 2}px`, // Slight horizontal offset to show stacking
-                          right: `${index * 2}px`,
-                          minHeight: '24px'
-                        }}
+                        className="text-xs px-1 py-1 rounded text-white cursor-pointer mb-1 flex items-center gap-1"
+                        style={{ backgroundColor: event.resource.color }}
                         onClick={(e) => {
                           e.stopPropagation();
                           onSelectEvent(event);
@@ -533,13 +498,6 @@ export const CustomWeekView: React.FC<CustomWeekViewProps> = ({
                         <span className={`truncate flex-1 ${isCompleted ? 'line-through opacity-60' : ''}`}>
                           {event.title}
                         </span>
-                        
-                        {/* Show stacking indicator for overlapped events */}
-                        {index > 0 && (
-                          <span className="text-xs opacity-80 font-bold ml-1">
-                            +{hourEvents.length - 1}
-                          </span>
-                        )}
                       </div>
                     );
                   })}
