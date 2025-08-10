@@ -707,7 +707,7 @@ export default function Calendar() {
                     event: ({ event }: { event: any }) => (
                       <div
                         onContextMenu={(e) => handleEventRightClick(event, e)}
-                        className="w-full h-full"
+                        className="w-full h-full text-xs"
                       >
                         {event.title}
                       </div>
