@@ -794,7 +794,7 @@ export default function Calendar() {
                   views={[Views.MONTH, Views.WEEK, Views.DAY]}
                   view={view}
                   onView={setView}
-                  toolbar={false}
+                  toolbar={true}
                   date={date}
                   onNavigate={setDate}
                   onSelectSlot={handleSelectSlot}
