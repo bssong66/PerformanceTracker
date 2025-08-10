@@ -1,5 +1,6 @@
 import { useState, useCallback, useMemo } from "react";
 import CustomWeekView from '@/components/CustomWeekView';
+import { CustomDayView } from '@/components/CustomDayView';
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { Calendar as BigCalendar, momentLocalizer, View, Views } from "react-big-calendar";
@@ -759,6 +760,15 @@ export default function Calendar() {
                     onNavigate={setDate}
                     onViewChange={setView}
                   />
+                ) : view === 'day' ? (
+                  <CustomDayView
+                    date={date}
+                    events={calendarEvents}
+                    onSelectEvent={handleSelectEvent}
+                    onSelectSlot={handleSelectSlot}
+                    onNavigate={setDate}
+                    onViewChange={setView}
+                  />
                 ) : (
                   <DnDCalendar
                   localizer={localizer}
@@ -766,7 +776,7 @@ export default function Calendar() {
                   startAccessor={(event: any) => event.start}
                   endAccessor={(event: any) => event.end}
                   allDayAccessor={(event: any) => event.allDay} // Important: Tell React Big Calendar which events are all-day
-                  views={[Views.MONTH, Views.WEEK, Views.DAY]}
+                  views={[Views.MONTH]}
                   view={view}
                   onView={setView}
                   toolbar={true}
