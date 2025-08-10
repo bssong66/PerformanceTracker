@@ -280,27 +280,24 @@ export const CustomWeekView: React.FC<CustomWeekViewProps> = ({
           {format(weekStart, 'yyyy년 M월 d일', { locale: ko })} - {format(weekEnd, 'M월 d일', { locale: ko })}
         </h2>
 
-        <div className="flex items-center space-x-1">
-          <Button 
-            variant="outline" 
-            size="sm"
+        <div className="rbc-btn-group">
+          <button 
+            className="rbc-btn"
             onClick={() => onViewChange?.('month')}
           >
             월
-          </Button>
-          <Button 
-            variant="default" 
-            size="sm"
+          </button>
+          <button 
+            className="rbc-active rbc-btn"
           >
             주
-          </Button>
-          <Button 
-            variant="outline" 
-            size="sm"
+          </button>
+          <button 
+            className="rbc-btn"
             onClick={() => onViewChange?.('day')}
           >
             일
-          </Button>
+          </button>
         </div>
       </div>
 
