@@ -616,7 +616,7 @@ export const CustomWeekView: React.FC<CustomWeekViewProps> = ({
                     checked={isCompleted}
                     onChange={() => {}}
                     onClick={handleCheckboxClick}
-                    className="w-4 h-4 flex-shrink-0"
+                    className="w-4 h-4 flex-shrink-0 accent-white bg-white border border-white rounded"
                   />
 
                   <div className="flex items-center gap-2 flex-1">
