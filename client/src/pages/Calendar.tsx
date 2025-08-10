@@ -36,9 +36,9 @@ const DnDCalendar = withDragAndDrop(BigCalendar);
 
 // 기존 우선순위 색상 시스템은 아이콘으로 대체됨
 
-// Simplified color scheme - only two colors
-const EVENT_COLOR = '#3B82F6';  // 파란색 - 일정
-const TASK_COLOR = '#EF4444';   // 빨간색 - 할일
+// Sophisticated and muted color scheme - only two colors
+const EVENT_COLOR = '#64748B';  // 차분한 그레이 블루 - 일정
+const TASK_COLOR = '#94A3B8';   // 부드러운 그레이 - 할일
 
 // Priority indicator mapping
 const getPriorityIndicator = (priority: string, type: 'event' | 'task') => {

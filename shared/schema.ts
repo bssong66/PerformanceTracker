@@ -69,7 +69,7 @@ export const projects = pgTable("projects", {
   userId: varchar("user_id").notNull(),
   title: text("title").notNull(),
   description: text("description"),
-  color: text("color").default("#3B82F6"), // hex color for calendar display
+  color: text("color").default("#64748B"), // hex color for calendar display
   priority: text("priority").notNull(), // 'high', 'medium', 'low'
   startDate: date("start_date"),
   endDate: date("end_date"),
@@ -114,7 +114,7 @@ export const events = pgTable("events", {
   startTime: text("start_time"), // e.g., "14:30"
   endTime: text("end_time"),
   priority: text("priority").notNull(), // 'high', 'medium', 'low'
-  color: text("color").default("#3B82F6"),
+  color: text("color").default("#64748B"),
   isAllDay: boolean("is_all_day").default(false),
   repeatType: text("repeat_type"), // 'none', 'daily', 'weekly', 'monthly', 'yearly'
   repeatInterval: integer("repeat_interval").default(1), // repeat every N days/weeks/months/years
