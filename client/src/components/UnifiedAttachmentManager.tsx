@@ -279,7 +279,8 @@ export function UnifiedAttachmentManager({
           const aclResult = await aclResponse.json();
           return {
             url: aclResult.objectPath,
-            name: file.name
+            name: file.name,
+            size: file.size
           };
         });
 
