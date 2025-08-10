@@ -607,7 +607,8 @@ export const CustomWeekView: React.FC<CustomWeekViewProps> = ({
               return (
                 <div
                   key={`allday-dialog-${event.id}-${index}`}
-                  className="flex items-center gap-3 p-3 rounded-lg border hover:bg-gray-50 cursor-pointer"
+                  className="flex items-center gap-3 p-3 rounded-lg cursor-pointer text-white"
+                  style={{ backgroundColor: event.resource.color }}
                   onClick={handleEventClick}
                 >
                   <input
@@ -625,7 +626,7 @@ export const CustomWeekView: React.FC<CustomWeekViewProps> = ({
                     </span>
                   </div>
 
-                  <div className="text-sm text-gray-500">
+                  <div className="text-sm opacity-80">
                     {isTask ? '할일' : '일정'}
                   </div>
                 </div>
