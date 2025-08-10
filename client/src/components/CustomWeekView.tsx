@@ -209,21 +209,28 @@ export const CustomWeekView: React.FC<CustomWeekViewProps> = ({
         <div className="w-32"></div> {/* Spacer for balance */}
       </div>
 
-      {/* Header with days */}
+      {/* Header with days and events */}
       <div className="grid grid-cols-8 border-b">
-        <div className="p-4 border-r bg-gray-50 text-sm text-gray-500">시간</div>
+        <div className="p-2 border-r bg-gray-50 text-sm text-gray-500">시간</div>
         {weekDays.map(day => {
           const dayEvents = getEventsForDay(day);
-          const visibleEvents = dayEvents.slice(0, 3);
-          const hiddenCount = dayEvents.length - 3;
+          const multiDayEvents = getMultiDayEventsForWeek().filter(event => {
+            const eventStart = new Date(event.start);
+            const eventEnd = new Date(event.end);
+            return eventStart <= day && eventEnd >= day;
+          });
+          
+          const allEvents = [...dayEvents, ...multiDayEvents];
+          const visibleEvents = allEvents.slice(0, 3);
+          const hiddenCount = allEvents.length - 3;
 
           return (
-            <div key={day.toISOString()} className="p-2 border-r min-h-[80px] bg-gray-50">
-              <div className="text-sm font-semibold text-center mb-1">
+            <div key={day.toISOString()} className="border-r bg-gray-50">
+              <div className="text-sm font-semibold text-center py-2 border-b border-gray-200">
                 {format(day, 'M월 d일 (E)', { locale: ko })}
               </div>
               
-              <div className="space-y-1">
+              <div className="p-1 space-y-1 min-h-[60px]">
                 {visibleEvents.map((event, index) => {
                   const isCompleted = event.resource?.data?.completed || false;
                   const isTask = event.resource?.type === 'task';
@@ -268,8 +275,8 @@ export const CustomWeekView: React.FC<CustomWeekViewProps> = ({
                 
                 {hiddenCount > 0 && (
                   <div 
-                    className="text-xs text-blue-600 cursor-pointer font-medium px-2 hover:underline"
-                    onClick={() => handleShowMore(day, dayEvents)}
+                    className="text-xs text-blue-600 cursor-pointer font-medium px-1 hover:underline"
+                    onClick={() => handleShowMore(day, allEvents)}
                   >
                     +{hiddenCount} more
                   </div>
@@ -279,71 +286,6 @@ export const CustomWeekView: React.FC<CustomWeekViewProps> = ({
           );
         })}
       </div>
-
-      {/* Multi-day events row */}
-      {getMultiDayEventsForWeek().length > 0 && (
-        <div className="grid grid-cols-8 border-b">
-          <div className="px-2 py-1 border-r bg-gray-100 text-xs text-gray-500">종일일정</div>
-          <div className="col-span-7 px-2 py-1 bg-gray-100">
-            <div className="space-y-1">
-              {getMultiDayEventsForWeek().map((event, index) => {
-                const eventStart = new Date(event.start);
-                const eventEnd = new Date(event.end);
-                const startDay = Math.max(0, Math.floor((eventStart.getTime() - weekStart.getTime()) / (1000 * 60 * 60 * 24)));
-                const endDay = Math.min(6, Math.floor((eventEnd.getTime() - weekStart.getTime()) / (1000 * 60 * 60 * 24)));
-                
-                const isCompleted = event.resource?.data?.completed || false;
-                const isTask = event.resource?.type === 'task';
-                
-                const handleCheckboxClick = (e: React.MouseEvent) => {
-                  e.stopPropagation();
-                  e.preventDefault();
-                  
-                  if (isTask) {
-                    completeTaskMutation.mutate({
-                      id: event.resource.data.id,
-                      completed: !isCompleted
-                    });
-                  } else {
-                    completeEventMutation.mutate({
-                      id: event.resource.data.id,
-                      completed: !isCompleted
-                    });
-                  }
-                };
-
-                return (
-                  <div
-                    key={`multiday-${event.id}-${index}`}
-                    className="relative grid grid-cols-7 gap-1"
-                  >
-                    <div
-                      className="text-xs px-2 py-1 rounded text-white cursor-pointer flex items-center gap-1"
-                      style={{ 
-                        backgroundColor: event.resource.color,
-                        gridColumnStart: startDay + 1,
-                        gridColumnEnd: endDay + 2
-                      }}
-                      onClick={() => onSelectEvent(event)}
-                    >
-                      <input
-                        type="checkbox"
-                        checked={isCompleted}
-                        onChange={() => {}}
-                        onClick={handleCheckboxClick}
-                        className="w-3 h-3 flex-shrink-0"
-                      />
-                      <span className={`truncate flex-1 ${isCompleted ? 'line-through opacity-60' : ''}`}>
-                        {event.title}
-                      </span>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Time grid */}
       <div className="grid grid-cols-8">
