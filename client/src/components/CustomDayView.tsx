@@ -125,13 +125,23 @@ export const CustomDayView: React.FC<CustomDayViewProps> = ({
   const getEventsForTimeSlot = (hour: number) => {
     return events.filter(event => {
       const eventStart = new Date(event.start);
-      const eventHour = eventStart.getHours();
+      const eventEnd = new Date(event.end);
 
       // Only include timed events (exclude all-day events)
       const isAllDay = event.resource?.data?.isAllDay || event.allDay;
       if (isAllDay) return false;
 
-      return isSameDay(eventStart, date) && eventHour === hour;
+      // Check if event is on the same day
+      if (!isSameDay(eventStart, date)) return false;
+
+      // Check if the event overlaps with this hour slot
+      const slotStart = new Date(date);
+      slotStart.setHours(hour, 0, 0, 0);
+      const slotEnd = new Date(date);
+      slotEnd.setHours(hour + 1, 0, 0, 0);
+
+      // Event overlaps if it starts before slot ends and ends after slot starts
+      return eventStart < slotEnd && eventEnd > slotStart;
     });
   };
 
