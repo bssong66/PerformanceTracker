@@ -280,7 +280,7 @@
 }
 
 .rbc-time-header-content {
-  height: 100px !important;
+  height: 150px !important;
   overflow: hidden;
 }
 
@@ -362,23 +362,36 @@
 
 /* 주간뷰 날짜 헤더 이벤트 컨테이너 */
 .rbc-header {
-  height: 100px !important;
+  height: 150px !important;
   overflow: hidden;
-  padding: 4px;
+  padding: 0px;
 }
 
-/* "+N more" 기능을 위한 이벤트 개수 제한 */
-.rbc-header .rbc-event:nth-child(n+4) {
-  display: none !important;
+/* 주뷰 "+N more" 기능을 위한 높이 제한 */
+.rbc-time-view .rbc-header {
+  height: 150px !important;
+  overflow: hidden !important;
 }
 
-.rbc-day-slot .rbc-events-container .rbc-event:nth-child(n+4) {
-  display: none !important;
+.rbc-time-view .rbc-day-slot .rbc-events-container {
+  height: 150px !important;
+  overflow: hidden !important;
+}
+
+/* 각 이벤트의 높이를 고정하여 3개까지만 표시 */
+.rbc-time-view .rbc-header .rbc-event {
+  height: 20px !important;
+  margin-bottom: 2px !important;
+}
+
+.rbc-time-view .rbc-day-slot .rbc-events-container .rbc-event {
+  height: 20px !important;
+  margin-bottom: 2px !important;
 }
 
 /* 일간뷰 전체 날짜 헤더 이벤트 컨테이너 */
 .rbc-day-slot .rbc-events-container {
-  height: 100px !important;
+  height: 150px !important;
   overflow: hidden;
 }
 
@@ -390,7 +403,7 @@
   white-space: nowrap !important;
   overflow: hidden !important;
   text-overflow: ellipsis !important;
-  min-height: 18px !important;
+  min-height: 15px !important;
 }
 
 .rbc-time-view .rbc-event-content {

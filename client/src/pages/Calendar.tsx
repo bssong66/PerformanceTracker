@@ -747,6 +747,7 @@ export default function Calendar() {
                   timeslots={1}
                   min={new Date(0, 0, 0, 6, 0, 0)}
                   max={new Date(0, 0, 0, 22, 0, 0)}
+                  eventLimit={3}
                   components={{
                     event: ({ event }: { event: any }) => {
                       const isCompleted = event.resource?.data?.completed || false;
