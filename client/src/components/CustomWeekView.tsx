@@ -150,11 +150,25 @@ export const CustomWeekView: React.FC<CustomWeekViewProps> = ({
 
   const timeSlots = Array.from({ length: 16 }, (_, i) => i + 6); // 6AM to 10PM
 
-  // Helper function to get all-day events for a specific day
+  // Helper function to get single-day all-day events for a specific day
   const getAllDayEventsForDay = (day: Date) => {
     return events.filter(event => {
-      const eventDate = new Date(event.start);
-      return isSameDay(eventDate, day) && (event.resource.data.isAllDay || event.allDay);
+      const eventStart = new Date(event.start);
+      const eventEnd = new Date(event.end);
+      
+      // Only include all-day events
+      const isAllDay = event.resource.data.isAllDay || event.allDay;
+      if (!isAllDay) return false;
+      
+      // Only include single-day events (multi-day events are shown in the overlay)
+      const startDate = new Date(eventStart);
+      startDate.setHours(0, 0, 0, 0);
+      const endDate = new Date(eventEnd);
+      endDate.setHours(0, 0, 0, 0);
+      
+      const isSingleDay = startDate.getTime() === endDate.getTime();
+      
+      return isSameDay(eventStart, day) && isSingleDay;
     });
   };
 
@@ -166,21 +180,17 @@ export const CustomWeekView: React.FC<CustomWeekViewProps> = ({
     });
   };
 
-  const getEventsForDay = (day: Date) => {
-    return getTimedEventsForDay(day); // Only return timed events for the grid
-  };
-
   const getEventsForTimeSlot = (day: Date, hour: number) => {
     return events.filter(event => {
       const eventStart = new Date(event.start);
       const eventHour = eventStart.getHours();
       
-      // Only show timed events in time slots, only on the start day
-      if (!event.resource?.data?.isAllDay) {
+      // Only show timed events (NOT all-day events) in time slots
+      if (!event.resource?.data?.isAllDay && !event.allDay) {
         return isSameDay(eventStart, day) && eventHour === hour;
       }
       
-      return false; // Don't show all-day events in time slots
+      return false; // Exclude all-day events from time slots
     });
   };
 
@@ -189,12 +199,18 @@ export const CustomWeekView: React.FC<CustomWeekViewProps> = ({
     const multiDayEvents = events.filter(event => {
       const eventStart = new Date(event.start);
       const eventEnd = new Date(event.end);
-      const startOfEventStart = new Date(eventStart);
-      startOfEventStart.setHours(0, 0, 0, 0);
-      const startOfEventEnd = new Date(eventEnd);
-      startOfEventEnd.setHours(0, 0, 0, 0);
       
-      return event.resource?.data?.isAllDay && startOfEventStart.getTime() !== startOfEventEnd.getTime();
+      // Check if it's an all-day event that spans multiple days
+      const isAllDay = event.resource?.data?.isAllDay || event.allDay;
+      if (!isAllDay) return false;
+      
+      // Check if event spans multiple days
+      const startDate = new Date(eventStart);
+      startDate.setHours(0, 0, 0, 0);
+      const endDate = new Date(eventEnd);
+      endDate.setHours(0, 0, 0, 0);
+      
+      return startDate.getTime() !== endDate.getTime();
     });
 
     // Group events by their unique ID to avoid duplicates
@@ -214,6 +230,7 @@ export const CustomWeekView: React.FC<CustomWeekViewProps> = ({
       const weekStartDate = startOfWeek(date, { locale: ko });
       const weekEndDate = endOfWeek(date, { locale: ko });
       
+      // Ensure we're working with the visible week range
       const eventStartInWeek = eventStart < weekStartDate ? weekStartDate : eventStart;
       const eventEndInWeek = eventEnd > weekEndDate ? weekEndDate : eventEnd;
       
@@ -345,8 +362,8 @@ export const CustomWeekView: React.FC<CustomWeekViewProps> = ({
           })}
         </div>
       
-      {/* Multi-day events overlay */}
-      <div className="relative" style={{ marginBottom: '8px' }}>
+      {/* Multi-day events overlay - positioned above all-day events */}
+      <div className="relative bg-gray-50 border-b" style={{ minHeight: '32px' }}>
         {getMultiDayEventsForWeek().map((event, index) => {
           const isCompleted = event.resource?.data?.completed || false;
           const isTask = event.resource?.type === 'task';
@@ -368,8 +385,9 @@ export const CustomWeekView: React.FC<CustomWeekViewProps> = ({
             }
           };
 
+          // Calculate position: 12.5% for time column, then 12.5% per day
           const leftOffset = `${12.5 + (event.startDayIndex * 12.5)}%`;
-          const width = `${(event.spanDays * 12.5) - 1}%`;
+          const width = `${(event.spanDays * 12.5) - 0.5}%`; // Slight margin for visual separation
 
           return (
             <div
@@ -379,8 +397,9 @@ export const CustomWeekView: React.FC<CustomWeekViewProps> = ({
                 backgroundColor: event.resource.color,
                 left: leftOffset,
                 width: width,
-                top: `${index * 24 + 4}px`,
-                height: '20px'
+                top: `${index * 26 + 4}px`,
+                height: '22px',
+                minWidth: '60px'
               }}
               onClick={() => onSelectEvent(event)}
             >
