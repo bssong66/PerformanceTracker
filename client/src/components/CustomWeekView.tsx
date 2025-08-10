@@ -3,7 +3,6 @@ import { ko } from 'date-fns/locale';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { apiRequest } from '@/lib/queryClient';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useState } from 'react';
 
@@ -40,7 +39,19 @@ export default function CustomWeekView({ date, events, onSelectEvent, onSelectSl
   // Mutation for completing tasks
   const completeTaskMutation = useMutation({
     mutationFn: async ({ id, completed }: { id: number; completed: boolean }) => {
-      return apiRequest(`/api/tasks/${id}`, 'PATCH', { completed });
+      const response = await fetch(`/api/tasks/${id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ completed }),
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to update task');
+      }
+      
+      return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/tasks'] });
@@ -51,7 +62,19 @@ export default function CustomWeekView({ date, events, onSelectEvent, onSelectSl
   // Mutation for completing events
   const completeEventMutation = useMutation({
     mutationFn: async ({ id, completed }: { id: number; completed: boolean }) => {
-      return apiRequest(`/api/events/${id}`, 'PATCH', { completed });
+      const response = await fetch(`/api/events/${id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ completed }),
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to update event');
+      }
+      
+      return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/events'] });
