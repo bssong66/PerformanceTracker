@@ -745,7 +745,7 @@ export default function Calendar() {
                 </div>
               </div>
             </CardHeader>
-            <CardContent>
+            <CardContent className="p-0">
               <div 
                 style={{ height: '880px', position: 'relative' }} 
                 onClick={handleCloseContextMenu}
