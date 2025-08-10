@@ -178,24 +178,31 @@ export const CustomDayView: React.FC<CustomDayViewProps> = ({
         return !(newEnd <= blockStart || newStart >= blockEnd); // Check overlap
       });
 
-      // Calculate total overlapping events (including this one)
-      const totalOverlapping = overlappingBlocks.length + 1;
+      // Calculate total overlapping events (including this one), but limit to MAX_COLUMNS
+      const totalOverlapping = Math.min(overlappingBlocks.length + 1, MAX_COLUMNS);
       
       // Find first available column
       let column = 0;
-      while (column < MAX_COLUMNS && column < totalOverlapping) {
+      while (column < totalOverlapping) {
         const columnTaken = overlappingBlocks.some(block => block.column === column);
         if (!columnTaken) break;
         column++;
       }
 
-      // Calculate width and position based on total overlapping events
-      const columnWidth = 100 / totalOverlapping;
+      // If all columns are taken, use the last column (overlapping is acceptable)
+      if (column >= totalOverlapping) {
+        column = totalOverlapping - 1;
+      }
+
+      // Calculate width and position based on maximum columns to prevent overflow
+      const columnWidth = 100 / MAX_COLUMNS;
       const leftOffset = column * columnWidth;
 
-      // Update existing overlapping blocks to use new width calculation
+      // Update existing overlapping blocks to use consistent width
       overlappingBlocks.forEach(block => {
-        block.width = columnWidth - 1; // Small gap between columns
+        if (block.width > columnWidth) {
+          block.width = columnWidth - 2; // Small gap between columns
+        }
       });
 
       eventBlocks.push({
@@ -203,7 +210,7 @@ export const CustomDayView: React.FC<CustomDayViewProps> = ({
         top: topOffset,
         height: blockHeight,
         left: leftOffset,
-        width: columnWidth - 1, // Small gap between columns
+        width: columnWidth - 2, // Small gap between columns
         column
       });
     });
@@ -337,7 +344,7 @@ export const CustomDayView: React.FC<CustomDayViewProps> = ({
           </div>
 
           {/* Events column with block layout */}
-          <div className="col-span-7 relative">
+          <div className="col-span-7 relative overflow-hidden">
             {/* Time grid background */}
             {timeSlots.map(hour => (
               <div
