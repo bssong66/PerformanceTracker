@@ -801,6 +801,54 @@ export default function Calendar() {
                   max={new Date(0, 0, 0, 22, 0, 0)}
                   dayLayoutAlgorithm="no-overlap"
                   components={{
+                    toolbar: (props: any) => {
+                      const { date, onNavigate, onView, view } = props;
+                      
+                      const navigate = (action: 'PREV' | 'NEXT' | 'TODAY') => {
+                        onNavigate(action);
+                      };
+
+                      return (
+                        <div className="rbc-toolbar">
+                          <span className="rbc-btn-group">
+                            <button className="rbc-btn" onClick={() => navigate('TODAY')}>
+                              오늘
+                            </button>
+                            <button className="rbc-btn" onClick={() => navigate('PREV')}>
+                              &lt; 이전
+                            </button>
+                            <button className="rbc-btn" onClick={() => navigate('NEXT')}>
+                              다음 &gt;
+                            </button>
+                          </span>
+                          
+                          <span className="rbc-toolbar-label">
+                            {format(date, 'yyyy년 M월', { locale: ko })}
+                          </span>
+                          
+                          <span className="rbc-btn-group">
+                            <button 
+                              className={`rbc-btn ${view === 'month' ? 'rbc-active bg-[#0079f2] text-[#ffffff]' : ''}`}
+                              onClick={() => setView('month')}
+                            >
+                              월
+                            </button>
+                            <button 
+                              className="rbc-btn"
+                              onClick={() => setView('week')}
+                            >
+                              주
+                            </button>
+                            <button 
+                              className="rbc-btn"
+                              onClick={() => setView('day')}
+                            >
+                              일
+                            </button>
+                          </span>
+                        </div>
+                      );
+                    },
                     event: ({ event }: { event: any }) => {
                       const isCompleted = event.resource?.data?.completed || false;
                       const isTask = event.resource?.type === 'task';
