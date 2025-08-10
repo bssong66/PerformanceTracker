@@ -625,10 +625,6 @@ export const CustomWeekView: React.FC<CustomWeekViewProps> = ({
                   />
 
                   <div className="flex items-center gap-2 flex-1">
-                    <div
-                      className="w-3 h-3 rounded-full flex-shrink-0"
-                      style={{ backgroundColor: event.resource.color }}
-                    />
                     {getPriorityIndicator(event.resource?.priority || 'medium', event.resource?.type || 'event')}
                     <span className={`font-medium ${isCompleted ? 'line-through opacity-60' : ''}`}>
                       {event.title}
