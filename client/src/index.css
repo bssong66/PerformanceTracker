@@ -254,17 +254,6 @@
     border-bottom: 2px solid #d1d5db !important;
   }
   
-  /* Hide all-day events from time slots */
-  .rbc-time-view .rbc-event-allday {
-    display: none !important;
-  }
-  
-  /* Force all-day events to only appear in header */
-  .rbc-week-view .rbc-time-content .rbc-event-allday,
-  .rbc-day-view .rbc-time-content .rbc-event-allday {
-    display: none !important;
-  }
-  
   /* Mobile optimization utilities */
   .mobile-optimized {
     -webkit-overflow-scrolling: touch;
