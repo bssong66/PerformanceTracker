@@ -745,7 +745,7 @@ export default function Calendar() {
                   showAllEvents={false}
                   max={{
                     month: 3
-                  }}
+                  } as any}
                   components={{
                     event: ({ event }: { event: any }) => {
                       const isCompleted = event.resource?.data?.completed || false;
