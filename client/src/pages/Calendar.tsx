@@ -822,8 +822,10 @@ export default function Calendar() {
                   dayLayoutAlgorithm="no-overlap"
                   components={{
                     event: ({ event }: { event: any }) => {
-                      const isCompleted = event.resource?.data?.completed || false;
-                      const isTask = event.resource?.type === 'task';
+                      // Find the latest event data from calendarEvents
+                      const latestEvent = calendarEvents.find(e => e.id === event.id) || event;
+                      const isCompleted = latestEvent.resource?.data?.completed || false;
+                      const isTask = latestEvent.resource?.type === 'task';
                       
                       const handleCheckboxClick = (e: React.MouseEvent) => {
                         e.stopPropagation();
@@ -831,12 +833,12 @@ export default function Calendar() {
                         
                         if (isTask) {
                           completeTaskMutation.mutate({
-                            id: event.resource.data.id,
+                            id: latestEvent.resource.data.id,
                             completed: !isCompleted
                           });
                         } else {
                           completeEventMutation.mutate({
-                            id: event.resource.data.id,
+                            id: latestEvent.resource.data.id,
                             completed: !isCompleted
                           });
                         }
@@ -853,7 +855,7 @@ export default function Calendar() {
                           e.preventDefault();
                           // Navigate to Planning page with tasks tab active
                           // Use URL parameter to specify which task to highlight
-                          setLocation(`/planning?tab=tasks&taskId=${event.resource.data.id}`);
+                          setLocation(`/planning?tab=tasks&taskId=${latestEvent.resource.data.id}`);
                         }
                       };
 
@@ -870,9 +872,9 @@ export default function Calendar() {
                             onClick={handleCheckboxClick}
                             className="w-3 h-3 flex-shrink-0"
                           />
-                          {getPriorityIndicator(event.resource?.priority || 'medium', event.resource?.type || 'event')}
+                          {getPriorityIndicator(latestEvent.resource?.priority || 'medium', latestEvent.resource?.type || 'event')}
                           <span className={`flex-1 truncate ${isCompleted ? 'line-through opacity-60' : ''}`}>
-                            {event.title}
+                            {latestEvent.title}
                           </span>
                         </div>
                       );
