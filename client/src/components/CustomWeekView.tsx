@@ -11,6 +11,7 @@ interface Event {
   title: string;
   start: Date;
   end: Date;
+  allDay?: boolean;
   resource: {
     type: 'event' | 'task';
     color: string;
@@ -59,6 +60,16 @@ export const CustomWeekView: React.FC<CustomWeekViewProps> = ({
 }) => {
   const queryClient = useQueryClient();
   const [showMoreDialog, setShowMoreDialog] = useState<{
+    open: boolean;
+    day: Date;
+    events: Event[];
+  }>({
+    open: false,
+    day: new Date(),
+    events: []
+  });
+
+  const [showAllDayDialog, setShowAllDayDialog] = useState<{
     open: boolean;
     day: Date;
     events: Event[];
@@ -139,22 +150,24 @@ export const CustomWeekView: React.FC<CustomWeekViewProps> = ({
 
   const timeSlots = Array.from({ length: 16 }, (_, i) => i + 6); // 6AM to 10PM
 
-  const getEventsForDay = (day: Date) => {
+  // Helper function to get all-day events for a specific day
+  const getAllDayEventsForDay = (day: Date) => {
     return events.filter(event => {
-      const eventStart = new Date(event.start);
-      const eventEnd = new Date(event.end);
-      const startOfEventStart = new Date(eventStart);
-      startOfEventStart.setHours(0, 0, 0, 0);
-      const startOfEventEnd = new Date(eventEnd);
-      startOfEventEnd.setHours(0, 0, 0, 0);
-      
-      // Only show single-day all-day events in header
-      if (event.resource?.data?.isAllDay && startOfEventStart.getTime() === startOfEventEnd.getTime()) {
-        return isSameDay(eventStart, day);
-      }
-      
-      return false; // Don't show multi-day or timed events in header
+      const eventDate = new Date(event.start);
+      return isSameDay(eventDate, day) && (event.resource.data.isAllDay || event.allDay);
     });
+  };
+
+  // Helper function to get timed events for a specific day
+  const getTimedEventsForDay = (day: Date) => {
+    return events.filter(event => {
+      const eventDate = new Date(event.start);
+      return isSameDay(eventDate, day) && !event.resource.data.isAllDay && !event.allDay;
+    });
+  };
+
+  const getEventsForDay = (day: Date) => {
+    return getTimedEventsForDay(day); // Only return timed events for the grid
   };
 
   const getEventsForTimeSlot = (day: Date, hour: number) => {
@@ -224,6 +237,14 @@ export const CustomWeekView: React.FC<CustomWeekViewProps> = ({
     });
   };
 
+  const handleShowAllDayMore = (day: Date, allDayEvents: Event[]) => {
+    setShowAllDayDialog({
+      open: true,
+      day,
+      events: allDayEvents
+    });
+  };
+
   return (
     <div className="custom-week-view bg-white rounded-lg overflow-hidden" style={{ height: '100%' }}>
       {/* Navigation Toolbar */}
@@ -251,77 +272,78 @@ export const CustomWeekView: React.FC<CustomWeekViewProps> = ({
 
       {/* Header with days and events */}
       <div className="relative">
-        {/* Day headers */}
+        {/* Day headers with all-day events section */}
         <div className="grid grid-cols-8 border-b">
           <div className="p-2 border-r bg-gray-50 text-sm text-gray-500">시간</div>
           {weekDays.map(day => {
-            const dayEvents = getEventsForDay(day);
-            const visibleEvents = dayEvents.slice(0, 3);
-            const hiddenCount = dayEvents.length - 3;
+            const allDayEvents = getAllDayEventsForDay(day);
+            const visibleAllDayEvents = allDayEvents.slice(0, 3);
+            const hiddenAllDayCount = allDayEvents.length - 3;
 
-          return (
-            <div key={day.toISOString()} className="border-r bg-gray-50">
-              <div className="text-sm font-semibold text-center py-2 border-b border-gray-200">
-                {format(day, 'M월 d일 (E)', { locale: ko })}
-              </div>
-              
-              <div className="p-1 space-y-1 min-h-[60px]">
-                {visibleEvents.map((event, index) => {
-                  const isCompleted = event.resource?.data?.completed || false;
-                  const isTask = event.resource?.type === 'task';
-                  
-                  const handleCheckboxClick = (e: React.MouseEvent) => {
-                    e.stopPropagation();
-                    e.preventDefault();
-                    
-                    if (isTask) {
-                      completeTaskMutation.mutate({
-                        id: event.resource.data.id,
-                        completed: !isCompleted
-                      });
-                    } else {
-                      completeEventMutation.mutate({
-                        id: event.resource.data.id,
-                        completed: !isCompleted
-                      });
-                    }
-                  };
-
-                  return (
-                    <div
-                      key={`${event.id}-${index}`}
-                      className="text-xs px-1 py-1 rounded text-white cursor-pointer flex items-center gap-1"
-                      style={{ backgroundColor: event.resource.color }}
-                      onClick={() => onSelectEvent(event)}
-                    >
-                      <input
-                        type="checkbox"
-                        checked={isCompleted}
-                        onChange={() => {}}
-                        onClick={handleCheckboxClick}
-                        className="w-3 h-3 flex-shrink-0"
-                      />
-                      {getPriorityIndicator(event.resource?.priority || 'medium', event.resource?.type || 'event')}
-                      <span className={`truncate flex-1 ${isCompleted ? 'line-through opacity-60' : ''}`}>
-                        {event.title}
-                      </span>
-                    </div>
-                  );
-                })}
+            return (
+              <div key={day.toISOString()} className="border-r bg-gray-50">
+                <div className="text-sm font-semibold text-center py-2 border-b border-gray-200">
+                  {format(day, 'M월 d일 (E)', { locale: ko })}
+                </div>
                 
-                {hiddenCount > 0 && (
-                  <div 
-                    className="text-xs text-blue-600 cursor-pointer font-medium px-1 hover:underline"
-                    onClick={() => handleShowMore(day, dayEvents)}
-                  >
-                    +{hiddenCount} more
-                  </div>
-                )}
+                {/* All-day events section */}
+                <div className="p-1 space-y-1 min-h-[80px] bg-gray-50">
+                  {visibleAllDayEvents.map((event, index) => {
+                    const isCompleted = event.resource?.data?.completed || false;
+                    const isTask = event.resource?.type === 'task';
+                    
+                    const handleCheckboxClick = (e: React.MouseEvent) => {
+                      e.stopPropagation();
+                      e.preventDefault();
+                      
+                      if (isTask) {
+                        completeTaskMutation.mutate({
+                          id: event.resource.data.id,
+                          completed: !isCompleted
+                        });
+                      } else {
+                        completeEventMutation.mutate({
+                          id: event.resource.data.id,
+                          completed: !isCompleted
+                        });
+                      }
+                    };
+
+                    return (
+                      <div
+                        key={`${event.id}-${index}`}
+                        className="text-xs px-2 py-1 rounded text-white cursor-pointer flex items-center gap-1"
+                        style={{ backgroundColor: event.resource.color }}
+                        onClick={() => onSelectEvent(event)}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={isCompleted}
+                          onChange={() => {}}
+                          onClick={handleCheckboxClick}
+                          className="w-3 h-3 flex-shrink-0"
+                        />
+                        {getPriorityIndicator(event.resource?.priority || 'medium', event.resource?.type || 'event')}
+                        <span className={`truncate flex-1 ${isCompleted ? 'line-through opacity-60' : ''}`}>
+                          {event.title}
+                        </span>
+                      </div>
+                    );
+                  })}
+                  
+                  {hiddenAllDayCount > 0 && (
+                    <div 
+                      className="text-xs text-blue-600 cursor-pointer font-medium px-1 hover:underline"
+                      onClick={() => handleShowAllDayMore(day, allDayEvents)}
+                    >
+                      +{hiddenAllDayCount} more
+                    </div>
+                  )}
+                </div>
               </div>
-            </div>
-          );
-        })}
-      </div>
+            );
+          })}
+        </div>
       
       {/* Multi-day events overlay */}
       <div className="relative" style={{ marginBottom: '8px' }}>
@@ -511,6 +533,81 @@ export const CustomWeekView: React.FC<CustomWeekViewProps> = ({
                     <span className={`text-sm ${isCompleted ? 'line-through opacity-60' : ''}`}>
                       {event.title}
                     </span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* All-day events dialog */}
+      <Dialog open={showAllDayDialog.open} onOpenChange={(open) => {
+        if (!open) {
+          setShowAllDayDialog(prev => ({ ...prev, open: false }));
+        }
+      }}>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <h2 className="text-lg font-semibold">
+              {format(showAllDayDialog.day, 'M월 d일 종일 일정', { locale: ko })}
+            </h2>
+          </DialogHeader>
+          
+          <div className="space-y-2 mt-4">
+            {showAllDayDialog.events.map((event, index) => {
+              const isCompleted = event.resource?.data?.completed || false;
+              const isTask = event.resource?.type === 'task';
+              
+              const handleCheckboxClick = (e: React.MouseEvent) => {
+                e.stopPropagation();
+                e.preventDefault();
+                
+                if (isTask) {
+                  completeTaskMutation.mutate({
+                    id: event.resource.data.id,
+                    completed: !isCompleted
+                  });
+                } else {
+                  completeEventMutation.mutate({
+                    id: event.resource.data.id,
+                    completed: !isCompleted
+                  });
+                }
+              };
+
+              const handleEventClick = () => {
+                onSelectEvent(event);
+                setShowAllDayDialog(prev => ({ ...prev, open: false }));
+              };
+
+              return (
+                <div
+                  key={`allday-dialog-${event.id}-${index}`}
+                  className="flex items-center gap-3 p-3 rounded-lg border hover:bg-gray-50 cursor-pointer"
+                  onClick={handleEventClick}
+                >
+                  <input
+                    type="checkbox"
+                    checked={isCompleted}
+                    onChange={() => {}}
+                    onClick={handleCheckboxClick}
+                    className="w-4 h-4 flex-shrink-0"
+                  />
+                  
+                  <div className="flex items-center gap-2 flex-1">
+                    <div
+                      className="w-3 h-3 rounded-full flex-shrink-0"
+                      style={{ backgroundColor: event.resource.color }}
+                    />
+                    {getPriorityIndicator(event.resource?.priority || 'medium', event.resource?.type || 'event')}
+                    <span className={`font-medium ${isCompleted ? 'line-through opacity-60' : ''}`}>
+                      {event.title}
+                    </span>
+                  </div>
+                  
+                  <div className="text-sm text-gray-500">
+                    {isTask ? '할일' : '일정'}
                   </div>
                 </div>
               );
