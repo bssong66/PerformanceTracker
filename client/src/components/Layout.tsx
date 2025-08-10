@@ -24,7 +24,7 @@ interface LayoutProps {
 }
 
 const navigation = [
-  { name: '대시보드', href: '/', icon: Home },
+  { name: '대시보드', href: '/dashboard', icon: Home },
   { name: '가치중심계획', href: '/foundation', icon: Sprout },
   { name: '일정관리', href: '/calendar', icon: CalendarDays },
   { name: '계획관리', href: '/planning', icon: FolderOpen },
@@ -48,8 +48,8 @@ export function Layout({ children }: LayoutProps) {
   };
 
   const isActive = (href: string) => {
-    if (href === '/') {
-      return location === '/';
+    if (href === '/' || href === '/dashboard') {
+      return location === '/' || location === '/dashboard';
     }
     return location.startsWith(href);
   };
