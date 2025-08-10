@@ -123,24 +123,17 @@ export const CustomWeekView: React.FC<CustomWeekViewProps> = ({
     return events.filter(event => {
       const eventStart = new Date(event.start);
       const eventEnd = new Date(event.end);
+      const startOfEventStart = new Date(eventStart);
+      startOfEventStart.setHours(0, 0, 0, 0);
+      const startOfEventEnd = new Date(eventEnd);
+      startOfEventEnd.setHours(0, 0, 0, 0);
       
-      // For all-day events, check if the day falls within the event range
-      if (event.resource?.data?.isAllDay) {
-        const dayStart = new Date(day);
-        dayStart.setHours(0, 0, 0, 0);
-        const dayEnd = new Date(day);
-        dayEnd.setHours(23, 59, 59, 999);
-        
-        const eventStartDay = new Date(eventStart);
-        eventStartDay.setHours(0, 0, 0, 0);
-        const eventEndDay = new Date(eventEnd);
-        eventEndDay.setHours(23, 59, 59, 999);
-        
-        return dayStart >= eventStartDay && dayStart <= eventEndDay;
+      // Only show single-day all-day events in header
+      if (event.resource?.data?.isAllDay && startOfEventStart.getTime() === startOfEventEnd.getTime()) {
+        return isSameDay(eventStart, day);
       }
       
-      // For timed events, only show on the start day
-      return isSameDay(eventStart, day);
+      return false; // Don't show multi-day or timed events in header
     });
   };
 
@@ -221,8 +214,15 @@ export const CustomWeekView: React.FC<CustomWeekViewProps> = ({
         <div className="p-2 border-r bg-gray-50 text-sm text-gray-500">시간</div>
         {weekDays.map(day => {
           const dayEvents = getEventsForDay(day);
-          const visibleEvents = dayEvents.slice(0, 3);
-          const hiddenCount = dayEvents.length - 3;
+          const multiDayEvents = getMultiDayEventsForWeek().filter(event => {
+            const eventStart = new Date(event.start);
+            const eventEnd = new Date(event.end);
+            return eventStart <= day && eventEnd >= day;
+          });
+          
+          const allEvents = [...dayEvents, ...multiDayEvents];
+          const visibleEvents = allEvents.slice(0, 3);
+          const hiddenCount = allEvents.length - 3;
 
           return (
             <div key={day.toISOString()} className="border-r bg-gray-50">
@@ -276,7 +276,7 @@ export const CustomWeekView: React.FC<CustomWeekViewProps> = ({
                 {hiddenCount > 0 && (
                   <div 
                     className="text-xs text-blue-600 cursor-pointer font-medium px-1 hover:underline"
-                    onClick={() => handleShowMore(day, dayEvents)}
+                    onClick={() => handleShowMore(day, allEvents)}
                   >
                     +{hiddenCount} more
                   </div>
