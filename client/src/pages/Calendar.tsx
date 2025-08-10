@@ -19,7 +19,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
-import { CalendarIcon, Clock, Repeat, Save, X, Check, MousePointer2 } from "lucide-react";
+import { CalendarIcon, Clock, Repeat, Save, X, Check, MousePointer2, AlertTriangle, Circle, ChevronDown } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient } from "@/lib/queryClient";
 import { format } from "date-fns";
@@ -34,29 +34,29 @@ const DnDCalendar = withDragAndDrop(BigCalendar);
 
 // Remove mock user ID - use authenticated endpoints
 
-const priorityColors = {
-  high: '#EF4444',    // 빨간색
-  medium: '#F59E0B',  // 주황색
-  low: '#10B981'      // 초록색
-};
+// 기존 우선순위 색상 시스템은 아이콘으로 대체됨
 
-const taskPriorityColors = {
-  A: '#EF4444',    // 빨간색
-  B: '#F59E0B',    // 주황색
-  C: '#10B981'     // 초록색
-};
+// Simplified color scheme - only two colors
+const EVENT_COLOR = '#3B82F6';  // 파란색 - 일정
+const TASK_COLOR = '#EF4444';   // 빨간색 - 할일
 
-// Color scheme for events vs tasks
-const eventColors = {
-  high: '#3B82F6',    // 파란색 계열
-  medium: '#6366F1',  // 인디고
-  low: '#8B5CF6'      // 보라색
-};
-
-const taskColors = {
-  A: '#EF4444',    // 빨간색 계열  
-  B: '#F59E0B',    // 주황색
-  C: '#10B981'     // 초록색
+// Priority icons mapping
+const getPriorityIcon = (priority: string, type: 'event' | 'task') => {
+  if (type === 'event') {
+    switch (priority) {
+      case 'high': return <AlertTriangle className="w-3 h-3" />;
+      case 'medium': return <Circle className="w-3 h-3" />;
+      case 'low': return <ChevronDown className="w-3 h-3" />;
+      default: return <Circle className="w-3 h-3" />;
+    }
+  } else {
+    switch (priority) {
+      case 'A': return <AlertTriangle className="w-3 h-3" />;
+      case 'B': return <Circle className="w-3 h-3" />;
+      case 'C': return <ChevronDown className="w-3 h-3" />;
+      default: return <Circle className="w-3 h-3" />;
+    }
+  }
 };
 
 export default function Calendar() {
@@ -294,7 +294,7 @@ export default function Calendar() {
         type: 'event',
         data: event,
         priority: event.priority,
-        color: eventColors[event.priority as keyof typeof eventColors]
+        color: EVENT_COLOR
       }
     });
 
@@ -357,7 +357,7 @@ export default function Calendar() {
               type: 'event',
               data: { ...event, isRecurring: true, originalId: event.id },
               priority: event.priority,
-              color: eventColors[event.priority as keyof typeof eventColors]
+              color: EVENT_COLOR
             }
           });
         }
@@ -394,7 +394,7 @@ export default function Calendar() {
             data: task,
             project: project,
             priority: task.priority,
-            color: taskColors[task.priority as keyof typeof taskColors]
+            color: TASK_COLOR
           }
         };
       });
@@ -620,7 +620,7 @@ export default function Calendar() {
       startTime: eventForm.isAllDay ? null : (eventForm.startTime || null),
       endTime: eventForm.isAllDay ? null : (eventForm.endTime || null),
       priority: eventForm.priority,
-      color: priorityColors[eventForm.priority],
+      color: EVENT_COLOR,
       isAllDay: eventForm.isAllDay,
       repeatType: eventForm.repeatType === 'none' ? null : eventForm.repeatType,
       repeatInterval: eventForm.repeatType === 'none' ? null : eventForm.repeatInterval,
@@ -711,35 +711,27 @@ export default function Calendar() {
               </CardTitle>
               
               {/* Legend moved to second row */}
-              <div className="flex items-center justify-center space-x-6 text-sm pb-2 border-b">
+              <div className="flex items-center justify-center space-x-8 text-sm pb-2 border-b">
                 <div className="flex items-center space-x-2">
-                  <span className="font-medium">일정:</span>
-                  <div className="flex items-center space-x-1">
-                    <div className="w-3 h-3 rounded" style={{ backgroundColor: eventColors.high }} />
-                    <span className="text-xs">높음</span>
-                  </div>
-                  <div className="flex items-center space-x-1">
-                    <div className="w-3 h-3 rounded" style={{ backgroundColor: eventColors.medium }} />
-                    <span className="text-xs">보통</span>
-                  </div>
-                  <div className="flex items-center space-x-1">
-                    <div className="w-3 h-3 rounded" style={{ backgroundColor: eventColors.low }} />
-                    <span className="text-xs">낮음</span>
-                  </div>
+                  <div className="w-3 h-3 rounded" style={{ backgroundColor: EVENT_COLOR }} />
+                  <span className="font-medium">일정</span>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <span className="font-medium">할일:</span>
+                  <div className="w-3 h-3 rounded" style={{ backgroundColor: TASK_COLOR }} />
+                  <span className="font-medium">할일</span>
+                </div>
+                <div className="flex items-center space-x-3 text-xs text-gray-600">
                   <div className="flex items-center space-x-1">
-                    <div className="w-3 h-3 rounded" style={{ backgroundColor: taskColors.A }} />
-                    <span className="text-xs">A급</span>
+                    <AlertTriangle className="w-3 h-3" />
+                    <span>중요</span>
                   </div>
                   <div className="flex items-center space-x-1">
-                    <div className="w-3 h-3 rounded" style={{ backgroundColor: taskColors.B }} />
-                    <span className="text-xs">B급</span>
+                    <Circle className="w-3 h-3" />
+                    <span>보통</span>
                   </div>
                   <div className="flex items-center space-x-1">
-                    <div className="w-3 h-3 rounded" style={{ backgroundColor: taskColors.C }} />
-                    <span className="text-xs">C급</span>
+                    <ChevronDown className="w-3 h-3" />
+                    <span>낮음</span>
                   </div>
                 </div>
               </div>
@@ -837,6 +829,7 @@ export default function Calendar() {
                             onClick={handleCheckboxClick}
                             className="w-3 h-3 flex-shrink-0"
                           />
+                          {getPriorityIcon(event.resource?.priority || 'medium', event.resource?.type || 'event')}
                           <span className={`flex-1 truncate ${isCompleted ? 'line-through opacity-60' : ''}`}>
                             {event.title}
                           </span>

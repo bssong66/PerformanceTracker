@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { format, startOfWeek, endOfWeek, eachDayOfInterval, addWeeks, subWeeks, isSameDay } from 'date-fns';
 import { ko } from 'date-fns/locale';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, AlertTriangle, Circle, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -14,6 +14,7 @@ interface Event {
   resource: {
     type: 'event' | 'task';
     color: string;
+    priority?: string;
     data: {
       id: number;
       completed?: boolean;
@@ -21,6 +22,25 @@ interface Event {
     };
   };
 }
+
+// Priority icons mapping
+const getPriorityIcon = (priority: string, type: 'event' | 'task') => {
+  if (type === 'event') {
+    switch (priority) {
+      case 'high': return <AlertTriangle className="w-3 h-3" />;
+      case 'medium': return <Circle className="w-3 h-3" />;
+      case 'low': return <ChevronDown className="w-3 h-3" />;
+      default: return <Circle className="w-3 h-3" />;
+    }
+  } else {
+    switch (priority) {
+      case 'A': return <AlertTriangle className="w-3 h-3" />;
+      case 'B': return <Circle className="w-3 h-3" />;
+      case 'C': return <ChevronDown className="w-3 h-3" />;
+      default: return <Circle className="w-3 h-3" />;
+    }
+  }
+};
 
 interface CustomWeekViewProps {
   events: Event[];
@@ -266,6 +286,7 @@ export const CustomWeekView: React.FC<CustomWeekViewProps> = ({
                         onClick={handleCheckboxClick}
                         className="w-3 h-3 flex-shrink-0"
                       />
+                      {getPriorityIcon(event.resource?.priority || 'medium', event.resource?.type || 'event')}
                       <span className={`truncate flex-1 ${isCompleted ? 'line-through opacity-60' : ''}`}>
                         {event.title}
                       </span>
@@ -350,6 +371,7 @@ export const CustomWeekView: React.FC<CustomWeekViewProps> = ({
                           onClick={handleCheckboxClick}
                           className="w-3 h-3 flex-shrink-0"
                         />
+                        {getPriorityIcon(event.resource?.priority || 'medium', event.resource?.type || 'event')}
                         <span className={`truncate flex-1 ${isCompleted ? 'line-through opacity-60' : ''}`}>
                           {event.title}
                         </span>
@@ -409,11 +431,12 @@ export const CustomWeekView: React.FC<CustomWeekViewProps> = ({
                     onClick={handleCheckboxClick}
                     className="w-4 h-4 flex-shrink-0"
                   />
-                  <div className="flex-1 min-w-0">
+                  <div className="flex-1 min-w-0 flex items-center gap-2">
                     <div
-                      className="w-3 h-3 rounded inline-block mr-2"
+                      className="w-3 h-3 rounded inline-block"
                       style={{ backgroundColor: event.resource.color }}
                     />
+                    {getPriorityIcon(event.resource?.priority || 'medium', event.resource?.type || 'event')}
                     <span className={`text-sm ${isCompleted ? 'line-through opacity-60' : ''}`}>
                       {event.title}
                     </span>
