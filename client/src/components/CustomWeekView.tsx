@@ -3,7 +3,7 @@ import { format, startOfWeek, endOfWeek, eachDayOfInterval, addWeeks, subWeeks, 
 import { ko } from 'date-fns/locale';
 import { ChevronLeft, ChevronRight, AlertTriangle, Circle, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader } from '@/components/ui/dialog';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 interface Event {
