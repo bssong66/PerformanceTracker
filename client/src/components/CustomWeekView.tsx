@@ -49,6 +49,7 @@ interface CustomWeekViewProps {
   onNavigate: (date: Date) => void;
   onSelectEvent: (event: Event) => void;
   onSelectSlot: (slot: { start: Date; end: Date }) => void;
+  onViewChange?: (view: 'month' | 'week' | 'day') => void;
 }
 
 export const CustomWeekView: React.FC<CustomWeekViewProps> = ({
@@ -57,6 +58,7 @@ export const CustomWeekView: React.FC<CustomWeekViewProps> = ({
   onNavigate,
   onSelectEvent,
   onSelectSlot,
+  onViewChange,
 }) => {
   console.log('CustomWeekView received events:', events.length);
 
@@ -279,9 +281,26 @@ export const CustomWeekView: React.FC<CustomWeekViewProps> = ({
         </h2>
 
         <div className="flex items-center space-x-1">
-          <Button variant="outline" size="sm">월</Button>
-          <Button variant="default" size="sm">주</Button>
-          <Button variant="outline" size="sm">일</Button>
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={() => onViewChange?.('month')}
+          >
+            월
+          </Button>
+          <Button 
+            variant="default" 
+            size="sm"
+          >
+            주
+          </Button>
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={() => onViewChange?.('day')}
+          >
+            일
+          </Button>
         </div>
       </div>
 

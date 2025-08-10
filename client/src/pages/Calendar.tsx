@@ -757,6 +757,7 @@ export default function Calendar() {
                     onSelectEvent={handleSelectEvent}
                     onSelectSlot={handleSelectSlot}
                     onNavigate={setDate}
+                    onViewChange={setView}
                   />
                 ) : (
                   <DnDCalendar
