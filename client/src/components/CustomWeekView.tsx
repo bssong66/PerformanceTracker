@@ -40,10 +40,7 @@ export default function CustomWeekView({ date, events, onSelectEvent, onSelectSl
   // Mutation for completing tasks
   const completeTaskMutation = useMutation({
     mutationFn: async ({ id, completed }: { id: number; completed: boolean }) => {
-      return apiRequest(`/api/tasks/${id}`, {
-        method: 'PATCH',
-        body: JSON.stringify({ completed })
-      });
+      return apiRequest(`/api/tasks/${id}`, 'PATCH', { completed });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/tasks'] });
@@ -54,10 +51,7 @@ export default function CustomWeekView({ date, events, onSelectEvent, onSelectSl
   // Mutation for completing events
   const completeEventMutation = useMutation({
     mutationFn: async ({ id, completed }: { id: number; completed: boolean }) => {
-      return apiRequest(`/api/events/${id}`, {
-        method: 'PATCH',
-        body: JSON.stringify({ completed })
-      });
+      return apiRequest(`/api/events/${id}`, 'PATCH', { completed });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/events'] });
@@ -239,11 +233,7 @@ export default function CustomWeekView({ date, events, onSelectEvent, onSelectSl
               return (
                 <div
                   key={`${event.id}-${index}`}
-                  className="px-3 py-2 border-b border-gray-100 last:border-b-0 cursor-pointer hover:bg-gray-50 text-xs"
-                  onClick={() => {
-                    onSelectEvent(event);
-                    setShowMoreDialog(prev => ({ ...prev, open: false }));
-                  }}
+                  className="px-3 py-2 border-b border-gray-100 last:border-b-0 hover:bg-gray-50"
                 >
                   <div className="flex items-center gap-2">
                     <input
@@ -253,17 +243,18 @@ export default function CustomWeekView({ date, events, onSelectEvent, onSelectSl
                       onClick={handleCheckboxClick}
                       className="w-3 h-3 flex-shrink-0"
                     />
-                    <div className="flex-1">
-                      <div 
-                        className={`px-2 py-1 rounded text-white font-medium mb-1 ${isCompleted ? 'line-through opacity-60' : ''}`}
-                        style={{ backgroundColor: event.resource.color }}
-                      >
-                        {event.title}
-                      </div>
-                      <div className="text-gray-600 px-2">
-                        {format(event.start, 'HH:mm')} - {format(event.end, 'HH:mm')}
-                      </div>
+                    <div 
+                      className={`text-sm ${isCompleted ? 'line-through opacity-60' : ''} cursor-pointer flex-1`}
+                      onClick={() => {
+                        onSelectEvent(event);
+                        setShowMoreDialog(prev => ({ ...prev, open: false }));
+                      }}
+                    >
+                      {event.title}
                     </div>
+                  </div>
+                  <div className="text-gray-500 text-xs mt-1 ml-5">
+                    {format(event.start, 'HH:mm')} - {format(event.end, 'HH:mm')}
                   </div>
                 </div>
               );
