@@ -23,21 +23,21 @@ interface Event {
   };
 }
 
-// Priority icons mapping
-const getPriorityIcon = (priority: string, type: 'event' | 'task') => {
+// Priority indicator mapping
+const getPriorityIndicator = (priority: string, type: 'event' | 'task') => {
   if (type === 'event') {
     switch (priority) {
-      case 'high': return <AlertTriangle className="w-3 h-3" />;
-      case 'medium': return <Circle className="w-3 h-3" />;
-      case 'low': return <ChevronDown className="w-3 h-3" />;
-      default: return <Circle className="w-3 h-3" />;
+      case 'high': return <span className="text-red-500 font-bold">!!!</span>;
+      case 'medium': return <span className="text-yellow-500 font-bold">!!</span>;
+      case 'low': return <span className="text-blue-500 font-bold">!</span>;
+      default: return <span className="text-yellow-500 font-bold">!!</span>;
     }
   } else {
     switch (priority) {
-      case 'A': return <AlertTriangle className="w-3 h-3" />;
-      case 'B': return <Circle className="w-3 h-3" />;
-      case 'C': return <ChevronDown className="w-3 h-3" />;
-      default: return <Circle className="w-3 h-3" />;
+      case 'A': return <span className="text-red-500 font-bold">!!!</span>;
+      case 'B': return <span className="text-yellow-500 font-bold">!!</span>;
+      case 'C': return <span className="text-blue-500 font-bold">!</span>;
+      default: return <span className="text-yellow-500 font-bold">!!</span>;
     }
   }
 };
@@ -286,7 +286,7 @@ export const CustomWeekView: React.FC<CustomWeekViewProps> = ({
                         onClick={handleCheckboxClick}
                         className="w-3 h-3 flex-shrink-0"
                       />
-                      {getPriorityIcon(event.resource?.priority || 'medium', event.resource?.type || 'event')}
+                      {getPriorityIndicator(event.resource?.priority || 'medium', event.resource?.type || 'event')}
                       <span className={`truncate flex-1 ${isCompleted ? 'line-through opacity-60' : ''}`}>
                         {event.title}
                       </span>
@@ -371,7 +371,7 @@ export const CustomWeekView: React.FC<CustomWeekViewProps> = ({
                           onClick={handleCheckboxClick}
                           className="w-3 h-3 flex-shrink-0"
                         />
-                        {getPriorityIcon(event.resource?.priority || 'medium', event.resource?.type || 'event')}
+                        {getPriorityIndicator(event.resource?.priority || 'medium', event.resource?.type || 'event')}
                         <span className={`truncate flex-1 ${isCompleted ? 'line-through opacity-60' : ''}`}>
                           {event.title}
                         </span>
@@ -436,7 +436,7 @@ export const CustomWeekView: React.FC<CustomWeekViewProps> = ({
                       className="w-3 h-3 rounded inline-block"
                       style={{ backgroundColor: event.resource.color }}
                     />
-                    {getPriorityIcon(event.resource?.priority || 'medium', event.resource?.type || 'event')}
+                    {getPriorityIndicator(event.resource?.priority || 'medium', event.resource?.type || 'event')}
                     <span className={`text-sm ${isCompleted ? 'line-through opacity-60' : ''}`}>
                       {event.title}
                     </span>

@@ -40,21 +40,21 @@ const DnDCalendar = withDragAndDrop(BigCalendar);
 const EVENT_COLOR = '#3B82F6';  // 파란색 - 일정
 const TASK_COLOR = '#EF4444';   // 빨간색 - 할일
 
-// Priority icons mapping
-const getPriorityIcon = (priority: string, type: 'event' | 'task') => {
+// Priority indicator mapping
+const getPriorityIndicator = (priority: string, type: 'event' | 'task') => {
   if (type === 'event') {
     switch (priority) {
-      case 'high': return <AlertTriangle className="w-3 h-3" />;
-      case 'medium': return <Circle className="w-3 h-3" />;
-      case 'low': return <ChevronDown className="w-3 h-3" />;
-      default: return <Circle className="w-3 h-3" />;
+      case 'high': return <span className="text-red-500 font-bold">!!!</span>;
+      case 'medium': return <span className="text-yellow-500 font-bold">!!</span>;
+      case 'low': return <span className="text-blue-500 font-bold">!</span>;
+      default: return <span className="text-yellow-500 font-bold">!!</span>;
     }
   } else {
     switch (priority) {
-      case 'A': return <AlertTriangle className="w-3 h-3" />;
-      case 'B': return <Circle className="w-3 h-3" />;
-      case 'C': return <ChevronDown className="w-3 h-3" />;
-      default: return <Circle className="w-3 h-3" />;
+      case 'A': return <span className="text-red-500 font-bold">!!!</span>;
+      case 'B': return <span className="text-yellow-500 font-bold">!!</span>;
+      case 'C': return <span className="text-blue-500 font-bold">!</span>;
+      default: return <span className="text-yellow-500 font-bold">!!</span>;
     }
   }
 };
@@ -722,15 +722,15 @@ export default function Calendar() {
                 </div>
                 <div className="flex items-center space-x-3 text-xs text-gray-600">
                   <div className="flex items-center space-x-1">
-                    <AlertTriangle className="w-3 h-3" />
+                    <span className="text-red-500 font-bold">!!!</span>
                     <span>중요</span>
                   </div>
                   <div className="flex items-center space-x-1">
-                    <Circle className="w-3 h-3" />
+                    <span className="text-yellow-500 font-bold">!!</span>
                     <span>보통</span>
                   </div>
                   <div className="flex items-center space-x-1">
-                    <ChevronDown className="w-3 h-3" />
+                    <span className="text-blue-500 font-bold">!</span>
                     <span>낮음</span>
                   </div>
                 </div>
@@ -829,7 +829,7 @@ export default function Calendar() {
                             onClick={handleCheckboxClick}
                             className="w-3 h-3 flex-shrink-0"
                           />
-                          {getPriorityIcon(event.resource?.priority || 'medium', event.resource?.type || 'event')}
+                          {getPriorityIndicator(event.resource?.priority || 'medium', event.resource?.type || 'event')}
                           <span className={`flex-1 truncate ${isCompleted ? 'line-through opacity-60' : ''}`}>
                             {event.title}
                           </span>
