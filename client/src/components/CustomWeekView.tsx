@@ -358,7 +358,7 @@ export const CustomWeekView: React.FC<CustomWeekViewProps> = ({
 
         {/* Multi-day events overlay - positioned in header area */}
         <div className="absolute top-0 left-0 right-0 pointer-events-none">
-          {getMultiDayEventsForWeek().map((multiDayEvent, index) => {
+          {getMultiDayEventsForWeek().slice(0, 3).map((multiDayEvent, index) => {
             const isCompleted = multiDayEvent.event.resource?.data?.completed || false;
             const isTask = multiDayEvent.event.resource?.type === 'task';
             
@@ -404,6 +404,29 @@ export const CustomWeekView: React.FC<CustomWeekViewProps> = ({
               </div>
             );
           })}
+          
+          {/* Show +N more button if there are more than 3 multi-day events */}
+          {getMultiDayEventsForWeek().length > 3 && (
+            <div
+              className="absolute text-xs text-blue-600 cursor-pointer font-medium px-2 py-1 hover:underline z-20 pointer-events-auto"
+              style={{
+                left: `12.5%`,
+                top: `${34 + 3 * 24}px`, // Position after the 3rd event
+                height: '20px'
+              }}
+              onClick={() => {
+                // Show all multi-day events in a dialog
+                const allMultiDayEvents = getMultiDayEventsForWeek().map(md => md.event);
+                setShowAllDayDialog({
+                  open: true,
+                  day: weekStart, // Use week start as representative day
+                  events: allMultiDayEvents
+                });
+              }}
+            >
+              +{getMultiDayEventsForWeek().length - 3} more
+            </div>
+          )}
         </div>
       </div>
 
