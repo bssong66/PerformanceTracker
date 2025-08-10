@@ -246,7 +246,7 @@ export const CustomDayView: React.FC<CustomDayViewProps> = ({
       </div>
 
       {/* Time slots section with scroll */}
-      <div className="flex-1 overflow-y-auto max-h-[calc(100vh-200px)]">
+      <div className="flex-1 overflow-y-scroll" style={{ maxHeight: '500px' }}>
         <div className="grid grid-cols-8">
           {/* Time column */}
           <div className="col-span-1 border-r">
