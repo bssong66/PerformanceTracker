@@ -342,6 +342,22 @@
   overflow: hidden;
 }
 
+/* 주간/일간 뷰에서 이벤트 텍스트 잘림 방지 */
+.rbc-time-view .rbc-event {
+  font-size: 10px !important;
+  padding: 1px 4px !important;
+  line-height: 1.1 !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  min-height: 18px !important;
+}
+
+.rbc-time-view .rbc-event-content {
+  font-size: 10px !important;
+  line-height: 1.1 !important;
+}
+
 .rbc-selected {
   background-color: #3b82f6 !important;
 }

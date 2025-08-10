@@ -750,9 +750,13 @@ export default function Calendar() {
                   } as any}
                   step={30}
                   timeslots={2}
-                  min={new Date(0, 0, 0, 6, 0, 0)}
-                  max={new Date(0, 0, 0, 22, 0, 0)}
-                  scrollToTime={new Date(0, 0, 0, 9, 0, 0)}
+                  dayPropGetter={(date: Date) => ({ 
+                    style: { 
+                      minHeight: view === 'week' || view === 'day' ? '60px' : undefined 
+                    } 
+                  })}
+                  min={moment().hour(6).minute(0).second(0).toDate()}
+                  scrollToTime={moment().hour(9).minute(0).second(0).toDate()}
                   components={{
                     event: ({ event }: { event: any }) => {
                       const isCompleted = event.resource?.data?.completed || false;
