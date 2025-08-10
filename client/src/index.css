@@ -310,6 +310,22 @@
   display: block !important;
 }
 
+/* 시간 가터 강제 표시 */
+.rbc-time-view .rbc-time-gutter {
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+.rbc-time-view .rbc-time-gutter .rbc-timeslot-group {
+  flex: 1 !important;
+}
+
+.rbc-time-view .rbc-time-gutter .rbc-time-slot {
+  flex: 1 !important;
+  display: flex !important;
+  align-items: center !important;
+}
+
 .rbc-time-slot {
   border-bottom: 1px solid #f1f5f9;
 }
