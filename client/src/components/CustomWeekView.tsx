@@ -130,7 +130,7 @@ export const CustomWeekView: React.FC<CustomWeekViewProps> = ({
   const weekEnd = endOfWeek(date, { locale: ko });
   const weekDays = eachDayOfInterval({ start: weekStart, end: weekEnd });
 
-  const timeSlots = Array.from({ length: 16 }, (_, i) => i + 6); // 6AM to 10PM
+  const timeSlots = Array.from({ length: 24 }, (_, i) => i); // 0AM to 11PM (24 hours)
 
   // Get single-day all-day events for a specific day
   const getSingleDayEventsForDay = (day: Date) => {
@@ -430,8 +430,9 @@ export const CustomWeekView: React.FC<CustomWeekViewProps> = ({
           )}
         </div>
       </div>
-      {/* Time grid */}
-      <div className="grid grid-cols-8">
+      {/* Time grid with scroll */}
+      <div className="overflow-y-scroll" style={{ maxHeight: '500px' }}>
+        <div className="grid grid-cols-8">
         {timeSlots.map(hour => (
           <div key={hour} className="contents">
             {/* Time label */}
@@ -505,6 +506,7 @@ export const CustomWeekView: React.FC<CustomWeekViewProps> = ({
             })}
           </div>
         ))}
+        </div>
       </div>
       {/* More Events Dialog - styled like React Big Calendar popup */}
       <Dialog open={showMoreDialog.open} onOpenChange={(open) => setShowMoreDialog(prev => ({ ...prev, open }))}>
