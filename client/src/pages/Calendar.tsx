@@ -711,59 +711,7 @@ export default function Calendar() {
                       >
                         {event.title}
                       </div>
-                    ),
-                    month: {
-                      dateHeader: ({ date, label }: { date: Date; label: string }) => {
-                        const dayEvents = calendarEvents.filter((event: any) => {
-                          const eventDate = new Date(event.start);
-                          return eventDate.toDateString() === date.toDateString();
-                        });
-                        
-                        const maxEvents = window.innerWidth <= 768 ? 2 : 3; // 모바일에서는 2개, 데스크톱에서는 3개
-                        const visibleEvents = dayEvents.slice(0, maxEvents);
-                        const hiddenCount = dayEvents.length - maxEvents;
-                        
-                        return (
-                          <div className="relative">
-                            <span className="absolute top-1 right-1 text-sm font-medium">
-                              {label}
-                            </span>
-                            <div className="mt-6">
-                              {visibleEvents.map((event: any, index: number) => (
-                                <div
-                                  key={`${event.id}-${index}`}
-                                  className="text-xs mb-1 px-1 py-0.5 rounded truncate cursor-pointer"
-                                  style={{
-                                    backgroundColor: event.color || '#3B82F6',
-                                    color: 'white'
-                                  }}
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleSelectEvent(event);
-                                  }}
-                                  onContextMenu={(e) => handleEventRightClick(event, e)}
-                                >
-                                  {event.title}
-                                </div>
-                              ))}
-                              {hiddenCount > 0 && (
-                                <div 
-                                  className="more-events-indicator"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    // 해당 날짜로 일 뷰 전환
-                                    setDate(date);
-                                    setView(Views.DAY);
-                                  }}
-                                >
-                                  +{hiddenCount} more
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        );
-                      }
-                    }
+                    )
                   }}
                   messages={{
                     next: "다음",
