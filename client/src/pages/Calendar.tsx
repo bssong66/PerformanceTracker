@@ -391,29 +391,26 @@ export default function Calendar() {
     const safeTasks = Array.isArray(allTasks) ? allTasks : [];
     const safeProjects = Array.isArray(projects) ? projects : [];
     
+    // Debug: Log data
+    console.log('Calendar Debug:', {
+      eventsCount: safeEvents.length,
+      tasksCount: safeTasks.length,
+      projectsCount: safeProjects.length,
+      currentDate: date,
+      view: view
+    });
+    
     // Get current week boundaries for filtering
     const weekStart = startOfWeek(date, { locale: ko });
     const weekEnd = endOfWeek(date, { locale: ko });
     
-    // Filter and generate event items
-    const filteredEvents = view === 'week' 
-      ? safeEvents.filter((event: any) => {
-          const eventStart = new Date(event.startDate);
-          const eventEnd = new Date(event.endDate);
-          return eventStart <= weekEnd && eventEnd >= weekStart;
-        })
-      : safeEvents;
+    // Filter and generate event items (no filtering for now to show all events)
+    const filteredEvents = safeEvents;
     
     const eventItems = filteredEvents.flatMap((event: any) => generateRecurringEvents(event));
     
-    // Filter and generate task items
-    const filteredTasks = view === 'week'
-      ? safeTasks.filter((task: any) => {
-          if (!task.startDate && !task.endDate) return false;
-          const taskDate = new Date(task.startDate || task.endDate);
-          return taskDate >= weekStart && taskDate <= weekEnd;
-        })
-      : safeTasks.filter((task: any) => task.startDate || task.endDate);
+    // Filter and generate task items (no filtering for now to show all tasks)
+    const filteredTasks = safeTasks.filter((task: any) => task.startDate || task.endDate);
     
     const taskItems = filteredTasks.map((task: any) => {
       const project = safeProjects.find((p: any) => p.id === task.projectId);
