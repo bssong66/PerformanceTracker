@@ -68,15 +68,18 @@ export const projects = pgTable("projects", {
   id: serial("id").primaryKey(),
   userId: varchar("user_id").notNull(),
   title: text("title").notNull(),
-  description: text("description"),
+  description: text("description"), // Project plan description
   color: text("color").default("#64748B"), // hex color for calendar display
   priority: text("priority").notNull(), // 'high', 'medium', 'low'
   startDate: date("start_date"),
   endDate: date("end_date"),
   coreValue: text("core_value"), // Connected core value from foundation
   annualGoal: text("annual_goal"), // Connected annual goal
-  imageUrls: text("image_urls").array(),
-  fileUrls: jsonb("file_urls").$type<Array<{url: string, name: string, size: number}>>().default([]), // For general file uploads
+  imageUrls: text("image_urls").array(), // For project plan attachments
+  fileUrls: jsonb("file_urls").$type<Array<{url: string, name: string, size: number}>>().default([]), // For project plan file uploads
+  result: text("result"), // Project result and reflection
+  resultImageUrls: text("result_image_urls").array(), // For project result attachments
+  resultFileUrls: jsonb("result_file_urls").$type<Array<{url: string, name: string, size: number}>>().default([]), // For project result file uploads
   completed: boolean("completed").default(false), // 프로젝트 완료 상태
   createdAt: timestamp("created_at").defaultNow(),
 });

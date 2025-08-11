@@ -95,8 +95,11 @@ export default function ProjectManagement() {
     endDate: '',
     coreValue: '',
     annualGoal: '',
+    result: '',
     imageUrls: [] as string[],
-    fileUrls: [] as Array<{url: string, name: string}>
+    fileUrls: [] as Array<{url: string, name: string}>,
+    resultImageUrls: [] as string[],
+    resultFileUrls: [] as Array<{url: string, name: string}>
   });
 
   // Fetch projects
@@ -469,8 +472,11 @@ export default function ProjectManagement() {
       endDate: '',
       coreValue: '',
       annualGoal: '',
+      result: '',
       imageUrls: [],
-      fileUrls: []
+      fileUrls: [],
+      resultImageUrls: [],
+      resultFileUrls: []
     });
     setEditingProject(null);
   };
@@ -506,8 +512,11 @@ export default function ProjectManagement() {
       endDate: project.endDate || '',
       coreValue: project.coreValue || '',
       annualGoal: project.annualGoal || '',
+      result: project.result || '',
       imageUrls: project.imageUrls || [],
-      fileUrls: project.fileUrls || []
+      fileUrls: project.fileUrls || [],
+      resultImageUrls: project.resultImageUrls || [],
+      resultFileUrls: project.resultFileUrls || []
     });
     setEditingProject(project);
     setShowProjectDialog(true);
@@ -644,8 +653,11 @@ export default function ProjectManagement() {
           endDate: selectedProject.endDate || '',
           coreValue: selectedProject.coreValue || 'none',
           annualGoal: selectedProject.annualGoal || 'none',
+          result: selectedProject.result || '',
           imageUrls: selectedProject.imageUrls || [],
-          fileUrls: fileUrls
+          fileUrls: fileUrls,
+          resultImageUrls: selectedProject.resultImageUrls || [],
+          resultFileUrls: selectedProject.resultFileUrls || []
         });
       } else {
         // Fallback to project data
@@ -658,8 +670,11 @@ export default function ProjectManagement() {
           endDate: selectedProject.endDate || '',
           coreValue: selectedProject.coreValue || 'none',
           annualGoal: selectedProject.annualGoal || 'none',
+          result: selectedProject.result || '',
           imageUrls: selectedProject.imageUrls || [],
-          fileUrls: selectedProject.fileUrls || []
+          fileUrls: selectedProject.fileUrls || [],
+          resultImageUrls: selectedProject.resultImageUrls || [],
+          resultFileUrls: selectedProject.resultFileUrls || []
         });
       }
     } catch (error) {
@@ -674,8 +689,11 @@ export default function ProjectManagement() {
         endDate: selectedProject.endDate || '',
         coreValue: selectedProject.coreValue || 'none',
         annualGoal: selectedProject.annualGoal || 'none',
+        result: selectedProject.result || '',
         imageUrls: selectedProject.imageUrls || [],
-        fileUrls: selectedProject.fileUrls || []
+        fileUrls: selectedProject.fileUrls || [],
+        resultImageUrls: selectedProject.resultImageUrls || [],
+        resultFileUrls: selectedProject.resultFileUrls || []
       });
     }
   };
@@ -695,8 +713,11 @@ export default function ProjectManagement() {
       endDate: projectForm.endDate || null,
       coreValue: projectForm.coreValue === 'none' ? null : projectForm.coreValue,
       annualGoal: projectForm.annualGoal === 'none' ? null : projectForm.annualGoal,
+      result: projectForm.result,
       imageUrls: projectForm.imageUrls,
       fileUrls: projectForm.fileUrls,
+      resultImageUrls: projectForm.resultImageUrls,
+      resultFileUrls: projectForm.resultFileUrls,
       userId: user?.id
     };
 
@@ -2069,7 +2090,7 @@ export default function ProjectManagement() {
             }
           }
         }}>
-          <DialogContent className="sm:max-w-lg max-h-[70vh] overflow-y-auto">
+          <DialogContent className="sm:max-w-4xl max-h-[80vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>
                 {isEditingProjectDetail ? '프로젝트 수정' : '프로젝트 상세'}
@@ -2081,129 +2102,166 @@ export default function ProjectManagement() {
             
             {isEditingProjectDetail ? (
               <form onSubmit={(e) => { e.preventDefault(); handleProjectDetailSave(); }} className="space-y-4">
-                <div>
-                  <Label htmlFor="projectTitle">프로젝트 제목</Label>
-                  <Input
-                    id="projectTitle"
-                    value={projectForm.title}
-                    onChange={(e) => setProjectForm(prev => ({ ...prev, title: e.target.value }))}
-                    placeholder="프로젝트 제목을 입력하세요"
-                    required
-                  />
-                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* 왼쪽: 프로젝트 계획 */}
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-semibold border-b pb-2">프로젝트: 계획</h3>
+                    
+                    <div>
+                      <Label htmlFor="projectTitle">프로젝트 제목</Label>
+                      <Input
+                        id="projectTitle"
+                        value={projectForm.title}
+                        onChange={(e) => setProjectForm(prev => ({ ...prev, title: e.target.value }))}
+                        placeholder="프로젝트 제목을 입력하세요"
+                        required
+                      />
+                    </div>
 
-                <div>
-                  <Label htmlFor="projectDescription">설명</Label>
-                  <Textarea
-                    id="projectDescription"
-                    value={projectForm.description}
-                    onChange={(e) => setProjectForm(prev => ({ ...prev, description: e.target.value }))}
-                    placeholder="프로젝트에 대한 설명"
-                    rows={3}
-                  />
-                </div>
+                    <div>
+                      <Label htmlFor="projectDescription">프로젝트 설명</Label>
+                      <Textarea
+                        id="projectDescription"
+                        value={projectForm.description}
+                        onChange={(e) => setProjectForm(prev => ({ ...prev, description: e.target.value }))}
+                        placeholder="프로젝트에 대한 상세한 설명을 입력하세요"
+                        rows={5}
+                      />
+                    </div>
 
-                <div>
-                  <Label>중요도</Label>
-                  <Select
-                    value={projectForm.priority}
-                    onValueChange={(value: 'high' | 'medium' | 'low') => {
-                      setProjectForm(prev => ({ 
-                        ...prev, 
-                        priority: value,
-                        color: priorityColors[value]
-                      }));
-                    }}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="high">높음</SelectItem>
-                      <SelectItem value="medium">보통</SelectItem>
-                      <SelectItem value="low">낮음</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+                    <div>
+                      <Label>중요도</Label>
+                      <Select
+                        value={projectForm.priority}
+                        onValueChange={(value: 'high' | 'medium' | 'low') => {
+                          setProjectForm(prev => ({ 
+                            ...prev, 
+                            priority: value,
+                            color: priorityColors[value]
+                          }));
+                        }}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="high">높음</SelectItem>
+                          <SelectItem value="medium">보통</SelectItem>
+                          <SelectItem value="low">낮음</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="projectStartDate">시작일</Label>
-                    <Input
-                      id="projectStartDate"
-                      type="date"
-                      value={projectForm.startDate}
-                      onChange={(e) => setProjectForm(prev => ({ ...prev, startDate: e.target.value }))}
-                    />
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="projectStartDate">시작일</Label>
+                        <Input
+                          id="projectStartDate"
+                          type="date"
+                          value={projectForm.startDate}
+                          onChange={(e) => setProjectForm(prev => ({ ...prev, startDate: e.target.value }))}
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="projectEndDate">종료일</Label>
+                        <Input
+                          id="projectEndDate"
+                          type="date"
+                          value={projectForm.endDate}
+                          min={projectForm.startDate}
+                          onChange={(e) => setProjectForm(prev => ({ ...prev, endDate: e.target.value }))}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <Label>핵심 가치</Label>
+                        <Select
+                          value={projectForm.coreValue}
+                          onValueChange={(value) => 
+                            setProjectForm(prev => ({ ...prev, coreValue: value }))
+                          }
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="핵심 가치 선택" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="none">없음</SelectItem>
+                            {foundation?.coreValue1 && (
+                              <SelectItem value={foundation.coreValue1}>{foundation.coreValue1}</SelectItem>
+                            )}
+                            {foundation?.coreValue2 && (
+                              <SelectItem value={foundation.coreValue2}>{foundation.coreValue2}</SelectItem>
+                            )}
+                            {foundation?.coreValue3 && (
+                              <SelectItem value={foundation.coreValue3}>{foundation.coreValue3}</SelectItem>
+                            )}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div>
+                        <Label>연간 목표</Label>
+                        <Select
+                          value={projectForm.annualGoal}
+                          onValueChange={(value) => 
+                            setProjectForm(prev => ({ ...prev, annualGoal: value }))
+                          }
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="연간 목표 선택" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="none">없음</SelectItem>
+                            {annualGoals?.map((goal: any) => (
+                              <SelectItem key={goal.id} value={goal.title}>{goal.title}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+
+                    <div>
+                      <Label>파일 및 사진 첨부</Label>
+                      <UnifiedAttachmentManager
+                        imageUrls={projectForm.imageUrls || []}
+                        fileUrls={projectForm.fileUrls || []}
+                        onImagesChange={(urls) => setProjectForm(prev => ({ ...prev, imageUrls: urls }))}
+                        onFilesChange={(files) => setProjectForm(prev => ({ ...prev, fileUrls: files }))}
+                        uploadEndpoint="/api/files/upload"
+                      />
+                    </div>
                   </div>
-                  <div>
-                    <Label htmlFor="projectEndDate">종료일</Label>
-                    <Input
-                      id="projectEndDate"
-                      type="date"
-                      value={projectForm.endDate}
-                      min={projectForm.startDate}
-                      onChange={(e) => setProjectForm(prev => ({ ...prev, endDate: e.target.value }))}
-                    />
+
+                  {/* 오른쪽: 프로젝트 결과 */}
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-semibold border-b pb-2">프로젝트: 결과</h3>
+                    
+                    <div>
+                      <Label htmlFor="projectResult">프로젝트 결과</Label>
+                      <Textarea
+                        id="projectResult"
+                        value={projectForm.result || ''}
+                        onChange={(e) => setProjectForm(prev => ({ ...prev, result: e.target.value }))}
+                        placeholder="프로젝트를 완료한 후 결과나 소감을 기록해주세요"
+                        rows={8}
+                      />
+                    </div>
+
+                    <div>
+                      <Label>첨부 스크린샷, 파일 및 사진</Label>
+                      <UnifiedAttachmentManager
+                        imageUrls={projectForm.resultImageUrls || []}
+                        fileUrls={projectForm.resultFileUrls || []}
+                        onImagesChange={(urls) => setProjectForm(prev => ({ ...prev, resultImageUrls: urls }))}
+                        onFilesChange={(files) => setProjectForm(prev => ({ ...prev, resultFileUrls: files }))}
+                        uploadEndpoint="/api/files/upload"
+                      />
+                    </div>
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label>핵심 가치</Label>
-                    <Select
-                      value={projectForm.coreValue}
-                      onValueChange={(value) => 
-                        setProjectForm(prev => ({ ...prev, coreValue: value }))
-                      }
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="핵심 가치 선택" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="none">없음</SelectItem>
-                        {foundation?.coreValue1 && (
-                          <SelectItem value={foundation.coreValue1}>{foundation.coreValue1}</SelectItem>
-                        )}
-                        {foundation?.coreValue2 && (
-                          <SelectItem value={foundation.coreValue2}>{foundation.coreValue2}</SelectItem>
-                        )}
-                        {foundation?.coreValue3 && (
-                          <SelectItem value={foundation.coreValue3}>{foundation.coreValue3}</SelectItem>
-                        )}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <Label>연간 목표</Label>
-                    <Select
-                      value={projectForm.annualGoal}
-                      onValueChange={(value) => 
-                        setProjectForm(prev => ({ ...prev, annualGoal: value }))
-                      }
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="연간 목표 선택" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="none">없음</SelectItem>
-                        {annualGoals?.map((goal: any) => (
-                          <SelectItem key={goal.id} value={goal.title}>{goal.title}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-
-                <UnifiedAttachmentManager
-                  imageUrls={projectForm.imageUrls || []}
-                  fileUrls={projectForm.fileUrls || []}
-                  onImagesChange={(urls) => setProjectForm(prev => ({ ...prev, imageUrls: urls }))}
-                  onFilesChange={(files) => setProjectForm(prev => ({ ...prev, fileUrls: files }))}
-                  uploadEndpoint="/api/files/upload"
-                />
-
-                <div className="flex justify-end space-x-2 pt-4">
+                <div className="flex justify-end space-x-2 pt-4 border-t">
                   <Button
                     type="button"
                     variant="outline"
@@ -2218,95 +2276,160 @@ export default function ProjectManagement() {
               </form>
             ) : (
               <div className="space-y-4">
-                <div>
-                  <Label className="text-sm font-medium text-gray-600">프로젝트 제목</Label>
-                  <p className="text-sm text-gray-900 mt-1">{selectedProject.title}</p>
-                </div>
-
-                {selectedProject.description && (
-                  <div>
-                    <Label className="text-sm font-medium text-gray-600">설명</Label>
-                    <p className="text-sm text-gray-900 mt-1 whitespace-pre-wrap">{selectedProject.description}</p>
-                  </div>
-                )}
-
-                <div>
-                  <Label className="text-sm font-medium text-gray-600">중요도</Label>
-                  <p className="text-sm text-gray-900 mt-1">
-                    {selectedProject.priority === 'high' ? '높음' :
-                     selectedProject.priority === 'medium' ? '보통' : '낮음'}
-                  </p>
-                </div>
-
-                {(selectedProject.startDate || selectedProject.endDate) && (
-                  <div className="grid grid-cols-2 gap-4">
-                    {selectedProject.startDate && (
-                      <div>
-                        <Label className="text-sm font-medium text-gray-600">시작일</Label>
-                        <p className="text-sm text-gray-900 mt-1">
-                          {format(new Date(selectedProject.startDate), 'yyyy년 MM월 dd일', { locale: ko })}
-                        </p>
-                      </div>
-                    )}
-                    {selectedProject.endDate && (
-                      <div>
-                        <Label className="text-sm font-medium text-gray-600">종료일</Label>
-                        <p className="text-sm text-gray-900 mt-1">
-                          {format(new Date(selectedProject.endDate), 'yyyy년 MM월 dd일', { locale: ko })}
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label className="text-sm font-medium text-gray-600">핵심 가치</Label>
-                    <p className="text-sm text-gray-900 mt-1">{selectedProject.coreValue || '없음'}</p>
-                  </div>
-                  <div>
-                    <Label className="text-sm font-medium text-gray-600">연간 목표</Label>
-                    <p className="text-sm text-gray-900 mt-1">{selectedProject.annualGoal || '없음'}</p>
-                  </div>
-                </div>
-
-                {selectedProject.imageUrls && selectedProject.imageUrls.length > 0 && (
-                  <div>
-                    <Label className="text-sm font-medium text-gray-600">이미지</Label>
-                    <div className="grid grid-cols-4 gap-2 mt-2">
-                      {selectedProject.imageUrls.map((imageUrl: string, index: number) => (
-                        <img
-                          key={index}
-                          src={imageUrl}
-                          alt={`프로젝트 이미지 ${index + 1}`}
-                          className="w-16 h-16 object-cover rounded border cursor-pointer hover:opacity-80"
-                          onClick={() => {
-                            setViewingImage(imageUrl);
-                            setCurrentImageIndex(index);
-                            setCurrentImageProject(selectedProject);
-                          }}
-                        />
-                      ))}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* 왼쪽: 프로젝트 계획 정보 */}
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-semibold border-b pb-2">프로젝트: 계획</h3>
+                    
+                    <div>
+                      <Label className="text-sm font-medium text-gray-600">프로젝트 제목</Label>
+                      <p className="text-sm text-gray-900 mt-1">{selectedProject.title}</p>
                     </div>
-                  </div>
-                )}
 
-                {/* Project File Management Section */}
-                <div className="border-t pt-4">
-                  <ProjectFileManager 
-                    projectId={selectedProject.id} 
-                    projectTitle={selectedProject.title}
-                  />
+                    {selectedProject.description && (
+                      <div>
+                        <Label className="text-sm font-medium text-gray-600">프로젝트 설명</Label>
+                        <p className="text-sm text-gray-900 mt-1 whitespace-pre-wrap">{selectedProject.description}</p>
+                      </div>
+                    )}
+
+                    <div>
+                      <Label className="text-sm font-medium text-gray-600">중요도</Label>
+                      <p className="text-sm text-gray-900 mt-1">
+                        {selectedProject.priority === 'high' ? '높음' :
+                         selectedProject.priority === 'medium' ? '보통' : '낮음'}
+                      </p>
+                    </div>
+
+                    {(selectedProject.startDate || selectedProject.endDate) && (
+                      <div className="grid grid-cols-2 gap-4">
+                        {selectedProject.startDate && (
+                          <div>
+                            <Label className="text-sm font-medium text-gray-600">시작일</Label>
+                            <p className="text-sm text-gray-900 mt-1">
+                              {format(new Date(selectedProject.startDate), 'yyyy년 MM월 dd일', { locale: ko })}
+                            </p>
+                          </div>
+                        )}
+                        {selectedProject.endDate && (
+                          <div>
+                            <Label className="text-sm font-medium text-gray-600">종료일</Label>
+                            <p className="text-sm text-gray-900 mt-1">
+                              {format(new Date(selectedProject.endDate), 'yyyy년 MM월 dd일', { locale: ko })}
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <Label className="text-sm font-medium text-gray-600">핵심 가치</Label>
+                        <p className="text-sm text-gray-900 mt-1">{selectedProject.coreValue || '없음'}</p>
+                      </div>
+                      <div>
+                        <Label className="text-sm font-medium text-gray-600">연간 목표</Label>
+                        <p className="text-sm text-gray-900 mt-1">{selectedProject.annualGoal || '없음'}</p>
+                      </div>
+                    </div>
+
+                    {selectedProject.imageUrls && selectedProject.imageUrls.length > 0 && (
+                      <div>
+                        <Label className="text-sm font-medium text-gray-600">이미지</Label>
+                        <div className="grid grid-cols-4 gap-2 mt-2">
+                          {selectedProject.imageUrls.map((imageUrl: string, index: number) => (
+                            <img
+                              key={index}
+                              src={imageUrl}
+                              alt={`프로젝트 이미지 ${index + 1}`}
+                              className="w-16 h-16 object-cover rounded border cursor-pointer hover:opacity-80"
+                              onClick={() => {
+                                setViewingImage(imageUrl);
+                                setCurrentImageIndex(index);
+                                setCurrentImageProject(selectedProject);
+                              }}
+                            />
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* 오른쪽: 프로젝트 결과 정보 */}
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-semibold border-b pb-2">프로젝트: 결과</h3>
+                    
+                    {selectedProject.result ? (
+                      <div>
+                        <Label className="text-sm font-medium text-gray-600">프로젝트 결과</Label>
+                        <p className="text-sm text-gray-900 mt-1 whitespace-pre-wrap">{selectedProject.result}</p>
+                      </div>
+                    ) : (
+                      <div>
+                        <Label className="text-sm font-medium text-gray-600">프로젝트 결과</Label>
+                        <p className="text-sm text-gray-500 mt-1 italic">아직 프로젝트 결과가 기록되지 않았습니다.</p>
+                      </div>
+                    )}
+
+                    {selectedProject.resultImageUrls && selectedProject.resultImageUrls.length > 0 ? (
+                      <div>
+                        <Label className="text-sm font-medium text-gray-600">결과 이미지</Label>
+                        <div className="grid grid-cols-4 gap-2 mt-2">
+                          {selectedProject.resultImageUrls.map((imageUrl: string, index: number) => (
+                            <img
+                              key={index}
+                              src={imageUrl}
+                              alt={`프로젝트 결과 이미지 ${index + 1}`}
+                              className="w-16 h-16 object-cover rounded border cursor-pointer hover:opacity-80"
+                              onClick={() => {
+                                setViewingImage(imageUrl);
+                                setCurrentImageIndex(index);
+                                setCurrentImageProject(selectedProject);
+                              }}
+                            />
+                          ))}
+                        </div>
+                      </div>
+                    ) : (
+                      <div>
+                        <Label className="text-sm font-medium text-gray-600">결과 이미지</Label>
+                        <p className="text-sm text-gray-500 mt-1 italic">첨부된 결과 이미지가 없습니다.</p>
+                      </div>
+                    )}
+
+                    {selectedProject.resultFileUrls && selectedProject.resultFileUrls.length > 0 ? (
+                      <div>
+                        <Label className="text-sm font-medium text-gray-600">결과 첨부파일</Label>
+                        <div className="space-y-2 mt-2">
+                          {selectedProject.resultFileUrls.map((fileUrl: FileUrl, index: number) => (
+                            <a
+                              key={index}
+                              href={fileUrl.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex items-center space-x-2 text-blue-600 hover:text-blue-800 text-sm"
+                            >
+                              <FileText className="h-4 w-4" />
+                              <span>{fileUrl.name || `결과 파일 ${index + 1}`}</span>
+                            </a>
+                          ))}
+                        </div>
+                      </div>
+                    ) : (
+                      <div>
+                        <Label className="text-sm font-medium text-gray-600">결과 첨부파일</Label>
+                        <p className="text-sm text-gray-500 mt-1 italic">첨부된 결과 파일이 없습니다.</p>
+                      </div>
+                    )}
+                  </div>
                 </div>
 
-                <div className="flex justify-end space-x-2 pt-4">
-                  <Button
-                    variant="outline"
-                    onClick={() => setShowProjectDetailDialog(false)}
-                  >
+
+                <div className="flex justify-end space-x-2 pt-4 border-t">
+                  <Button variant="outline" onClick={handleCloseProjectDetail}>
                     닫기
                   </Button>
-                  <Button onClick={handleProjectDetailEdit}>
+                  <Button onClick={() => setIsEditingProjectDetail(true)}>
                     수정
                   </Button>
                 </div>
