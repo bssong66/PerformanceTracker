@@ -1234,7 +1234,7 @@ export default function Calendar() {
               <Button
                 onClick={handleSaveEvent}
                 disabled={createEventMutation.isPending || updateEventMutation.isPending}
-                className="px-4 h-8 text-sm"
+                className="px-4 h-8 text-sm bg-gray-700 hover:bg-gray-800 text-white"
               >
                 <Save className="h-3 w-3 mr-1" />
                 {isEditing ? '저장' : '생성'}
