@@ -1252,7 +1252,7 @@ export default function Calendar() {
                   variant="destructive"
                   onClick={handleDeleteEvent}
                   disabled={deleteEventMutation.isPending}
-                  className="px-4 h-8 text-sm"
+                  className="px-4 h-8 text-sm bg-red-200 hover:bg-red-300 text-red-800"
                 >
                   삭제
                 </Button>
