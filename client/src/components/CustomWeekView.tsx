@@ -213,17 +213,123 @@ export const CustomWeekView: React.FC<CustomWeekViewProps> = ({
     return multiDayEvents;
   };
 
-  // Get timed events for time slots
-  const getEventsForTimeSlot = (day: Date, hour: number) => {
+  // Get all timed events for a specific day to calculate layout
+  const getTimedEventsForDay = (day: Date) => {
     return events.filter(event => {
       const eventStart = new Date(event.start);
-      const eventHour = eventStart.getHours();
-
+      
       // Only include timed events (exclude all-day events completely)
       const isAllDay = event.resource?.data?.isAllDay || event.allDay;
       if (isAllDay) return false;
 
-      return isSameDay(eventStart, day) && eventHour === hour;
+      return isSameDay(eventStart, day);
+    }).map(event => {
+      const eventStart = new Date(event.start);
+      const eventEnd = new Date(event.end);
+      const startMinutes = eventStart.getHours() * 60 + eventStart.getMinutes();
+      const endMinutes = eventEnd.getHours() * 60 + eventEnd.getMinutes();
+      
+      return {
+        ...event,
+        startMinutes,
+        endMinutes,
+        duration: endMinutes - startMinutes
+      };
+    });
+  };
+
+  // Calculate event blocks with positioning to avoid overlaps
+  const calculateEventBlocks = (day: Date) => {
+    const dayEvents = getTimedEventsForDay(day);
+    
+    // Sort events by start time, then by duration (longer events first)
+    dayEvents.sort((a, b) => {
+      if (a.startMinutes !== b.startMinutes) {
+        return a.startMinutes - b.startMinutes;
+      }
+      return b.duration - a.duration; // Longer events first for same start time
+    });
+
+    const eventBlocks: Array<{
+      event: any;
+      top: number;
+      height: number;
+      left: number;
+      width: number;
+      column: number;
+      startHour: number;
+      endHour: number;
+    }> = [];
+
+    const MAX_COLUMNS = 3;
+
+    dayEvents.forEach(event => {
+      const startHour = Math.floor(event.startMinutes / 60);
+      const endHour = Math.ceil(event.endMinutes / 60);
+      
+      // Calculate top position and height
+      const topOffset = ((event.startMinutes % 60) / 60) * 40; // 40px per hour
+      const blockHeight = Math.max(20, (event.duration / 60) * 40); // Minimum 20px height
+
+      // Find overlapping blocks
+      const overlappingBlocks = eventBlocks.filter(block => {
+        const blockStart = block.top;
+        const blockEnd = block.top + block.height;
+        const newStart = topOffset;
+        const newEnd = topOffset + blockHeight;
+        return !(newEnd <= blockStart || newStart >= blockEnd);
+      });
+
+      // Find first available column
+      let column = 0;
+      while (column < MAX_COLUMNS) {
+        const columnTaken = overlappingBlocks.some(block => block.column === column);
+        if (!columnTaken) break;
+        column++;
+      }
+
+      // If all columns are taken, use the last column
+      if (column >= MAX_COLUMNS) {
+        column = MAX_COLUMNS - 1;
+      }
+
+      // Calculate width and position
+      const columnWidth = 100 / MAX_COLUMNS;
+      const leftOffset = column * columnWidth;
+
+      eventBlocks.push({
+        event,
+        top: topOffset,
+        height: blockHeight,
+        left: leftOffset,
+        width: columnWidth - 2, // Small gap between columns
+        column,
+        startHour,
+        endHour
+      });
+    });
+
+    return eventBlocks;
+  };
+
+  // Get event blocks that span across this hour
+  const getEventBlocksForTimeSlot = (day: Date, hour: number) => {
+    const allBlocks = calculateEventBlocks(day);
+    return allBlocks.filter(block => {
+      const eventStartHour = Math.floor(block.event.startMinutes / 60);
+      const eventEndHour = Math.ceil(block.event.endMinutes / 60);
+      
+      // Only show blocks that start in this hour slot
+      return eventStartHour === hour;
+    }).map(block => {
+      // Adjust block position relative to the hour slot
+      const hourStartMinutes = hour * 60;
+      const relativeTop = ((block.event.startMinutes - hourStartMinutes) / 60) * 40;
+      
+      return {
+        ...block,
+        top: Math.max(0, relativeTop), // Ensure it doesn't go above the slot
+      };
     });
   };
 
@@ -442,12 +548,12 @@ export const CustomWeekView: React.FC<CustomWeekViewProps> = ({
 
             {/* Day columns */}
             {weekDays.map(day => {
-              const hourEvents = getEventsForTimeSlot(day, hour);
+              const eventBlocks = getEventBlocksForTimeSlot(day, hour);
 
               return (
                 <div
                   key={`${day.toISOString()}-${hour}`}
-                  className="p-1 border-r border-b min-h-[40px] hover:bg-gray-50 cursor-pointer relative"
+                  className="border-r border-b min-h-[40px] hover:bg-gray-50 cursor-pointer relative overflow-hidden"
                   onClick={() => {
                     const slotStart = new Date(day);
                     slotStart.setHours(hour, 0, 0, 0);
@@ -456,9 +562,10 @@ export const CustomWeekView: React.FC<CustomWeekViewProps> = ({
                     onSelectSlot({ start: slotStart, end: slotEnd });
                   }}
                 >
-                  {hourEvents.map((event, index) => {
-                    const isCompleted = event.resource?.data?.completed || false;
-                    const isTask = event.resource?.type === 'task';
+                  {/* Render event blocks positioned within the hour slot */}
+                  {eventBlocks.map((block, index) => {
+                    const isCompleted = block.event.resource?.data?.completed || false;
+                    const isTask = block.event.resource?.type === 'task';
 
                     const handleCheckboxClick = (e: React.MouseEvent) => {
                       e.stopPropagation();
@@ -466,12 +573,12 @@ export const CustomWeekView: React.FC<CustomWeekViewProps> = ({
 
                       if (isTask) {
                         completeTaskMutation.mutate({
-                          id: event.resource.data.id,
+                          id: block.event.resource.data.id,
                           completed: !isCompleted
                         });
                       } else {
                         completeEventMutation.mutate({
-                          id: event.resource.data.id,
+                          id: block.event.resource.data.id,
                           completed: !isCompleted
                         });
                       }
@@ -479,12 +586,19 @@ export const CustomWeekView: React.FC<CustomWeekViewProps> = ({
 
                     return (
                       <div
-                        key={`${event.id}-${index}`}
-                        className="text-xs px-1 py-1 rounded text-white cursor-pointer mb-1 flex items-center gap-1"
-                        style={{ backgroundColor: event.resource.color }}
+                        key={`${block.event.id}-${index}`}
+                        className="absolute text-xs px-1 py-1 rounded text-white cursor-pointer flex items-center gap-1 z-10"
+                        style={{
+                          backgroundColor: block.event.resource.color,
+                          top: `${block.top}px`,
+                          height: `${block.height}px`,
+                          left: `${block.left}%`,
+                          width: `${block.width}%`,
+                          minHeight: '20px'
+                        }}
                         onClick={(e) => {
                           e.stopPropagation();
-                          onSelectEvent(event);
+                          onSelectEvent(block.event);
                         }}
                       >
                         <input
@@ -494,9 +608,9 @@ export const CustomWeekView: React.FC<CustomWeekViewProps> = ({
                           onClick={handleCheckboxClick}
                           className="w-3 h-3 flex-shrink-0"
                         />
-                        {getPriorityIndicator(event.resource?.priority || 'medium', event.resource?.type || 'event')}
+                        {getPriorityIndicator(block.event.resource?.priority || 'medium', block.event.resource?.type || 'event')}
                         <span className={`truncate flex-1 ${isCompleted ? 'line-through opacity-60' : ''}`}>
-                          {event.title}
+                          {block.event.title}
                         </span>
                       </div>
                     );
