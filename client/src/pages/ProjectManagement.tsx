@@ -894,8 +894,18 @@ export default function ProjectManagement() {
   // Open task detail dialog
   const openTaskDetailDialog = (task: any) => {
     setSelectedTask(task);
+    setTaskForm({
+      title: task.title || '',
+      priority: task.priority || 'B',
+      startDate: task.startDate || '',
+      endDate: task.endDate || '',
+      notes: task.notes || '',
+      imageUrls: task.imageUrls || [],
+      fileUrls: task.fileUrls || []
+    });
+    setEditingTask(task);
     setShowTaskDetailDialog(true);
-    setIsEditMode(false);
+    setIsEditMode(true);
   };
 
   // Handle edit mode toggle
@@ -1805,15 +1815,11 @@ export default function ProjectManagement() {
         }}>
           <DialogContent className="sm:max-w-md max-h-[70vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>
-                {isEditMode ? '할일 수정' : '할일 상세'}
-              </DialogTitle>
-              <DialogDescription>
-                {isEditMode ? '할일 정보를 수정하세요.' : '할일의 상세 정보를 확인하세요.'}
-              </DialogDescription>
+              <DialogTitle>할일 수정</DialogTitle>
+              <DialogDescription>할일 정보를 수정하세요.</DialogDescription>
             </DialogHeader>
 
-            {isEditMode ? (
+            {true && (
               <form onSubmit={(e) => {
                 e.preventDefault();
                 handleSaveFromDetail();
@@ -1911,177 +1917,6 @@ export default function ProjectManagement() {
                   </Button>
                 </div>
               </form>
-            ) : (
-              <div className="space-y-4">
-                <div>
-                  <Label className="text-sm font-medium text-gray-600">할일 제목</Label>
-                  <p className="text-sm text-gray-900 mt-1">{selectedTask.title}</p>
-                </div>
-
-                <div>
-                  <Label className="text-sm font-medium text-gray-600">우선순위</Label>
-                  <p className="text-sm text-gray-900 mt-1">
-                    {selectedTask.priority}급 {
-                      selectedTask.priority === 'A' ? '(긴급+중요)' :
-                      selectedTask.priority === 'B' ? '(중요)' : '(일반)'
-                    }
-                  </p>
-                </div>
-
-                {(selectedTask.startDate || selectedTask.endDate) && (
-                  <div className="grid grid-cols-2 gap-4">
-                    {selectedTask.startDate && (
-                      <div>
-                        <Label className="text-sm font-medium text-gray-600">시작일</Label>
-                        <p className="text-sm text-gray-900 mt-1">
-                          {format(new Date(selectedTask.startDate), 'yyyy년 MM월 dd일', { locale: ko })}
-                        </p>
-                      </div>
-                    )}
-                    {selectedTask.endDate && (
-                      <div>
-                        <Label className="text-sm font-medium text-gray-600">마감일</Label>
-                        <p className="text-sm text-gray-900 mt-1">
-                          {format(new Date(selectedTask.endDate), 'yyyy년 MM월 dd일', { locale: ko })}
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {selectedTask.notes && (
-                  <div>
-                    <Label className="text-sm font-medium text-gray-600">메모</Label>
-                    <p className="text-sm text-gray-900 mt-1 whitespace-pre-wrap">{selectedTask.notes}</p>
-                  </div>
-                )}
-
-                {selectedTask.imageUrls && selectedTask.imageUrls.length > 0 && (
-                  <div>
-                    <Label className="text-sm font-medium text-gray-600">이미지</Label>
-                    <div className="grid grid-cols-4 gap-2 mt-2">
-                      {selectedTask.imageUrls.map((imageUrl: string, index: number) => (
-                        <img
-                          key={index}
-                          src={imageUrl}
-                          alt={`할일 이미지 ${index + 1}`}
-                          className="w-16 h-16 object-cover rounded border cursor-pointer hover:opacity-80"
-                          onClick={() => setViewingTaskImage(imageUrl)}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {selectedTask.fileUrls && selectedTask.fileUrls.length > 0 && (
-                  <div>
-                    <Label className="text-sm font-medium text-gray-600">첨부 파일</Label>
-                    <div className="space-y-2 mt-2">
-                      {selectedTask.fileUrls.map((file: any, index: number) => {
-                        const isImage = file.name?.toLowerCase().match(/\.(jpg|jpeg|png|gif|webp|svg)$/);
-                        const isPdf = file.name?.toLowerCase().endsWith('.pdf');
-                        
-                        return (
-                          <div
-                            key={index}
-                            className="flex items-start gap-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                          >
-                            <div className="flex-shrink-0 mt-1">
-                              {isImage ? (
-                                <Image className="h-5 w-5 text-blue-500 dark:text-blue-400" />
-                              ) : isPdf ? (
-                                <FileText className="h-5 w-5 text-red-500 dark:text-red-400" />
-                              ) : (
-                                <File className="h-5 w-5 text-gray-500 dark:text-gray-400" />
-                              )}
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <div 
-                                className="cursor-pointer"
-                                onClick={() => {
-                                  if (isImage || isPdf) {
-                                    setPreviewFile({ url: file.url, name: file.name, type: isImage ? 'image' : 'pdf' });
-                                  }
-                                }}
-                              >
-                                <p className="text-sm font-medium text-gray-900 dark:text-gray-100 break-words hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
-                                  {file.name || 'Unknown file'}
-                                </p>
-                                {file.size && (
-                                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                                    {(file.size / 1024 / 1024).toFixed(2)} MB
-                                  </p>
-                                )}
-                              </div>
-                            </div>
-                            <div className="flex-shrink-0">
-                              <div className="flex items-center space-x-2">
-                                {(isImage || isPdf) && (
-                                  <Button
-                                    size="sm"
-                                    variant="outline"
-                                    onClick={() => setPreviewFile({ url: file.url, name: file.name, type: isImage ? 'image' : 'pdf' })}
-                                    className="h-8 px-2"
-                                  >
-                                    <Eye className="h-3 w-3" />
-                                    <span className="ml-1 text-xs">미리보기</span>
-                                  </Button>
-                                )}
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={async () => {
-                                    try {
-                                      // Fetch the file data
-                                      const response = await fetch(file.url);
-                                      if (!response.ok) throw new Error('파일 다운로드에 실패했습니다.');
-                                      
-                                      const blob = await response.blob();
-                                      const url = window.URL.createObjectURL(blob);
-                                      
-                                      const link = document.createElement('a');
-                                      link.href = url;
-                                      link.download = file.name || 'download';
-                                      document.body.appendChild(link);
-                                      link.click();
-                                      
-                                      // Clean up
-                                      document.body.removeChild(link);
-                                      window.URL.revokeObjectURL(url);
-                                    } catch (error) {
-                                      console.error('Download error:', error);
-                                      // Fallback to direct link
-                                      window.open(file.url, '_blank');
-                                    }
-                                  }}
-                                  className="h-8 px-2"
-                                >
-                                  <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                  </svg>
-                                  <span className="ml-1 text-xs">다운로드</span>
-                                </Button>
-                              </div>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
-
-                <div className="flex justify-end space-x-2 pt-4">
-                  <Button
-                    variant="outline"
-                    onClick={() => setShowTaskDetailDialog(false)}
-                  >
-                    닫기
-                  </Button>
-                  <Button onClick={handleEditModeToggle}>
-                    수정
-                  </Button>
-                </div>
-              </div>
             )}
           </DialogContent>
         </Dialog>
