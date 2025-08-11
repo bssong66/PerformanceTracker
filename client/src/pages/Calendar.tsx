@@ -103,35 +103,35 @@ export default function Calendar() {
   });
 
   // Fetch events
-  const { data: events = [] } = useQuery({
+  const { data: events = [], isLoading: eventsLoading, error: eventsError } = useQuery({
     queryKey: ['/api/events', (user as any)?.id || '1'],
     enabled: !!(user as any)?.id,
     retry: false,
   });
 
   // Fetch all tasks to display on calendar
-  const { data: allTasks = [] } = useQuery({
+  const { data: allTasks = [], isLoading: tasksLoading, error: tasksError } = useQuery({
     queryKey: ['/api/tasks', (user as any)?.id || '1'],
     enabled: !!(user as any)?.id,
     retry: false,
   });
 
   // Fetch projects for task context
-  const { data: projects = [] } = useQuery({
+  const { data: projects = [], isLoading: projectsLoading, error: projectsError } = useQuery({
     queryKey: ['/api/projects', (user as any)?.id || '1'],
     enabled: !!(user as any)?.id,
     retry: false,
   });
 
   // Fetch foundation (core values) for dropdown
-  const { data: foundation = null } = useQuery({
+  const { data: foundation = null, isLoading: foundationLoading, error: foundationError } = useQuery({
     queryKey: ['/api/foundation', (user as any)?.id || '1'],
     enabled: !!(user as any)?.id,
     retry: false,
   });
 
   // Fetch annual goals for dropdown
-  const { data: annualGoals = [] } = useQuery({
+  const { data: annualGoals = [], isLoading: goalsLoading, error: goalsError } = useQuery({
     queryKey: ['/api/goals', (user as any)?.id || '1'],
     enabled: !!(user as any)?.id,
     retry: false,
@@ -392,13 +392,28 @@ export default function Calendar() {
     const safeTasks = Array.isArray(allTasks) ? allTasks : [];
     const safeProjects = Array.isArray(projects) ? projects : [];
     
-    // Debug: Log data
+    // Debug: Log data and loading states
     console.log('Calendar Debug:', {
+      user: (user as any)?.id,
       eventsCount: safeEvents.length,
       tasksCount: safeTasks.length,
       projectsCount: safeProjects.length,
       currentDate: date,
-      view: view
+      view: view,
+      loading: {
+        events: eventsLoading,
+        tasks: tasksLoading,
+        projects: projectsLoading,
+        foundation: foundationLoading,
+        goals: goalsLoading
+      },
+      errors: {
+        events: eventsError?.message,
+        tasks: tasksError?.message,
+        projects: projectsError?.message,
+        foundation: foundationError?.message,
+        goals: goalsError?.message
+      }
     });
     
     // Get current week boundaries for filtering
