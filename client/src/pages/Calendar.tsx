@@ -1230,21 +1230,21 @@ export default function Calendar() {
             </div>
 
             {/* 하단 버튼들 */}
-            <div className="flex space-x-2 pt-4 border-t mt-4">
+            <div className="flex justify-center space-x-2 pt-4 border-t mt-4">
               <Button
                 onClick={handleSaveEvent}
                 disabled={createEventMutation.isPending || updateEventMutation.isPending}
-                className="flex-1 h-10 text-sm"
+                className="px-4 h-8 text-sm"
               >
-                <Save className="h-4 w-4 mr-1" />
+                <Save className="h-3 w-3 mr-1" />
                 {isEditing ? '수정' : '생성'}
               </Button>
               <Button
                 variant="outline"
                 onClick={() => setShowEventDialog(false)}
-                className="flex-1 h-10 text-sm"
+                className="px-4 h-8 text-sm"
               >
-                <X className="h-4 w-4 mr-1" />
+                <X className="h-3 w-3 mr-1" />
                 취소
               </Button>
               {isEditing && (
@@ -1252,7 +1252,7 @@ export default function Calendar() {
                   variant="destructive"
                   onClick={handleDeleteEvent}
                   disabled={deleteEventMutation.isPending}
-                  className="px-3 h-10 text-sm"
+                  className="px-4 h-8 text-sm"
                 >
                   삭제
                 </Button>
