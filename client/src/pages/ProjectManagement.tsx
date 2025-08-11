@@ -938,8 +938,11 @@ export default function ProjectManagement() {
         startDate: selectedTask.startDate || '',
         endDate: selectedTask.endDate || '',
         notes: selectedTask.notes || '',
+        result: selectedTask.result || '',
         imageUrls: selectedTask.imageUrls || [],
-        fileUrls: selectedTask.fileUrls || []
+        fileUrls: selectedTask.fileUrls || [],
+        resultImageUrls: selectedTask.resultImageUrls || [],
+        resultFileUrls: selectedTask.resultFileUrls || []
       });
       setEditingTask(selectedTask);
     }
@@ -954,10 +957,13 @@ export default function ProjectManagement() {
       title: taskForm.title,
       priority: taskForm.priority,
       notes: taskForm.notes,
+      result: taskForm.result,
       startDate: taskForm.startDate || null,
       endDate: taskForm.endDate || null,
       imageUrls: taskForm.imageUrls,
-      fileUrls: taskForm.fileUrls
+      fileUrls: taskForm.fileUrls,
+      resultImageUrls: taskForm.resultImageUrls,
+      resultFileUrls: taskForm.resultFileUrls
     };
 
     updateTaskMutation.mutate({ 
