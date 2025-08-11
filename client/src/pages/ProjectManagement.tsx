@@ -1813,7 +1813,7 @@ export default function ProjectManagement() {
             setIsEditMode(false);
           }
         }}>
-          <DialogContent className="sm:max-w-md max-h-[70vh] overflow-y-auto">
+          <DialogContent className="sm:max-w-4xl max-h-[80vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>할일 상세</DialogTitle>
               <DialogDescription>할일의 상세 정보를 확인하세요.</DialogDescription>
@@ -1824,77 +1824,103 @@ export default function ProjectManagement() {
                 e.preventDefault();
                 handleSaveFromDetail();
               }} className="space-y-4">
-                <div>
-                  <Label htmlFor="title">할일 제목</Label>
-                  <Input
-                    id="title"
-                    value={taskForm.title}
-                    onChange={(e) => setTaskForm(prev => ({ ...prev, title: e.target.value }))}
-                    placeholder="할일 제목을 입력하세요"
-                    required
-                  />
-                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* 왼쪽: 할일 내용 */}
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-semibold border-b pb-2">할일: 내용</h3>
+                    
+                    <div>
+                      <Label htmlFor="title">할일 제목</Label>
+                      <Input
+                        id="title"
+                        value={taskForm.title}
+                        onChange={(e) => setTaskForm(prev => ({ ...prev, title: e.target.value }))}
+                        placeholder="할일 제목을 입력하세요"
+                        required
+                      />
+                    </div>
 
-                <div>
-                  <Label>우선순위</Label>
-                  <Select
-                    value={taskForm.priority}
-                    onValueChange={(value: 'A' | 'B' | 'C') => 
-                      setTaskForm(prev => ({ ...prev, priority: value }))
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="A">A급 (긴급+중요)</SelectItem>
-                      <SelectItem value="B">B급 (중요)</SelectItem>
-                      <SelectItem value="C">C급 (일반)</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+                    <div>
+                      <Label>우선순위</Label>
+                      <Select
+                        value={taskForm.priority}
+                        onValueChange={(value: 'A' | 'B' | 'C') => 
+                          setTaskForm(prev => ({ ...prev, priority: value }))
+                        }
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="A">A급 (긴급+중요)</SelectItem>
+                          <SelectItem value="B">B급 (중요)</SelectItem>
+                          <SelectItem value="C">C급 (일반)</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="startDate">시작일</Label>
-                    <Input
-                      id="startDate"
-                      type="date"
-                      value={taskForm.startDate}
-                      onChange={(e) => setTaskForm(prev => ({ ...prev, startDate: e.target.value }))}
-                    />
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="startDate">시작일</Label>
+                        <Input
+                          id="startDate"
+                          type="date"
+                          value={taskForm.startDate}
+                          onChange={(e) => setTaskForm(prev => ({ ...prev, startDate: e.target.value }))}
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="endDate">마감일</Label>
+                        <Input
+                          id="endDate"
+                          type="date"
+                          value={taskForm.endDate}
+                          onChange={(e) => setTaskForm(prev => ({ ...prev, endDate: e.target.value }))}
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <Label htmlFor="notes">메모</Label>
+                      <Textarea
+                        id="notes"
+                        value={taskForm.notes}
+                        onChange={(e) => setTaskForm(prev => ({ ...prev, notes: e.target.value }))}
+                        placeholder="할일에 대한 메모"
+                        rows={4}
+                      />
+                    </div>
                   </div>
-                  <div>
-                    <Label htmlFor="endDate">마감일</Label>
-                    <Input
-                      id="endDate"
-                      type="date"
-                      value={taskForm.endDate}
-                      onChange={(e) => setTaskForm(prev => ({ ...prev, endDate: e.target.value }))}
-                    />
+
+                  {/* 오른쪽: 할일 결과 */}
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-semibold border-b pb-2">할일: 결과</h3>
+                    
+                    <div>
+                      <Label htmlFor="result">결과 기록</Label>
+                      <Textarea
+                        id="result"
+                        value={taskForm.result || ''}
+                        onChange={(e) => setTaskForm(prev => ({ ...prev, result: e.target.value }))}
+                        placeholder="할일을 완료한 후 결과나 소감을 기록해주세요"
+                        rows={6}
+                      />
+                    </div>
+
+                    <div>
+                      <Label>파일 및 사진 첨부</Label>
+                      <UnifiedAttachmentManager
+                        imageUrls={taskForm.imageUrls || []}
+                        fileUrls={taskForm.fileUrls || []}
+                        onImagesChange={(urls) => setTaskForm(prev => ({ ...prev, imageUrls: urls }))}
+                        onFilesChange={(files) => setTaskForm(prev => ({ ...prev, fileUrls: files }))}
+                        uploadEndpoint="/api/files/upload"
+                      />
+                    </div>
                   </div>
                 </div>
 
-                <div>
-                  <Label htmlFor="notes">메모</Label>
-                  <Textarea
-                    id="notes"
-                    value={taskForm.notes}
-                    onChange={(e) => setTaskForm(prev => ({ ...prev, notes: e.target.value }))}
-                    placeholder="할일에 대한 메모"
-                    rows={3}
-                  />
-                </div>
-
-                <UnifiedAttachmentManager
-                  imageUrls={taskForm.imageUrls || []}
-                  fileUrls={taskForm.fileUrls || []}
-                  onImagesChange={(urls) => setTaskForm(prev => ({ ...prev, imageUrls: urls }))}
-                  onFilesChange={(files) => setTaskForm(prev => ({ ...prev, fileUrls: files }))}
-                  uploadEndpoint="/api/files/upload"
-                />
-
-                <div className="flex justify-end space-x-2 pt-4">
+                <div className="flex justify-end space-x-2 pt-4 border-t">
                   <Button
                     type="button"
                     variant="outline"
