@@ -94,10 +94,13 @@ export const tasks = pgTable("tasks", {
   completedAt: timestamp("completed_at"),
   timeEstimate: integer("time_estimate"), // in minutes
   notes: text("notes"),
+  result: text("result"), // Task result and reflection
   coreValue: text("core_value"), // Connected core value from foundation
   annualGoal: text("annual_goal"), // Connected annual goal
-  imageUrls: text("image_urls").array(),
-  fileUrls: jsonb("file_urls").$type<Array<{url: string, name: string, size: number}>>().default([]), // For general file uploads
+  imageUrls: text("image_urls").array(), // For task planning/content attachments
+  fileUrls: jsonb("file_urls").$type<Array<{url: string, name: string, size: number}>>().default([]), // For task planning/content file uploads
+  resultImageUrls: text("result_image_urls").array(), // For task result/completion attachments
+  resultFileUrls: jsonb("result_file_urls").$type<Array<{url: string, name: string, size: number}>>().default([]), // For task result/completion file uploads
   isCarriedOver: boolean("is_carried_over").default(false), // 이월된 할일인지 표시
   originalScheduledDate: date("original_scheduled_date"), // 원래 예정된 날짜
   createdAt: timestamp("created_at").defaultNow(),

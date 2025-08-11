@@ -482,8 +482,11 @@ export default function ProjectManagement() {
       startDate: '',
       endDate: '',
       notes: '',
+      result: '',
       imageUrls: [],
-      fileUrls: []
+      fileUrls: [],
+      resultImageUrls: [],
+      resultFileUrls: []
     });
     setEditingTask(null);
   };
@@ -524,8 +527,11 @@ export default function ProjectManagement() {
       startDate: '',
       endDate: '',
       notes: '',
+      result: '',
       imageUrls: [],
-      fileUrls: []
+      fileUrls: [],
+      resultImageUrls: [],
+      resultFileUrls: []
     });
     setEditingTask(null);
     setShowTaskDialog(true);
@@ -738,10 +744,13 @@ export default function ProjectManagement() {
           title: taskForm.title,
           priority: taskForm.priority,
           notes: taskForm.notes,
+          result: taskForm.result,
           startDate: taskForm.startDate || null,
           endDate: taskForm.endDate || null,
           imageUrls: taskForm.imageUrls,
-          fileUrls: taskForm.fileUrls
+          fileUrls: taskForm.fileUrls,
+          resultImageUrls: taskForm.resultImageUrls,
+          resultFileUrls: taskForm.resultFileUrls
         }
       });
     } else {
@@ -756,10 +765,13 @@ export default function ProjectManagement() {
         title: taskForm.title,
         priority: taskForm.priority,
         notes: taskForm.notes,
+        result: taskForm.result,
         startDate: taskForm.startDate || null,
         endDate: taskForm.endDate || null,
         imageUrls: taskForm.imageUrls,
         fileUrls: taskForm.fileUrls,
+        resultImageUrls: taskForm.resultImageUrls,
+        resultFileUrls: taskForm.resultFileUrls,
         completed: false
       });
     }
@@ -861,8 +873,11 @@ export default function ProjectManagement() {
       startDate: task.startDate || '',
       endDate: task.endDate || '',
       notes: task.notes || '',
+      result: task.result || '',
       imageUrls: task.imageUrls || [],
-      fileUrls: task.fileUrls || []
+      fileUrls: task.fileUrls || [],
+      resultImageUrls: task.resultImageUrls || [],
+      resultFileUrls: task.resultFileUrls || []
     });
     setShowTaskDialog(true);
   };
@@ -903,8 +918,11 @@ export default function ProjectManagement() {
       startDate: task.startDate || '',
       endDate: task.endDate || '',
       notes: task.notes || '',
+      result: task.result || '',
       imageUrls: task.imageUrls || [],
-      fileUrls: task.fileUrls || []
+      fileUrls: task.fileUrls || [],
+      resultImageUrls: task.resultImageUrls || [],
+      resultFileUrls: task.resultFileUrls || []
     });
     setEditingTask(task);
     setShowTaskDetailDialog(true);
