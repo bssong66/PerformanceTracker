@@ -929,7 +929,7 @@ export default function Calendar() {
           <DialogContent className="max-w-3xl max-h-[95vh] sm:max-h-[80vh] p-0 flex flex-col" aria-describedby="event-dialog-description">
             <DialogHeader className="pb-3 px-4 sm:px-6 pt-4 sm:pt-6 bg-white z-10 border-b flex-shrink-0">
               <DialogTitle className="text-lg sm:text-xl">
-                {isEditing ? '일정 수정' : '새 일정 생성'}
+                {isEditing ? '일정 상세' : '새 일정 생성'}
               </DialogTitle>
               <div id="event-dialog-description" className="sr-only">
                 일정의 제목, 날짜, 시간, 우선순위 등을 설정할 수 있습니다.
