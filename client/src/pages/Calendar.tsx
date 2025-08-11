@@ -926,8 +926,8 @@ export default function Calendar() {
           setShowEventDialog(open);
           if (!open) resetEventForm();
         }}>
-          <DialogContent className="max-w-3xl max-h-[95vh] sm:max-h-[56vh] overflow-y-auto p-4 sm:p-6" aria-describedby="event-dialog-description">
-            <DialogHeader className="pb-3 sticky top-0 bg-white z-10">
+          <DialogContent className="max-w-3xl max-h-[95vh] sm:max-h-[56vh] p-0" aria-describedby="event-dialog-description">
+            <DialogHeader className="pb-3 px-4 sm:px-6 pt-4 sm:pt-6 bg-white z-10 border-b">
               <DialogTitle className="text-lg sm:text-xl">
                 {isEditing ? '일정 수정' : '새 일정 생성'}
               </DialogTitle>
@@ -936,7 +936,7 @@ export default function Calendar() {
               </div>
             </DialogHeader>
             
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 min-h-0 flex-1">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 min-h-0 flex-1 overflow-y-auto px-4 sm:px-6 pb-4 sm:pb-6">
               {/* 왼쪽: 일정 내용 */}
               <div className="space-y-3 pr-2">
                 <h3 className="text-base font-semibold border-b pb-1">일정 내용</h3>
