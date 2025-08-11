@@ -749,6 +749,13 @@ export default function ProjectManagement() {
     resetForm();
   };
 
+  const handleCloseProjectDetail = () => {
+    setShowProjectDetailDialog(false);
+    setSelectedProject(null);
+    setIsEditingProjectDetail(false);
+    resetForm();
+  };
+
   const handleTaskSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
