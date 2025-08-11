@@ -428,6 +428,78 @@ export function UnifiedAttachmentManager({
         className="hidden"
       />
 
+      {/* 미리보기 모달 */}
+      {previewFile && (
+        <Dialog open={!!previewFile} onOpenChange={() => setPreviewFile(null)}>
+          <DialogContent className="sm:max-w-4xl">
+            <DialogHeader>
+              <DialogTitle className="flex items-center justify-between">
+                <span className="truncate pr-4">{previewFile.name}</span>
+                <div className="flex items-center space-x-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleDownload({ 
+                      url: previewFile.url, 
+                      name: previewFile.name, 
+                      type: previewFile.type === 'image' ? 'image' : 'file' 
+                    })}
+                  >
+                    <Download className="h-4 w-4 mr-1" />
+                    다운로드
+                  </Button>
+                </div>
+              </DialogTitle>
+            </DialogHeader>
+            
+            <div className="mt-4">
+              {previewFile.type === 'image' ? (
+                <div className="flex justify-center">
+                  <img
+                    src={previewFile.url}
+                    alt={previewFile.name}
+                    className="max-w-full max-h-[70vh] object-contain rounded"
+                  />
+                </div>
+              ) : previewFile.type === 'pdf' ? (
+                <div className="text-center space-y-4">
+                  <div className="flex justify-center">
+                    <FileText className="h-16 w-16 text-red-600" />
+                  </div>
+                  <div>
+                    <p className="text-lg font-medium">{previewFile.name}</p>
+                    <p className="text-sm text-gray-500">PDF 문서</p>
+                  </div>
+                  <div className="flex justify-center space-x-3">
+                    <Button
+                      onClick={() => window.open(previewFile.url, '_blank')}
+                      className="flex items-center space-x-2"
+                    >
+                      <Eye className="h-4 w-4" />
+                      <span>브라우저에서 열기</span>
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <p className="text-gray-500">미리보기를 지원하지 않는 파일 형식입니다.</p>
+                </div>
+              )}
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
+
+      {/* 업로드 중 표시 */}
+      {isUploading && (
+        <div className="text-center py-4">
+          <div className="inline-flex items-center space-x-2">
+            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+            <span className="text-sm text-gray-600">업로드 중...</span>
+          </div>
+        </div>
+      )}
+
       {/* 첨부파일 목록 */}
       {allAttachments.length > 0 && (
         <div className="space-y-2">
@@ -502,78 +574,6 @@ export function UnifiedAttachmentManager({
                 </div>
               </div>
             ))}
-          </div>
-        </div>
-      )}
-
-      {/* 미리보기 모달 */}
-      {previewFile && (
-        <Dialog open={!!previewFile} onOpenChange={() => setPreviewFile(null)}>
-          <DialogContent className="sm:max-w-4xl">
-            <DialogHeader>
-              <DialogTitle className="flex items-center justify-between">
-                <span className="truncate pr-4">{previewFile.name}</span>
-                <div className="flex items-center space-x-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleDownload({ 
-                      url: previewFile.url, 
-                      name: previewFile.name, 
-                      type: previewFile.type === 'image' ? 'image' : 'file' 
-                    })}
-                  >
-                    <Download className="h-4 w-4 mr-1" />
-                    다운로드
-                  </Button>
-                </div>
-              </DialogTitle>
-            </DialogHeader>
-            
-            <div className="mt-4">
-              {previewFile.type === 'image' ? (
-                <div className="flex justify-center">
-                  <img
-                    src={previewFile.url}
-                    alt={previewFile.name}
-                    className="max-w-full max-h-[70vh] object-contain rounded"
-                  />
-                </div>
-              ) : previewFile.type === 'pdf' ? (
-                <div className="text-center space-y-4">
-                  <div className="flex justify-center">
-                    <FileText className="h-16 w-16 text-red-600" />
-                  </div>
-                  <div>
-                    <p className="text-lg font-medium">{previewFile.name}</p>
-                    <p className="text-sm text-gray-500">PDF 문서</p>
-                  </div>
-                  <div className="flex justify-center space-x-3">
-                    <Button
-                      onClick={() => window.open(previewFile.url, '_blank')}
-                      className="flex items-center space-x-2"
-                    >
-                      <Eye className="h-4 w-4" />
-                      <span>브라우저에서 열기</span>
-                    </Button>
-                  </div>
-                </div>
-              ) : (
-                <div className="text-center py-8">
-                  <p className="text-gray-500">미리보기를 지원하지 않는 파일 형식입니다.</p>
-                </div>
-              )}
-            </div>
-          </DialogContent>
-        </Dialog>
-      )}
-
-      {/* 업로드 중 표시 */}
-      {isUploading && (
-        <div className="text-center py-4">
-          <div className="inline-flex items-center space-x-2">
-            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
-            <span className="text-sm text-gray-600">업로드 중...</span>
           </div>
         </div>
       )}
