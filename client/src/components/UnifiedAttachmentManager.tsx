@@ -431,7 +431,7 @@ export function UnifiedAttachmentManager({
       {/* 첨부파일 목록 */}
       {allAttachments.length > 0 && (
         <div className="space-y-2">
-          <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300">
+          <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 text-left">
             첨부파일 ({allAttachments.length}개)
           </h4>
           
