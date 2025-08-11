@@ -1815,8 +1815,8 @@ export default function ProjectManagement() {
         }}>
           <DialogContent className="sm:max-w-md max-h-[70vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>할일 수정</DialogTitle>
-              <DialogDescription>할일 정보를 수정하세요.</DialogDescription>
+              <DialogTitle>할일 상세</DialogTitle>
+              <DialogDescription>할일의 상세 정보를 확인하세요.</DialogDescription>
             </DialogHeader>
 
             {true && (
