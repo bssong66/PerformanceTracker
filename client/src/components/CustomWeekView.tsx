@@ -595,31 +595,50 @@ export const CustomWeekView: React.FC<CustomWeekViewProps> = ({
               return (
                 <div
                   key={`event-${layoutItem.event.id}-${eventIndex}`}
-                  className="absolute text-xs px-1 py-1 rounded text-white cursor-pointer flex items-center gap-1 z-10 pointer-events-auto"
+                  className="absolute text-[10px] px-1 py-0.5 rounded text-white cursor-pointer flex flex-col justify-start gap-0.5 z-10 pointer-events-auto overflow-hidden"
                   style={{
                     backgroundColor: layoutItem.event.resource.color,
                     top: `${topPosition}px`,
                     height: `${Math.max(20, height)}px`,
                     left: `${eventLeft}%`,
                     width: `${eventWidth}%`,
-                    minHeight: '20px'
+                    minHeight: '20px',
+                    fontSize: '9px',
+                    lineHeight: '1.1'
                   }}
                   onClick={(e) => {
                     e.stopPropagation();
                     onSelectEvent(layoutItem.event);
                   }}
                 >
-                  <input
-                    type="checkbox"
-                    checked={isCompleted}
-                    onChange={() => {}}
-                    onClick={handleCheckboxClick}
-                    className="w-3 h-3 flex-shrink-0"
-                  />
-                  {getPriorityIndicator(layoutItem.event.resource?.priority || 'medium', layoutItem.event.resource?.type || 'event')}
-                  <span className={`truncate flex-1 ${isCompleted ? 'line-through opacity-60' : ''}`}>
+                  {/* Top row with checkbox and priority */}
+                  <div className="flex items-center gap-0.5 flex-shrink-0">
+                    <input
+                      type="checkbox"
+                      checked={isCompleted}
+                      onChange={() => {}}
+                      onClick={handleCheckboxClick}
+                      className="w-2 h-2 flex-shrink-0"
+                      style={{ minWidth: '8px', minHeight: '8px' }}
+                    />
+                    <span className="flex-shrink-0" style={{ fontSize: '8px' }}>
+                      {getPriorityIndicator(layoutItem.event.resource?.priority || 'medium', layoutItem.event.resource?.type || 'event')}
+                    </span>
+                  </div>
+                  
+                  {/* Title with word wrap */}
+                  <div 
+                    className={`text-[9px] leading-tight break-words hyphens-auto flex-1 ${isCompleted ? 'line-through opacity-60' : ''}`}
+                    style={{
+                      wordBreak: 'break-word',
+                      overflowWrap: 'break-word',
+                      hyphens: 'auto',
+                      fontSize: '8px',
+                      lineHeight: '1.0'
+                    }}
+                  >
                     {layoutItem.event.title}
-                  </span>
+                  </div>
                 </div>
               );
             });
