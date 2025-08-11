@@ -1230,7 +1230,7 @@ export default function Calendar() {
             </div>
 
             {/* 하단 버튼들 */}
-            <div className="flex justify-center space-x-2 pt-4 border-t mt-4">
+            <div className="flex justify-center items-center space-x-2 pt-4 border-t mt-4">
               <Button
                 onClick={handleSaveEvent}
                 disabled={createEventMutation.isPending || updateEventMutation.isPending}
