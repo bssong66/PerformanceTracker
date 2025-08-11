@@ -238,8 +238,8 @@ export const CustomWeekView: React.FC<CustomWeekViewProps> = ({
     });
   };
 
-  // Calculate event blocks with positioning to avoid overlaps
-  const calculateEventBlocks = (day: Date) => {
+  // Calculate event layout for the entire day to handle overlaps properly
+  const calculateEventLayout = (day: Date) => {
     const dayEvents = getTimedEventsForDay(day);
     
     // Sort events by start time, then by duration (longer events first)
@@ -250,40 +250,25 @@ export const CustomWeekView: React.FC<CustomWeekViewProps> = ({
       return b.duration - a.duration; // Longer events first for same start time
     });
 
-    const eventBlocks: Array<{
+    const eventLayout: Array<{
       event: any;
-      top: number;
-      height: number;
-      left: number;
-      width: number;
       column: number;
-      startHour: number;
-      endHour: number;
+      startMinutes: number;
+      endMinutes: number;
     }> = [];
 
     const MAX_COLUMNS = 3;
 
     dayEvents.forEach(event => {
-      const startHour = Math.floor(event.startMinutes / 60);
-      const endHour = Math.ceil(event.endMinutes / 60);
-      
-      // Calculate top position and height
-      const topOffset = ((event.startMinutes % 60) / 60) * 40; // 40px per hour
-      const blockHeight = Math.max(20, (event.duration / 60) * 40); // Minimum 20px height
-
-      // Find overlapping blocks
-      const overlappingBlocks = eventBlocks.filter(block => {
-        const blockStart = block.top;
-        const blockEnd = block.top + block.height;
-        const newStart = topOffset;
-        const newEnd = topOffset + blockHeight;
-        return !(newEnd <= blockStart || newStart >= blockEnd);
+      // Find overlapping events
+      const overlappingEvents = eventLayout.filter(existing => {
+        return !(event.endMinutes <= existing.startMinutes || event.startMinutes >= existing.endMinutes);
       });
 
       // Find first available column
       let column = 0;
       while (column < MAX_COLUMNS) {
-        const columnTaken = overlappingBlocks.some(block => block.column === column);
+        const columnTaken = overlappingEvents.some(existing => existing.column === column);
         if (!columnTaken) break;
         column++;
       }
@@ -293,42 +278,46 @@ export const CustomWeekView: React.FC<CustomWeekViewProps> = ({
         column = MAX_COLUMNS - 1;
       }
 
-      // Calculate width and position
-      const columnWidth = 100 / MAX_COLUMNS;
-      const leftOffset = column * columnWidth;
-
-      eventBlocks.push({
+      eventLayout.push({
         event,
-        top: topOffset,
-        height: blockHeight,
-        left: leftOffset,
-        width: columnWidth - 2, // Small gap between columns
         column,
-        startHour,
-        endHour
+        startMinutes: event.startMinutes,
+        endMinutes: event.endMinutes
       });
     });
 
-    return eventBlocks;
+    return eventLayout;
   };
 
   // Get event blocks that span across this hour
   const getEventBlocksForTimeSlot = (day: Date, hour: number) => {
-    const allBlocks = calculateEventBlocks(day);
-    return allBlocks.filter(block => {
-      const eventStartHour = Math.floor(block.event.startMinutes / 60);
-      const eventEndHour = Math.ceil(block.event.endMinutes / 60);
+    const eventLayout = calculateEventLayout(day);
+    const hourStartMinutes = hour * 60;
+    const hourEndMinutes = (hour + 1) * 60;
+    const MAX_COLUMNS = 3;
+    
+    return eventLayout.filter(layoutItem => {
+      // Show events that overlap with this hour slot
+      return layoutItem.startMinutes < hourEndMinutes && layoutItem.endMinutes > hourStartMinutes;
+    }).map(layoutItem => {
+      // Calculate the portion of the event that appears in this hour slot
+      const blockStartMinutes = Math.max(layoutItem.startMinutes, hourStartMinutes);
+      const blockEndMinutes = Math.min(layoutItem.endMinutes, hourEndMinutes);
       
-      // Only show blocks that start in this hour slot
-      return eventStartHour === hour;
-    }).map(block => {
-      // Adjust block position relative to the hour slot
-      const hourStartMinutes = hour * 60;
-      const relativeTop = ((block.event.startMinutes - hourStartMinutes) / 60) * 40;
+      const relativeTop = ((blockStartMinutes - hourStartMinutes) / 60) * 40;
+      const blockHeight = Math.max(20, ((blockEndMinutes - blockStartMinutes) / 60) * 40);
+      
+      // Calculate width and position
+      const columnWidth = 100 / MAX_COLUMNS;
+      const leftOffset = layoutItem.column * columnWidth;
       
       return {
-        ...block,
-        top: Math.max(0, relativeTop), // Ensure it doesn't go above the slot
+        event: layoutItem.event,
+        top: Math.max(0, relativeTop),
+        height: blockHeight,
+        left: leftOffset,
+        width: columnWidth - 2, // Small gap between columns
+        column: layoutItem.column
       };
     });
   };
