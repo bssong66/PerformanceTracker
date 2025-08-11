@@ -526,23 +526,21 @@ export const CustomWeekView: React.FC<CustomWeekViewProps> = ({
         </div>
       </div>
       {/* Time grid with scroll */}
-      <div className="overflow-y-scroll" style={{ maxHeight: '500px' }}>
+      <div className="overflow-y-scroll relative" style={{ maxHeight: '500px' }}>
+        {/* Background time grid */}
         <div className="grid grid-cols-8">
-        {timeSlots.map(hour => (
-          <div key={hour} className="contents">
-            {/* Time label */}
-            <div className="p-2 border-r border-b bg-gray-50 text-sm text-gray-600 text-right">
-              {hour === 12 ? '12 PM' : hour > 12 ? `${hour - 12} PM` : `${hour} AM`}
-            </div>
+          {timeSlots.map(hour => (
+            <div key={hour} className="contents">
+              {/* Time label */}
+              <div className="p-2 border-r border-b bg-gray-50 text-sm text-gray-600 text-right">
+                {hour === 12 ? '12 PM' : hour > 12 ? `${hour - 12} PM` : `${hour} AM`}
+              </div>
 
-            {/* Day columns */}
-            {weekDays.map(day => {
-              const eventBlocks = getEventBlocksForTimeSlot(day, hour);
-
-              return (
+              {/* Empty day columns for grid structure */}
+              {weekDays.map(day => (
                 <div
                   key={`${day.toISOString()}-${hour}`}
-                  className="border-r border-b min-h-[40px] hover:bg-gray-50 cursor-pointer relative overflow-hidden"
+                  className="border-r border-b min-h-[40px] hover:bg-gray-50 cursor-pointer"
                   onClick={() => {
                     const slotStart = new Date(day);
                     slotStart.setHours(hour, 0, 0, 0);
@@ -550,65 +548,82 @@ export const CustomWeekView: React.FC<CustomWeekViewProps> = ({
                     slotEnd.setHours(hour + 1, 0, 0, 0);
                     onSelectSlot({ start: slotStart, end: slotEnd });
                   }}
+                />
+              ))}
+            </div>
+          ))}
+        </div>
+
+        {/* Event blocks overlay */}
+        <div className="absolute top-0 left-0 right-0 pointer-events-none">
+          {weekDays.map((day, dayIndex) => {
+            const dayLayout = calculateEventLayout(day);
+            const MAX_COLUMNS = 3;
+
+            return dayLayout.map((layoutItem, eventIndex) => {
+              const isCompleted = layoutItem.event.resource?.data?.completed || false;
+              const isTask = layoutItem.event.resource?.type === 'task';
+
+              // Calculate position
+              const startHour = Math.floor(layoutItem.startMinutes / 60) - timeSlots[0]; // Offset by first time slot
+              const topPosition = startHour * 40 + ((layoutItem.startMinutes % 60) / 60) * 40;
+              const height = ((layoutItem.endMinutes - layoutItem.startMinutes) / 60) * 40;
+              
+              const columnWidth = 100 / 8; // 8 columns total (1 time + 7 days)
+              const dayLeftOffset = (columnWidth + dayIndex * columnWidth); // Skip first column (time)
+              const eventColumnWidth = columnWidth / MAX_COLUMNS;
+              const eventLeft = dayLeftOffset + (layoutItem.column * eventColumnWidth);
+              const eventWidth = eventColumnWidth - 0.5; // Small gap
+
+              const handleCheckboxClick = (e: React.MouseEvent) => {
+                e.stopPropagation();
+                e.preventDefault();
+
+                if (isTask) {
+                  completeTaskMutation.mutate({
+                    id: layoutItem.event.resource.data.id,
+                    completed: !isCompleted
+                  });
+                } else {
+                  completeEventMutation.mutate({
+                    id: layoutItem.event.resource.data.id,
+                    completed: !isCompleted
+                  });
+                }
+              };
+
+              return (
+                <div
+                  key={`event-${layoutItem.event.id}-${eventIndex}`}
+                  className="absolute text-xs px-1 py-1 rounded text-white cursor-pointer flex items-center gap-1 z-10 pointer-events-auto"
+                  style={{
+                    backgroundColor: layoutItem.event.resource.color,
+                    top: `${topPosition}px`,
+                    height: `${Math.max(20, height)}px`,
+                    left: `${eventLeft}%`,
+                    width: `${eventWidth}%`,
+                    minHeight: '20px'
+                  }}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onSelectEvent(layoutItem.event);
+                  }}
                 >
-                  {/* Render event blocks positioned within the hour slot */}
-                  {eventBlocks.map((block, index) => {
-                    const isCompleted = block.event.resource?.data?.completed || false;
-                    const isTask = block.event.resource?.type === 'task';
-
-                    const handleCheckboxClick = (e: React.MouseEvent) => {
-                      e.stopPropagation();
-                      e.preventDefault();
-
-                      if (isTask) {
-                        completeTaskMutation.mutate({
-                          id: block.event.resource.data.id,
-                          completed: !isCompleted
-                        });
-                      } else {
-                        completeEventMutation.mutate({
-                          id: block.event.resource.data.id,
-                          completed: !isCompleted
-                        });
-                      }
-                    };
-
-                    return (
-                      <div
-                        key={`${block.event.id}-${index}`}
-                        className="absolute text-xs px-1 py-1 rounded text-white cursor-pointer flex items-center gap-1 z-10"
-                        style={{
-                          backgroundColor: block.event.resource.color,
-                          top: `${block.top}px`,
-                          height: `${block.height}px`,
-                          left: `${block.left}%`,
-                          width: `${block.width}%`,
-                          minHeight: '20px'
-                        }}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onSelectEvent(block.event);
-                        }}
-                      >
-                        <input
-                          type="checkbox"
-                          checked={isCompleted}
-                          onChange={() => {}}
-                          onClick={handleCheckboxClick}
-                          className="w-3 h-3 flex-shrink-0"
-                        />
-                        {getPriorityIndicator(block.event.resource?.priority || 'medium', block.event.resource?.type || 'event')}
-                        <span className={`truncate flex-1 ${isCompleted ? 'line-through opacity-60' : ''}`}>
-                          {block.event.title}
-                        </span>
-                      </div>
-                    );
-                  })}
+                  <input
+                    type="checkbox"
+                    checked={isCompleted}
+                    onChange={() => {}}
+                    onClick={handleCheckboxClick}
+                    className="w-3 h-3 flex-shrink-0"
+                  />
+                  {getPriorityIndicator(layoutItem.event.resource?.priority || 'medium', layoutItem.event.resource?.type || 'event')}
+                  <span className={`truncate flex-1 ${isCompleted ? 'line-through opacity-60' : ''}`}>
+                    {layoutItem.event.title}
+                  </span>
                 </div>
               );
-            })}
-          </div>
-        ))}
+            });
+          })}
         </div>
       </div>
       {/* More Events Dialog - styled like React Big Calendar popup */}
