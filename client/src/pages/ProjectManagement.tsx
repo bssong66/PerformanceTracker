@@ -50,8 +50,11 @@ export default function ProjectManagement() {
     notes: '',
     startDate: '',
     endDate: '',
+    result: '',
     imageUrls: [] as string[],
-    fileUrls: [] as Array<{url: string, name: string}>
+    fileUrls: [] as Array<{url: string, name: string}>,
+    resultImageUrls: [] as string[],
+    resultFileUrls: [] as Array<{url: string, name: string}>
   });
   const [showProjectDialog, setShowProjectDialog] = useState(false);
   const [editingProject, setEditingProject] = useState<Project | null>(null);
@@ -1915,6 +1918,17 @@ export default function ProjectManagement() {
                         onChange={(e) => setTaskForm(prev => ({ ...prev, result: e.target.value }))}
                         placeholder="할일을 완료한 후 결과나 소감을 기록해주세요"
                         rows={6}
+                      />
+                    </div>
+
+                    <div>
+                      <Label>첨부 스크린샷, 파일 및 사진</Label>
+                      <UnifiedAttachmentManager
+                        imageUrls={taskForm.resultImageUrls || []}
+                        fileUrls={taskForm.resultFileUrls || []}
+                        onImagesChange={(urls) => setTaskForm(prev => ({ ...prev, resultImageUrls: urls }))}
+                        onFilesChange={(files) => setTaskForm(prev => ({ ...prev, resultFileUrls: files }))}
+                        uploadEndpoint="/api/files/upload"
                       />
                     </div>
                   </div>
