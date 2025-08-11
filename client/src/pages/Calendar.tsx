@@ -1237,7 +1237,7 @@ export default function Calendar() {
                 className="px-4 h-8 text-sm"
               >
                 <Save className="h-3 w-3 mr-1" />
-                {isEditing ? '수정' : '생성'}
+                {isEditing ? '저장' : '생성'}
               </Button>
               <Button
                 variant="outline"
