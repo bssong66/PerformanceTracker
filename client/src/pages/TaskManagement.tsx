@@ -73,7 +73,10 @@ function TaskManagement({ highlightTaskId }: TaskManagementProps) {
     imageUrls: [] as string[],
     fileUrls: [] as Array<{url: string, name: string}>,
     coreValue: '',
-    annualGoal: ''
+    annualGoal: '',
+    result: '',
+    resultImageUrls: [] as string[],
+    resultFileUrls: [] as Array<{url: string, name: string}>
   });
 
   // Fetch tasks
@@ -252,7 +255,10 @@ function TaskManagement({ highlightTaskId }: TaskManagementProps) {
       imageUrls: [],
       fileUrls: [],
       coreValue: 'none',
-      annualGoal: 'none'
+      annualGoal: 'none',
+      result: '',
+      resultImageUrls: [],
+      resultFileUrls: []
     });
     setEditingTask(null);
   };
@@ -294,7 +300,10 @@ function TaskManagement({ highlightTaskId }: TaskManagementProps) {
       imageUrls: task.imageUrls || [],
       fileUrls: task.fileUrls || [],
       coreValue: (task as any).coreValue || 'none',
-      annualGoal: (task as any).annualGoal || 'none'
+      annualGoal: (task as any).annualGoal || 'none',
+      result: (task as any).result || '',
+      resultImageUrls: (task as any).resultImageUrls || [],
+      resultFileUrls: (task as any).resultFileUrls || []
     });
     setEditingTask(task);
     setShowTaskDialog(true);
@@ -435,144 +444,178 @@ function TaskManagement({ highlightTaskId }: TaskManagementProps) {
         </div>
       </div>
       <Dialog open={showTaskDialog} onOpenChange={setShowTaskDialog}>
-          <DialogContent className="sm:max-w-md max-h-[70vh] overflow-y-auto">
+          <DialogContent className="sm:max-w-4xl max-h-[80vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>
-                {editingTask ? '할일 수정' : '새 할일 만들기'}
+                할일 상세
               </DialogTitle>
               <p className="text-sm text-gray-500 mt-2">
-                {editingTask ? '할일 정보를 수정하세요.' : '새로운 독립 할일을 생성하세요.'}
+                할일의 상세 정보를 확인하세요.
               </p>
             </DialogHeader>
 
             <form onSubmit={handleSubmit} className="space-y-4">
-              <div>
-                <Label htmlFor="title">할일 제목</Label>
-                <Input
-                  id="title"
-                  value={taskForm.title}
-                  onChange={(e) => setTaskForm(prev => ({ ...prev, title: e.target.value }))}
-                  placeholder="할일 제목을 입력하세요"
-                  required
-                />
-              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:divide-x divide-gray-200">
+                {/* 좌측: 할일 계획 */}
+                <div className="space-y-4 md:pr-6">
+                  <h3 className="text-lg font-semibold border-b pb-2">할일: 내용</h3>
+                  
+                  <div>
+                    <Label htmlFor="title">할일 제목</Label>
+                    <Input
+                      id="title"
+                      value={taskForm.title}
+                      onChange={(e) => setTaskForm(prev => ({ ...prev, title: e.target.value }))}
+                      placeholder="할일 제목을 입력하세요"
+                      required
+                    />
+                  </div>
 
-              <div>
-                <Label>우선순위</Label>
-                <Select
-                  value={taskForm.priority}
-                  onValueChange={(value: 'A' | 'B' | 'C') => 
-                    setTaskForm(prev => ({ ...prev, priority: value }))
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="A">A급 (긴급+중요)</SelectItem>
-                    <SelectItem value="B">B급 (중요)</SelectItem>
-                    <SelectItem value="C">C급 (일반)</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+                  <div>
+                    <Label>우선순위</Label>
+                    <Select
+                      value={taskForm.priority}
+                      onValueChange={(value: 'A' | 'B' | 'C') => 
+                        setTaskForm(prev => ({ ...prev, priority: value }))
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="A">A급 (긴급+중요)</SelectItem>
+                        <SelectItem value="B">B급 (중요)</SelectItem>
+                        <SelectItem value="C">C급 (일반)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
 
-              {/* Core Values Selection */}
-              <div>
-                <Label>연관 핵심가치</Label>
-                <Select
-                  value={taskForm.coreValue}
-                  onValueChange={(value) => 
-                    setTaskForm(prev => ({ ...prev, coreValue: value }))
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="핵심가치를 선택하세요 (선택사항)" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">선택 안함</SelectItem>
-                    {foundation && (
-                      <>
-                        {foundation.coreValue1 && (
-                          <SelectItem value={foundation.coreValue1}>{foundation.coreValue1}</SelectItem>
+                  <div>
+                    <Label>연관 핵심가치</Label>
+                    <Select
+                      value={taskForm.coreValue}
+                      onValueChange={(value) => 
+                        setTaskForm(prev => ({ ...prev, coreValue: value }))
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="핵심가치를 선택하세요 (선택사항)" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">선택 안함</SelectItem>
+                        {foundation && (
+                          <>
+                            {foundation.coreValue1 && (
+                              <SelectItem value={foundation.coreValue1}>{foundation.coreValue1}</SelectItem>
+                            )}
+                            {foundation.coreValue2 && (
+                              <SelectItem value={foundation.coreValue2}>{foundation.coreValue2}</SelectItem>
+                            )}
+                            {foundation.coreValue3 && (
+                              <SelectItem value={foundation.coreValue3}>{foundation.coreValue3}</SelectItem>
+                            )}
+                          </>
                         )}
-                        {foundation.coreValue2 && (
-                          <SelectItem value={foundation.coreValue2}>{foundation.coreValue2}</SelectItem>
-                        )}
-                        {foundation.coreValue3 && (
-                          <SelectItem value={foundation.coreValue3}>{foundation.coreValue3}</SelectItem>
-                        )}
-                      </>
-                    )}
-                  </SelectContent>
-                </Select>
-              </div>
+                      </SelectContent>
+                    </Select>
+                  </div>
 
-              {/* Annual Goals Selection */}
-              <div>
-                <Label>연관 연간목표</Label>
-                <Select
-                  value={taskForm.annualGoal}
-                  onValueChange={(value) => 
-                    setTaskForm(prev => ({ ...prev, annualGoal: value }))
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="연간목표를 선택하세요 (선택사항)" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">선택 안함</SelectItem>
-                    {annualGoals.map((goal: any) => (
-                      <SelectItem key={goal.id} value={goal.title}>
-                        {goal.title}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+                  <div>
+                    <Label>연관 연간목표</Label>
+                    <Select
+                      value={taskForm.annualGoal}
+                      onValueChange={(value) => 
+                        setTaskForm(prev => ({ ...prev, annualGoal: value }))
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="연간목표를 선택하세요 (선택사항)" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">선택 안함</SelectItem>
+                        {annualGoals.map((goal: any) => (
+                          <SelectItem key={goal.id} value={goal.title}>
+                            {goal.title}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="startDate">시작일</Label>
-                  <Input
-                    id="startDate"
-                    type="date"
-                    value={taskForm.startDate}
-                    onChange={(e) => setTaskForm(prev => ({ ...prev, startDate: e.target.value }))}
-                  />
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="startDate">시작일</Label>
+                      <Input
+                        id="startDate"
+                        type="date"
+                        value={taskForm.startDate}
+                        onChange={(e) => setTaskForm(prev => ({ ...prev, startDate: e.target.value }))}
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="endDate">마감일</Label>
+                      <Input
+                        id="endDate"
+                        type="date"
+                        value={taskForm.endDate}
+                        onChange={(e) => setTaskForm(prev => ({ ...prev, endDate: e.target.value }))}
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="notes">메모</Label>
+                    <Textarea
+                      id="notes"
+                      value={taskForm.notes}
+                      onChange={(e) => setTaskForm(prev => ({ ...prev, notes: e.target.value }))}
+                      placeholder="할일에 대한 메모"
+                      rows={3}
+                    />
+                  </div>
+
+                  <div>
+                    <Label>첨부 스크린샷, 파일 및 사진</Label>
+                    <UnifiedAttachmentManager
+                      imageUrls={taskForm.imageUrls}
+                      fileUrls={taskForm.fileUrls}
+                      onImagesChange={(urls) => setTaskForm(prev => ({ ...prev, imageUrls: urls }))}
+                      onFilesChange={(files) => setTaskForm(prev => ({ ...prev, fileUrls: files }))}
+                      uploadEndpoint="/api/files/upload"
+                      maxFiles={15}
+                      maxFileSize={50 * 1024 * 1024} // 50MB
+                    />
+                  </div>
                 </div>
-                <div>
-                  <Label htmlFor="endDate">마감일</Label>
-                  <Input
-                    id="endDate"
-                    type="date"
-                    value={taskForm.endDate}
-                    onChange={(e) => setTaskForm(prev => ({ ...prev, endDate: e.target.value }))}
-                  />
+
+                {/* 우측: 할일 결과 */}
+                <div className="space-y-4 md:pl-6">
+                  <h3 className="text-lg font-semibold border-b pb-2">할일: 결과</h3>
+                  
+                  <div>
+                    <Label htmlFor="taskResult">결과 기록</Label>
+                    <Textarea
+                      id="taskResult"
+                      value={taskForm.result || ''}
+                      onChange={(e) => setTaskForm(prev => ({ ...prev, result: e.target.value }))}
+                      placeholder="할일을 완료한 후 결과나 소감을 기록해주세요"
+                      rows={8}
+                    />
+                  </div>
+
+                  <div>
+                    <Label>결과 첨부파일</Label>
+                    <UnifiedAttachmentManager
+                      imageUrls={taskForm.resultImageUrls || []}
+                      fileUrls={taskForm.resultFileUrls || []}
+                      onImagesChange={(urls) => setTaskForm(prev => ({ ...prev, resultImageUrls: urls }))}
+                      onFilesChange={(files) => setTaskForm(prev => ({ ...prev, resultFileUrls: files }))}
+                      uploadEndpoint="/api/files/upload"
+                      maxFiles={15}
+                      maxFileSize={50 * 1024 * 1024} // 50MB
+                    />
+                  </div>
                 </div>
-              </div>
-
-              <div>
-                <Label htmlFor="notes">메모</Label>
-                <Textarea
-                  id="notes"
-                  value={taskForm.notes}
-                  onChange={(e) => setTaskForm(prev => ({ ...prev, notes: e.target.value }))}
-                  placeholder="할일에 대한 메모"
-                  rows={3}
-                />
-              </div>
-
-              <div>
-                <Label>첨부파일</Label>
-                <UnifiedAttachmentManager
-                  imageUrls={taskForm.imageUrls}
-                  fileUrls={taskForm.fileUrls}
-                  onImagesChange={(urls) => setTaskForm(prev => ({ ...prev, imageUrls: urls }))}
-                  onFilesChange={(files) => setTaskForm(prev => ({ ...prev, fileUrls: files }))}
-                  uploadEndpoint="/api/files/upload"
-                  maxFiles={15}
-                  maxFileSize={50 * 1024 * 1024} // 50MB
-                />
               </div>
 
               <div className="flex justify-end space-x-2 pt-4">
