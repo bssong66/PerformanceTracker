@@ -642,7 +642,7 @@ function TaskManagement({ highlightTaskId }: TaskManagementProps) {
                       </button>
                       <span 
                         className={`text-sm font-medium cursor-pointer hover:text-blue-600 ${task.completed ? 'line-through text-gray-500' : 'text-gray-900'}`}
-                        onClick={() => openTaskDetailDialog(task)}
+                        onClick={() => openEditDialog(task)}
                       >
                         {task.title}
                       </span>
