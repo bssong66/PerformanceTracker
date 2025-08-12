@@ -363,18 +363,18 @@ export function UnifiedAttachmentManager({
     <div className="space-y-4">
       {/* 업로드 영역 */}
       <div
-        className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-6 text-center hover:border-gray-400 dark:hover:border-gray-500 transition-colors"
+        className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-3 text-center hover:border-gray-400 dark:hover:border-gray-500 transition-colors"
         onDrop={handleDrop}
         onDragOver={(e) => e.preventDefault()}
         onDragEnter={(e) => e.preventDefault()}
       >
-        <div className="space-y-4">
+        <div className="space-y-2">
           <div className="flex justify-center">
-            <Upload className="h-8 w-8 text-gray-400" />
+            <Upload className="h-6 w-6 text-gray-400" />
           </div>
           
           <div>
-            <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
+            <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
               파일을 여기에 드래그하거나 아래 버튼을 클릭하세요
             </p>
             
