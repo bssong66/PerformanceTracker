@@ -1702,105 +1702,141 @@ export default function ProjectManagement() {
 
       {/* Task Creation Dialog */}
       <Dialog open={showTaskDialog} onOpenChange={setShowTaskDialog}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-4xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
-              {editingTask ? '할일 수정' : '새 할일 만들기'}
+              할일 상세
             </DialogTitle>
             <DialogDescription>
-              {editingTask ? '할일 정보를 수정하세요.' : '프로젝트에 새로운 할일을 추가하세요.'}
+              할일의 상세 정보를 확인하세요.
             </DialogDescription>
           </DialogHeader>
           
           <form onSubmit={handleTaskSubmit} className="space-y-4">
-            <div>
-              <Label htmlFor="taskTitle">할일 제목</Label>
-              <Input
-                id="taskTitle"
-                value={taskForm.title}
-                onChange={(e) => setTaskForm(prev => ({ ...prev, title: e.target.value }))}
-                placeholder="할일 제목을 입력하세요"
-                required
-              />
-            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:divide-x divide-gray-200">
+              {/* 왼쪽: 할일 내용 */}
+              <div className="space-y-4 md:pr-6">
+                <h3 className="text-lg font-semibold border-b pb-2">할일: 내용</h3>
+                
+                <div>
+                  <Label htmlFor="taskTitle">할일 제목</Label>
+                  <Input
+                    id="taskTitle"
+                    value={taskForm.title}
+                    onChange={(e) => setTaskForm(prev => ({ ...prev, title: e.target.value }))}
+                    placeholder="할일 제목을 입력하세요"
+                    required
+                  />
+                </div>
 
-            <div>
-              <Label>우선순위</Label>
-              {!editingTask && selectedProjectForTask && (
-                <p className="text-xs text-blue-600 mb-2">
-                  💡 프로젝트 중요도({projects.find((p: Project) => p.id === selectedProjectForTask)?.priority === 'high' ? '높음' : 
-                    projects.find((p: Project) => p.id === selectedProjectForTask)?.priority === 'medium' ? '보통' : '낮음'})를 기본값으로 설정했습니다
-                </p>
-              )}
-              <Select
-                value={taskForm.priority}
-                onValueChange={(value: 'A' | 'B' | 'C') => 
-                  setTaskForm(prev => ({ ...prev, priority: value }))
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="A">A (매우 중요)</SelectItem>
-                  <SelectItem value="B">B (중요)</SelectItem>
-                  <SelectItem value="C">C (보통)</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+                <div>
+                  <Label>우선순위</Label>
+                  {!editingTask && selectedProjectForTask && (
+                    <p className="text-xs text-blue-600 mb-2">
+                      💡 프로젝트 중요도({projects.find((p: Project) => p.id === selectedProjectForTask)?.priority === 'high' ? '높음' : 
+                        projects.find((p: Project) => p.id === selectedProjectForTask)?.priority === 'medium' ? '보통' : '낮음'})를 기본값으로 설정했습니다
+                    </p>
+                  )}
+                  <Select
+                    value={taskForm.priority}
+                    onValueChange={(value: 'A' | 'B' | 'C') => 
+                      setTaskForm(prev => ({ ...prev, priority: value }))
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="A">A (매우 중요)</SelectItem>
+                      <SelectItem value="B">B (중요)</SelectItem>
+                      <SelectItem value="C">C (보통)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="taskStartDate">시작일</Label>
-                <Input
-                  id="taskStartDate"
-                  type="date"
-                  value={taskForm.startDate}
-                  min={getSelectedProject()?.startDate || undefined}
-                  max={getSelectedProject()?.endDate || undefined}
-                  onChange={(e) => setTaskForm(prev => ({ ...prev, startDate: e.target.value }))}
-                />
-                {getSelectedProject()?.startDate && (
-                  <p className="text-xs text-gray-500 mt-1 whitespace-nowrap">
-                    프로젝트 기간: {getSelectedProject()?.startDate} ~ {getSelectedProject()?.endDate || '미정'}
-                  </p>
-                )}
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="taskStartDate">시작일</Label>
+                    <Input
+                      id="taskStartDate"
+                      type="date"
+                      value={taskForm.startDate}
+                      min={getSelectedProject()?.startDate || undefined}
+                      max={getSelectedProject()?.endDate || undefined}
+                      onChange={(e) => setTaskForm(prev => ({ ...prev, startDate: e.target.value }))}
+                    />
+                    {getSelectedProject()?.startDate && (
+                      <p className="text-xs text-gray-500 mt-1 whitespace-nowrap">
+                        프로젝트 기간: {getSelectedProject()?.startDate} ~ {getSelectedProject()?.endDate || '미정'}
+                      </p>
+                    )}
+                  </div>
+                  <div>
+                    <Label htmlFor="taskEndDate">종료일</Label>
+                    <Input
+                      id="taskEndDate"
+                      type="date"
+                      value={taskForm.endDate}
+                      min={taskForm.startDate || getSelectedProject()?.startDate || undefined}
+                      max={getSelectedProject()?.endDate || undefined}
+                      onChange={(e) => setTaskForm(prev => ({ ...prev, endDate: e.target.value }))}
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <Label htmlFor="taskNotes">메모</Label>
+                  <Textarea
+                    id="taskNotes"
+                    value={taskForm.notes}
+                    onChange={(e) => setTaskForm(prev => ({ ...prev, notes: e.target.value }))}
+                    placeholder="할일에 대한 메모"
+                    rows={3}
+                  />
+                </div>
+
+                <div>
+                  <Label>첨부 스크린샷, 파일 및 사진</Label>
+                  <UnifiedAttachmentManager
+                    imageUrls={taskForm.imageUrls}
+                    fileUrls={taskForm.fileUrls}
+                    onImagesChange={(urls) => setTaskForm(prev => ({ ...prev, imageUrls: urls }))}
+                    onFilesChange={(files) => setTaskForm(prev => ({ ...prev, fileUrls: files }))}
+                    uploadEndpoint="/api/files/upload"
+                    maxFiles={15}
+                    maxFileSize={50 * 1024 * 1024} // 50MB
+                  />
+                </div>
               </div>
-              <div>
-                <Label htmlFor="taskEndDate">종료일</Label>
-                <Input
-                  id="taskEndDate"
-                  type="date"
-                  value={taskForm.endDate}
-                  min={taskForm.startDate || getSelectedProject()?.startDate || undefined}
-                  max={getSelectedProject()?.endDate || undefined}
-                  onChange={(e) => setTaskForm(prev => ({ ...prev, endDate: e.target.value }))}
-                />
+
+              {/* 오른쪽: 할일 결과 */}
+              <div className="space-y-4 md:pl-6">
+                <h3 className="text-lg font-semibold border-b pb-2">할일: 결과</h3>
+                
+                <div>
+                  <Label htmlFor="taskResult">결과 기록</Label>
+                  <Textarea
+                    id="taskResult"
+                    value={taskForm.result}
+                    onChange={(e) => setTaskForm(prev => ({ ...prev, result: e.target.value }))}
+                    placeholder="할일을 완료한 후 결과나 소감을 기록해주세요"
+                    rows={6}
+                  />
+                </div>
+
+                <div>
+                  <Label>결과 첨부파일</Label>
+                  <UnifiedAttachmentManager
+                    imageUrls={taskForm.resultImageUrls}
+                    fileUrls={taskForm.resultFileUrls}
+                    onImagesChange={(urls) => setTaskForm(prev => ({ ...prev, resultImageUrls: urls }))}
+                    onFilesChange={(files) => setTaskForm(prev => ({ ...prev, resultFileUrls: files }))}
+                    uploadEndpoint="/api/files/upload"
+                    maxFiles={15}
+                    maxFileSize={50 * 1024 * 1024} // 50MB
+                  />
+                </div>
               </div>
-            </div>
-
-            <div>
-              <Label htmlFor="taskNotes">메모</Label>
-              <Textarea
-                id="taskNotes"
-                value={taskForm.notes}
-                onChange={(e) => setTaskForm(prev => ({ ...prev, notes: e.target.value }))}
-                placeholder="할일에 대한 메모"
-                rows={3}
-              />
-            </div>
-
-            <div>
-              <Label>첨부파일</Label>
-              <UnifiedAttachmentManager
-                imageUrls={taskForm.imageUrls}
-                fileUrls={taskForm.fileUrls}
-                onImagesChange={(urls) => setTaskForm(prev => ({ ...prev, imageUrls: urls }))}
-                onFilesChange={(files) => setTaskForm(prev => ({ ...prev, fileUrls: files }))}
-                uploadEndpoint="/api/files/upload"
-                maxFiles={15}
-                maxFileSize={50 * 1024 * 1024} // 50MB
-              />
             </div>
 
             <div className="flex justify-end space-x-2 pt-4">
