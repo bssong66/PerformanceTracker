@@ -2109,9 +2109,9 @@ export default function ProjectManagement() {
             
             {isEditingProjectDetail ? (
               <form onSubmit={(e) => { e.preventDefault(); handleProjectDetailSave(); }} className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:divide-x divide-gray-200">
                   {/* 왼쪽: 프로젝트 계획 */}
-                  <div className="space-y-4">
+                  <div className="space-y-4 md:pr-6">
                     <h3 className="text-lg font-semibold border-b pb-2">프로젝트: 계획</h3>
                     
                     <div>
@@ -2241,7 +2241,7 @@ export default function ProjectManagement() {
                   </div>
 
                   {/* 오른쪽: 프로젝트 결과 */}
-                  <div className="space-y-4">
+                  <div className="space-y-4 md:pl-6">
                     <h3 className="text-lg font-semibold border-b pb-2">프로젝트: 결과</h3>
                     
                     <div>
@@ -2283,9 +2283,9 @@ export default function ProjectManagement() {
               </form>
             ) : (
               <div className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:divide-x divide-gray-200">
                   {/* 왼쪽: 프로젝트 계획 정보 */}
-                  <div className="space-y-4">
+                  <div className="space-y-4 md:pr-6">
                     <h3 className="text-lg font-semibold border-b pb-2">프로젝트: 계획</h3>
                     
                     <div>
@@ -2363,7 +2363,7 @@ export default function ProjectManagement() {
                   </div>
 
                   {/* 오른쪽: 프로젝트 결과 정보 */}
-                  <div className="space-y-4">
+                  <div className="space-y-4 md:pl-6">
                     <h3 className="text-lg font-semibold border-b pb-2">프로젝트: 결과</h3>
                     
                     {selectedProject.result ? (
