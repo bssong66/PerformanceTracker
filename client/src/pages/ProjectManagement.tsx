@@ -619,10 +619,79 @@ export default function ProjectManagement() {
   };
 
   // Project detail popup functions
-  const openProjectDetailDialog = (project: any) => {
+  const openProjectDetailDialog = async (project: any) => {
     setSelectedProject(project);
     setShowProjectDetailDialog(true);
-    setIsEditingProjectDetail(false);
+    setIsEditingProjectDetail(true);  // 바로 편집 모드로 설정
+    
+    // Fetch project files from the dedicated API and set form data
+    try {
+      const filesResponse = await fetch(`/api/projects/${project.id}/files`);
+      if (filesResponse.ok) {
+        const projectFiles = await filesResponse.json();
+        console.log('Fetched project files:', projectFiles);
+        
+        // Convert project files to fileUrls format
+        const fileUrls = projectFiles.map((file: any) => ({
+          url: file.objectPath, // objectPath already contains /objects/...
+          name: file.originalFileName,
+          size: file.fileSize || 0
+        }));
+        
+        console.log('Converted fileUrls:', fileUrls);
+        
+        setProjectForm({
+          title: project.title,
+          description: project.description || '',
+          priority: project.priority,
+          color: project.color,
+          startDate: project.startDate || '',
+          endDate: project.endDate || '',
+          coreValue: project.coreValue || 'none',
+          annualGoal: project.annualGoal || 'none',
+          result: project.result || '',
+          imageUrls: project.imageUrls || [],
+          fileUrls: fileUrls,
+          resultImageUrls: project.resultImageUrls || [],
+          resultFileUrls: project.resultFileUrls || []
+        });
+      } else {
+        // Fallback to project data
+        setProjectForm({
+          title: project.title,
+          description: project.description || '',
+          priority: project.priority,
+          color: project.color,
+          startDate: project.startDate || '',
+          endDate: project.endDate || '',
+          coreValue: project.coreValue || 'none',
+          annualGoal: project.annualGoal || 'none',
+          result: project.result || '',
+          imageUrls: project.imageUrls || [],
+          fileUrls: project.fileUrls || [],
+          resultImageUrls: project.resultImageUrls || [],
+          resultFileUrls: project.resultFileUrls || []
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching project files:', error);
+      // Fallback to project data
+      setProjectForm({
+        title: project.title,
+        description: project.description || '',
+        priority: project.priority,
+        color: project.color,
+        startDate: project.startDate || '',
+        endDate: project.endDate || '',
+        coreValue: project.coreValue || 'none',
+        annualGoal: project.annualGoal || 'none',
+        result: project.result || '',
+        imageUrls: project.imageUrls || [],
+        fileUrls: project.fileUrls || [],
+        resultImageUrls: project.resultImageUrls || [],
+        resultFileUrls: project.resultFileUrls || []
+      });
+    }
   };
 
   const handleProjectDetailEdit = async () => {
@@ -2100,10 +2169,10 @@ export default function ProjectManagement() {
           <DialogContent className="sm:max-w-4xl max-h-[80vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>
-                {isEditingProjectDetail ? '프로젝트 수정' : '프로젝트 상세'}
+                프로젝트 상세
               </DialogTitle>
               <DialogDescription>
-                {isEditingProjectDetail ? '프로젝트 정보를 수정하세요.' : '프로젝트의 상세 정보를 확인하세요.'}
+                프로젝트의 상세 정보를 확인하세요.
               </DialogDescription>
             </DialogHeader>
             
