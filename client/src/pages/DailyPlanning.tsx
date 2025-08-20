@@ -70,22 +70,34 @@ export default function DailyPlanning() {
   // 오늘 날짜의 모든 할일 가져오기 (날짜 필터 제거)
   const { data: allTasks = [], isLoading: tasksLoading } = useQuery({
     queryKey: ['tasks', user?.id],
-    queryFn: () => fetch(`/api/tasks/${user?.id as string}`).then(res => res.json()),
+    queryFn: () => fetch(`/api/tasks/${user!.id}`).then(res => res.json()),
+    enabled: !!user?.id,
+  });
+
+  // 습관 데이터 가져오기
+  const { data: habits = [] } = useQuery({
+    queryKey: ['habits', user?.id],
+    queryFn: () => fetch(`/api/habits/${user!.id}`).then(res => res.json()),
+    enabled: !!user?.id,
+  });
+
+  // 오늘의 습관 로그 가져오기
+  const { data: habitLogs = [] } = useQuery({
+    queryKey: ['habit-logs', user?.id, today],
+    queryFn: () => fetch(`/api/habit-logs/${user!.id}/${today}`).then(res => res.json()),
     enabled: !!user?.id,
   });
 
   // 오늘 날짜의 일정 가져오기
   const { data: todayEvents = [] } = useQuery({
     queryKey: ['events', user?.id, today],
-    queryFn: () => fetch(`/api/events/${user?.id as string}?startDate=${today}&endDate=${today}`).then(res => res.json()),
+    queryFn: () => fetch(`/api/events/${user!.id}?startDate=${today}&endDate=${today}`).then(res => res.json()),
     enabled: !!user?.id,
   });
 
-
-
   const { data: projects = [] } = useQuery({
     queryKey: ['projects', user?.id],
-    queryFn: () => fetch(`/api/projects/${user?.id as string}`).then(res => res.json()),
+    queryFn: () => fetch(`/api/projects/${user!.id}`).then(res => res.json()),
     enabled: !!user?.id,
   });
 
@@ -93,37 +105,27 @@ export default function DailyPlanning() {
   
   const { data: foundation } = useQuery({
     queryKey: ['foundation', user?.id, currentYear],
-    queryFn: () => fetch(`/api/foundation/${user?.id as string}?year=${currentYear}`).then(res => res.json()),
+    queryFn: () => fetch(`/api/foundation/${user!.id}?year=${currentYear}`).then(res => res.json()),
     enabled: !!user?.id,
   });
 
   const { data: annualGoals = [] } = useQuery({
     queryKey: ['goals', user?.id, currentYear],
-    queryFn: () => fetch(`/api/goals/${user?.id as string}?year=${currentYear}`).then(res => res.json()),
+    queryFn: () => fetch(`/api/goals/${user!.id}?year=${currentYear}`).then(res => res.json()),
     enabled: !!user?.id,
   });
 
   const { data: timeBlocks = [] } = useQuery({
     queryKey: ['timeBlocks', user?.id, today],
-    queryFn: () => fetch(api.timeBlocks.list(user?.id as string, today)).then(res => res.json()),
+    queryFn: () => fetch(api.timeBlocks.list(user!.id, today)).then(res => res.json()),
     enabled: !!user?.id,
   });
 
-  const { data: habits = [] } = useQuery({
-    queryKey: ['habits', user?.id],
-    queryFn: () => fetch(`/api/habits/${user?.id as string}`).then(res => res.json()),
-    enabled: !!user?.id,
-  });
 
-  const { data: habitLogs = [] } = useQuery({
-    queryKey: ['habitLogs', user?.id, today],
-    queryFn: () => fetch(`/api/habit-logs/${user?.id as string}/${today}`).then(res => res.json()),
-    enabled: !!user?.id,
-  });
 
   const { data: dailyReflection } = useQuery({
     queryKey: ['dailyReflection', user?.id, today],
-    queryFn: () => fetch(`/api/daily-reflection/${user?.id as string}/${today}`).then(res => res.json()).catch(() => null),
+    queryFn: () => fetch(`/api/daily-reflection/${user!.id}/${today}`).then(res => res.json()).catch(() => null),
     enabled: !!user?.id,
   });
 
@@ -131,7 +133,7 @@ export default function DailyPlanning() {
   const addTaskMutation = useMutation({
     mutationFn: createTask,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['tasks', user?.id as string] });
+      queryClient.invalidateQueries({ queryKey: ['tasks', user!.id] });
       setNewTask("");
     },
   });
@@ -139,7 +141,7 @@ export default function DailyPlanning() {
   const updateTaskMutation = useMutation({
     mutationFn: ({ id, updates }: { id: number; updates: any }) => updateTask(id, updates),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['tasks', user?.id as string] });
+      queryClient.invalidateQueries({ queryKey: ['tasks', user!.id] });
     },
   });
 
@@ -151,14 +153,14 @@ export default function DailyPlanning() {
         body: JSON.stringify({ completed })
       }).then(res => res.json()),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['events', user?.id as string, today] });
+      queryClient.invalidateQueries({ queryKey: ['events', user!.id, today] });
     },
   });
 
   const saveReflectionMutation = useMutation({
     mutationFn: saveDailyReflection,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['dailyReflection', user?.id as string, today] });
+      queryClient.invalidateQueries({ queryKey: ['dailyReflection', user!.id, today] });
       toast({
         title: "성공",
         description: "일일 회고가 저장되었습니다.",
@@ -169,13 +171,33 @@ export default function DailyPlanning() {
   const addTimeBlockMutation = useMutation({
     mutationFn: createTimeBlock,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['timeBlocks', user?.id as string, today] });
+      queryClient.invalidateQueries({ queryKey: ['timeBlocks', user!.id, today] });
       setNewTimeBlock({
         startTime: "",
         endTime: "",
         title: "",
         type: "focus",
       });
+    },
+  });
+
+  // 습관 로그 토글 뮤테이션
+  const toggleHabitMutation = useMutation({
+    mutationFn: async ({ habitId, completed }: { habitId: number; completed: boolean }) => {
+      const response = await fetch(`/api/habit-logs`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: user!.id,
+          habitId,
+          date: today,
+          completed
+        })
+      });
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['habit-logs', user!.id, today] });
     },
   });
 
@@ -248,7 +270,7 @@ export default function DailyPlanning() {
     }
 
     addTaskMutation.mutate({
-      userId: user?.id as string,
+      userId: user!.id,
       title: newTask.trim(),
       priority: selectedPriority,
       coreValue: selectedCoreValue === 'none' ? null : selectedCoreValue,
@@ -283,7 +305,7 @@ export default function DailyPlanning() {
 
   const handleSaveReflection = () => {
     saveReflectionMutation.mutate({
-      userId: user?.id as string,
+      userId: user!.id,
       date: today,
       content: reflection,
     });
@@ -310,7 +332,7 @@ export default function DailyPlanning() {
     }
 
     addTimeBlockMutation.mutate({
-      userId: user?.id as string,
+      userId: user!.id,
       date: today,
       ...newTimeBlock,
     });
@@ -629,6 +651,47 @@ export default function DailyPlanning() {
                           {block.startTime}-{block.endTime} {block.title}
                         </div>
                       ))}
+                    </div>
+                  </div>
+
+                  {/* Today's Habits */}
+                  <div>
+                    <h4 className="text-sm font-medium text-gray-900 mb-2">오늘의 습관</h4>
+                    <div className="space-y-2">
+                      {habits.length > 0 ? (
+                        habits.map((habit: any) => {
+                          const habitLog = habitLogs.find((log: any) => log.habitId === habit.id);
+                          const isCompleted = habitLog?.completed || false;
+                          
+                          return (
+                            <div key={habit.id} className="flex items-center space-x-2 p-2 bg-gray-50 rounded">
+                              <Checkbox
+                                id={`habit-${habit.id}`}
+                                checked={isCompleted}
+                                onCheckedChange={(checked) => {
+                                  toggleHabitMutation.mutate({
+                                    habitId: habit.id,
+                                    completed: checked as boolean
+                                  });
+                                }}
+                              />
+                              <label 
+                                htmlFor={`habit-${habit.id}`}
+                                className={`text-sm flex-1 cursor-pointer ${isCompleted ? 'line-through text-gray-500' : 'text-gray-900'}`}
+                              >
+                                {habit.name}
+                              </label>
+                              {habit.coreValue && (
+                                <span className="text-xs px-2 py-1 bg-blue-100 text-blue-800 rounded-full">
+                                  {habit.coreValue}
+                                </span>
+                              )}
+                            </div>
+                          );
+                        })
+                      ) : (
+                        <p className="text-sm text-gray-500">등록된 습관이 없습니다.</p>
+                      )}
                     </div>
                   </div>
 
