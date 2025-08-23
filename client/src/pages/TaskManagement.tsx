@@ -60,6 +60,7 @@ function TaskManagement({ highlightTaskId }: TaskManagementProps) {
   const [isEditMode, setIsEditMode] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [taskToDelete, setTaskToDelete] = useState<number | null>(null);
+  const [showCompletedTasks, setShowCompletedTasks] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -416,9 +417,16 @@ function TaskManagement({ highlightTaskId }: TaskManagementProps) {
   const filteredTasks = tasks.filter((task: Task) => !task.projectId);
 
   const tasksByPriority = {
-    A: filteredTasks.filter((task: Task) => task.priority === 'A'),
-    B: filteredTasks.filter((task: Task) => task.priority === 'B'),
-    C: filteredTasks.filter((task: Task) => task.priority === 'C')
+    A: filteredTasks.filter((task: Task) => task.priority === 'A' && (showCompletedTasks || !task.completed)),
+    B: filteredTasks.filter((task: Task) => task.priority === 'B' && (showCompletedTasks || !task.completed)),
+    C: filteredTasks.filter((task: Task) => task.priority === 'C' && (showCompletedTasks || !task.completed))
+  };
+
+  // Count completed tasks for each priority
+  const completedTasksByPriority = {
+    A: filteredTasks.filter((task: Task) => task.priority === 'A' && task.completed).length,
+    B: filteredTasks.filter((task: Task) => task.priority === 'B' && task.completed).length,
+    C: filteredTasks.filter((task: Task) => task.priority === 'C' && task.completed).length
   };
 
 
@@ -431,7 +439,16 @@ function TaskManagement({ highlightTaskId }: TaskManagementProps) {
           <p className="text-gray-600">A-B-C 우선순위로 할일을 관리하세요</p>
         </div>
 
-
+        <div className="flex items-center space-x-3">
+          <Button
+            variant={showCompletedTasks ? "default" : "outline"}
+            onClick={() => setShowCompletedTasks(!showCompletedTasks)}
+            className="flex items-center space-x-2"
+          >
+            <CheckCircle className="h-4 w-4" />
+            <span>{showCompletedTasks ? '완료된 할일 숨기기' : '완료된 할일 보기'}</span>
+          </Button>
+        </div>
       </div>
       <Dialog open={showTaskDialog} onOpenChange={setShowTaskDialog}>
           <DialogContent className="sm:max-w-4xl max-h-[80vh] overflow-y-auto">
@@ -641,7 +658,14 @@ function TaskManagement({ highlightTaskId }: TaskManagementProps) {
               <CardTitle className="flex items-center justify-between">
                 <span className="text-[16px]">{priority}급 우선순위</span>
                 <div className="flex items-center space-x-2">
-                  <Badge variant="secondary">{tasksByPriority[priority].length}</Badge>
+                  <div className="flex items-center space-x-1">
+                    <Badge variant="secondary">{tasksByPriority[priority].length}</Badge>
+                    {!showCompletedTasks && completedTasksByPriority[priority] > 0 && (
+                      <Badge variant="outline" className="text-green-600 border-green-300">
+                        +{completedTasksByPriority[priority]}
+                      </Badge>
+                    )}
+                  </div>
                   <Button
                     size="sm"
                     variant="ghost"
