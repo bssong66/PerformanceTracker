@@ -1425,15 +1425,6 @@ export default function DailyPlanning() {
                     onKeyDown={handleReflectionKeyDown}
                     className="min-h-[200px] text-sm"
                   />
-                  <Button 
-                    onClick={handleSaveReflection}
-                    disabled={saveReflectionMutation.isPending}
-                    size="sm" 
-                    className="mt-2"
-                  >
-                    <Save className="h-4 w-4 mr-2" />
-                    저장
-                  </Button>
                 </div>
 
                 {/* File Upload */}
@@ -1856,6 +1847,19 @@ export default function DailyPlanning() {
             </div>
           </DialogContent>
         </Dialog>
+
+        {/* 고정된 저장 버튼 */}
+        <div className="fixed bottom-6 right-6 z-50">
+          <Button 
+            onClick={handleSaveReflection}
+            disabled={saveReflectionMutation.isPending}
+            size="lg"
+            className="shadow-lg hover:shadow-xl transition-shadow"
+          >
+            <Save className="h-4 w-4 mr-2" />
+            저장
+          </Button>
+        </div>
 
       </div>
     </div>
