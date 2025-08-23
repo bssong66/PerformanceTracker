@@ -828,7 +828,7 @@ export default function DailyPlanning() {
 
         <Tabs defaultValue="planning" className="space-y-4">
           {/* 플로팅 저장 버튼 */}
-          <div className="fixed z-50" style={{ top: '120px', right: '20px' }}>
+          <div className="fixed z-50" style={{ top: '70px', right: '50px' }}>
             <Button 
               onClick={handleSaveReflection}
               disabled={saveReflectionMutation.isPending}
