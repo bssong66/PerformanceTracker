@@ -443,6 +443,34 @@ export default function DailyPlanning() {
     }
   };
 
+  const handleDeleteFile = async (fileIndex: number) => {
+    try {
+      const fileToDelete = savedFiles[fileIndex];
+      
+      const response = await fetch(`/api/daily-reflection/${user!.id}/${today}/file`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ fileUrl: fileToDelete.url })
+      });
+      
+      if (response.ok) {
+        const updatedFiles = savedFiles.filter((_, index) => index !== fileIndex);
+        setSavedFiles(updatedFiles);
+        queryClient.invalidateQueries({ queryKey: ['dailyReflection', user!.id, today] });
+        toast({
+          title: "성공",
+          description: "파일이 삭제되었습니다.",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "오류",
+        description: "파일 삭제 중 오류가 발생했습니다.",
+        variant: "destructive",
+      });
+    }
+  };
+
   const handleAddTimeBlock = () => {
     if (!newTimeBlock.startTime || !newTimeBlock.endTime || !newTimeBlock.title.trim()) {
       toast({
@@ -1428,7 +1456,20 @@ export default function DailyPlanning() {
                       <h5 className="text-sm font-medium text-gray-900">저장된 파일</h5>
                       <div className="grid grid-cols-2 gap-2">
                         {savedFiles.map((file, index) => (
-                          <div key={index} className="p-2 bg-blue-50 rounded border border-blue-200">
+                          <div key={index} className="relative p-2 bg-blue-50 rounded border border-blue-200 group">
+                            {/* 삭제 버튼 */}
+                            <Button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDeleteFile(index);
+                              }}
+                              size="sm"
+                              variant="ghost"
+                              className="absolute top-1 right-1 h-6 w-6 p-0 text-red-500 hover:text-red-700 hover:bg-red-100 opacity-0 group-hover:opacity-100 transition-opacity z-10"
+                            >
+                              ×
+                            </Button>
+                            
                             {file.type?.startsWith('image/') ? (
                               <div className="text-center cursor-pointer" onClick={() => setPreviewImage(file.url)}>
                                 <img 

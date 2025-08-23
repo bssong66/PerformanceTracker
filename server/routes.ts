@@ -972,19 +972,66 @@ export async function registerRoutes(app: Express): Promise<Server> {
         size: file.size
       })) || [];
 
+      // Get existing reflection to merge files
+      const existingReflection = await storage.getDailyReflection(userId, date);
+      const existingFiles = existingReflection?.files || [];
+      const allFiles = [...existingFiles, ...fileData];
+
       // Create reflection data
       const reflectionData = {
         userId,
         date,
-        content: content || "",
-        files: fileData
+        content: content || existingReflection?.content || "",
+        files: allFiles
       };
 
       const reflection = await storage.upsertDailyReflection(reflectionData);
-      res.json({ ...reflection, files: fileData });
+      res.json({ ...reflection, files: allFiles });
     } catch (error) {
       console.error("Error saving daily reflection with files:", error);
       res.status(500).json({ message: "Failed to save daily reflection" });
+    }
+  });
+
+  // Delete file from daily reflection
+  app.delete("/api/daily-reflection/:userId/:date/file", async (req, res) => {
+    try {
+      const { userId, date } = req.params;
+      const { fileUrl } = req.body;
+
+      // Get existing reflection
+      const existingReflection = await storage.getDailyReflection(userId, date);
+      if (!existingReflection) {
+        return res.status(404).json({ message: "Daily reflection not found" });
+      }
+
+      // Remove file from files array
+      const existingFiles = existingReflection.files || [];
+      const updatedFiles = existingFiles.filter((file: any) => file.url !== fileUrl);
+
+      // Update reflection data
+      const reflectionData = {
+        userId,
+        date,
+        content: existingReflection.content || "",
+        files: updatedFiles
+      };
+
+      // Delete physical file
+      if (fileUrl.startsWith('/uploads/')) {
+        const filename = fileUrl.replace('/uploads/daily-reflections/', '');
+        const filePath = path.join(uploadsDir, filename);
+        
+        if (fs.existsSync(filePath)) {
+          fs.unlinkSync(filePath);
+        }
+      }
+
+      const reflection = await storage.upsertDailyReflection(reflectionData);
+      res.json({ ...reflection, files: updatedFiles });
+    } catch (error) {
+      console.error("Error deleting file from daily reflection:", error);
+      res.status(500).json({ message: "Failed to delete file" });
     }
   });
 
