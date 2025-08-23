@@ -455,6 +455,7 @@ export default function Calendar() {
 
   // Handle slot selection (drag to create event)
   const handleSelectSlot = useCallback(({ start, end }: { start: Date; end: Date }) => {
+    console.log('handleSelectSlot called:', { start, end });
     setSelectedSlot({ start, end });
     setEventForm(prev => ({
       ...prev,
@@ -464,6 +465,7 @@ export default function Calendar() {
       endTime: format(end, 'HH:mm'),
       isAllDay: format(start, 'HH:mm') === '00:00' && format(end, 'HH:mm') === '00:00'
     }));
+    console.log('Setting showEventDialog to true');
     setShowEventDialog(true);
   }, []);
 
