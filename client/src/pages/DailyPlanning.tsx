@@ -311,7 +311,8 @@ export default function DailyPlanning() {
   // 오늘 날짜의 할일만 필터링
   const todayTasks = allTasks.filter((task: any) => {
     if (task.dueDate) {
-      return task.dueDate === today;
+      // 오늘 날짜이거나 지연된 할일(완료되지 않은 과거 할일)도 포함
+      return task.dueDate <= today && !task.completed;
     }
     // dueDate가 없는 경우 생성일이 선택된 날짜인 것들 포함
     return task.createdAt && task.createdAt.startsWith(today);
