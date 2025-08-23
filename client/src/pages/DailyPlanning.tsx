@@ -1384,10 +1384,10 @@ export default function DailyPlanning() {
               <div>
                 <Label className="text-sm font-medium">연결된 프로젝트 (선택사항)</Label>
                 <Select 
-                  value={newTimeBlock.projectId?.toString() || ""} 
+                  value={newTimeBlock.projectId?.toString() || "none"} 
                   onValueChange={(value) => setNewTimeBlock(prev => ({ 
                     ...prev, 
-                    projectId: value ? parseInt(value) : null,
+                    projectId: value === "none" ? null : parseInt(value),
                     taskId: null // Reset task when project changes
                   }))}
                 >
@@ -1395,7 +1395,7 @@ export default function DailyPlanning() {
                     <SelectValue placeholder="프로젝트 선택 (선택사항)" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">프로젝트 없음</SelectItem>
+                    <SelectItem value="none">프로젝트 없음</SelectItem>
                     {projects.map((project: any) => (
                       <SelectItem key={project.id} value={project.id.toString()}>
                         {project.title}
@@ -1409,17 +1409,17 @@ export default function DailyPlanning() {
               <div>
                 <Label className="text-sm font-medium">연결된 할일 (선택사항)</Label>
                 <Select 
-                  value={newTimeBlock.taskId?.toString() || ""} 
+                  value={newTimeBlock.taskId?.toString() || "none"} 
                   onValueChange={(value) => setNewTimeBlock(prev => ({ 
                     ...prev, 
-                    taskId: value ? parseInt(value) : null 
+                    taskId: value === "none" ? null : parseInt(value) 
                   }))}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="할일 선택 (선택사항)" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">할일 없음</SelectItem>
+                    <SelectItem value="none">할일 없음</SelectItem>
                     {allTasks
                       .filter((task: any) => !newTimeBlock.projectId || task.projectId === newTimeBlock.projectId)
                       .map((task: any) => (
