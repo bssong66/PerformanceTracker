@@ -50,6 +50,13 @@ export default function DailyPlanning() {
   const [showCompletionDialog, setShowCompletionDialog] = useState(false);
   const [notificationPermission, setNotificationPermission] = useState<NotificationPermission>('default');
   
+  // Time picker states
+  const [showTimePicker, setShowTimePicker] = useState(false);
+  const [currentTimeField, setCurrentTimeField] = useState<'start' | 'end'>('start');
+  const [selectedHour, setSelectedHour] = useState(9);
+  const [selectedMinute, setSelectedMinute] = useState(0);
+  const [selectedPeriod, setSelectedPeriod] = useState<'AM' | 'PM'>('AM');
+  
   const timer = useTimer(0); // 테스트용 10초
   const { minutes, seconds, isRunning, isBreak, isCompleted, start, pause, reset, startBreak, extendSession, acknowledgeCompletion } = timer;
 
@@ -353,6 +360,85 @@ export default function DailyPlanning() {
     return Notification.permission;
   };
 
+  // Time picker functions
+  const openTimePicker = (field: 'start' | 'end') => {
+    setCurrentTimeField(field);
+    const currentTime = field === 'start' ? newTimeBlock.startTime : newTimeBlock.endTime;
+    
+    if (currentTime) {
+      const [hours, minutes] = currentTime.split(':').map(Number);
+      const hour12 = hours === 0 ? 12 : hours > 12 ? hours - 12 : hours;
+      const period = hours >= 12 ? 'PM' : 'AM';
+      
+      setSelectedHour(hour12);
+      setSelectedMinute(minutes);
+      setSelectedPeriod(period);
+    } else {
+      setSelectedHour(9);
+      setSelectedMinute(0);
+      setSelectedPeriod('AM');
+    }
+    
+    setShowTimePicker(true);
+  };
+
+  const formatTime = (hour: number, minute: number, period: 'AM' | 'PM') => {
+    let hour24 = hour;
+    if (period === 'PM' && hour !== 12) {
+      hour24 = hour + 12;
+    } else if (period === 'AM' && hour === 12) {
+      hour24 = 0;
+    }
+    
+    return `${hour24.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+  };
+
+  const handleTimeSelect = () => {
+    const timeString = formatTime(selectedHour, selectedMinute, selectedPeriod);
+    
+    if (currentTimeField === 'start') {
+      setNewTimeBlock(prev => ({ ...prev, startTime: timeString }));
+    } else {
+      setNewTimeBlock(prev => ({ ...prev, endTime: timeString }));
+    }
+    
+    setShowTimePicker(false);
+  };
+
+  const generateClockNumbers = () => {
+    const numbers = [];
+    for (let i = 1; i <= 12; i++) {
+      const angle = (i * 30 - 90) * (Math.PI / 180);
+      const x = 50 + 35 * Math.cos(angle);
+      const y = 50 + 35 * Math.sin(angle);
+      
+      numbers.push({
+        number: i,
+        x,
+        y,
+        angle: i * 30 - 90
+      });
+    }
+    return numbers;
+  };
+
+  const generateMinuteMarks = () => {
+    const marks = [];
+    for (let i = 0; i < 60; i += 5) {
+      const angle = (i * 6 - 90) * (Math.PI / 180);
+      const x = 50 + 40 * Math.cos(angle);
+      const y = 50 + 40 * Math.sin(angle);
+      
+      marks.push({
+        minute: i,
+        x,
+        y,
+        angle: i * 6 - 90
+      });
+    }
+    return marks;
+  };
+
   // 할일 완료 및 세션 종료
   const handleCompleteTaskAndEndSession = () => {
     if (selectedTask) {
@@ -617,18 +703,22 @@ export default function DailyPlanning() {
                     <div className="grid grid-cols-12 gap-1 mb-2 items-end">
                       <div className="col-span-2">
                         <Input
-                          type="time"
+                          type="text"
                           value={newTimeBlock.startTime}
-                          onChange={(e) => setNewTimeBlock(prev => ({ ...prev, startTime: e.target.value }))}
-                          className="h-7 text-xs"
+                          onClick={() => openTimePicker('start')}
+                          readOnly
+                          placeholder="시작시간"
+                          className="h-7 text-xs cursor-pointer"
                         />
                       </div>
                       <div className="col-span-2">
                         <Input
-                          type="time"
+                          type="text"
                           value={newTimeBlock.endTime}
-                          onChange={(e) => setNewTimeBlock(prev => ({ ...prev, endTime: e.target.value }))}
-                          className="h-7 text-xs"
+                          onClick={() => openTimePicker('end')}
+                          readOnly
+                          placeholder="종료시간"
+                          className="h-7 text-xs cursor-pointer"
                         />
                       </div>
                       <div className="col-span-6">
@@ -944,6 +1034,135 @@ export default function DailyPlanning() {
                   </Button>
                 </div>
               )}
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Time Picker Dialog */}
+        <Dialog open={showTimePicker} onOpenChange={setShowTimePicker}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>시간 선택</DialogTitle>
+              <DialogDescription>
+                {currentTimeField === 'start' ? '시작 시간' : '종료 시간'}을 선택하세요.
+              </DialogDescription>
+            </DialogHeader>
+            
+            <div className="space-y-6">
+              {/* AM/PM Selector */}
+              <div className="flex justify-center space-x-2">
+                <Button
+                  onClick={() => setSelectedPeriod('AM')}
+                  variant={selectedPeriod === 'AM' ? 'default' : 'outline'}
+                  size="sm"
+                >
+                  오전
+                </Button>
+                <Button
+                  onClick={() => setSelectedPeriod('PM')}
+                  variant={selectedPeriod === 'PM' ? 'default' : 'outline'}
+                  size="sm"
+                >
+                  오후
+                </Button>
+              </div>
+              
+              {/* Clock Display */}
+              <div className="flex justify-center">
+                <div className="relative w-64 h-64">
+                  {/* Clock Face */}
+                  <svg width="100%" height="100%" viewBox="0 0 100 100" className="border-2 border-gray-300 rounded-full bg-white">
+                    {/* Hour Numbers */}
+                    {generateClockNumbers().map((item) => (
+                      <g key={item.number}>
+                        <circle
+                          cx={item.x}
+                          cy={item.y}
+                          r="3"
+                          fill={selectedHour === item.number ? '#3b82f6' : '#e5e7eb'}
+                          className="cursor-pointer hover:fill-blue-400"
+                          onClick={() => setSelectedHour(item.number)}
+                        />
+                        <text
+                          x={item.x}
+                          y={item.y + 1.5}
+                          textAnchor="middle"
+                          className="text-xs font-medium fill-gray-700 cursor-pointer"
+                          onClick={() => setSelectedHour(item.number)}
+                        >
+                          {item.number}
+                        </text>
+                      </g>
+                    ))}
+                    
+                    {/* Minute Marks (for every 5 minutes) */}
+                    {generateMinuteMarks().map((item) => (
+                      <g key={item.minute}>
+                        <circle
+                          cx={item.x}
+                          cy={item.y}
+                          r="2"
+                          fill={selectedMinute === item.minute ? '#ef4444' : '#d1d5db'}
+                          className="cursor-pointer hover:fill-red-400"
+                          onClick={() => setSelectedMinute(item.minute)}
+                        />
+                        <text
+                          x={item.x}
+                          y={item.y + 1}
+                          textAnchor="middle"
+                          className="text-xs fill-gray-600 cursor-pointer"
+                          onClick={() => setSelectedMinute(item.minute)}
+                        >
+                          {item.minute.toString().padStart(2, '0')}
+                        </text>
+                      </g>
+                    ))}
+                    
+                    {/* Center dot */}
+                    <circle cx="50" cy="50" r="1" fill="#374151" />
+                  </svg>
+                </div>
+              </div>
+              
+              {/* Selected Time Display */}
+              <div className="text-center">
+                <div className="text-2xl font-mono font-bold text-gray-900">
+                  {selectedPeriod} {selectedHour.toString().padStart(2, '0')}:{selectedMinute.toString().padStart(2, '0')}
+                </div>
+              </div>
+              
+              {/* Minute Fine Tuning */}
+              <div className="space-y-2">
+                <Label className="text-sm font-medium text-gray-700">분 세밀 조정</Label>
+                <div className="flex justify-center space-x-1">
+                  {[0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55].map(minute => (
+                    <Button
+                      key={minute}
+                      onClick={() => setSelectedMinute(minute)}
+                      variant={selectedMinute === minute ? 'default' : 'outline'}
+                      size="sm"
+                      className="text-xs h-8 w-12"
+                    >
+                      {minute.toString().padStart(2, '0')}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+              
+              {/* Action Buttons */}
+              <div className="flex justify-end space-x-2">
+                <Button
+                  onClick={() => setShowTimePicker(false)}
+                  variant="outline"
+                >
+                  취소
+                </Button>
+                <Button
+                  onClick={handleTimeSelect}
+                >
+                  선택
+                </Button>
+              </div>
             </div>
           </DialogContent>
         </Dialog>
