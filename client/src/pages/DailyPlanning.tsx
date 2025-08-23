@@ -1319,7 +1319,7 @@ export default function DailyPlanning() {
                         <span className="text-xs text-gray-500">
                           {habitLogs.filter((log: any) => log.completed).length}/{habits.length}
                         </span>
-                        <div className="w-16 h-2 bg-gray-200 rounded-full overflow-hidden">
+                        <div className="w-80 h-2 bg-gray-200 rounded-full overflow-hidden">
                           <div 
                             className="h-full bg-green-500 transition-all duration-300 ease-out rounded-full"
                             style={{ 
