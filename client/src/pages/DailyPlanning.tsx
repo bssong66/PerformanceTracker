@@ -914,7 +914,10 @@ export default function DailyPlanning() {
                             <div className="flex items-start justify-between">
                               <div className="flex-1">
                                 <div className="flex items-center space-x-2 mb-1">
-                                  <span className="text-sm font-medium text-gray-900">
+                                  <span 
+                                    className="text-sm font-medium text-gray-900 cursor-pointer hover:text-blue-600 transition-colors"
+                                    onClick={() => openTimeBlockDialog(block)}
+                                  >
                                     {block.startTime} - {block.endTime}
                                   </span>
                                   <span className={`text-xs px-2 py-1 rounded-full ${
@@ -926,7 +929,12 @@ export default function DailyPlanning() {
                                      block.type === 'meeting' ? '회의' : '휴식'}
                                   </span>
                                 </div>
-                                <p className="text-sm text-gray-900 font-medium mb-1">{block.title}</p>
+                                <p 
+                                  className="text-sm text-gray-900 font-medium mb-1 cursor-pointer hover:text-blue-600 transition-colors"
+                                  onClick={() => openTimeBlockDialog(block)}
+                                >
+                                  {block.title}
+                                </p>
                                 {(getProjectName(block.projectId) || getTaskName(block.taskId)) && (
                                   <div className="flex items-center space-x-2 text-xs text-gray-600">
                                     {getProjectName(block.projectId) && (
