@@ -1050,10 +1050,50 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Helper function to convert Korean time format to 24-hour format
+  function convertKoreanTimeTo24Hour(timeStr: string): string {
+    if (!timeStr) return '00:00';
+    
+    const isAM = timeStr.includes('오전');
+    const timeOnly = timeStr.replace(/(오전|오후)\s*/, '');
+    const [hours, minutes] = timeOnly.split(':').map(Number);
+    
+    let hour24 = hours;
+    if (!isAM && hours !== 12) {
+      hour24 = hours + 12; // PM이고 12시가 아니면 12시간 추가
+    } else if (isAM && hours === 12) {
+      hour24 = 0; // AM 12시는 0시로 변환
+    }
+    
+    return `${hour24.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+  }
+
+  // Helper function to convert 24-hour format to Korean time format
+  function convert24HourToKoreanTime(time24: string): string {
+    const [hour, min] = time24.split(':').map(Number);
+    
+    let hour12 = hour;
+    let period = '오전';
+    
+    if (hour >= 12) {
+      period = '오후';
+      if (hour > 12) {
+        hour12 = hour - 12;
+      }
+    } else if (hour === 0) {
+      hour12 = 12;
+    }
+    
+    return `${period} ${hour12.toString().padStart(2, '0')}:${min.toString().padStart(2, '0')}`;
+  }
+
   // Helper function to calculate time difference in minutes
   function calculateTimeDifference(startTime: string, endTime: string): number {
-    const [startHour, startMin] = startTime.split(':').map(Number);
-    const [endHour, endMin] = endTime.split(':').map(Number);
+    const start24 = convertKoreanTimeTo24Hour(startTime);
+    const end24 = convertKoreanTimeTo24Hour(endTime);
+    
+    const [startHour, startMin] = start24.split(':').map(Number);
+    const [endHour, endMin] = end24.split(':').map(Number);
     
     const startMinutes = startHour * 60 + startMin;
     const endMinutes = endHour * 60 + endMin;
@@ -1063,13 +1103,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Helper function to add minutes to time
   function addMinutesToTime(time: string, minutes: number): string {
-    const [hour, min] = time.split(':').map(Number);
+    const time24 = convertKoreanTimeTo24Hour(time);
+    const [hour, min] = time24.split(':').map(Number);
     const totalMinutes = hour * 60 + min + minutes;
     
-    const newHour = Math.floor(totalMinutes / 60);
+    const newHour = Math.floor(totalMinutes / 60) % 24; // 24시간 형태로 유지
     const newMin = totalMinutes % 60;
     
-    return `${newHour.toString().padStart(2, '0')}:${newMin.toString().padStart(2, '0')}`;
+    const newTime24 = `${newHour.toString().padStart(2, '0')}:${newMin.toString().padStart(2, '0')}`;
+    return convert24HourToKoreanTime(newTime24);
   }
 
   // User settings routes
