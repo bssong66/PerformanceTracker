@@ -11,7 +11,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Checkbox } from "@/components/ui/checkbox";
 import { TaskItem } from "@/components/TaskItem";
 import { PriorityBadge } from "@/components/PriorityBadge";
-import { Plus, Mic, CalendarDays, X, ChevronLeft, ChevronRight, AlertTriangle, Focus, Play, Pause, RotateCcw, Target, Clock, CheckCircle, Bell } from "lucide-react";
+import { Plus, Mic, CalendarDays, X, ChevronLeft, ChevronRight, AlertTriangle, Focus, Play, Pause, RotateCcw, Target, Clock, CheckCircle, Bell, FileText, Save, Upload, Calendar } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { api, createTask, updateTask, saveDailyReflection, createTimeBlock } from "@/lib/api";
 import { queryClient } from "@/lib/queryClient";
@@ -662,22 +662,27 @@ export default function DailyPlanning() {
         </div>
 
         <Tabs defaultValue="planning" className="space-y-4">
-          <TabsList className="grid w-full max-w-md grid-cols-2">
-            <TabsTrigger value="planning" className="flex items-center space-x-2">
-              <CalendarDays className="h-4 w-4" />
-              <span>일일관리</span>
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="planning" className="flex items-center justify-center space-x-1 text-xs sm:text-sm">
+              <CalendarDays className="h-3 w-3 sm:h-4 sm:w-4" />
+              <span className="hidden sm:inline">오늘의 계획</span>
+              <span className="sm:hidden">계획</span>
             </TabsTrigger>
-            <TabsTrigger value="focus" className="flex items-center space-x-2">
-              <Focus className="h-4 w-4" />
-              <span>포커스모드</span>
+            <TabsTrigger value="timeblocks" className="flex items-center justify-center space-x-1 text-xs sm:text-sm">
+              <Clock className="h-3 w-3 sm:h-4 sm:w-4" />
+              <span className="hidden sm:inline">시간블록</span>
+              <span className="sm:hidden">시간</span>
+            </TabsTrigger>
+            <TabsTrigger value="records" className="flex items-center justify-center space-x-1 text-xs sm:text-sm">
+              <FileText className="h-3 w-3 sm:h-4 sm:w-4" />
+              <span className="hidden sm:inline">오늘의 기록</span>
+              <span className="sm:hidden">기록</span>
             </TabsTrigger>
           </TabsList>
 
           <TabsContent value="planning" className="space-y-4">
-            {/* Daily Planning Two-column layout */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              {/* Left Page - Planning */}
-              <Card>
+            {/* 오늘의 계획 */}
+            <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center space-x-2">
                     <CalendarDays className="h-5 w-5" />
@@ -845,246 +850,13 @@ export default function DailyPlanning() {
                     </div>
                   ))}
                 </CardContent>
-              </Card>
-
-              {/* Right Page - Tracking */}
-              <Card>
-                <CardHeader>
-                  <CardTitle>오늘의 기록</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  {/* Time Blocks */}
-                  <div>
-                    <div className="flex items-center justify-between mb-3">
-                      <h4 className="text-sm font-medium text-gray-900">시간 블록</h4>
-                      <div className="flex items-center space-x-2">
-                        {yesterdayTimeBlocks.length > 0 && timeBlocks.length === 0 && (
-                          <Button
-                            onClick={() => copyTimeBlocksMutation.mutate()}
-                            size="sm"
-                            variant="outline"
-                            className="h-7 text-xs"
-                            disabled={copyTimeBlocksMutation.isPending}
-                          >
-                            어제 복사
-                          </Button>
-                        )}
-                        {timeBlocks.length > 1 && (
-                          <Button
-                            onClick={getSuggestedBreaks}
-                            size="sm"
-                            variant="outline"
-                            className="h-7 text-xs"
-                          >
-                            휴식 제안
-                          </Button>
-                        )}
-                        <Button
-                          onClick={() => openTimeBlockDialog()}
-                          size="sm"
-                          className="h-7 text-xs"
-                        >
-                          <Plus className="h-3 w-3 mr-1" />
-                          추가
-                        </Button>
-                      </div>
-                    </div>
-                    
-                    {/* Time Block List */}
-                    <div className="space-y-2 max-h-64 overflow-y-auto">
-                      {timeBlocks.length === 0 ? (
-                        <div className="text-center py-4 text-gray-500 bg-gray-50 rounded-lg">
-                          <Clock className="h-8 w-8 mx-auto mb-2 text-gray-400" />
-                          <p className="text-sm mb-2">등록된 시간 블록이 없습니다</p>
-                          {yesterdayTimeBlocks.length > 0 && (
-                            <Button
-                              onClick={() => copyTimeBlocksMutation.mutate()}
-                              size="sm"
-                              variant="outline"
-                              disabled={copyTimeBlocksMutation.isPending}
-                            >
-                              어제 일정 복사하기
-                            </Button>
-                          )}
-                        </div>
-                      ) : (
-                        (timeBlocks as any[]).sort((a: any, b: any) => {
-                          const timeA = convertToComparableTime(a.startTime);
-                          const timeB = convertToComparableTime(b.startTime);
-                          return timeA - timeB;
-                        }).map((block: any) => (
-                          <div 
-                            key={block.id} 
-                            className="bg-white border rounded-lg p-3 hover:shadow-sm transition-shadow"
-                          >
-                            <div className="flex items-start justify-between">
-                              <div className="flex-1">
-                                <div className="flex items-center space-x-2 mb-1">
-                                  <span 
-                                    className="text-sm font-medium text-gray-900 cursor-pointer hover:text-blue-600 transition-colors"
-                                    onClick={() => openTimeBlockDialog(block)}
-                                  >
-                                    {block.startTime} - {block.endTime}
-                                  </span>
-                                  <span className={`text-xs px-2 py-1 rounded-full ${
-                                    block.type === 'focus' ? 'bg-blue-100 text-blue-700' :
-                                    block.type === 'meeting' ? 'bg-green-100 text-green-700' :
-                                    'bg-orange-100 text-orange-700'
-                                  }`}>
-                                    {block.type === 'focus' ? '집중' : 
-                                     block.type === 'meeting' ? '회의' : '휴식'}
-                                  </span>
-                                </div>
-                                <p 
-                                  className="text-sm text-gray-900 font-medium mb-1 cursor-pointer hover:text-blue-600 transition-colors"
-                                  onClick={() => openTimeBlockDialog(block)}
-                                >
-                                  {block.title}
-                                </p>
-                                {(getProjectName(block.projectId) || getTaskName(block.taskId)) && (
-                                  <div className="flex items-center space-x-2 text-xs text-gray-600">
-                                    {getProjectName(block.projectId) && (
-                                      <span className="bg-purple-100 text-purple-700 px-2 py-1 rounded">
-                                        📁 {getProjectName(block.projectId)}
-                                      </span>
-                                    )}
-                                    {getTaskName(block.taskId) && (
-                                      <span className="bg-green-100 text-green-700 px-2 py-1 rounded">
-                                        ✓ {getTaskName(block.taskId)}
-                                      </span>
-                                    )}
-                                  </div>
-                                )}
-                                {block.description && (
-                                  <p className="text-xs text-gray-600 mt-1">{block.description}</p>
-                                )}
-                              </div>
-                              <div className="flex items-center space-x-1 ml-2">
-                                <Button
-                                  onClick={() => openTimeBlockDialog(block)}
-                                  size="sm"
-                                  variant="ghost"
-                                  className="h-7 w-7 p-0"
-                                >
-                                  <div className="h-3 w-3 border border-gray-400 rounded-sm" />
-                                </Button>
-                                <Button
-                                  onClick={() => deleteTimeBlockMutation.mutate(block.id)}
-                                  size="sm"
-                                  variant="ghost"
-                                  className="h-7 w-7 p-0 text-red-500 hover:text-red-700"
-                                >
-                                  <X className="h-3 w-3" />
-                                </Button>
-                              </div>
-                            </div>
-                          </div>
-                        ))
-                      )}
-                    </div>
-                    
-                    {/* Break Suggestions Dialog */}
-                    {showBreakSuggestions && (
-                      <div className="mt-3 p-3 bg-orange-50 border border-orange-200 rounded-lg">
-                        <div className="flex items-center justify-between mb-2">
-                          <h5 className="text-sm font-medium text-orange-800">제안된 휴식 시간</h5>
-                          <Button
-                            onClick={() => setShowBreakSuggestions(false)}
-                            size="sm"
-                            variant="ghost"
-                            className="h-6 w-6 p-0"
-                          >
-                            <X className="h-3 w-3" />
-                          </Button>
-                        </div>
-                        <div className="space-y-2">
-                          {suggestedBreaks.map((breakBlock, index) => (
-                            <div key={index} className="flex items-center justify-between bg-white p-2 rounded border">
-                              <span className="text-sm">
-                                {breakBlock.startTime} - {breakBlock.endTime}: {breakBlock.title}
-                              </span>
-                              <Button
-                                onClick={() => addSuggestedBreak(breakBlock)}
-                                size="sm"
-                                className="h-6 text-xs"
-                              >
-                                추가
-                              </Button>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Today's Habits */}
-                  <div>
-                    <h4 className="text-sm font-medium text-gray-900 mb-2">오늘의 습관</h4>
-                    <div className="space-y-2">
-                      {habits.length > 0 ? (
-                        habits.map((habit: any) => {
-                          const habitLog = habitLogs.find((log: any) => log.habitId === habit.id);
-                          const isCompleted = habitLog?.completed || false;
-                          
-                          return (
-                            <div key={habit.id} className="flex items-center space-x-2 p-2 bg-gray-50 rounded">
-                              <Checkbox
-                                id={`habit-${habit.id}`}
-                                checked={isCompleted}
-                                onCheckedChange={(checked) => {
-                                  toggleHabitMutation.mutate({
-                                    habitId: habit.id,
-                                    completed: checked as boolean
-                                  });
-                                }}
-                              />
-                              <label 
-                                htmlFor={`habit-${habit.id}`}
-                                className={`text-sm flex-1 cursor-pointer ${isCompleted ? 'line-through text-gray-500' : 'text-gray-900'}`}
-                              >
-                                {habit.name}
-                              </label>
-                              {habit.coreValue && (
-                                <span className="text-xs px-2 py-1 bg-blue-100 text-blue-800 rounded-full">
-                                  {habit.coreValue}
-                                </span>
-                              )}
-                            </div>
-                          );
-                        })
-                      ) : (
-                        <p className="text-sm text-gray-500">등록된 습관이 없습니다.</p>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Daily Reflection */}
-                  <div>
-                    <h4 className="text-sm font-medium text-gray-900 mb-2">오늘의 회고</h4>
-                    <Textarea
-                      placeholder="오늘 하루를 돌아보며..."
-                      value={reflection}
-                      onChange={(e) => setReflection(e.target.value)}
-                      className="min-h-[100px] text-sm"
-                    />
-                    <Button 
-                      onClick={handleSaveReflection}
-                      disabled={saveReflectionMutation.isPending}
-                      size="sm" 
-                      className="mt-2"
-                    >
-                      저장
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
+            </Card>
           </TabsContent>
 
-          <TabsContent value="focus" className="space-y-4">
-            {/* Focus Mode Content */}
+          <TabsContent value="timeblocks" className="space-y-4">
+            {/* 시간블록 관리 */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              {/* Timer and Controls */}
+              {/* 포모도로 타이머 */}
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center space-x-2">
@@ -1142,33 +914,179 @@ export default function DailyPlanning() {
                 </CardContent>
               </Card>
 
-              {/* Task Selection and Settings */}
+              {/* 시간 블록 관리 */}
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center space-x-2">
-                    <Target className="h-5 w-5" />
-                    <span>집중 할일</span>
+                    <Calendar className="h-5 w-5" />
+                    <span>시간 블록</span>
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  {/* Current Task */}
-                  {selectedTask ? (
-                    <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
-                      <div className="text-sm text-blue-600 mb-1">현재 집중 중인 할일</div>
-                      <div className="font-medium text-blue-900">{selectedTask.title}</div>
-                      <div className="text-xs text-blue-600 mt-2">
-                        우선순위: {selectedTask.priority}급
-                      </div>
+                  <div className="flex items-center justify-between mb-3">
+                    <h4 className="text-sm font-medium text-gray-900">오늘의 일정</h4>
+                    <div className="flex items-center space-x-2">
+                      {yesterdayTimeBlocks.length > 0 && timeBlocks.length === 0 && (
+                        <Button
+                          onClick={() => copyTimeBlocksMutation.mutate()}
+                          size="sm"
+                          variant="outline"
+                          className="h-7 text-xs"
+                          disabled={copyTimeBlocksMutation.isPending}
+                        >
+                          어제 복사
+                        </Button>
+                      )}
+                      {timeBlocks.length > 1 && (
+                        <Button
+                          onClick={getSuggestedBreaks}
+                          size="sm"
+                          variant="outline"
+                          className="h-7 text-xs"
+                        >
+                          휴식 제안
+                        </Button>
+                      )}
+                      <Button
+                        onClick={() => openTimeBlockDialog()}
+                        size="sm"
+                        className="h-7 text-xs"
+                      >
+                        <Plus className="h-3 w-3 mr-1" />
+                        추가
+                      </Button>
                     </div>
-                  ) : (
-                    <div className="bg-gray-50 p-4 rounded-lg text-center text-gray-500">
-                      집중할 할일을 선택해주세요
+                  </div>
+                  
+                  {/* Time Block List */}
+                  <div className="space-y-2 max-h-96 overflow-y-auto">
+                    {timeBlocks.length === 0 ? (
+                      <div className="text-center py-4 text-gray-500 bg-gray-50 rounded-lg">
+                        <Clock className="h-8 w-8 mx-auto mb-2 text-gray-400" />
+                        <p className="text-sm mb-2">등록된 시간 블록이 없습니다</p>
+                        {yesterdayTimeBlocks.length > 0 && (
+                          <Button
+                            onClick={() => copyTimeBlocksMutation.mutate()}
+                            size="sm"
+                            variant="outline"
+                            disabled={copyTimeBlocksMutation.isPending}
+                          >
+                            어제 일정 복사하기
+                          </Button>
+                        )}
+                      </div>
+                    ) : (
+                      (timeBlocks as any[]).sort((a: any, b: any) => {
+                        const timeA = convertToComparableTime(a.startTime);
+                        const timeB = convertToComparableTime(b.startTime);
+                        return timeA - timeB;
+                      }).map((block: any) => (
+                        <div 
+                          key={block.id} 
+                          className="bg-white border rounded-lg p-3 hover:shadow-sm transition-shadow"
+                        >
+                          <div className="flex items-start justify-between">
+                            <div className="flex-1">
+                              <div className="flex items-center space-x-2 mb-1">
+                                <span 
+                                  className="text-sm font-medium text-gray-900 cursor-pointer hover:text-blue-600 transition-colors"
+                                  onClick={() => openTimeBlockDialog(block)}
+                                >
+                                  {block.startTime} - {block.endTime}
+                                </span>
+                                <span className={`text-xs px-2 py-1 rounded-full ${
+                                  block.type === 'focus' ? 'bg-blue-100 text-blue-700' :
+                                  block.type === 'meeting' ? 'bg-green-100 text-green-700' :
+                                  'bg-orange-100 text-orange-700'
+                                }`}>
+                                  {block.type === 'focus' ? '집중' : 
+                                   block.type === 'meeting' ? '회의' : '휴식'}
+                                </span>
+                              </div>
+                              <p 
+                                className="text-sm text-gray-900 font-medium mb-1 cursor-pointer hover:text-blue-600 transition-colors"
+                                onClick={() => openTimeBlockDialog(block)}
+                              >
+                                {block.title}
+                              </p>
+                              {(getProjectName(block.projectId) || getTaskName(block.taskId)) && (
+                                <div className="flex items-center space-x-2 text-xs text-gray-600">
+                                  {getProjectName(block.projectId) && (
+                                    <span className="bg-purple-100 text-purple-700 px-2 py-1 rounded">
+                                      📁 {getProjectName(block.projectId)}
+                                    </span>
+                                  )}
+                                  {getTaskName(block.taskId) && (
+                                    <span className="bg-green-100 text-green-700 px-2 py-1 rounded">
+                                      ✓ {getTaskName(block.taskId)}
+                                    </span>
+                                  )}
+                                </div>
+                              )}
+                              {block.description && (
+                                <p className="text-xs text-gray-600 mt-1">{block.description}</p>
+                              )}
+                            </div>
+                            <div className="flex items-center space-x-1 ml-2">
+                              <Button
+                                onClick={() => openTimeBlockDialog(block)}
+                                size="sm"
+                                variant="ghost"
+                                className="h-7 w-7 p-0"
+                              >
+                                <div className="h-3 w-3 border border-gray-400 rounded-sm" />
+                              </Button>
+                              <Button
+                                onClick={() => deleteTimeBlockMutation.mutate(block.id)}
+                                size="sm"
+                                variant="ghost"
+                                className="h-7 w-7 p-0 text-red-500 hover:text-red-700"
+                              >
+                                <X className="h-3 w-3" />
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                  
+                  {/* Break Suggestions Dialog */}
+                  {showBreakSuggestions && (
+                    <div className="mt-3 p-3 bg-orange-50 border border-orange-200 rounded-lg">
+                      <div className="flex items-center justify-between mb-2">
+                        <h5 className="text-sm font-medium text-orange-800">제안된 휴식 시간</h5>
+                        <Button
+                          onClick={() => setShowBreakSuggestions(false)}
+                          size="sm"
+                          variant="ghost"
+                          className="h-6 w-6 p-0"
+                        >
+                          <X className="h-3 w-3" />
+                        </Button>
+                      </div>
+                      <div className="space-y-2">
+                        {suggestedBreaks.map((breakBlock, index) => (
+                          <div key={index} className="flex items-center justify-between bg-white p-2 rounded border">
+                            <span className="text-sm">
+                              {breakBlock.startTime} - {breakBlock.endTime}: {breakBlock.title}
+                            </span>
+                            <Button
+                              onClick={() => addSuggestedBreak(breakBlock)}
+                              size="sm"
+                              className="h-6 text-xs"
+                            >
+                              추가
+                            </Button>
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   )}
 
-                  {/* Task Selection */}
+                  {/* 할일 선택 */}
                   <div>
-                    <Label htmlFor="task-select" className="text-sm font-medium">할일 선택</Label>
+                    <Label htmlFor="task-select" className="text-sm font-medium">집중할 할일</Label>
                     <Select value={selectedTask?.id?.toString() || ""} onValueChange={handleTaskSelect}>
                       <SelectTrigger>
                         <SelectValue placeholder="할일을 선택하세요" />
@@ -1182,52 +1100,120 @@ export default function DailyPlanning() {
                       </SelectContent>
                     </Select>
                   </div>
-
-                  {/* Settings */}
-                  <div className="space-y-3">
-                    <div className="flex items-center space-x-2">
-                      <Checkbox
-                        id="a-tasks-only"
-                        checked={showATasksOnly}
-                        onCheckedChange={(checked) => setShowATasksOnly(checked === true)}
-                      />
-                      <Label htmlFor="a-tasks-only" className="text-sm">A급 할일만 표시</Label>
-                    </div>
-                    
-                    <div className="flex items-center space-x-2">
-                      <Checkbox
-                        id="block-notifications"
-                        checked={blockNotifications}
-                        onCheckedChange={(checked) => setBlockNotifications(checked === true)}
-                      />
-                      <Label htmlFor="block-notifications" className="text-sm">알림 차단 (개발 예정)</Label>
-                    </div>
-                  </div>
-
-                  {/* Task List */}
-                  <div>
-                    <div className="text-sm font-medium text-gray-900 mb-2">
-                      할일 목록 ({filteredTasks.length}개)
-                    </div>
-                    <div className="space-y-1 max-h-64 overflow-y-auto">
-                      {filteredTasks.length === 0 ? (
-                        <p className="text-xs text-gray-400 italic">할일이 없습니다.</p>
-                      ) : (
-                        filteredTasks.map((task: any) => (
-                          <TaskItem
-                            key={task.id}
-                            task={task}
-                            onToggleComplete={handleToggleTask}
-                            showPriority={true}
-                            showTime={false}
-                          />
-                        ))
-                      )}
-                    </div>
-                  </div>
                 </CardContent>
               </Card>
             </div>
+          </TabsContent>
+
+          <TabsContent value="records" className="space-y-4">
+            {/* 오늘의 기록 */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2">
+                  <FileText className="h-5 w-5" />
+                  <span>오늘의 기록</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {/* Today's Habits */}
+                <div>
+                  <h4 className="text-sm font-medium text-gray-900 mb-3">오늘의 습관</h4>
+                  <div className="space-y-2">
+                    {habits.length > 0 ? (
+                      habits.map((habit: any) => {
+                        const habitLog = habitLogs.find((log: any) => log.habitId === habit.id);
+                        const isCompleted = habitLog?.completed || false;
+                        
+                        return (
+                          <div key={habit.id} className="flex items-center space-x-2 p-3 bg-gray-50 rounded-lg">
+                            <Checkbox
+                              id={`habit-${habit.id}`}
+                              checked={isCompleted}
+                              onCheckedChange={(checked) => {
+                                toggleHabitMutation.mutate({
+                                  habitId: habit.id,
+                                  completed: checked as boolean
+                                });
+                              }}
+                            />
+                            <label 
+                              htmlFor={`habit-${habit.id}`}
+                              className={`text-sm flex-1 cursor-pointer ${isCompleted ? 'line-through text-gray-500' : 'text-gray-900'}`}
+                            >
+                              {habit.name}
+                            </label>
+                            {habit.coreValue && (
+                              <span className="text-xs px-2 py-1 bg-blue-100 text-blue-800 rounded-full">
+                                {habit.coreValue}
+                              </span>
+                            )}
+                          </div>
+                        );
+                      })
+                    ) : (
+                      <p className="text-sm text-gray-500">등록된 습관이 없습니다.</p>
+                    )}
+                  </div>
+                </div>
+
+                {/* Daily Journal */}
+                <div>
+                  <div className="flex items-center space-x-2 mb-3">
+                    <h4 className="text-sm font-medium text-gray-900">오늘의 일기</h4>
+                    <span className="text-xs text-gray-500">
+                      {format(new Date(), 'HH:mm', { locale: ko })}
+                    </span>
+                  </div>
+                  
+                  {/* Emoji Selector */}
+                  <div className="mb-3">
+                    <Label className="text-xs text-gray-600 mb-2 block">오늘의 기분</Label>
+                    <div className="flex space-x-2">
+                      {['😊', '😐', '😔', '😤', '😴', '🤔', '😍', '😱'].map((emoji) => (
+                        <Button
+                          key={emoji}
+                          onClick={() => setReflection(prev => prev + emoji)}
+                          variant="outline"
+                          size="sm"
+                          className="h-8 w-8 p-0 text-lg"
+                        >
+                          {emoji}
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
+                  
+                  <Textarea
+                    placeholder="오늘 하루를 돌아보며...\n\n• 잘한 점:\n• 아쉬운 점:\n• 내일 계획:"
+                    value={reflection}
+                    onChange={(e) => setReflection(e.target.value)}
+                    className="min-h-[200px] text-sm"
+                  />
+                  <Button 
+                    onClick={handleSaveReflection}
+                    disabled={saveReflectionMutation.isPending}
+                    size="sm" 
+                    className="mt-2"
+                  >
+                    <Save className="h-4 w-4 mr-2" />
+                    저장
+                  </Button>
+                </div>
+
+                {/* File Upload */}
+                <div>
+                  <h4 className="text-sm font-medium text-gray-900 mb-3">사진 및 파일</h4>
+                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition-colors">
+                    <Upload className="h-8 w-8 mx-auto mb-2 text-gray-400" />
+                    <p className="text-sm text-gray-600 mb-2">파일을 드래그하거나 클릭하여 업로드</p>
+                    <Button variant="outline" size="sm">
+                      파일 선택
+                    </Button>
+                    <p className="text-xs text-gray-500 mt-2">이미지, 문서, 최대 10MB</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
           </TabsContent>
         </Tabs>
 
