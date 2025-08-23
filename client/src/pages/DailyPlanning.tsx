@@ -1101,7 +1101,7 @@ export default function DailyPlanning() {
                   <div className="flex items-center justify-between mb-3">
                     <h4 className="text-sm font-medium text-gray-900">오늘의 일정</h4>
                     <div className="flex items-center space-x-2">
-                      {yesterdayTimeBlocks.length > 0 && timeBlocks.length === 0 && (
+                      {yesterdayTimeBlocks?.length > 0 && (timeBlocks?.length || 0) === 0 && (
                         <Button
                           onClick={() => copyTimeBlocksMutation.mutate()}
                           size="sm"
@@ -1112,7 +1112,7 @@ export default function DailyPlanning() {
                           어제 복사
                         </Button>
                       )}
-                      {timeBlocks.length > 1 && (
+                      {(timeBlocks?.length || 0) > 1 && (
                         <Button
                           onClick={getSuggestedBreaks}
                           size="sm"
@@ -1135,11 +1135,11 @@ export default function DailyPlanning() {
 
                   {/* Time Block List */}
                   <div className="space-y-2 max-h-96 overflow-y-auto">
-                    {timeBlocks.length === 0 ? (
+                    {(timeBlocks?.length || 0) === 0 ? (
                       <div className="text-center py-4 text-gray-500 bg-gray-50 rounded-lg">
                         <Clock className="h-8 w-8 mx-auto mb-2 text-gray-400" />
                         <p className="text-sm mb-2">등록된 시간 블록이 없습니다</p>
-                        {yesterdayTimeBlocks.length > 0 && (
+                        {(yesterdayTimeBlocks?.length || 0) > 0 && (
                           <Button
                             onClick={() => copyTimeBlocksMutation.mutate()}
                             size="sm"
@@ -1151,7 +1151,7 @@ export default function DailyPlanning() {
                         )}
                       </div>
                     ) : (
-                      (timeBlocks as any[]).sort((a: any, b: any) => {
+                      (timeBlocks || []).sort((a: any, b: any) => {
                         const timeA = convertToComparableTime(a.startTime);
                         const timeB = convertToComparableTime(b.startTime);
                         return timeA - timeB;
@@ -1317,13 +1317,13 @@ export default function DailyPlanning() {
                     {habits.length > 0 && (
                       <div className="flex items-center space-x-2">
                         <span className="text-xs text-gray-500">
-                          {habitLogs.filter((log: any) => log.completed).length}/{habits.length}
+                          {(habitLogs || []).filter((log: any) => log.completed).length}/{habits?.length || 0}
                         </span>
                         <div className="w-80 h-2 bg-gray-200 rounded-full overflow-hidden">
                           <div 
                             className="h-full bg-green-500 transition-all duration-300 ease-out rounded-full"
                             style={{ 
-                              width: `${habits.length > 0 ? (habitLogs.filter((log: any) => log.completed).length / habits.length) * 100 : 0}%` 
+                              width: `${(habits?.length || 0) > 0 ? ((habitLogs || []).filter((log: any) => log.completed).length / (habits?.length || 1)) * 100 : 0}%` 
                             }}
                           />
                         </div>
