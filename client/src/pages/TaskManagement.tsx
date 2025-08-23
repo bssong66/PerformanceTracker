@@ -718,14 +718,14 @@ function TaskManagement({ highlightTaskId }: TaskManagementProps) {
                 </div>
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-3 p-4">
+            <CardContent className="space-y-1.5 p-2">
               {tasksByPriority[priority].map((task: Task) => (
                 <div
                   key={task.id}
                   data-task-id={task.id}
-                  className={`p-3 rounded-lg border ${task.completed ? 'bg-gray-50 opacity-75' : 'bg-white'} transition-all`}
+                  className={`p-1.5 rounded-lg border ${task.completed ? 'bg-gray-50 opacity-75' : 'bg-white'} transition-all`}
                 >
-                  <div className="flex items-start justify-between mb-2">
+                  <div className="flex items-start justify-between mb-1">
                     <div className="flex items-center space-x-2 flex-1">
                       <button
                         onClick={() => toggleTaskMutation.mutate(task)}
@@ -780,7 +780,7 @@ function TaskManagement({ highlightTaskId }: TaskManagementProps) {
 
                   {/* Dates */}
                   {(task.startDate || task.endDate) && (
-                    <div className="flex items-center space-x-4 text-xs text-gray-500 mb-2">
+                    <div className="flex items-center space-x-4 text-xs text-gray-500 mb-1">
                       {task.startDate && (
                         <div className="flex items-center space-x-1">
                           <Calendar className="h-3 w-3" />
@@ -798,13 +798,13 @@ function TaskManagement({ highlightTaskId }: TaskManagementProps) {
 
                   {/* Notes */}
                   {task.notes && (
-                    <p className="text-xs text-gray-600 mb-2 line-clamp-2">
+                    <p className="text-xs text-gray-600 mb-1 line-clamp-1">
                       {task.notes}
                     </p>
                   )}
 
                   {/* Core Value and Annual Goal indicators */}
-                  <div className="flex flex-wrap gap-1 mb-2">
+                  <div className="flex flex-wrap gap-1 mb-1">
                     {(task as any).coreValue && (task as any).coreValue !== 'none' && (
                       <span className="px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded-full">
                         🎯 {(task as any).coreValue}
