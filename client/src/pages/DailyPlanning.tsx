@@ -828,12 +828,12 @@ export default function DailyPlanning() {
 
         <Tabs defaultValue="planning" className="space-y-4">
           {/* 플로팅 저장 버튼 */}
-          <div className="fixed z-50" style={{ top: '70px', right: '50px' }}>
+          <div className="fixed z-50" style={{ top: '60px', right: '80px' }}>
             <Button 
               onClick={handleSaveReflection}
               disabled={saveReflectionMutation.isPending}
               size="sm"
-              className="shadow-lg hover:shadow-xl transition-shadow bg-gray-800/90 hover:bg-gray-700/90 text-white backdrop-blur-sm"
+              className="shadow-lg hover:shadow-xl transition-shadow bg-gray-800/50 hover:bg-gray-700/60 text-white backdrop-blur-sm"
             >
               <Save className="h-3 w-3 mr-1" />
               저장
