@@ -1071,7 +1071,8 @@ export default function ProjectManagement() {
       imageUrls: taskForm.imageUrls,
       fileUrls: taskForm.fileUrls,
       resultImageUrls: taskForm.resultImageUrls,
-      resultFileUrls: taskForm.resultFileUrls
+      resultFileUrls: taskForm.resultFileUrls,
+      completed: taskForm.completed
     };
 
     updateTaskMutation.mutate({ 
