@@ -1521,13 +1521,12 @@ export default function DailyPlanning() {
                             </Button>
                             
                             {file.type?.startsWith('image/') ? (
-                              <div className="text-center cursor-pointer" onClick={() => setPreviewImage(file.url)}>
-                                <img 
-                                  src={file.url} 
-                                  alt={file.name}
-                                  className="w-full h-20 object-cover rounded mb-2 hover:opacity-75 transition-opacity"
-                                />
-                                <span className="text-xs text-gray-600 truncate block">{file.name}</span>
+                              <div 
+                                className="flex items-center space-x-2 hover:bg-blue-100 p-1 rounded transition-colors cursor-pointer"
+                                onClick={() => setPreviewImage(file.url)}
+                              >
+                                <span className="text-lg">🖼️</span>
+                                <span className="text-sm text-gray-700 truncate flex-1">{file.name}</span>
                               </div>
                             ) : (
                               <a 
