@@ -401,6 +401,8 @@ export default function Calendar() {
       currentDate: date,
       view: view,
       showEventDialog: showEventDialog,
+      annualGoalsCount: (annualGoals as any[])?.length || 0,
+      annualGoals: annualGoals,
       loading: {
         events: eventsLoading,
         tasks: tasksLoading,
