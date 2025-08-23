@@ -1064,64 +1064,6 @@ export default function DailyPlanning() {
           <TabsContent value="timeblocks" className="space-y-4">
             {/* 시간블록 관리 */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              {/* 포모도로 타이머 */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center space-x-2">
-                    <Clock className="h-5 w-5" />
-                    <span>포모도로 타이머</span>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="text-center space-y-6">
-                  {/* Timer Display */}
-                  <div className="text-6xl font-mono font-bold text-gray-900">
-                    {String(minutes).padStart(2, '0')}:{String(seconds).padStart(2, '0')}
-                  </div>
-
-                  {/* Timer Type */}
-                  <div className="text-lg font-medium text-gray-600">
-                    {isBreak ? '휴식 시간' : '집중 시간'}
-                  </div>
-
-                  {/* Controls */}
-                  <div className="flex justify-center space-x-4">
-                    <Button
-                      onClick={isRunning ? pause : start}
-                      size="lg"
-                      className="w-16 h-16 rounded-full"
-                    >
-                      {isRunning ? <Pause className="h-6 w-6" /> : <Play className="h-6 w-6" />}
-                    </Button>
-                    <Button
-                      onClick={reset}
-                      variant="outline"
-                      size="lg"
-                      className="w-16 h-16 rounded-full"
-                    >
-                      <RotateCcw className="h-6 w-6" />
-                    </Button>
-                  </div>
-
-                  {/* Session Counter */}
-                  <div className="bg-gray-50 p-4 rounded-lg">
-                    <div className="text-sm text-gray-600">완료한 세션</div>
-                    <div className="text-2xl font-bold text-green-600">{completedSessions}</div>
-                  </div>
-
-                  {/* Quick Actions */}
-                  <div className="space-y-2">
-                    <Button
-                      onClick={handleCompleteSession}
-                      disabled={!selectedTask}
-                      className="w-full"
-                    >
-                      <CheckCircle className="h-4 w-4 mr-2" />
-                      할일 완료 및 세션 종료
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-
               {/* 시간 블록 관리 */}
               <Card>
                 <CardHeader>
@@ -1334,6 +1276,64 @@ export default function DailyPlanning() {
                         ))}
                       </SelectContent>
                     </Select>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* 포모도로 타이머 */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center space-x-2">
+                    <Clock className="h-5 w-5" />
+                    <span>포모도로 타이머</span>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="text-center space-y-6">
+                  {/* Timer Display */}
+                  <div className="text-6xl font-mono font-bold text-gray-900">
+                    {String(minutes).padStart(2, '0')}:{String(seconds).padStart(2, '0')}
+                  </div>
+
+                  {/* Timer Type */}
+                  <div className="text-lg font-medium text-gray-600">
+                    {isBreak ? '휴식 시간' : '집중 시간'}
+                  </div>
+
+                  {/* Controls */}
+                  <div className="flex justify-center space-x-4">
+                    <Button
+                      onClick={isRunning ? pause : start}
+                      size="lg"
+                      className="w-16 h-16 rounded-full"
+                    >
+                      {isRunning ? <Pause className="h-6 w-6" /> : <Play className="h-6 w-6" />}
+                    </Button>
+                    <Button
+                      onClick={reset}
+                      variant="outline"
+                      size="lg"
+                      className="w-16 h-16 rounded-full"
+                    >
+                      <RotateCcw className="h-6 w-6" />
+                    </Button>
+                  </div>
+
+                  {/* Session Counter */}
+                  <div className="bg-gray-50 p-4 rounded-lg">
+                    <div className="text-sm text-gray-600">완료한 세션</div>
+                    <div className="text-2xl font-bold text-green-600">{completedSessions}</div>
+                  </div>
+
+                  {/* Quick Actions */}
+                  <div className="space-y-2">
+                    <Button
+                      onClick={handleCompleteSession}
+                      disabled={!selectedTask}
+                      className="w-full"
+                    >
+                      <CheckCircle className="h-4 w-4 mr-2" />
+                      할일 완료 및 세션 종료
+                    </Button>
                   </div>
                 </CardContent>
               </Card>
