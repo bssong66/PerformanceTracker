@@ -1312,7 +1312,24 @@ export default function DailyPlanning() {
               <CardContent className="space-y-6">
                 {/* Today's Habits */}
                 <div>
-                  <h4 className="text-sm font-medium text-gray-900 mb-3">오늘의 습관</h4>
+                  <div className="flex items-center justify-between mb-3">
+                    <h4 className="text-sm font-medium text-gray-900">오늘의 습관</h4>
+                    {habits.length > 0 && (
+                      <div className="flex items-center space-x-2">
+                        <span className="text-xs text-gray-500">
+                          {habitLogs.filter((log: any) => log.completed).length}/{habits.length}
+                        </span>
+                        <div className="w-16 h-2 bg-gray-200 rounded-full overflow-hidden">
+                          <div 
+                            className="h-full bg-green-500 transition-all duration-300 ease-out rounded-full"
+                            style={{ 
+                              width: `${habits.length > 0 ? (habitLogs.filter((log: any) => log.completed).length / habits.length) * 100 : 0}%` 
+                            }}
+                          />
+                        </div>
+                      </div>
+                    )}
+                  </div>
                   <div className="space-y-2">
                     {habits.length > 0 ? (
                       habits.map((habit: any) => {
