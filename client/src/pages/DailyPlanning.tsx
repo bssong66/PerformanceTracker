@@ -12,6 +12,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { TaskItem } from "@/components/TaskItem";
 import { PriorityBadge } from "@/components/PriorityBadge";
 import { Plus, Mic, CalendarDays, X, ChevronLeft, ChevronRight, AlertTriangle, Focus, Play, Pause, RotateCcw, Target, Clock, CheckCircle, Bell, FileText, Save, Upload, Calendar } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { useToast } from "@/hooks/use-toast";
 import { api, createTask, updateTask, saveDailyReflection, createTimeBlock } from "@/lib/api";
 import { queryClient } from "@/lib/queryClient";
@@ -23,7 +25,8 @@ import { useAuth } from "@/hooks/useAuth";
 export default function DailyPlanning() {
   const { toast } = useToast();
   const { user } = useAuth();
-  const today = format(new Date(), 'yyyy-MM-dd');
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  const today = format(selectedDate, 'yyyy-MM-dd');
   const [newTask, setNewTask] = useState("");
   const [selectedPriority, setSelectedPriority] = useState<'A' | 'B' | 'C'>('B');
   const [selectedCoreValue, setSelectedCoreValue] = useState<string>('none');
@@ -140,7 +143,7 @@ export default function DailyPlanning() {
   });
 
   // Yesterday's date for copying time blocks
-  const yesterday = format(new Date(new Date().setDate(new Date().getDate() - 1)), 'yyyy-MM-dd');
+  const yesterday = format(new Date(selectedDate.getTime() - 24 * 60 * 60 * 1000), 'yyyy-MM-dd');
 
   const { data: yesterdayTimeBlocks = [] } = useQuery({
     queryKey: ['timeBlocks', user?.id, yesterday],
@@ -310,7 +313,7 @@ export default function DailyPlanning() {
     if (task.dueDate) {
       return task.dueDate === today;
     }
-    // dueDate가 없는 경우 생성일이 오늘인 것들 포함
+    // dueDate가 없는 경우 생성일이 선택된 날짜인 것들 포함
     return task.createdAt && task.createdAt.startsWith(today);
   });
 
@@ -820,9 +823,36 @@ export default function DailyPlanning() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-6">
-          <h1 className="text-2xl font-bold text-gray-900">일일 관리</h1>
+          <div className="flex items-center justify-between">
+            <h1 className="text-2xl font-bold text-gray-900">일일 관리</h1>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" className="ml-auto">
+                  <Calendar className="h-4 w-4 mr-2" />
+                  {format(selectedDate, 'M월 d일', { locale: ko })}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="end">
+                <CalendarComponent
+                  mode="single"
+                  selected={selectedDate}
+                  onSelect={(date) => {
+                    if (date) {
+                      setSelectedDate(date);
+                      // 선택된 날짜에 따라 관련 쿼리들을 refetch
+                      const selectedDateStr = format(date, 'yyyy-MM-dd');
+                      queryClient.invalidateQueries({ queryKey: ['habitLogs', user!.id, selectedDateStr] });
+                      queryClient.invalidateQueries({ queryKey: ['timeBlocks', user!.id, selectedDateStr] });
+                      queryClient.invalidateQueries({ queryKey: ['dailyReflection', user!.id, selectedDateStr] });
+                    }
+                  }}
+                  initialFocus
+                />
+              </PopoverContent>
+            </Popover>
+          </div>
           <p className="text-sm text-gray-600">
-            {format(new Date(), 'yyyy년 M월 d일 EEEE', { locale: ko })} - 오늘의 계획과 기록
+            {format(selectedDate, 'yyyy년 M월 d일 EEEE', { locale: ko })} - 선택된 날짜의 계획과 기록
           </p>
         </div>
 
