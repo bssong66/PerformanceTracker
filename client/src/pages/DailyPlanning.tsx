@@ -777,7 +777,10 @@ export default function DailyPlanning() {
   };
 
   const handleCompleteSession = () => {
-    if (selectedTask) {
+    // 시간 블록에 할일이 포함된 경우 해당 할일을 완료 처리
+    if (selectedTimeBlock?.taskId) {
+      handleToggleTask(selectedTimeBlock.taskId, true);
+    } else if (selectedTask) {
       handleToggleTask(selectedTask.id, true);
     }
     reset();
