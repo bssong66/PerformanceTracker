@@ -67,6 +67,7 @@ export default function ProjectManagement() {
   const [showCloneDialog, setShowCloneDialog] = useState(false);
   const [projectToClone, setProjectToClone] = useState<Project | null>(null);
   const [previewFile, setPreviewFile] = useState<{url: string, name: string, type: 'image' | 'pdf'} | null>(null);
+  const [showCompletedProjects, setShowCompletedProjects] = useState(true);
 
   // Project detail popup states
   const [showProjectDetailDialog, setShowProjectDetailDialog] = useState(false);
@@ -1113,7 +1114,16 @@ export default function ProjectManagement() {
           <p className="text-gray-600">프로젝트를 생성하고 관리하세요</p>
         </div>
 
-        <Dialog open={showProjectDialog} onOpenChange={setShowProjectDialog}>
+        <div className="flex items-center space-x-3">
+          <Button
+            variant="outline"
+            onClick={() => setShowCompletedProjects(!showCompletedProjects)}
+            className="text-sm"
+          >
+            {showCompletedProjects ? '완료된 프로젝트 감추기' : '완료된 프로젝트 보기'}
+          </Button>
+
+          <Dialog open={showProjectDialog} onOpenChange={setShowProjectDialog}>
           <DialogTrigger asChild>
             <Button onClick={openCreateDialog} className="bg-blue-600 hover:bg-blue-700">
               <Plus className="h-4 w-4 mr-2" />
@@ -1307,11 +1317,20 @@ export default function ProjectManagement() {
             </form>
           </DialogContent>
         </Dialog>
+        </div>
       </div>
 
       {/* Projects List */}
       <div className="space-y-4">
-        {projects.map((project: Project) => {
+        {projects.filter((project: Project) => {
+          if (showCompletedProjects) return true;
+          
+          const projectTasks = getProjectTasks(project.id);
+          if (projectTasks.length === 0) return true; // 할일이 없는 프로젝트는 항상 표시
+          
+          const completedTasks = projectTasks.filter((task: any) => task.completed).length;
+          return completedTasks !== projectTasks.length; // 모든 할일이 완료되지 않은 프로젝트만 표시
+        }).map((project: Project) => {
           const projectTasks = getProjectTasks(project.id);
           const completionPercentage = getCompletionPercentage(project.id);
           const isExpanded = expandedProjects.has(project.id);
