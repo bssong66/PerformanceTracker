@@ -1248,7 +1248,7 @@ export default function DailyPlanning() {
                         const isCompleted = habitLog?.completed || false;
                         
                         return (
-                          <div key={habit.id} className="flex items-center space-x-2 p-3 bg-gray-50 rounded-lg">
+                          <div key={habit.id} className="flex items-center space-x-2 px-3 py-1 bg-gray-50 rounded-lg">
                             <Checkbox
                               id={`habit-${habit.id}`}
                               checked={isCompleted}
