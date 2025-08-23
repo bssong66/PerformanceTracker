@@ -458,9 +458,33 @@ export default function DailyPlanning() {
       });
     } else {
       setEditingTimeBlock(null);
+      
+      // 기존 시간 블록들을 확인해서 다음 가능한 시간 제안
+      let suggestedStartTime = "오전 09:00";
+      let suggestedEndTime = "오전 10:00";
+      
+      if (timeBlocks.length > 0) {
+        // 시간 블록들을 시간 순으로 정렬
+        const sortedBlocks = [...timeBlocks].sort((a: any, b: any) => {
+          const timeA = convertToComparableTime(a.endTime);
+          const timeB = convertToComparableTime(b.endTime);
+          return timeA - timeB;
+        });
+        
+        // 가장 마지막 시간 블록의 종료 시간을 가져옴
+        const lastBlock = sortedBlocks[sortedBlocks.length - 1];
+        const lastEndTime = lastBlock.endTime;
+        
+        // 마지막 종료 시간을 새로운 시작 시간으로 설정
+        suggestedStartTime = lastEndTime;
+        
+        // 1시간 후를 종료 시간으로 설정
+        suggestedEndTime = addOneHour(lastEndTime);
+      }
+      
       setNewTimeBlock({
-        startTime: "",
-        endTime: "",
+        startTime: suggestedStartTime,
+        endTime: suggestedEndTime,
         title: "",
         type: "focus",
         projectId: null,
@@ -469,6 +493,51 @@ export default function DailyPlanning() {
       });
     }
     setShowTimeBlockDialog(true);
+  };
+
+  // 시간을 비교 가능한 숫자로 변환 (분 단위)
+  const convertToComparableTime = (timeStr: string) => {
+    if (!timeStr) return 0;
+    
+    const isAM = timeStr.includes('오전');
+    const timeOnly = timeStr.replace(/(오전|오후)\s*/, '');
+    const [hours, minutes] = timeOnly.split(':').map(Number);
+    
+    let totalMinutes = hours * 60 + minutes;
+    if (!isAM && hours !== 12) {
+      totalMinutes += 12 * 60; // PM이고 12시가 아니면 12시간 추가
+    } else if (isAM && hours === 12) {
+      totalMinutes -= 12 * 60; // AM 12시는 0시로 변환
+    }
+    
+    return totalMinutes;
+  };
+
+  // 1시간 추가하는 함수
+  const addOneHour = (timeStr: string) => {
+    if (!timeStr) return "오전 10:00";
+    
+    const isAM = timeStr.includes('오전');
+    const timeOnly = timeStr.replace(/(오전|오후)\s*/, '');
+    const [hours, minutes] = timeOnly.split(':').map(Number);
+    
+    let newHours = hours + 1;
+    let newPeriod = isAM ? '오전' : '오후';
+    
+    // 시간 조정
+    if (isAM && newHours >= 12) {
+      if (newHours === 12) {
+        newPeriod = '오후';
+      } else {
+        newHours = newHours - 12;
+        newPeriod = '오후';
+      }
+    } else if (!isAM && newHours > 12) {
+      newHours = newHours - 12;
+      newPeriod = '오전';
+    }
+    
+    return `${newPeriod} ${newHours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
   };
 
   const getSuggestedBreaks = async () => {
