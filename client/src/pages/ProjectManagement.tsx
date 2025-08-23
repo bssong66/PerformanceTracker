@@ -17,28 +17,13 @@ import { format } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import { ProjectFileManager } from '@/components/ProjectFileManager';
 import { useAuth } from '@/hooks/useAuth';
+import { Project, Foundation, AnnualGoal, Task, User } from '@shared/schema';
 
 const priorityColors = {
   high: '#ef4444',
   medium: '#f59e0b', 
   low: '#10b981'
 };
-
-interface Project {
-  id: number;
-  title: string;
-  description?: string;
-  priority: 'high' | 'medium' | 'low';
-  color: string;
-  startDate?: string;
-  endDate?: string;
-  coreValue?: string;
-  annualGoal?: string;
-  imageUrls?: string[];
-  fileUrls?: Array<{url: string, name: string}>;
-  userId: number;
-  completed?: boolean;
-}
 
 interface FileUrl {
   url: string;
@@ -48,7 +33,7 @@ interface FileUrl {
 
 export default function ProjectManagement() {
   const { toast } = useToast();
-  const { user } = useAuth();
+  const { user } = useAuth() as { user: User | null };
 
   // Task form state
   const [taskForm, setTaskForm] = useState({
@@ -118,7 +103,7 @@ export default function ProjectManagement() {
   });
 
   // Fetch foundations for core values
-  const { data: foundation, error: foundationError, refetch: refetchFoundation } = useQuery({
+  const { data: foundation, error: foundationError, refetch: refetchFoundation } = useQuery<Foundation | null>({
     queryKey: ['foundation', user?.id, new Date().getFullYear()],
     queryFn: async () => {
       const currentYear = new Date().getFullYear();
@@ -138,7 +123,7 @@ export default function ProjectManagement() {
   });
 
   // Fetch annual goals
-  const { data: annualGoals = [], error: goalsError } = useQuery({
+  const { data: annualGoals = [], error: goalsError } = useQuery<AnnualGoal[]>({
     queryKey: ['goals', user?.id, new Date().getFullYear()],
     queryFn: async () => {
       const currentYear = new Date().getFullYear();
@@ -158,7 +143,7 @@ export default function ProjectManagement() {
   });
 
   // Fetch tasks for all projects
-  const { data: allTasks = [] } = useQuery({
+  const { data: allTasks = [] } = useQuery<Task[]>({
     queryKey: ['tasks', user?.id],
     queryFn: () => fetch(`/api/tasks/${user?.id}`).then(res => res.json()),
     enabled: !!user?.id
@@ -515,8 +500,8 @@ export default function ProjectManagement() {
     setProjectForm({
       title: project.title,
       description: project.description || '',
-      priority: project.priority,
-      color: project.color,
+      priority: project.priority as 'high' | 'medium' | 'low',
+      color: project.color || priorityColors.medium,
       startDate: project.startDate || '',
       endDate: project.endDate || '',
       coreValue: project.coreValue || '',
@@ -549,7 +534,8 @@ export default function ProjectManagement() {
       imageUrls: [],
       fileUrls: [],
       resultImageUrls: [],
-      resultFileUrls: []
+      resultFileUrls: [],
+      completed: false
     });
     setEditingTask(null);
     setShowTaskDialog(true);
@@ -633,7 +619,22 @@ export default function ProjectManagement() {
     setShowProjectDetailDialog(true);
     setIsEditingProjectDetail(true);  // 바로 편집 모드로 설정
 
-    // Fetch project files from the dedicated API and set form data
+    // Set form data with the selected project
+    setProjectForm({
+      title: project.title,
+      description: project.description || '',
+      priority: project.priority,
+      color: project.color,
+      startDate: project.startDate || '',
+      endDate: project.endDate || '',
+      coreValue: project.coreValue || '',
+      annualGoal: project.annualGoal || '',
+      result: project.result || '',
+      imageUrls: project.imageUrls || [],
+      fileUrls: project.fileUrls || [],
+      resultImageUrls: project.resultImageUrls || [],
+      resultFileUrls: project.resultFileUrls || []
+    });
     try {
       const filesResponse = await fetch(`/api/projects/${project.id}/files`);
       if (filesResponse.ok) {
@@ -878,7 +879,8 @@ export default function ProjectManagement() {
         fileUrls: taskForm.fileUrls,
         resultImageUrls: taskForm.resultImageUrls,
         resultFileUrls: taskForm.resultFileUrls,
-        completed: false
+        completed: false,
+        userId: user?.id
       });
     }
   };
@@ -915,7 +917,8 @@ export default function ProjectManagement() {
 
     const projectData = {
       ...projectForm,
-      color: priorityColors[projectForm.priority]
+      color: priorityColors[projectForm.priority],
+      userId: user?.id
     };
 
     if (editingProject) {
@@ -1050,7 +1053,8 @@ export default function ProjectManagement() {
         imageUrls: selectedTask.imageUrls || [],
         fileUrls: selectedTask.fileUrls || [],
         resultImageUrls: selectedTask.resultImageUrls || [],
-        resultFileUrls: selectedTask.resultFileUrls || []
+        resultFileUrls: selectedTask.resultFileUrls || [],
+        completed: selectedTask.completed || false
       });
       setEditingTask(selectedTask);
     }
@@ -1099,6 +1103,7 @@ export default function ProjectManagement() {
     if (!projectToClone) return;
     cloneProjectMutation.mutate(projectToClone.id);
   };
+
 
   return (
     <div className="p-6 space-y-6">
@@ -1328,7 +1333,7 @@ export default function ProjectManagement() {
 
                     <div 
                       className="w-1 h-8 rounded-full"
-                      style={{ backgroundColor: project.color }}
+                      style={{ backgroundColor: project.color || priorityColors.medium }}
                     />
 
                     <div className="flex-1">
@@ -1916,10 +1921,10 @@ export default function ProjectManagement() {
               {/* Find the task with this image and show navigation if multiple images */}
               {(() => {
                 const currentTask = allTasks.find((task: any) => 
-                  task.imageUrls && task.imageUrls.includes(viewingTaskImage)
+                  task.imageUrls && task.imageUrls?.includes(viewingTaskImage)
                 );
 
-                if (!currentTask || !currentTask.imageUrls || currentTask.imageUrls.length <= 1) {
+                if (!currentTask || !currentTask.imageUrls || currentTask.imageUrls?.length <= 1) {
                   return (
                     <img
                       src={viewingTaskImage}
@@ -1929,7 +1934,7 @@ export default function ProjectManagement() {
                   );
                 }
 
-                const currentIndex = currentTask.imageUrls.indexOf(viewingTaskImage);
+                const currentIndex = currentTask.imageUrls?.indexOf(viewingTaskImage) || 0;
 
                 return (
                   <>
@@ -1938,8 +1943,8 @@ export default function ProjectManagement() {
                       variant="outline"
                       size="sm"
                       onClick={() => {
-                        const newIndex = currentIndex > 0 ? currentIndex - 1 : currentTask.imageUrls.length - 1;
-                        setViewingTaskImage(currentTask.imageUrls[newIndex]);
+                        const newIndex = currentIndex > 0 ? currentIndex - 1 : (currentTask.imageUrls?.length || 1) - 1;
+                        setViewingTaskImage(currentTask.imageUrls?.[newIndex] || viewingTaskImage);
                       }}
                       className="absolute left-2 z-10 h-10 w-10 p-0 bg-white/80 hover:bg-white"
                       title="이전 이미지"
@@ -1955,7 +1960,7 @@ export default function ProjectManagement() {
                         className="max-w-full h-auto rounded-lg max-h-96 object-contain"
                       />
                       <p className="text-sm text-gray-500 mt-2">
-                        {currentIndex + 1} / {currentTask.imageUrls.length}
+                        {currentIndex + 1} / {currentTask.imageUrls?.length || 0}
                       </p>
                     </div>
 
@@ -1964,8 +1969,8 @@ export default function ProjectManagement() {
                       variant="outline"
                       size="sm"
                       onClick={() => {
-                        const newIndex = currentIndex < currentTask.imageUrls.length - 1 ? currentIndex + 1 : 0;
-                        setViewingTaskImage(currentTask.imageUrls[newIndex]);
+                        const newIndex = currentIndex < (currentTask.imageUrls?.length || 1) - 1 ? currentIndex + 1 : 0;
+                        setViewingTaskImage(currentTask.imageUrls?.[newIndex] || viewingTaskImage);
                       }}
                       className="absolute right-2 z-10 h-10 w-10 p-0 bg-white/80 hover:bg-white"
                       title="다음 이미지"
@@ -1975,10 +1980,10 @@ export default function ProjectManagement() {
 
                     {/* Image indicators */}
                     <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-2">
-                      {currentTask.imageUrls.map((_: string, index: number) => (
+                      {currentTask.imageUrls?.map((_: string, index: number) => (
                         <button
                           key={index}
-                          onClick={() => setViewingTaskImage(currentTask.imageUrls[index])}
+                          onClick={() => setViewingTaskImage(currentTask.imageUrls?.[index] || viewingTaskImage)}
                           className={`w-2 h-2 rounded-full transition-colors ${
                             index === currentIndex ? 'bg-blue-600' : 'bg-gray-300'
                           }`}
