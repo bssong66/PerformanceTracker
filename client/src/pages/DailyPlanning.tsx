@@ -1357,7 +1357,6 @@ export default function DailyPlanning() {
 
                   {/* 텍스트 서식 도구 */}
                   <div className="mb-3">
-                    <Label className="text-xs text-gray-600 mb-2 block">텍스트 서식</Label>
                     <div className="flex space-x-2 flex-wrap gap-2">
                       <Button
                         onClick={() => setReflection(prev => prev + '\n1. ')}
