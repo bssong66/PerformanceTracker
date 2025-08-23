@@ -53,7 +53,7 @@ export default function DailyPlanning() {
   const [showTimeBlockDialog, setShowTimeBlockDialog] = useState(false);
   const [suggestedBreaks, setSuggestedBreaks] = useState<any[]>([]);
   const [showBreakSuggestions, setShowBreakSuggestions] = useState(false);
-  
+
   // Focus Mode states
   const [selectedTask, setSelectedTask] = useState<any>(null);
   const [selectedTimeBlock, setSelectedTimeBlock] = useState<any>(null);
@@ -66,8 +66,8 @@ export default function DailyPlanning() {
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [notificationPermission, setNotificationPermission] = useState<NotificationPermission>('default');
-  
-  
+
+
   const timer = useTimer(0); // 테스트용 10초
   const { minutes, seconds, isRunning, isBreak, isCompleted, start, pause, reset, startBreak, extendSession, acknowledgeCompletion } = timer;
 
@@ -120,7 +120,7 @@ export default function DailyPlanning() {
   });
 
   const currentYear = new Date().getFullYear();
-  
+
   const { data: foundation } = useQuery({
     queryKey: ['foundation', user?.id, currentYear],
     queryFn: () => fetch(`/api/foundation/${user!.id}?year=${currentYear}`).then(res => res.json()),
@@ -133,7 +133,7 @@ export default function DailyPlanning() {
     enabled: !!user?.id,
   });
 
-  const { data: timeBlocks = [], refetch: refetchTimeBlocks } = useQuery({
+  const { data: timeBlocks, refetch: refetchTimeBlocks } = useQuery({
     queryKey: ['timeBlocks', user?.id, today],
     queryFn: () => fetch(api.timeBlocks.list(user!.id, today)).then(res => res.json()),
     enabled: !!user?.id,
@@ -141,7 +141,7 @@ export default function DailyPlanning() {
 
   // Yesterday's date for copying time blocks
   const yesterday = format(new Date(new Date().setDate(new Date().getDate() - 1)), 'yyyy-MM-dd');
-  
+
   const { data: yesterdayTimeBlocks = [] } = useQuery({
     queryKey: ['timeBlocks', user?.id, yesterday],
     queryFn: () => fetch(api.timeBlocks.list(user!.id, yesterday)).then(res => res.json()),
@@ -198,7 +198,7 @@ export default function DailyPlanning() {
       queryClient.invalidateQueries({ queryKey: ['dailyReflection', user!.id, today] });
       toast({
         title: "성공",
-        description: "일일 회고가 저장되었습니다.",
+        description: "오늘의 기록이 저장되었습니다.",
       });
     },
   });
@@ -386,11 +386,11 @@ export default function DailyPlanning() {
 
   const handleToggleTask = (id: number, completed: boolean) => {
     updateTaskMutation.mutate({ id, updates: { completed } });
-    
+
     if (completed && selectedTask?.id === id) {
       const nextTask = filteredTasks.find((t: any) => t.id !== id && !t.completed);
       setSelectedTask(nextTask || null);
-      
+
       toast({
         title: "할일 완료!",
         description: "훌륭합니다! 다음 할일로 넘어가세요.",
@@ -400,7 +400,7 @@ export default function DailyPlanning() {
 
   const handleToggleEvent = (id: number, completed: boolean) => {
     updateEventMutation.mutate({ id, completed });
-    
+
     toast({
       title: completed ? "일정 완료!" : "일정 완료 취소",
       description: completed ? "일정이 완료되었습니다." : "일정이 미완료로 변경되었습니다.",
@@ -412,7 +412,7 @@ export default function DailyPlanning() {
     formData.append('userId', user!.id);
     formData.append('date', today);
     formData.append('content', reflection);
-    
+
     // Add all selected files to FormData
     selectedFiles.forEach((file, index) => {
       formData.append(`files`, file);
@@ -423,7 +423,7 @@ export default function DailyPlanning() {
         method: 'POST',
         body: formData,
       });
-      
+
       if (response.ok) {
         const result = await response.json();
         setSavedFiles(result.files || []);
@@ -446,13 +446,13 @@ export default function DailyPlanning() {
   const handleDeleteFile = async (fileIndex: number) => {
     try {
       const fileToDelete = savedFiles[fileIndex];
-      
+
       const response = await fetch(`/api/daily-reflection/${user!.id}/${today}/file`, {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ fileUrl: fileToDelete.url })
       });
-      
+
       if (response.ok) {
         const updatedFiles = savedFiles.filter((_, index) => index !== fileIndex);
         setSavedFiles(updatedFiles);
@@ -476,12 +476,12 @@ export default function DailyPlanning() {
       const textarea = e.target as HTMLTextAreaElement;
       const value = textarea.value;
       const cursorPosition = textarea.selectionStart;
-      
+
       // 현재 줄의 시작 위치 찾기
       const beforeCursor = value.substring(0, cursorPosition);
       const lines = beforeCursor.split('\n');
       const currentLine = lines[lines.length - 1];
-      
+
       // 번호 목록 패턴 확인 (1., 2., 3., ...)
       const numberMatch = currentLine.match(/^(\s*)(\d+)\.\s/);
       if (numberMatch) {
@@ -490,27 +490,27 @@ export default function DailyPlanning() {
         const currentNumber = parseInt(numberMatch[2]);
         const nextNumber = currentNumber + 1;
         const newText = `\n${indent}${nextNumber}. `;
-        
+
         const newValue = value.substring(0, cursorPosition) + newText + value.substring(cursorPosition);
         setReflection(newValue);
-        
+
         // 커서 위치를 새로운 번호 뒤로 이동
         setTimeout(() => {
           textarea.setSelectionRange(cursorPosition + newText.length, cursorPosition + newText.length);
         }, 0);
         return;
       }
-      
+
       // 불릿 목록 패턴 확인 (• )
       const bulletMatch = currentLine.match(/^(\s*)•\s/);
       if (bulletMatch) {
         e.preventDefault();
         const indent = bulletMatch[1];
         const newText = `\n${indent}• `;
-        
+
         const newValue = value.substring(0, cursorPosition) + newText + value.substring(cursorPosition);
         setReflection(newValue);
-        
+
         // 커서 위치를 새로운 불릿 뒤로 이동
         setTimeout(() => {
           textarea.setSelectionRange(cursorPosition + newText.length, cursorPosition + newText.length);
@@ -576,11 +576,11 @@ export default function DailyPlanning() {
       });
     } else {
       setEditingTimeBlock(null);
-      
+
       // 기존 시간 블록들을 확인해서 다음 가능한 시간 제안
       let suggestedStartTime = "오전 09:00";
       let suggestedEndTime = "오전 10:00";
-      
+
       if (timeBlocks.length > 0) {
         // 시간 블록들을 시간 순으로 정렬
         const sortedBlocks = [...timeBlocks].sort((a: any, b: any) => {
@@ -588,18 +588,18 @@ export default function DailyPlanning() {
           const timeB = convertToComparableTime(b.endTime);
           return timeA - timeB;
         });
-        
+
         // 가장 마지막 시간 블록의 종료 시간을 가져옴
         const lastBlock = sortedBlocks[sortedBlocks.length - 1];
         const lastEndTime = lastBlock.endTime;
-        
+
         // 마지막 종료 시간을 새로운 시작 시간으로 설정
         suggestedStartTime = lastEndTime;
-        
+
         // 1시간 후를 종료 시간으로 설정
         suggestedEndTime = addOneHour(lastEndTime);
       }
-      
+
       setNewTimeBlock({
         startTime: suggestedStartTime,
         endTime: suggestedEndTime,
@@ -616,35 +616,35 @@ export default function DailyPlanning() {
   // 시간을 비교 가능한 숫자로 변환 (분 단위)
   const convertToComparableTime = (timeStr: string) => {
     if (!timeStr) return 0;
-    
+
     const isAM = timeStr.includes('오전');
     const timeOnly = timeStr.replace(/(오전|오후)\s*/, '');
     const [hours, minutes] = timeOnly.split(':').map(Number);
-    
+
     let totalMinutes = hours * 60 + minutes;
     if (!isAM && hours !== 12) {
       totalMinutes += 12 * 60; // PM이고 12시가 아니면 12시간 추가
     } else if (isAM && hours === 12) {
       totalMinutes -= 12 * 60; // AM 12시는 0시로 변환
     }
-    
+
     return totalMinutes;
   };
 
   // 시간 블록 선택 시 포모도로 타이머 설정
   const handleSelectTimeBlock = (block: any) => {
     setSelectedTimeBlock(block);
-    
+
     // 시간 블록의 시간 범위 계산
     const startMinutes = convertToComparableTime(block.startTime);
     const endMinutes = convertToComparableTime(block.endTime);
     const durationMinutes = endMinutes - startMinutes;
-    
+
     // 포모도로 타이머에 시간 설정
     if (durationMinutes > 0) {
       extendSession(durationMinutes);
     }
-    
+
     // 연결된 할일이 있다면 선택
     if (block.taskId) {
       const task = allTasks.find((t: any) => t.id === block.taskId);
@@ -652,7 +652,7 @@ export default function DailyPlanning() {
         setSelectedTask(task);
       }
     }
-    
+
     toast({
       title: "시간 블록 선택됨",
       description: `${block.title} (${durationMinutes}분) 포모도로 타이머에 설정되었습니다.`,
@@ -662,14 +662,14 @@ export default function DailyPlanning() {
   // 1시간 추가하는 함수
   const addOneHour = (timeStr: string) => {
     if (!timeStr) return "오전 10:00";
-    
+
     const isAM = timeStr.includes('오전');
     const timeOnly = timeStr.replace(/(오전|오후)\s*/, '');
     const [hours, minutes] = timeOnly.split(':').map(Number);
-    
+
     let newHours = hours + 1;
     let newPeriod = isAM ? '오전' : '오후';
-    
+
     // 시간 조정
     if (isAM && newHours >= 12) {
       if (newHours === 12) {
@@ -682,7 +682,7 @@ export default function DailyPlanning() {
       newHours = newHours - 12;
       newPeriod = '오전';
     }
-    
+
     return `${newPeriod} ${newHours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
   };
 
@@ -750,7 +750,7 @@ export default function DailyPlanning() {
         description: `"${selectedTask.title}"이(가) 완료되었습니다. 5분 휴식을 시작합니다.`,
       });
     }
-    
+
     setShowCompletionDialog(false);
     acknowledgeCompletion();
     startBreak(); // 5분 휴식 시작
@@ -762,12 +762,12 @@ export default function DailyPlanning() {
     extendSession(additionalMinutes);
     setShowCompletionDialog(false);
     acknowledgeCompletion();
-    
+
     toast({
       title: "세션 연장",
       description: `${additionalMinutes}분 추가 세션을 시작합니다.`,
     });
-    
+
     // 연장된 세션 자동 시작
     setTimeout(() => start(), 100);
   };
@@ -827,7 +827,7 @@ export default function DailyPlanning() {
         </div>
 
         <Tabs defaultValue="planning" className="space-y-4">
-          
+
           <TabsList className="grid w-full grid-cols-3 h-16 bg-gray-50/50 backdrop-blur-sm rounded-xl border border-gray-200/50">
             <TabsTrigger 
               value="planning" 
@@ -896,7 +896,7 @@ export default function DailyPlanning() {
                         <Plus className="h-4 w-4" />
                       </Button>
                     </div>
-                    
+
                     {/* Value Selection */}
                     <div className="flex space-x-2">
                       <Select value={selectedCoreValue} onValueChange={setSelectedCoreValue}>
@@ -1044,7 +1044,7 @@ export default function DailyPlanning() {
                   <div className="text-6xl font-mono font-bold text-gray-900">
                     {String(minutes).padStart(2, '0')}:{String(seconds).padStart(2, '0')}
                   </div>
-                  
+
                   {/* Timer Type */}
                   <div className="text-lg font-medium text-gray-600">
                     {isBreak ? '휴식 시간' : '집중 시간'}
@@ -1132,7 +1132,7 @@ export default function DailyPlanning() {
                       </Button>
                     </div>
                   </div>
-                  
+
                   {/* Time Block List */}
                   <div className="space-y-2 max-h-96 overflow-y-auto">
                     {timeBlocks.length === 0 ? (
@@ -1232,7 +1232,7 @@ export default function DailyPlanning() {
                       ))
                     )}
                   </div>
-                  
+
                   {/* Break Suggestions Dialog */}
                   {showBreakSuggestions && (
                     <div className="mt-3 p-3 bg-orange-50 border border-orange-200 rounded-lg">
@@ -1335,7 +1335,7 @@ export default function DailyPlanning() {
                       habits.map((habit: any) => {
                         const habitLog = habitLogs.find((log: any) => log.habitId === habit.id);
                         const isCompleted = habitLog?.completed || false;
-                        
+
                         return (
                           <div key={habit.id} className="flex items-center space-x-2 px-3 py-1 bg-gray-50 rounded-lg">
                             <Checkbox
@@ -1377,7 +1377,7 @@ export default function DailyPlanning() {
                       {format(new Date(), 'HH:mm', { locale: ko })}
                     </span>
                   </div>
-                  
+
                   {/* Emoji Selector */}
                   <div className="mb-3">
                     <Label className="text-xs text-gray-600 mb-2 block">오늘의 기분</Label>
@@ -1453,7 +1453,7 @@ export default function DailyPlanning() {
                       </Button>
                     </div>
                   </div>
-                  
+
                   <Textarea
                     placeholder={`오늘 하루를 돌아보며...
 
@@ -1482,7 +1482,7 @@ export default function DailyPlanning() {
                   <h4 className="text-sm font-medium text-gray-900 mb-3">사진 및 파일</h4>
                   <div className="border-2 border-dashed border-gray-300 rounded-lg px-6 py-3 text-center hover:border-gray-400 transition-colors">
                     <p className="text-sm text-gray-600 mb-4">파일을 여기에 드래그하거나 아래 버튼을 클릭하세요</p>
-                    
+
                     <div className="flex justify-center space-x-4 mb-4">
                       <Button 
                         variant="outline" 
@@ -1503,7 +1503,7 @@ export default function DailyPlanning() {
                         <span>파일</span>
                       </Button>
                     </div>
-                    
+
                     <input
                       type="file"
                       ref={fileInputRef}
@@ -1512,10 +1512,10 @@ export default function DailyPlanning() {
                       accept="image/*,.pdf,.doc,.docx,.txt"
                       className="hidden"
                     />
-                    
+
                     <p className="text-xs text-gray-500">최대 15개, 개당 50 MB 이하</p>
                   </div>
-                  
+
                   {/* 선택된 파일 목록 */}
                   {selectedFiles.length > 0 && (
                     <div className="mt-3 space-y-2">
@@ -1560,7 +1560,7 @@ export default function DailyPlanning() {
                             >
                               ×
                             </Button>
-                            
+
                             {file.type?.startsWith('image/') ? (
                               <div 
                                 className="flex items-center space-x-2 hover:bg-blue-100 p-1 rounded transition-colors cursor-pointer"
@@ -1603,7 +1603,7 @@ export default function DailyPlanning() {
                 25분 집중 세션이 완료되었습니다. 다음 행동을 선택해주세요.
               </DialogDescription>
             </DialogHeader>
-            
+
             <div className="space-y-3">
               {/* 할일 완료 및 휴식 */}
               <Button
@@ -1614,7 +1614,7 @@ export default function DailyPlanning() {
                 <CheckCircle className="h-4 w-4 mr-2" />
                 할일 완료하고 5분 휴식하기
               </Button>
-              
+
               {/* 세션 연장 옵션 */}
               <div className="grid grid-cols-3 gap-2">
                 <Button
@@ -1639,7 +1639,7 @@ export default function DailyPlanning() {
                   +10분
                 </Button>
               </div>
-              
+
               {/* 휴식만 시작 */}
               <Button
                 onClick={() => {
@@ -1652,7 +1652,7 @@ export default function DailyPlanning() {
               >
                 할일은 진행 중, 5분 휴식만 하기
               </Button>
-              
+
               {/* 알림 설정 */}
               {notificationPermission === 'default' && (
                 <div className="pt-2 border-t">
@@ -1680,7 +1680,7 @@ export default function DailyPlanning() {
                 시간 블록 정보를 입력해주세요.
               </DialogDescription>
             </DialogHeader>
-            
+
             <div className="space-y-4">
               {/* Time Settings */}
               <div className="grid grid-cols-2 gap-4">
@@ -1880,7 +1880,7 @@ export default function DailyPlanning() {
                 이미지를 확대해서 볼 수 있습니다.
               </DialogDescription>
             </DialogHeader>
-            
+
             {previewImage && (
               <div className="flex justify-center">
                 <img 
@@ -1890,7 +1890,7 @@ export default function DailyPlanning() {
                 />
               </div>
             )}
-            
+
             <div className="flex justify-end">
               <Button onClick={() => setPreviewImage(null)}>
                 닫기
@@ -1899,7 +1899,7 @@ export default function DailyPlanning() {
           </DialogContent>
         </Dialog>
 
-        
+
 
       </div>
     </div>
