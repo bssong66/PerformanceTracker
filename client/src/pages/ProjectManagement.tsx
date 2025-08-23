@@ -88,6 +88,9 @@ export default function ProjectManagement() {
   const [selectedProject, setSelectedProject] = useState<any>(null);
   const [isEditingProjectDetail, setIsEditingProjectDetail] = useState(false);
 
+  // Show completed projects state
+  const [showCompletedProjects, setShowCompletedProjects] = useState(true);
+
   // State for task sorting
   const [taskSortBy, setTaskSortBy] = useState<'priority' | 'date' | 'title'>('priority');
   const [taskSortOrder, setTaskSortOrder] = useState<'asc' | 'desc'>('asc');
@@ -1108,13 +1111,21 @@ export default function ProjectManagement() {
           <p className="text-gray-600">프로젝트를 생성하고 관리하세요</p>
         </div>
 
-        <Dialog open={showProjectDialog} onOpenChange={setShowProjectDialog}>
-          <DialogTrigger asChild>
-            <Button onClick={openCreateDialog} className="bg-blue-600 hover:bg-blue-700">
-              <Plus className="h-4 w-4 mr-2" />
-              새 프로젝트
-            </Button>
-          </DialogTrigger>
+        <div className="flex items-center space-x-2">
+          <Button
+            variant={showCompletedProjects ? "default" : "outline"}
+            onClick={() => setShowCompletedProjects(!showCompletedProjects)}
+          >
+            {showCompletedProjects ? '완료된 프로젝트 감추기' : '완료된 프로젝트 보기'}
+          </Button>
+
+          <Dialog open={showProjectDialog} onOpenChange={setShowProjectDialog}>
+            <DialogTrigger asChild>
+              <Button onClick={openCreateDialog} className="bg-blue-600 hover:bg-blue-700">
+                <Plus className="h-4 w-4 mr-2" />
+                새 프로젝트
+              </Button>
+            </DialogTrigger>
           <DialogContent className="sm:max-w-md max-h-[70vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>
@@ -1306,7 +1317,14 @@ export default function ProjectManagement() {
 
       {/* Projects List */}
       <div className="space-y-4">
-        {projects.map((project: Project) => {
+        {projects.filter((project: Project) => {
+          if (!showCompletedProjects) {
+            const projectTasks = getProjectTasks(project.id);
+            const completionPercentage = getCompletionPercentage(project.id);
+            return completionPercentage < 100;
+          }
+          return true;
+        }).map((project: Project) => {
           const projectTasks = getProjectTasks(project.id);
           const completionPercentage = getCompletionPercentage(project.id);
           const isExpanded = expandedProjects.has(project.id);
