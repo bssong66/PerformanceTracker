@@ -10,7 +10,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
-import { Plus, Folder, Image, Eye, Trash2, Calendar, Edit, ChevronDown, ChevronRight, ChevronLeft, CheckCircle, Circle, Play, X, ImagePlus, Copy, FileText, Download, File, Target, Clock, Flag, User as UserIcon, Star } from 'lucide-react';
+import { Plus, Folder, Image, Eye, Trash2, Calendar, Edit, ChevronDown, ChevronRight, ChevronLeft, CheckCircle, Circle, Play, X, ImagePlus, Copy, FileText, Download, File } from 'lucide-react';
 import { FileUploader } from '@/components/FileUploader';
 import { UnifiedAttachmentManager } from '@/components/UnifiedAttachmentManager';
 import { format } from 'date-fns';
@@ -2047,252 +2047,162 @@ export default function ProjectManagement() {
             }
           }
         }}>
-          <DialogContent className="sm:max-w-6xl max-h-[90vh] overflow-hidden border-0 shadow-2xl rounded-3xl p-0">
-            {/* Custom Header */}
-            <div className="relative bg-gradient-to-br from-indigo-50 via-blue-50 to-cyan-50 px-8 py-6 border-b border-gray-100/80">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-4">
-                  <div className="bg-white/80 backdrop-blur-sm p-3 rounded-2xl shadow-sm border border-white/50">
-                    <Target className="h-6 w-6 text-indigo-600" />
-                  </div>
-                  <div>
-                    <h2 className="text-2xl font-bold text-gray-900">할일 세부사항</h2>
-                    <p className="text-sm text-gray-600 mt-0.5">작업 내용과 진행상황을 관리하세요</p>
-                  </div>
-                </div>
-                <div className="flex items-center space-x-3">
-                  <div className={`px-4 py-2 rounded-full text-sm font-semibold shadow-sm ${
-                    taskForm.priority === 'A' ? 'bg-red-100 text-red-700 border border-red-200' :
-                    taskForm.priority === 'B' ? 'bg-amber-100 text-amber-700 border border-amber-200' :
-                    'bg-emerald-100 text-emerald-700 border border-emerald-200'
-                  }`}>
-                    {taskForm.priority === 'A' ? '🚨 긴급중요' : 
-                     taskForm.priority === 'B' ? '⚡ 중요함' : '📋 일반'}
-                  </div>
-                  {taskForm.completed && (
-                    <div className="bg-green-100 text-green-700 px-3 py-1.5 rounded-full text-sm font-medium border border-green-200">
-                      ✅ 완료됨
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
+          <DialogContent className="sm:max-w-4xl max-h-[80vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>할일 상세</DialogTitle>
+              <DialogDescription>할일의 상세 정보를 확인하세요.</DialogDescription>
+            </DialogHeader>
 
-            <div className="px-8 pb-8 pt-6 max-h-[calc(90vh-140px)] overflow-y-auto custom-scrollbar">
+            {true && (
               <form onSubmit={(e) => {
                 e.preventDefault();
                 handleSaveFromDetail();
-              }} className="space-y-6">
-                <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
-                  {/* 왼쪽: 작업 계획 */}
-                  <div className="space-y-6">
-                    <div className="bg-white rounded-3xl border border-gray-100 shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300">
-                      <div className="bg-gradient-to-r from-indigo-500 via-indigo-600 to-purple-600 px-6 py-4">
-                        <h3 className="text-lg font-bold text-white flex items-center">
-                          <Edit className="h-5 w-5 mr-3" />
-                          작업 계획
-                        </h3>
-                        <p className="text-indigo-100 text-sm mt-1">기본 정보와 세부사항을 설정하세요</p>
+              }} className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* 왼쪽: 할일 내용 */}
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-semibold border-b pb-2">할일: 내용</h3>
+
+                    <div>
+                      <Label htmlFor="title">할일 제목</Label>
+                      <Input
+                        id="title"
+                        value={taskForm.title}
+                        onChange={(e) => setTaskForm(prev => ({ ...prev, title: e.target.value }))}
+                        placeholder="할일 제목을 입력하세요"
+                        required
+                      />
+                    </div>
+
+                    <div>
+                      <Label>우선순위</Label>
+                      <Select
+                        value={taskForm.priority}
+                        onValueChange={(value: 'A' | 'B' | 'C') => 
+                          setTaskForm(prev => ({ ...prev, priority: value }))
+                        }
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="A">A급 (긴급+중요)</SelectItem>
+                          <SelectItem value="B">B급 (중요)</SelectItem>
+                          <SelectItem value="C">C급 (일반)</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="startDate">시작일</Label>
+                        <Input
+                          id="startDate"
+                          type="date"
+                          value={taskForm.startDate}
+                          onChange={(e) => setTaskForm(prev => ({ ...prev, startDate: e.target.value }))}
+                        />
                       </div>
-                      <div className="p-6 space-y-6 bg-gradient-to-br from-white to-gray-50/30">
-
-                        <div className="space-y-5">
-                          <div className="group">
-                            <Label htmlFor="title" className="text-sm font-semibold text-gray-700 mb-2 block flex items-center">
-                              <Flag className="h-4 w-4 mr-2 text-indigo-500" />
-                              작업 제목
-                            </Label>
-                            <Input
-                              id="title"
-                              value={taskForm.title}
-                              onChange={(e) => setTaskForm(prev => ({ ...prev, title: e.target.value }))}
-                              placeholder="무엇을 해야 하나요?"
-                              required
-                              className="border-2 border-gray-200 rounded-xl px-4 py-3 text-base focus:border-indigo-400 focus:ring-indigo-400/20 transition-all duration-200 bg-white/70"
-                            />
-                          </div>
-
-                          <div className="group">
-                            <Label className="text-sm font-semibold text-gray-700 mb-2 block flex items-center">
-                              <Star className="h-4 w-4 mr-2 text-indigo-500" />
-                              중요도 설정
-                            </Label>
-                            <Select
-                              value={taskForm.priority}
-                              onValueChange={(value: 'A' | 'B' | 'C') => 
-                                setTaskForm(prev => ({ ...prev, priority: value }))
-                              }
-                            >
-                              <SelectTrigger className="border-2 border-gray-200 rounded-xl px-4 py-3 text-base focus:border-indigo-400 bg-white/70">
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent className="rounded-xl border-2">
-                                <SelectItem value="A" className="py-3 px-4 rounded-lg my-1">🚨 A급 - 긴급하고 중요함</SelectItem>
-                                <SelectItem value="B" className="py-3 px-4 rounded-lg my-1">⚡ B급 - 중요함</SelectItem>
-                                <SelectItem value="C" className="py-3 px-4 rounded-lg my-1">📋 C급 - 일반적인 업무</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </div>
-
-                          <div className="grid grid-cols-2 gap-4">
-                            <div className="group">
-                              <Label htmlFor="startDate" className="text-sm font-semibold text-gray-700 mb-2 block flex items-center">
-                                <Calendar className="h-4 w-4 mr-2 text-indigo-500" />
-                                시작일
-                              </Label>
-                              <Input
-                                id="startDate"
-                                type="date"
-                                value={taskForm.startDate}
-                                onChange={(e) => setTaskForm(prev => ({ ...prev, startDate: e.target.value }))}
-                                className="border-2 border-gray-200 rounded-xl px-4 py-3 text-base focus:border-indigo-400 focus:ring-indigo-400/20 transition-all duration-200 bg-white/70"
-                              />
-                            </div>
-                            <div className="group">
-                              <Label htmlFor="endDate" className="text-sm font-semibold text-gray-700 mb-2 block flex items-center">
-                                <Clock className="h-4 w-4 mr-2 text-red-500" />
-                                마감일
-                              </Label>
-                              <Input
-                                id="endDate"
-                                type="date"
-                                value={taskForm.endDate}
-                                onChange={(e) => setTaskForm(prev => ({ ...prev, endDate: e.target.value }))}
-                                className="border-2 border-gray-200 rounded-xl px-4 py-3 text-base focus:border-red-400 focus:ring-red-400/20 transition-all duration-200 bg-white/70"
-                              />
-                            </div>
-                          </div>
-
-                          <div className="group">
-                            <Label htmlFor="notes" className="text-sm font-semibold text-gray-700 mb-2 block flex items-center">
-                              <FileText className="h-4 w-4 mr-2 text-indigo-500" />
-                              세부 내용
-                            </Label>
-                            <Textarea
-                              id="notes"
-                              value={taskForm.notes}
-                              onChange={(e) => setTaskForm(prev => ({ ...prev, notes: e.target.value }))}
-                              placeholder="세부사항, 체크리스트, 참고사항 등을 자유롭게 작성하세요"
-                              rows={4}
-                              className="border-2 border-gray-200 rounded-xl px-4 py-3 text-base focus:border-indigo-400 focus:ring-indigo-400/20 transition-all duration-200 resize-none bg-white/70"
-                            />
-                          </div>
-
-                          <div className="group">
-                            <Label className="text-sm font-semibold text-gray-700 mb-3 block flex items-center">
-                              <ImagePlus className="h-4 w-4 mr-2 text-indigo-500" />
-                              참고 자료
-                            </Label>
-                            <div className="bg-gray-50/80 rounded-xl p-4 border-2 border-dashed border-gray-300">
-                              <UnifiedAttachmentManager
-                                imageUrls={taskForm.imageUrls || []}
-                                fileUrls={taskForm.fileUrls || []}
-                                onImagesChange={(urls) => setTaskForm(prev => ({ ...prev, imageUrls: urls }))}
-                                onFilesChange={(files) => setTaskForm(prev => ({ ...prev, fileUrls: files }))}
-                                uploadEndpoint="/api/files/upload"
-                              />
-                            </div>
-                          </div>
-                        </div>
+                      <div>
+                        <Label htmlFor="endDate">마감일</Label>
+                        <Input
+                          id="endDate"
+                          type="date"
+                          value={taskForm.endDate}
+                          onChange={(e) => setTaskForm(prev => ({ ...prev, endDate: e.target.value }))}
+                        />
                       </div>
+                    </div>
+
+                    <div>
+                      <Label htmlFor="notes">메모</Label>
+                      <Textarea
+                        id="notes"
+                        value={taskForm.notes}
+                        onChange={(e) => setTaskForm(prev => ({ ...prev, notes: e.target.value }))}
+                        placeholder="할일에 대한 메모"
+                        rows={4}
+                      />
+                    </div>
+
+                    <div>
+                      <Label>파일 및 사진 첨부</Label>
+                      <UnifiedAttachmentManager
+                        imageUrls={taskForm.imageUrls || []}
+                        fileUrls={taskForm.fileUrls || []}
+                        onImagesChange={(urls) => setTaskForm(prev => ({ ...prev, imageUrls: urls }))}
+                        onFilesChange={(files) => setTaskForm(prev => ({ ...prev, fileUrls: files }))}
+                        uploadEndpoint="/api/files/upload"
+                      />
                     </div>
                   </div>
 
-                  {/* 오른쪽: 작업 결과 */}
-                  <div className="space-y-6">
-                    <div className="bg-white rounded-3xl border border-gray-100 shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300">
-                      <div className="bg-gradient-to-r from-emerald-500 via-green-600 to-teal-600 px-6 py-4 flex items-center justify-between">
-                        <div>
-                          <h3 className="text-lg font-bold text-white flex items-center">
-                            <CheckCircle className="h-5 w-5 mr-3" />
-                            작업 결과
-                          </h3>
-                          <p className="text-emerald-100 text-sm mt-1">완료된 작업의 성과를 기록하세요</p>
-                        </div>
-                        <div className="flex items-center space-x-3">
-                          <Checkbox
-                            id="taskCompleted"
-                            checked={taskForm.completed || false}
-                            onCheckedChange={(checked) => 
-                              setTaskForm(prev => ({ ...prev, completed: checked === true }))
-                            }
-                            className="h-5 w-5 border-2 border-white/80 data-[state=checked]:bg-white data-[state=checked]:text-emerald-600"
-                          />
-                          <Label htmlFor="taskCompleted" className="text-white font-semibold cursor-pointer text-sm">
-                            완료 처리
-                          </Label>
-                        </div>
+                  {/* 오른쪽: 할일 결과 */}
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between border-b pb-2">
+                      <h3 className="text-lg font-semibold">할일: 결과</h3>
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          id="taskCompleted"
+                          checked={taskForm.completed || false}
+                          onCheckedChange={(checked) => 
+                            setTaskForm(prev => ({ ...prev, completed: checked === true }))
+                          }
+                        />
+                        <Label htmlFor="taskCompleted" className="text-sm font-medium cursor-pointer">
+                          할일 완료
+                        </Label>
                       </div>
-                      <div className="p-6 space-y-6 bg-gradient-to-br from-white to-emerald-50/30">
-                        <div className="group">
-                          <Label htmlFor="result" className="text-sm font-semibold text-gray-700 mb-2 block flex items-center">
-                            <Target className="h-4 w-4 mr-2 text-emerald-500" />
-                            성과 및 결과
-                          </Label>
-                          <Textarea
-                            id="result"
-                            value={taskForm.result || ''}
-                            onChange={(e) => setTaskForm(prev => ({ ...prev, result: e.target.value }))}
-                            placeholder="어떤 성과를 얻었나요?\n\n예시:\n• 목표 달성도: 95%\n• 배운 점: ...\n• 개선사항: ...\n• 다음 단계: ..."
-                            rows={8}
-                            className="border-2 border-gray-200 rounded-xl px-4 py-3 text-base focus:border-emerald-400 focus:ring-emerald-400/20 transition-all duration-200 resize-none bg-white/70"
-                          />
-                        </div>
+                    </div>
 
-                        <div className="group">
-                          <Label className="text-sm font-semibold text-gray-700 mb-3 block flex items-center">
-                            <Image className="h-4 w-4 mr-2 text-emerald-500" />
-                            결과물 및 증빙 자료
-                          </Label>
-                          <div className="bg-emerald-50/80 rounded-xl p-4 border-2 border-dashed border-emerald-300">
-                            <UnifiedAttachmentManager
-                              imageUrls={taskForm.resultImageUrls || []}
-                              fileUrls={taskForm.resultFileUrls || []}
-                              onImagesChange={(urls) => setTaskForm(prev => ({ ...prev, resultImageUrls: urls }))}
-                              onFilesChange={(files) => setTaskForm(prev => ({ ...prev, resultFileUrls: files }))}
-                              uploadEndpoint="/api/files/upload"
-                            />
-                          </div>
-                        </div>
-                      </div>
+                    <div>
+                      <Label htmlFor="result">결과 기록</Label>
+                      <Textarea
+                        id="result"
+                        value={taskForm.result || ''}
+                        onChange={(e) => setTaskForm(prev => ({ ...prev, result: e.target.value }))}
+                        placeholder="할일을 완료한 후 결과나 소감을 기록해주세요"
+                        rows={6}
+                      />
+                    </div>
+
+                    <div>
+                      <Label>첨부 스크린샷, 파일 및 사진</Label>
+                      <UnifiedAttachmentManager
+                        imageUrls={taskForm.resultImageUrls || []}
+                        fileUrls={taskForm.resultFileUrls || []}
+                        onImagesChange={(urls) => setTaskForm(prev => ({ ...prev, resultImageUrls: urls }))}
+                        onFilesChange={(files) => setTaskForm(prev => ({ ...prev, resultFileUrls: files }))}
+                        uploadEndpoint="/api/files/upload"
+                      />
                     </div>
                   </div>
                 </div>
 
-                <div className="flex justify-between items-center pt-8 mt-8 border-t-2 border-gray-100">
-                  <div className="text-sm text-gray-500">
-                    💡 작업이 완료되면 체크박스를 눌러주세요
-                  </div>
-                  <div className="flex space-x-3">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={handleCancelFromDetail}
-                      className="px-6 py-3 rounded-xl border-2 border-gray-300 hover:border-gray-400 font-semibold transition-all duration-200"
-                    >
-                      취소
-                    </Button>
-                    <Button 
-                      type="submit" 
-                      disabled={updateTaskMutation.isPending}
-                      className="px-8 py-3 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 font-bold text-white shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200"
-                    >
-                      {updateTaskMutation.isPending ? (
-                        <div className="flex items-center">
-                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                          저장 중...
-                        </div>
-                      ) : (
-                        <div className="flex items-center">
-                          <CheckCircle className="h-4 w-4 mr-2" />
-                          저장하기
-                        </div>
-                      )}
-                    </Button>
-                  </div>
+                <div className="flex justify-end space-x-2 pt-4 border-t">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={handleCancelFromDetail}
+                  >
+                    취소
+                  </Button>
+                  <Button 
+                    type="submit" 
+                    disabled={updateTaskMutation.isPending}
+                  >
+                    {updateTaskMutation.isPending ? (
+                      <div className="flex items-center">
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                        저장 중...
+                      </div>
+                    ) : (
+                      '저장'
+                    )}
+                  </Button>
                 </div>
               </form>
-            </div>
+            )}
           </DialogContent>
         </Dialog>
       )}

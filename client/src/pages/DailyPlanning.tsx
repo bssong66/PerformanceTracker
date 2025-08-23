@@ -91,34 +91,34 @@ export default function DailyPlanning() {
   // 오늘 날짜의 모든 할일 가져오기 (날짜 필터 제거)
   const { data: allTasks = [], isLoading: tasksLoading } = useQuery({
     queryKey: ['tasks', user?.id],
-    queryFn: () => fetch(`/api/tasks/${user?.id}`).then(res => res.json()),
+    queryFn: () => fetch(`/api/tasks/${user!.id}`).then(res => res.json()),
     enabled: !!user?.id,
   });
 
   // 습관 데이터 가져오기
   const { data: habits = [] } = useQuery({
     queryKey: ['habits', user?.id],
-    queryFn: () => fetch(`/api/habits/${user?.id}`).then(res => res.json()),
+    queryFn: () => fetch(`/api/habits/${user!.id}`).then(res => res.json()),
     enabled: !!user?.id,
   });
 
   // 오늘의 습관 로그 가져오기
   const { data: habitLogs = [] } = useQuery({
     queryKey: ['habit-logs', user?.id, today],
-    queryFn: () => fetch(`/api/habit-logs/${user?.id}/${today}`).then(res => res.json()),
+    queryFn: () => fetch(`/api/habit-logs/${user!.id}/${today}`).then(res => res.json()),
     enabled: !!user?.id,
   });
 
   // 오늘 날짜의 일정 가져오기
   const { data: todayEvents = [] } = useQuery({
     queryKey: ['events', user?.id, today],
-    queryFn: () => fetch(`/api/events/${user?.id}?startDate=${today}&endDate=${today}`).then(res => res.json()),
+    queryFn: () => fetch(`/api/events/${user!.id}?startDate=${today}&endDate=${today}`).then(res => res.json()),
     enabled: !!user?.id,
   });
 
   const { data: projects = [] } = useQuery({
     queryKey: ['projects', user?.id],
-    queryFn: () => fetch(`/api/projects/${user?.id}`).then(res => res.json()),
+    queryFn: () => fetch(`/api/projects/${user!.id}`).then(res => res.json()),
     enabled: !!user?.id,
   });
 
@@ -126,19 +126,19 @@ export default function DailyPlanning() {
 
   const { data: foundation } = useQuery({
     queryKey: ['foundation', user?.id, currentYear],
-    queryFn: () => fetch(`/api/foundation/${user?.id}?year=${currentYear}`).then(res => res.json()),
+    queryFn: () => fetch(`/api/foundation/${user!.id}?year=${currentYear}`).then(res => res.json()),
     enabled: !!user?.id,
   });
 
   const { data: annualGoals = [] } = useQuery({
     queryKey: ['goals', user?.id, currentYear],
-    queryFn: () => fetch(`/api/goals/${user?.id}?year=${currentYear}`).then(res => res.json()),
+    queryFn: () => fetch(`/api/goals/${user!.id}?year=${currentYear}`).then(res => res.json()),
     enabled: !!user?.id,
   });
 
   const { data: timeBlocks, refetch: refetchTimeBlocks } = useQuery({
     queryKey: ['timeBlocks', user?.id, today],
-    queryFn: () => fetch(api.timeBlocks.list(user?.id!, today)).then(res => res.json()),
+    queryFn: () => fetch(api.timeBlocks.list(user!.id, today)).then(res => res.json()),
     enabled: !!user?.id,
   });
 
@@ -147,7 +147,7 @@ export default function DailyPlanning() {
 
   const { data: yesterdayTimeBlocks = [] } = useQuery({
     queryKey: ['timeBlocks', user?.id, yesterday],
-    queryFn: () => fetch(api.timeBlocks.list(user?.id!, yesterday)).then(res => res.json()),
+    queryFn: () => fetch(api.timeBlocks.list(user!.id, yesterday)).then(res => res.json()),
     enabled: !!user?.id,
   });
 
@@ -155,7 +155,7 @@ export default function DailyPlanning() {
 
   const { data: dailyReflection } = useQuery({
     queryKey: ['dailyReflection', user?.id, today],
-    queryFn: () => fetch(`/api/daily-reflection/${user?.id}/${today}`).then(res => res.json()).catch(() => null),
+    queryFn: () => fetch(`/api/daily-reflection/${user!.id}/${today}`).then(res => res.json()).catch(() => null),
     enabled: !!user?.id,
   });
 
@@ -171,7 +171,7 @@ export default function DailyPlanning() {
   const addTaskMutation = useMutation({
     mutationFn: createTask,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['tasks', user?.id!] });
+      queryClient.invalidateQueries({ queryKey: ['tasks', user!.id] });
       setNewTask("");
     },
   });
@@ -179,7 +179,7 @@ export default function DailyPlanning() {
   const updateTaskMutation = useMutation({
     mutationFn: ({ id, updates }: { id: number; updates: any }) => updateTask(id, updates),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['tasks', user?.id!] });
+      queryClient.invalidateQueries({ queryKey: ['tasks', user!.id] });
     },
   });
 
@@ -191,14 +191,14 @@ export default function DailyPlanning() {
         body: JSON.stringify({ completed })
       }).then(res => res.json()),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['events', user?.id!, today] });
+      queryClient.invalidateQueries({ queryKey: ['events', user!.id, today] });
     },
   });
 
   const saveReflectionMutation = useMutation({
     mutationFn: saveDailyReflection,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['dailyReflection', user?.id!, today] });
+      queryClient.invalidateQueries({ queryKey: ['dailyReflection', user!.id, today] });
       toast({
         title: "성공",
         description: "오늘의 기록이 저장되었습니다.",
@@ -209,7 +209,7 @@ export default function DailyPlanning() {
   const addTimeBlockMutation = useMutation({
     mutationFn: createTimeBlock,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['timeBlocks', user?.id!, today] });
+      queryClient.invalidateQueries({ queryKey: ['timeBlocks', user!.id, today] });
       setNewTimeBlock({
         startTime: "",
         endTime: "",
@@ -271,7 +271,7 @@ export default function DailyPlanning() {
 
   const copyTimeBlocksMutation = useMutation({
     mutationFn: () => 
-      fetch(`/api/time-blocks/copy/${user?.id!}/${yesterday}/${today}`, {
+      fetch(`/api/time-blocks/copy/${user!.id}/${yesterday}/${today}`, {
         method: 'POST',
       }).then(res => res.json()),
     onSuccess: () => {
@@ -295,7 +295,7 @@ export default function DailyPlanning() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          userId: user?.id!,
+          userId: user!.id,
           habitId,
           date: today,
           completed
@@ -304,7 +304,7 @@ export default function DailyPlanning() {
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['habit-logs', user?.id!, today] });
+      queryClient.invalidateQueries({ queryKey: ['habit-logs', user!.id, today] });
     },
   });
 
@@ -378,7 +378,7 @@ export default function DailyPlanning() {
     }
 
     addTaskMutation.mutate({
-      userId: user?.id!,
+      userId: user!.id,
       title: newTask.trim(),
       priority: selectedPriority,
       coreValue: selectedCoreValue === 'none' ? null : selectedCoreValue,
@@ -413,7 +413,7 @@ export default function DailyPlanning() {
 
   const handleSaveReflection = async () => {
     const formData = new FormData();
-    formData.append('userId', user?.id!);
+    formData.append('userId', user!.id);
     formData.append('date', today);
     formData.append('content', reflection);
 
@@ -423,7 +423,7 @@ export default function DailyPlanning() {
     });
 
     try {
-      const response = await fetch(`/api/daily-reflection/${user?.id!}/${today}`, {
+      const response = await fetch(`/api/daily-reflection/${user!.id}/${today}`, {
         method: 'POST',
         body: formData,
       });
@@ -432,7 +432,7 @@ export default function DailyPlanning() {
         const result = await response.json();
         setSavedFiles(result.files || []);
         setSelectedFiles([]);
-        queryClient.invalidateQueries({ queryKey: ['dailyReflection', user?.id!, today] });
+        queryClient.invalidateQueries({ queryKey: ['dailyReflection', user!.id, today] });
         toast({
           title: "성공",
           description: "오늘의 기록이 저장되었습니다.",
@@ -451,7 +451,7 @@ export default function DailyPlanning() {
     try {
       const fileToDelete = savedFiles[fileIndex];
 
-      const response = await fetch(`/api/daily-reflection/${user?.id!}/${today}/file`, {
+      const response = await fetch(`/api/daily-reflection/${user!.id}/${today}/file`, {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ fileUrl: fileToDelete.url })
@@ -460,7 +460,7 @@ export default function DailyPlanning() {
       if (response.ok) {
         const updatedFiles = savedFiles.filter((_, index) => index !== fileIndex);
         setSavedFiles(updatedFiles);
-        queryClient.invalidateQueries({ queryKey: ['dailyReflection', user?.id!, today] });
+        queryClient.invalidateQueries({ queryKey: ['dailyReflection', user!.id, today] });
         toast({
           title: "성공",
           description: "파일이 삭제되었습니다.",
@@ -559,7 +559,7 @@ export default function DailyPlanning() {
       });
     } else {
       addTimeBlockMutation.mutate({
-        userId: user?.id!,
+        userId: user!.id,
         date: today,
         ...newTimeBlock,
       });
@@ -692,7 +692,7 @@ export default function DailyPlanning() {
 
   const getSuggestedBreaks = async () => {
     try {
-      const response = await fetch(`/api/time-blocks/suggest-breaks/${user?.id!}/${today}`, {
+      const response = await fetch(`/api/time-blocks/suggest-breaks/${user!.id}/${today}`, {
         method: 'POST',
       });
       const breaks = await response.json();
@@ -709,7 +709,7 @@ export default function DailyPlanning() {
 
   const addSuggestedBreak = (breakBlock: any) => {
     addTimeBlockMutation.mutate({
-      userId: user?.id!,
+      userId: user!.id,
       date: today,
       ...breakBlock,
     });
@@ -846,9 +846,9 @@ export default function DailyPlanning() {
                         setSelectedDate(date);
                         // 선택된 날짜에 따라 관련 쿼리들을 refetch
                         const selectedDateStr = format(date, 'yyyy-MM-dd');
-                        queryClient.invalidateQueries({ queryKey: ['habitLogs', user?.id!, selectedDateStr] });
-                        queryClient.invalidateQueries({ queryKey: ['timeBlocks', user?.id!, selectedDateStr] });
-                        queryClient.invalidateQueries({ queryKey: ['dailyReflection', user?.id!, selectedDateStr] });
+                        queryClient.invalidateQueries({ queryKey: ['habitLogs', user!.id, selectedDateStr] });
+                        queryClient.invalidateQueries({ queryKey: ['timeBlocks', user!.id, selectedDateStr] });
+                        queryClient.invalidateQueries({ queryKey: ['dailyReflection', user!.id, selectedDateStr] });
                       }
                     }}
                     initialFocus
@@ -1180,7 +1180,7 @@ export default function DailyPlanning() {
                                         onCheckedChange={(checked) => {
                                           if (block.taskId && !updateTaskMutation.isPending) {
                                             // Optimistic update: UI 즉시 업데이트
-                                            queryClient.setQueryData(['tasks', user?.id!], (oldTasks: any) => {
+                                            queryClient.setQueryData(['tasks', user!.id], (oldTasks: any) => {
                                               return oldTasks?.map((task: any) => 
                                                 task.id === block.taskId 
                                                   ? { ...task, completed: checked } 
