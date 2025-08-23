@@ -1849,12 +1849,12 @@ export default function DailyPlanning() {
         </Dialog>
 
         {/* 고정된 저장 버튼 */}
-        <div className="fixed bottom-6 right-6 z-50">
+        <div className="fixed bottom-6 z-50" style={{ right: 'calc(1.5rem + 75px)' }}>
           <Button 
             onClick={handleSaveReflection}
             disabled={saveReflectionMutation.isPending}
             size="sm"
-            className="shadow-lg hover:shadow-xl transition-shadow bg-gray-800/70 hover:bg-gray-700/70 text-white border-0 scale-50"
+            className="shadow-lg hover:shadow-xl transition-shadow bg-gray-800/70 hover:bg-gray-700/70 text-white border-0 scale-75"
           >
             <Save className="h-3 w-3 mr-1" />
             저장
