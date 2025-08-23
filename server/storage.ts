@@ -319,13 +319,20 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateTask(id: number, updates: Partial<Task>): Promise<Task | undefined> {
-    if (updates.completed) {
-      updates.completedAt = new Date();
+    // Process updates and remove problematic fields
+    const processedUpdates = { ...updates };
+    
+    // Remove id and createdAt fields that shouldn't be updated
+    delete (processedUpdates as any).id;
+    delete (processedUpdates as any).createdAt;
+    
+    if (processedUpdates.completed) {
+      processedUpdates.completedAt = new Date();
     }
     
     const result = await db
       .update(tasks)
-      .set(updates)
+      .set(processedUpdates)
       .where(eq(tasks.id, id))
       .returning();
     
