@@ -67,7 +67,7 @@ export default function ProjectManagement() {
   const [showCloneDialog, setShowCloneDialog] = useState(false);
   const [projectToClone, setProjectToClone] = useState<Project | null>(null);
   const [previewFile, setPreviewFile] = useState<{url: string, name: string, type: 'image' | 'pdf'} | null>(null);
-  const [showCompletedProjects, setShowCompletedProjects] = useState(true);
+  const [showCompletedProjects, setShowCompletedProjects] = useState(false);
 
   // Project detail popup states
   const [showProjectDetailDialog, setShowProjectDetailDialog] = useState(false);
