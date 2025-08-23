@@ -8,6 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
 import { Plus, Folder, Image, Eye, Trash2, Calendar, Edit, ChevronDown, ChevronRight, ChevronLeft, CheckCircle, Circle, Play, X, ImagePlus, Copy, FileText, Download, File } from 'lucide-react';
 import { FileUploader } from '@/components/FileUploader';
@@ -60,7 +61,8 @@ export default function ProjectManagement() {
     imageUrls: [] as string[],
     fileUrls: [] as Array<{url: string, name: string}>,
     resultImageUrls: [] as string[],
-    resultFileUrls: [] as Array<{url: string, name: string}>
+    resultFileUrls: [] as Array<{url: string, name: string}>,
+    completed: false
   });
   const [showProjectDialog, setShowProjectDialog] = useState(false);
   const [editingProject, setEditingProject] = useState<Project | null>(null);
@@ -498,7 +500,8 @@ export default function ProjectManagement() {
       imageUrls: [],
       fileUrls: [],
       resultImageUrls: [],
-      resultFileUrls: []
+      resultFileUrls: [],
+      completed: false
     });
     setEditingTask(null);
   };
@@ -980,7 +983,8 @@ export default function ProjectManagement() {
       imageUrls: task.imageUrls || [],
       fileUrls: task.fileUrls || [],
       resultImageUrls: task.resultImageUrls || [],
-      resultFileUrls: task.resultFileUrls || []
+      resultFileUrls: task.resultFileUrls || [],
+      completed: task.completed || false
     });
     setShowTaskDialog(true);
   };
@@ -1025,7 +1029,8 @@ export default function ProjectManagement() {
       imageUrls: task.imageUrls || [],
       fileUrls: task.fileUrls || [],
       resultImageUrls: task.resultImageUrls || [],
-      resultFileUrls: task.resultFileUrls || []
+      resultFileUrls: task.resultFileUrls || [],
+      completed: task.completed || false
     });
     setEditingTask(task);
     setShowTaskDetailDialog(true);
@@ -2095,6 +2100,19 @@ export default function ProjectManagement() {
                   {/* 오른쪽: 할일 결과 */}
                   <div className="space-y-4">
                     <h3 className="text-lg font-semibold border-b pb-2">할일: 결과</h3>
+                    
+                    <div className="flex items-center space-x-2 p-3 bg-gray-50 rounded-lg">
+                      <Checkbox
+                        id="taskCompleted"
+                        checked={taskForm.completed || false}
+                        onCheckedChange={(checked) => 
+                          setTaskForm(prev => ({ ...prev, completed: checked === true }))
+                        }
+                      />
+                      <Label htmlFor="taskCompleted" className="text-sm font-medium cursor-pointer">
+                        할일 완료
+                      </Label>
+                    </div>
 
                     <div>
                       <Label htmlFor="result">결과 기록</Label>
