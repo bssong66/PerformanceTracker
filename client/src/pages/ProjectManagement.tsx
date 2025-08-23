@@ -39,6 +39,12 @@ interface Project {
   completed?: boolean;
 }
 
+interface FileUrl {
+  url: string;
+  name: string;
+  size?: number;
+}
+
 export default function ProjectManagement() {
   const { toast } = useToast();
   const { user } = useAuth();
@@ -74,18 +80,18 @@ export default function ProjectManagement() {
   const [showCloneDialog, setShowCloneDialog] = useState(false);
   const [projectToClone, setProjectToClone] = useState<Project | null>(null);
   const [previewFile, setPreviewFile] = useState<{url: string, name: string, type: 'image' | 'pdf'} | null>(null);
-  
+
   // Project detail popup states
   const [showProjectDetailDialog, setShowProjectDetailDialog] = useState(false);
   const [selectedProject, setSelectedProject] = useState<any>(null);
   const [isEditingProjectDetail, setIsEditingProjectDetail] = useState(false);
-  
+
   // State for task sorting
   const [taskSortBy, setTaskSortBy] = useState<'priority' | 'date' | 'title'>('priority');
   const [taskSortOrder, setTaskSortOrder] = useState<'asc' | 'desc'>('asc');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const taskFileInputRef = useRef<HTMLInputElement>(null);
-  
+
   const [projectForm, setProjectForm] = useState({
     title: '',
     description: '',
@@ -164,11 +170,11 @@ export default function ProjectManagement() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(newProject)
       });
-      
+
       if (!response.ok) {
         throw new Error('프로젝트 생성에 실패했습니다.');
       }
-      
+
       return response.json();
     },
     onSuccess: (newProject) => {
@@ -197,11 +203,11 @@ export default function ProjectManagement() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(updates)
       });
-      
+
       if (!response.ok) {
         throw new Error('프로젝트 수정에 실패했습니다.');
       }
-      
+
       return response.json();
     },
     onSuccess: (updatedProject) => {
@@ -266,15 +272,15 @@ export default function ProjectManagement() {
         completed: false,
         _isOptimistic: true
       };
-      
+
       // Add to cache immediately for instant UI update
       queryClient.setQueryData(['projects', user?.id], (oldProjects: any) => {
         return oldProjects ? [...oldProjects, optimisticClone] : [optimisticClone];
       });
-      
+
       setShowCloneDialog(false);
       setProjectToClone(null);
-      
+
       // Then make the actual API call in background
       const response = await fetch(`/api/projects/${originalProjectId}/clone`, {
         method: 'POST',
@@ -283,13 +289,13 @@ export default function ProjectManagement() {
           title: `${originalProject.title} (복사본)`
         })
       });
-      
+
       if (!response.ok) throw new Error('프로젝트 복제에 실패했습니다.');
       return response.json();
     },
     onSuccess: (result) => {
       const { project: realClonedProject, tasks: clonedTasks, message } = result;
-      
+
       // Replace optimistic update with real data
       queryClient.setQueryData(['projects', user?.id], (oldProjects: any) => {
         if (!oldProjects) return [realClonedProject];
@@ -303,10 +309,10 @@ export default function ProjectManagement() {
       // Force refresh of tasks cache to show new cloned tasks immediately
       queryClient.invalidateQueries({ queryKey: ['tasks', user?.id] });
       queryClient.refetchQueries({ queryKey: ['tasks', user?.id] });
-      
+
       // Automatically expand the cloned project to show the tasks
       setExpandedProjects(prev => new Set([...Array.from(prev), realClonedProject.id]));
-      
+
       toast({ 
         title: "프로젝트 복제 완료", 
         description: message || `프로젝트와 ${clonedTasks.length}개의 할일이 복제되었습니다.`
@@ -318,7 +324,7 @@ export default function ProjectManagement() {
         if (!oldProjects) return [];
         return oldProjects.filter((p: any) => !p._isOptimistic);
       });
-      
+
       toast({ 
         title: "복제 실패", 
         description: error.message || "프로젝트 복제 중 오류가 발생했습니다.", 
@@ -343,12 +349,12 @@ export default function ProjectManagement() {
       queryClient.setQueryData(['tasks', user?.id], (oldTasks: any) => {
         return oldTasks ? [...oldTasks, newTask] : [newTask];
       });
-      
+
       // Ensure the project is expanded to show the new task
       if (selectedProjectForTask) {
         setExpandedProjects(prev => new Set([...Array.from(prev), selectedProjectForTask]));
       }
-      
+
       setShowTaskDialog(false);
       setSelectedProjectForTask(null);
       resetTaskForm();
@@ -410,7 +416,7 @@ export default function ProjectManagement() {
         if (allTasks) {
           const projectTasks = allTasks.filter(task => task.projectId === updatedTask.projectId);
           const allCompleted = projectTasks.length > 0 && projectTasks.every(task => task.completed);
-          
+
           // Update project completion status
           queryClient.setQueryData(['projects', user?.id], (oldProjects: any) => {
             if (!oldProjects) return oldProjects;
@@ -438,11 +444,11 @@ export default function ProjectManagement() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(updates)
       });
-      
+
       if (!response.ok) {
         throw new Error('할일 수정에 실패했습니다.');
       }
-      
+
       return response.json();
     },
     onSuccess: () => {
@@ -524,12 +530,12 @@ export default function ProjectManagement() {
 
   const openTaskDialog = (projectId: number) => {
     setSelectedProjectForTask(projectId);
-    
+
     // Find the project and set default priority based on project priority
     const project = projects.find((p: Project) => p.id === projectId);
     const defaultPriority = project?.priority === 'high' ? 'A' : 
                            project?.priority === 'medium' ? 'B' : 'C';
-    
+
     setTaskForm({
       title: '',
       priority: defaultPriority,
@@ -556,7 +562,7 @@ export default function ProjectManagement() {
   const sortTasks = (tasks: any[]) => {
     return [...tasks].sort((a, b) => {
       let comparison = 0;
-      
+
       if (taskSortBy === 'priority') {
         const priorityOrder: { [key: string]: number } = { 'A': 3, 'B': 2, 'C': 1 };
         comparison = (priorityOrder[a.priority] || 0) - (priorityOrder[b.priority] || 0);
@@ -567,7 +573,7 @@ export default function ProjectManagement() {
       } else if (taskSortBy === 'title') {
         comparison = a.title.localeCompare(b.title);
       }
-      
+
       return taskSortOrder === 'desc' ? -comparison : comparison;
     });
   };
@@ -596,7 +602,7 @@ export default function ProjectManagement() {
         return;
       }
     }
-    
+
     setDeleteTarget({ type, id });
     setShowDeleteDialog(true);
   };
@@ -623,23 +629,23 @@ export default function ProjectManagement() {
     setSelectedProject(project);
     setShowProjectDetailDialog(true);
     setIsEditingProjectDetail(true);  // 바로 편집 모드로 설정
-    
+
     // Fetch project files from the dedicated API and set form data
     try {
       const filesResponse = await fetch(`/api/projects/${project.id}/files`);
       if (filesResponse.ok) {
         const projectFiles = await filesResponse.json();
         console.log('Fetched project files:', projectFiles);
-        
+
         // Convert project files to fileUrls format
         const fileUrls = projectFiles.map((file: any) => ({
           url: file.objectPath, // objectPath already contains /objects/...
           name: file.originalFileName,
           size: file.fileSize || 0
         }));
-        
+
         console.log('Converted fileUrls:', fileUrls);
-        
+
         setProjectForm({
           title: project.title,
           description: project.description || '',
@@ -696,23 +702,23 @@ export default function ProjectManagement() {
 
   const handleProjectDetailEdit = async () => {
     setIsEditingProjectDetail(true);
-    
+
     // Fetch project files from the dedicated API
     try {
       const filesResponse = await fetch(`/api/projects/${selectedProject.id}/files`);
       if (filesResponse.ok) {
         const projectFiles = await filesResponse.json();
         console.log('Fetched project files:', projectFiles);
-        
+
         // Convert project files to fileUrls format
         const fileUrls = projectFiles.map((file: any) => ({
           url: file.objectPath, // objectPath already contains /objects/...
           name: file.originalFileName,
           size: file.fileSize || 0
         }));
-        
+
         console.log('Converted fileUrls:', fileUrls);
-        
+
         setProjectForm({
           title: selectedProject.title,
           description: selectedProject.description || '',
@@ -800,7 +806,7 @@ export default function ProjectManagement() {
       // If fileUrls changed, sync with project files table
       // This will be handled by the UnifiedAttachmentManager component internally
       console.log('Project updated successfully with files:', projectForm.fileUrls);
-      
+
     } catch (error) {
       console.error('Error updating project:', error);
       toast({ 
@@ -827,7 +833,7 @@ export default function ProjectManagement() {
 
   const handleTaskSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!taskForm.title.trim()) {
       toast({ title: "오류", description: "할일 제목을 입력해주세요.", variant: "destructive" });
       return;
@@ -893,12 +899,12 @@ export default function ProjectManagement() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // Prevent double submission
     if (createProjectMutation.isPending || updateProjectMutation.isPending) {
       return;
     }
-    
+
     if (!projectForm.title.trim()) {
       toast({ title: "오류", description: "프로젝트 제목을 입력해주세요.", variant: "destructive" });
       return;
@@ -995,7 +1001,7 @@ export default function ProjectManagement() {
         if (!oldTasks) return [];
         return oldTasks.filter((t: any) => t.id !== taskId);
       });
-      
+
       toast({ title: "할일 삭제", description: "할일이 삭제되었습니다." });
     } catch (error: any) {
       toast({ 
@@ -1049,7 +1055,7 @@ export default function ProjectManagement() {
   // Handle save from detail
   const handleSaveFromDetail = () => {
     if (!selectedTask) return;
-    
+
     const taskData = {
       title: taskForm.title,
       priority: taskForm.priority,
@@ -1095,7 +1101,7 @@ export default function ProjectManagement() {
           <h1 className="text-2xl font-bold text-gray-900">프로젝트 관리</h1>
           <p className="text-gray-600">프로젝트를 생성하고 관리하세요</p>
         </div>
-        
+
         <Dialog open={showProjectDialog} onOpenChange={setShowProjectDialog}>
           <DialogTrigger asChild>
             <Button onClick={openCreateDialog} className="bg-blue-600 hover:bg-blue-700">
@@ -1112,7 +1118,7 @@ export default function ProjectManagement() {
                 {editingProject ? '프로젝트 정보를 수정하세요.' : '새로운 프로젝트를 생성하세요.'}
               </DialogDescription>
             </DialogHeader>
-            
+
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
                 <Label htmlFor="title">프로젝트 제목</Label>
@@ -1298,7 +1304,7 @@ export default function ProjectManagement() {
           const projectTasks = getProjectTasks(project.id);
           const completionPercentage = getCompletionPercentage(project.id);
           const isExpanded = expandedProjects.has(project.id);
-          
+
           return (
             <div key={project.id} className="bg-white rounded-lg border shadow-sm">
               {/* Project Header */}
@@ -1313,12 +1319,12 @@ export default function ProjectManagement() {
                     >
                       {isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
                     </Button>
-                    
+
                     <div 
                       className="w-1 h-8 rounded-full"
                       style={{ backgroundColor: project.color }}
                     />
-                    
+
                     <div className="flex-1">
                       <div className="flex items-center space-x-2 mb-1">
                         <h3 
@@ -1327,12 +1333,12 @@ export default function ProjectManagement() {
                         >
                           {project.title}
                         </h3>
-                        
+
                         {/* 프로젝트 상태 아이콘 */}
                         {(() => {
                           const completedTasks = projectTasks.filter((task: any) => task.completed).length;
                           const totalTasks = projectTasks.length;
-                          
+
                           if (totalTasks === 0) {
                             return <div title="계획수립"><Circle className="h-5 w-5 text-gray-400" /></div>;
                           } else if (completedTasks === totalTasks) {
@@ -1343,7 +1349,7 @@ export default function ProjectManagement() {
                             return <div title="계획수립"><Circle className="h-5 w-5 text-gray-400" /></div>;
                           }
                         })()}
-                        
+
                         <span className={`px-2 py-1 rounded-full text-xs font-medium ${
                           project.priority === 'high' ? 'bg-red-100 text-red-800' :
                           project.priority === 'medium' ? 'bg-yellow-100 text-yellow-800' :
@@ -1359,11 +1365,11 @@ export default function ProjectManagement() {
                           </span>
                         )}
                       </div>
-                      
+
                       {project.description && (
                         <p className="text-sm text-gray-600 mb-2">{project.description}</p>
                       )}
-                      
+
                       <div className="flex items-center space-x-4 text-xs text-gray-500">
                         {(project.startDate || project.endDate) && (
                           <div className="flex items-center">
@@ -1377,14 +1383,14 @@ export default function ProjectManagement() {
                             )}
                           </div>
                         )}
-                        
+
                         {project.annualGoal && (
                           <div className="text-blue-600">
                             목표: {project.annualGoal}
                           </div>
                         )}
                       </div>
-                      
+
                       {/* Progress Bar */}
                       {(
                         <div className="mt-2">
@@ -1393,7 +1399,7 @@ export default function ProjectManagement() {
                             <span className={(() => {
                               const completedTasks = projectTasks.filter((task: any) => task.completed).length;
                               const totalTasks = projectTasks.length;
-                              
+
                               if (totalTasks === 0) {
                                 return 'text-gray-500';
                               } else if (completedTasks === totalTasks) {
@@ -1408,7 +1414,7 @@ export default function ProjectManagement() {
                               {(() => {
                                 const completedTasks = projectTasks.filter((task: any) => task.completed).length;
                                 const totalTasks = projectTasks.length;
-                                
+
                                 if (totalTasks === 0) {
                                   return ' (계획수립)';
                                 } else if (completedTasks === totalTasks) {
@@ -1426,7 +1432,7 @@ export default function ProjectManagement() {
                               className={`h-2 rounded-full transition-all duration-300 ${(() => {
                                 const completedTasks = projectTasks.filter((task: any) => task.completed).length;
                                 const totalTasks = projectTasks.length;
-                                
+
                                 if (totalTasks === 0) {
                                   return 'bg-gray-300';
                                 } else if (completedTasks === totalTasks) {
@@ -1444,7 +1450,7 @@ export default function ProjectManagement() {
                       )}
                     </div>
                   </div>
-                  
+
                   <div className="flex items-center space-x-2">
                     <Button
                       variant="outline"
@@ -1455,7 +1461,7 @@ export default function ProjectManagement() {
                       <Plus className="h-3 w-3" />
                       <span>할일</span>
                     </Button>
-                    
+
                     {project.imageUrls && project.imageUrls.length > 0 && (
                       <Button
                         variant="outline"
@@ -1476,7 +1482,7 @@ export default function ProjectManagement() {
                         )}
                       </Button>
                     )}
-                    
+
                     <Button
                       variant="outline"
                       size="sm"
@@ -1486,7 +1492,7 @@ export default function ProjectManagement() {
                     >
                       <Copy className="h-3 w-3" />
                     </Button>
-                    
+
                     <Button
                       variant="ghost"
                       size="sm"
@@ -1498,7 +1504,7 @@ export default function ProjectManagement() {
                   </div>
                 </div>
               </div>
-              
+
               {/* Project Tasks (Expandable) */}
               {isExpanded && (
                 <div className="border-t bg-gray-50 px-6 py-4 ml-16">
@@ -1711,13 +1717,13 @@ export default function ProjectManagement() {
               할일의 상세 정보를 확인하세요.
             </DialogDescription>
           </DialogHeader>
-          
+
           <form onSubmit={handleTaskSubmit} className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:divide-x divide-gray-200">
               {/* 왼쪽: 할일 내용 */}
               <div className="space-y-4 md:pr-6">
                 <h3 className="text-lg font-semibold border-b pb-2">할일: 내용</h3>
-                
+
                 <div>
                   <Label htmlFor="taskTitle">할일 제목</Label>
                   <Input
@@ -1811,8 +1817,26 @@ export default function ProjectManagement() {
 
               {/* 오른쪽: 할일 결과 */}
               <div className="space-y-4 md:pl-6">
-                <h3 className="text-lg font-semibold border-b pb-2">할일: 결과</h3>
-                
+                <div className="flex items-center justify-between border-b pb-2">
+                  <h3 className="text-lg font-semibold">할일: 결과</h3>
+                  <div className="flex items-center space-x-2 px-3 py-2 bg-gray-50 rounded-lg border">
+                    <input
+                      type="checkbox"
+                      id="taskCompleted"
+                      checked={editingTask?.completed || false}
+                      onChange={(e) => {
+                        if (editingTask) {
+                          handleTaskToggle(editingTask.id, editingTask.completed || false);
+                        }
+                      }}
+                      className="h-4 w-4"
+                    />
+                    <label htmlFor="taskCompleted" className="text-sm font-medium cursor-pointer select-none">
+                      할일 완료
+                    </label>
+                  </div>
+                </div>
+
                 <div>
                   <Label htmlFor="taskResult">결과 기록</Label>
                   <Textarea
@@ -1888,7 +1912,7 @@ export default function ProjectManagement() {
                 const currentTask = allTasks.find((task: any) => 
                   task.imageUrls && task.imageUrls.includes(viewingTaskImage)
                 );
-                
+
                 if (!currentTask || !currentTask.imageUrls || currentTask.imageUrls.length <= 1) {
                   return (
                     <img
@@ -1900,7 +1924,7 @@ export default function ProjectManagement() {
                 }
 
                 const currentIndex = currentTask.imageUrls.indexOf(viewingTaskImage);
-                
+
                 return (
                   <>
                     {/* Previous Button */}
@@ -1968,9 +1992,14 @@ export default function ProjectManagement() {
       {selectedTask && (
         <Dialog open={showTaskDetailDialog} onOpenChange={(open) => {
           if (!open) {
-            setShowTaskDetailDialog(false);
-            setSelectedTask(null);
-            setIsEditMode(false);
+            if (isEditingProjectDetail) {
+              // 편집 모드에서는 취소 핸들러를 호출
+              handleProjectDetailCancel();
+            } else {
+              // 일반 보기 모드에서는 바로 닫기
+              setShowTaskDetailDialog(false);
+              setSelectedTask(null);
+            }
           }
         }}>
           <DialogContent className="sm:max-w-4xl max-h-[80vh] overflow-y-auto">
@@ -1988,7 +2017,7 @@ export default function ProjectManagement() {
                   {/* 왼쪽: 할일 내용 */}
                   <div className="space-y-4">
                     <h3 className="text-lg font-semibold border-b pb-2">할일: 내용</h3>
-                    
+
                     <div>
                       <Label htmlFor="title">할일 제목</Label>
                       <Input
@@ -2066,7 +2095,7 @@ export default function ProjectManagement() {
                   {/* 오른쪽: 할일 결과 */}
                   <div className="space-y-4">
                     <h3 className="text-lg font-semibold border-b pb-2">할일: 결과</h3>
-                    
+
                     <div>
                       <Label htmlFor="result">결과 기록</Label>
                       <Textarea
@@ -2133,16 +2162,16 @@ export default function ProjectManagement() {
                     try {
                       const response = await fetch(previewFile.url);
                       if (!response.ok) throw new Error('파일 다운로드에 실패했습니다.');
-                      
+
                       const blob = await response.blob();
                       const url = window.URL.createObjectURL(blob);
-                      
+
                       const link = document.createElement('a');
                       link.href = url;
                       link.download = previewFile.name || 'download';
                       document.body.appendChild(link);
                       link.click();
-                      
+
                       document.body.removeChild(link);
                       window.URL.revokeObjectURL(url);
                     } catch (error) {
@@ -2211,14 +2240,14 @@ export default function ProjectManagement() {
                 프로젝트의 상세 정보를 확인하세요.
               </DialogDescription>
             </DialogHeader>
-            
+
             {isEditingProjectDetail ? (
               <form onSubmit={(e) => { e.preventDefault(); handleProjectDetailSave(); }} className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:divide-x divide-gray-200">
                   {/* 왼쪽: 프로젝트 계획 */}
                   <div className="space-y-4 md:pr-6">
                     <h3 className="text-lg font-semibold border-b pb-2">프로젝트: 계획</h3>
-                    
+
                     <div>
                       <Label htmlFor="projectTitle">프로젝트 제목</Label>
                       <Input
@@ -2348,7 +2377,7 @@ export default function ProjectManagement() {
                   {/* 오른쪽: 프로젝트 결과 */}
                   <div className="space-y-4 md:pl-6">
                     <h3 className="text-lg font-semibold border-b pb-2">프로젝트: 결과</h3>
-                    
+
                     <div>
                       <Label htmlFor="projectResult">프로젝트 결과</Label>
                       <Textarea
@@ -2392,7 +2421,7 @@ export default function ProjectManagement() {
                   {/* 왼쪽: 프로젝트 계획 정보 */}
                   <div className="space-y-4 md:pr-6">
                     <h3 className="text-lg font-semibold border-b pb-2">프로젝트: 계획</h3>
-                    
+
                     <div>
                       <Label className="text-sm font-medium text-gray-600">프로젝트 제목</Label>
                       <p className="text-sm text-gray-900 mt-1">{selectedProject.title}</p>
@@ -2470,7 +2499,7 @@ export default function ProjectManagement() {
                   {/* 오른쪽: 프로젝트 결과 정보 */}
                   <div className="space-y-4 md:pl-6">
                     <h3 className="text-lg font-semibold border-b pb-2">프로젝트: 결과</h3>
-                    
+
                     {selectedProject.result ? (
                       <div>
                         <Label className="text-sm font-medium text-gray-600">프로젝트 결과</Label>
