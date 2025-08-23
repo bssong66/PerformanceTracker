@@ -828,21 +828,30 @@ export default function DailyPlanning() {
 
         <Tabs defaultValue="planning" className="space-y-4">
           
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="planning" className="flex items-center justify-center space-x-1 text-xs sm:text-sm">
-              <CalendarDays className="h-3 w-3 sm:h-4 sm:w-4" />
-              <span className="hidden sm:inline">오늘의 계획</span>
-              <span className="sm:hidden">계획</span>
+          <TabsList className="grid w-full grid-cols-3 h-16 bg-gray-50/50 backdrop-blur-sm rounded-xl border border-gray-200/50">
+            <TabsTrigger 
+              value="planning" 
+              className="flex flex-col items-center justify-center space-y-1 h-full rounded-lg text-xs font-medium transition-all duration-200 data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-blue-600"
+            >
+              <CalendarDays className="h-4 w-4 transition-transform data-[state=active]:scale-110" />
+              <span className="hidden sm:block">오늘의 계획</span>
+              <span className="block sm:hidden">계획</span>
             </TabsTrigger>
-            <TabsTrigger value="timeblocks" className="flex items-center justify-center space-x-1 text-xs sm:text-sm">
-              <Clock className="h-3 w-3 sm:h-4 sm:w-4" />
-              <span className="hidden sm:inline">시간블록</span>
-              <span className="sm:hidden">시간</span>
+            <TabsTrigger 
+              value="timeblocks" 
+              className="flex flex-col items-center justify-center space-y-1 h-full rounded-lg text-xs font-medium transition-all duration-200 data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-orange-600"
+            >
+              <Clock className="h-4 w-4 transition-transform data-[state=active]:scale-110" />
+              <span className="hidden sm:block">시간블록</span>
+              <span className="block sm:hidden">시간</span>
             </TabsTrigger>
-            <TabsTrigger value="records" className="flex items-center justify-center space-x-1 text-xs sm:text-sm">
-              <FileText className="h-3 w-3 sm:h-4 sm:w-4" />
-              <span className="hidden sm:inline">오늘의 기록</span>
-              <span className="sm:hidden">기록</span>
+            <TabsTrigger 
+              value="records" 
+              className="flex flex-col items-center justify-center space-y-1 h-full rounded-lg text-xs font-medium transition-all duration-200 data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-green-600"
+            >
+              <FileText className="h-4 w-4 transition-transform data-[state=active]:scale-110" />
+              <span className="hidden sm:block">오늘의 기록</span>
+              <span className="block sm:hidden">기록</span>
             </TabsTrigger>
           </TabsList>
 
