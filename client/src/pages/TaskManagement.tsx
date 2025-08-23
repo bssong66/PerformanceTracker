@@ -77,7 +77,8 @@ function TaskManagement({ highlightTaskId }: TaskManagementProps) {
     annualGoal: '',
     result: '',
     resultImageUrls: [] as string[],
-    resultFileUrls: [] as Array<{url: string, name: string}>
+    resultFileUrls: [] as Array<{url: string, name: string}>,
+    completed: false
   });
 
   // Fetch tasks
@@ -259,7 +260,8 @@ function TaskManagement({ highlightTaskId }: TaskManagementProps) {
       annualGoal: 'none',
       result: '',
       resultImageUrls: [],
-      resultFileUrls: []
+      resultFileUrls: [],
+      completed: false
     });
     setEditingTask(null);
   };
@@ -304,7 +306,8 @@ function TaskManagement({ highlightTaskId }: TaskManagementProps) {
       annualGoal: (task as any).annualGoal || 'none',
       result: (task as any).result || '',
       resultImageUrls: (task as any).resultImageUrls || [],
-      resultFileUrls: (task as any).resultFileUrls || []
+      resultFileUrls: (task as any).resultFileUrls || [],
+      completed: task.completed || false
     });
     setEditingTask(task);
     setShowTaskDialog(true);
@@ -328,7 +331,11 @@ function TaskManagement({ highlightTaskId }: TaskManagementProps) {
         imageUrls: selectedTask.imageUrls || [],
         fileUrls: selectedTask.fileUrls || [],
         coreValue: (selectedTask as any).coreValue || 'none',
-        annualGoal: (selectedTask as any).annualGoal || 'none'
+        annualGoal: (selectedTask as any).annualGoal || 'none',
+        result: (selectedTask as any).result || '',
+        resultImageUrls: (selectedTask as any).resultImageUrls || [],
+        resultFileUrls: (selectedTask as any).resultFileUrls || [],
+        completed: selectedTask.completed || false
       });
       setEditingTask(selectedTask);
     }
@@ -368,7 +375,6 @@ function TaskManagement({ highlightTaskId }: TaskManagementProps) {
     const taskData = {
       ...taskForm,
       userId: user?.id,
-      completed: false,
       projectId: null, // Ensure tasks are always independent
       coreValue: taskForm.coreValue === 'none' ? null : taskForm.coreValue,
       annualGoal: taskForm.annualGoal === 'none' ? null : taskForm.annualGoal
@@ -598,6 +604,19 @@ function TaskManagement({ highlightTaskId }: TaskManagementProps) {
                 {/* 우측: 할일 결과 */}
                 <div className="space-y-4 md:pl-6">
                   <h3 className="text-lg font-semibold border-b pb-2">할일: 결과</h3>
+                  
+                  <div className="flex items-center space-x-2 p-3 bg-gray-50 rounded-lg">
+                    <Checkbox
+                      id="taskCompleted"
+                      checked={taskForm.completed || false}
+                      onCheckedChange={(checked) => 
+                        setTaskForm(prev => ({ ...prev, completed: checked === true }))
+                      }
+                    />
+                    <Label htmlFor="taskCompleted" className="text-sm font-medium cursor-pointer">
+                      할일 완료
+                    </Label>
+                  </div>
                   
                   <div>
                     <Label htmlFor="taskResult">결과 기록</Label>
