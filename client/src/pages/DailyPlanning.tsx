@@ -1849,7 +1849,7 @@ export default function DailyPlanning() {
         </Dialog>
 
         {/* 고정된 저장 버튼 */}
-        <div className="fixed bottom-6 z-50" style={{ right: 'calc(1.5rem + 75px)' }}>
+        <div className="fixed z-50" style={{ bottom: 'calc(1.5rem - 32px)', right: 'calc(1.5rem + 75px)' }}>
           <Button 
             onClick={handleSaveReflection}
             disabled={saveReflectionMutation.isPending}
