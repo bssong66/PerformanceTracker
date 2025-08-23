@@ -56,6 +56,7 @@ export default function DailyPlanning() {
   
   // Focus Mode states
   const [selectedTask, setSelectedTask] = useState<any>(null);
+  const [selectedTimeBlock, setSelectedTimeBlock] = useState<any>(null);
   const [blockNotifications, setBlockNotifications] = useState(false);
   const [showATasksOnly, setShowATasksOnly] = useState(false);
   const [completedSessions, setCompletedSessions] = useState(0);
@@ -511,6 +512,34 @@ export default function DailyPlanning() {
     }
     
     return totalMinutes;
+  };
+
+  // 시간 블록 선택 시 포모도로 타이머 설정
+  const handleSelectTimeBlock = (block: any) => {
+    setSelectedTimeBlock(block);
+    
+    // 시간 블록의 시간 범위 계산
+    const startMinutes = convertToComparableTime(block.startTime);
+    const endMinutes = convertToComparableTime(block.endTime);
+    const durationMinutes = endMinutes - startMinutes;
+    
+    // 포모도로 타이머에 시간 설정
+    if (durationMinutes > 0) {
+      extendSession(durationMinutes);
+    }
+    
+    // 연결된 할일이 있다면 선택
+    if (block.taskId) {
+      const task = allTasks.find((t: any) => t.id === block.taskId);
+      if (task) {
+        setSelectedTask(task);
+      }
+    }
+    
+    toast({
+      title: "시간 블록 선택됨",
+      description: `${block.title} (${durationMinutes}분) 포모도로 타이머에 설정되었습니다.`,
+    });
   };
 
   // 1시간 추가하는 함수
@@ -983,7 +1012,10 @@ export default function DailyPlanning() {
                       }).map((block: any) => (
                         <div 
                           key={block.id} 
-                          className="bg-white border rounded-lg p-3 hover:shadow-sm transition-shadow"
+                          className={`bg-white border rounded-lg p-3 hover:shadow-sm transition-shadow cursor-pointer ${
+                            selectedTimeBlock?.id === block.id ? 'ring-2 ring-blue-500 bg-blue-50' : ''
+                          }`}
+                          onClick={() => handleSelectTimeBlock(block)}
                         >
                           <div className="flex items-start justify-between">
                             <div className="flex-1">
