@@ -1022,7 +1022,10 @@ export default function DailyPlanning() {
                               <div className="flex items-center space-x-2 mb-1">
                                 <span 
                                   className="text-sm font-medium text-gray-900 cursor-pointer hover:text-blue-600 transition-colors"
-                                  onClick={() => openTimeBlockDialog(block)}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    openTimeBlockDialog(block);
+                                  }}
                                 >
                                   {block.startTime} - {block.endTime}
                                 </span>
@@ -1037,7 +1040,10 @@ export default function DailyPlanning() {
                               </div>
                               <p 
                                 className="text-sm text-gray-900 font-medium mb-1 cursor-pointer hover:text-blue-600 transition-colors"
-                                onClick={() => openTimeBlockDialog(block)}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  openTimeBlockDialog(block);
+                                }}
                               >
                                 {block.title}
                               </p>
@@ -1061,7 +1067,10 @@ export default function DailyPlanning() {
                             </div>
                             <div className="flex items-center space-x-1 ml-2">
                               <Button
-                                onClick={() => openTimeBlockDialog(block)}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  openTimeBlockDialog(block);
+                                }}
                                 size="sm"
                                 variant="ghost"
                                 className="h-7 w-7 p-0"
@@ -1069,7 +1078,10 @@ export default function DailyPlanning() {
                                 <div className="h-3 w-3 border border-gray-400 rounded-sm" />
                               </Button>
                               <Button
-                                onClick={() => deleteTimeBlockMutation.mutate(block.id)}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  deleteTimeBlockMutation.mutate(block.id);
+                                }}
                                 size="sm"
                                 variant="ghost"
                                 className="h-7 w-7 p-0 text-red-500 hover:text-red-700"
