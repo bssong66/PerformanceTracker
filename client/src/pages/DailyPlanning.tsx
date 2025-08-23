@@ -563,6 +563,8 @@ export default function DailyPlanning() {
       date: today,
       ...breakBlock,
     });
+    // 휴식 제안 박스 닫기
+    setShowBreakSuggestions(false);
   };
 
   const getProjectName = (projectId: number | null) => {
@@ -906,7 +908,11 @@ export default function DailyPlanning() {
                           )}
                         </div>
                       ) : (
-                        (timeBlocks as any[]).map((block: any) => (
+                        (timeBlocks as any[]).sort((a: any, b: any) => {
+                          const timeA = convertToComparableTime(a.startTime);
+                          const timeB = convertToComparableTime(b.startTime);
+                          return timeA - timeB;
+                        }).map((block: any) => (
                           <div 
                             key={block.id} 
                             className="bg-white border rounded-lg p-3 hover:shadow-sm transition-shadow"
