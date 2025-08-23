@@ -363,31 +363,31 @@ export function UnifiedAttachmentManager({
     <div className="space-y-2">
       {/* 업로드 영역 */}
       <div
-        className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-2 text-center hover:border-gray-400 dark:hover:border-gray-500 transition-colors"
+        className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-1 text-center hover:border-gray-400 dark:hover:border-gray-500 transition-colors"
         onDrop={handleDrop}
         onDragOver={(e) => e.preventDefault()}
         onDragEnter={(e) => e.preventDefault()}
       >
-        <div className="space-y-1">
+        <div className="space-y-0.5">
           <div className="flex justify-center">
-            <Upload className="h-4 w-4 text-gray-400" />
+            <Upload className="h-3 w-3 text-gray-400" />
           </div>
           
           <div>
-            <p className="text-xs text-gray-600 dark:text-gray-400 mb-1">
+            <p className="text-xs text-gray-600 dark:text-gray-400 mb-0.5">
               파일을 여기에 드래그하거나 아래 버튼을 클릭하세요
             </p>
             
-            <div className="flex flex-wrap justify-center gap-2">
+            <div className="flex flex-wrap justify-center gap-1">
               <Button
                 type="button"
                 variant="outline"
                 size="sm"
                 onClick={() => imageInputRef.current?.click()}
                 disabled={isUploading}
-                className="flex items-center space-x-1"
+                className="flex items-center space-x-1 h-6 px-2 text-xs"
               >
-                <Camera className="h-4 w-4" />
+                <Camera className="h-3 w-3" />
                 <span>사진</span>
               </Button>
               
@@ -397,9 +397,9 @@ export function UnifiedAttachmentManager({
                 size="sm"
                 onClick={() => fileInputRef.current?.click()}
                 disabled={isUploading}
-                className="flex items-center space-x-1"
+                className="flex items-center space-x-1 h-6 px-2 text-xs"
               >
-                <File className="h-4 w-4" />
+                <File className="h-3 w-3" />
                 <span>파일</span>
               </Button>
             </div>
