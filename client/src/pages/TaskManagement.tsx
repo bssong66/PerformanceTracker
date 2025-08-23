@@ -431,17 +431,7 @@ function TaskManagement({ highlightTaskId }: TaskManagementProps) {
           <p className="text-gray-600">A-B-C 우선순위로 할일을 관리하세요</p>
         </div>
 
-        <div className="flex items-center space-x-3">
-          <Button
-            variant="outline"
-            onClick={handleRefreshData}
-            disabled={foundationLoading || goalsLoading}
-            className="flex items-center space-x-2"
-          >
-            <RefreshCw className={`h-4 w-4 ${foundationLoading || goalsLoading ? 'animate-spin' : ''}`} />
-            <span>가치계획 새로고침</span>
-          </Button>
-        </div>
+
       </div>
       <Dialog open={showTaskDialog} onOpenChange={setShowTaskDialog}>
           <DialogContent className="sm:max-w-4xl max-h-[80vh] overflow-y-auto">
