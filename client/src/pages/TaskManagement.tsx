@@ -443,10 +443,11 @@ function TaskManagement({ highlightTaskId }: TaskManagementProps) {
           <Button
             variant={showCompletedTasks ? "default" : "outline"}
             onClick={() => setShowCompletedTasks(!showCompletedTasks)}
-            className="flex items-center space-x-2"
+            size="sm"
+            className="text-sm"
           >
-            <CheckCircle className="h-4 w-4" />
-            <span>{showCompletedTasks ? '완료된 할일 숨기기' : '완료된 할일 보기'}</span>
+            <Circle className="h-3 w-3 mr-1" />
+            {showCompletedTasks ? '완료' : '보기'}
           </Button>
         </div>
       </div>
