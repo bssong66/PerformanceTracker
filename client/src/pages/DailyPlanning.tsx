@@ -823,33 +823,35 @@ export default function DailyPlanning() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-6">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center">
             <h1 className="text-2xl font-bold text-gray-900">일일 관리</h1>
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button variant="outline" className="ml-auto">
-                  <Calendar className="h-4 w-4 mr-2" />
-                  {format(selectedDate, 'M월 d일', { locale: ko })}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="end">
-                <CalendarComponent
-                  mode="single"
-                  selected={selectedDate}
-                  onSelect={(date) => {
-                    if (date) {
-                      setSelectedDate(date);
-                      // 선택된 날짜에 따라 관련 쿼리들을 refetch
-                      const selectedDateStr = format(date, 'yyyy-MM-dd');
-                      queryClient.invalidateQueries({ queryKey: ['habitLogs', user!.id, selectedDateStr] });
-                      queryClient.invalidateQueries({ queryKey: ['timeBlocks', user!.id, selectedDateStr] });
-                      queryClient.invalidateQueries({ queryKey: ['dailyReflection', user!.id, selectedDateStr] });
-                    }
-                  }}
-                  initialFocus
-                />
-              </PopoverContent>
-            </Popover>
+            <div style={{ marginLeft: '30px' }}>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline">
+                    <Calendar className="h-4 w-4 mr-2" />
+                    {format(selectedDate, 'M월 d일', { locale: ko })}
+                  </Button>
+                </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                  <CalendarComponent
+                    mode="single"
+                    selected={selectedDate}
+                    onSelect={(date) => {
+                      if (date) {
+                        setSelectedDate(date);
+                        // 선택된 날짜에 따라 관련 쿼리들을 refetch
+                        const selectedDateStr = format(date, 'yyyy-MM-dd');
+                        queryClient.invalidateQueries({ queryKey: ['habitLogs', user!.id, selectedDateStr] });
+                        queryClient.invalidateQueries({ queryKey: ['timeBlocks', user!.id, selectedDateStr] });
+                        queryClient.invalidateQueries({ queryKey: ['dailyReflection', user!.id, selectedDateStr] });
+                      }
+                    }}
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
           </div>
           <p className="text-sm text-gray-600">
             {format(selectedDate, 'yyyy년 M월 d일 EEEE', { locale: ko })} - 선택된 날짜의 계획과 기록
