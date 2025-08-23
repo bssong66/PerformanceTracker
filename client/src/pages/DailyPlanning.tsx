@@ -11,7 +11,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Checkbox } from "@/components/ui/checkbox";
 import { TaskItem } from "@/components/TaskItem";
 import { PriorityBadge } from "@/components/PriorityBadge";
-import { Plus, Mic, CalendarDays, X, ChevronLeft, ChevronRight, AlertTriangle, Focus, Play, Pause, RotateCcw, Target, Clock, CheckCircle, Bell, FileText, Save, Upload, Calendar } from "lucide-react";
+import { Plus, Mic, CalendarDays, X, ChevronLeft, ChevronRight, AlertTriangle, Focus, Play, Pause, RotateCcw, Target, Clock, CheckCircle, Bell, FileText, Save, Upload, Calendar, Edit } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { useToast } from "@/hooks/use-toast";
@@ -1266,7 +1266,7 @@ export default function DailyPlanning() {
                                 variant="ghost"
                                 className="h-7 w-7 p-0"
                               >
-                                <div className="h-3 w-3 border border-gray-400 rounded-sm" />
+                                <Edit className="h-3 w-3" />
                               </Button>
                               <Button
                                 onClick={(e) => {
