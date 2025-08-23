@@ -1279,7 +1279,11 @@ export default function DailyPlanning() {
                   </div>
                   
                   <Textarea
-                    placeholder="오늘 하루를 돌아보며...\n\n• 잘한 점:\n• 아쉬운 점:\n• 내일 계획:"
+                    placeholder={`오늘 하루를 돌아보며...
+
+• 잘한 점:
+• 아쉬운 점:
+• 내일 계획:`}
                     value={reflection}
                     onChange={(e) => setReflection(e.target.value)}
                     className="min-h-[200px] text-sm"
