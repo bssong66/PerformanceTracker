@@ -1010,8 +1010,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const suggestedBreaks = [];
       
-      // Sort blocks by start time
-      const sortedBlocks = blocks.sort((a, b) => a.startTime.localeCompare(b.startTime));
+      // Sort blocks by start time (convert to 24-hour format for proper sorting)
+      const sortedBlocks = blocks.sort((a, b) => {
+        const timeA = convertKoreanTimeTo24Hour(a.startTime);
+        const timeB = convertKoreanTimeTo24Hour(b.startTime);
+        return timeA.localeCompare(timeB);
+      });
       
       for (let i = 0; i < sortedBlocks.length - 1; i++) {
         const currentBlock = sortedBlocks[i];
@@ -1021,8 +1025,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const currentEndTime = currentBlock.endTime;
         const nextStartTime = nextBlock.startTime;
         
+        console.log(`Checking gap between: ${currentEndTime} and ${nextStartTime}`);
+        
         if (currentEndTime !== nextStartTime) {
           const gap = calculateTimeDifference(currentEndTime, nextStartTime);
+          console.log(`Gap calculated: ${gap} minutes`);
           
           // If gap is between 15 minutes and 2 hours, suggest a break
           if (gap >= 15 && gap <= 120) {
@@ -1030,6 +1037,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
             if (gap >= 60) breakDuration = 30; // 30 minutes for longer gaps
             
             const breakEndTime = addMinutesToTime(currentEndTime, breakDuration);
+            
+            console.log(`Suggesting break: ${currentEndTime} - ${breakEndTime}`);
             
             suggestedBreaks.push({
               startTime: currentEndTime,
@@ -1040,7 +1049,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
               projectId: null,
               taskId: null
             });
+          } else {
+            console.log(`Gap ${gap} minutes is outside range (15-120)`);
           }
+        } else {
+          console.log(`No gap: ${currentEndTime} === ${nextStartTime}`);
         }
       }
       
@@ -1065,7 +1078,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       hour24 = 0; // AM 12시는 0시로 변환
     }
     
-    return `${hour24.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+    const result = `${hour24.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+    console.log(`Converting ${timeStr} -> ${result}`);
+    return result;
   }
 
   // Helper function to convert 24-hour format to Korean time format
