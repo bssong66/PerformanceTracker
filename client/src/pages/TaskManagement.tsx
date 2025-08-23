@@ -603,19 +603,20 @@ function TaskManagement({ highlightTaskId }: TaskManagementProps) {
 
                 {/* 우측: 할일 결과 */}
                 <div className="space-y-4 md:pl-6">
-                  <h3 className="text-lg font-semibold border-b pb-2">할일: 결과</h3>
-                  
-                  <div className="flex items-center space-x-2 p-3 bg-gray-50 rounded-lg">
-                    <Checkbox
-                      id="taskCompleted"
-                      checked={taskForm.completed || false}
-                      onCheckedChange={(checked) => 
-                        setTaskForm(prev => ({ ...prev, completed: checked === true }))
-                      }
-                    />
-                    <Label htmlFor="taskCompleted" className="text-sm font-medium cursor-pointer">
-                      할일 완료
-                    </Label>
+                  <div className="flex items-center justify-between border-b pb-2">
+                    <h3 className="text-lg font-semibold">할일: 결과</h3>
+                    <div className="flex items-center space-x-2 p-2 bg-gray-50 rounded-lg">
+                      <Checkbox
+                        id="taskCompleted"
+                        checked={taskForm.completed || false}
+                        onCheckedChange={(checked) => 
+                          setTaskForm(prev => ({ ...prev, completed: checked === true }))
+                        }
+                      />
+                      <Label htmlFor="taskCompleted" className="text-sm font-medium cursor-pointer">
+                        할일 완료
+                      </Label>
+                    </div>
                   </div>
                   
                   <div>
