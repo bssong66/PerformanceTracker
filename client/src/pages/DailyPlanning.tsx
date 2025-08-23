@@ -1439,7 +1439,7 @@ export default function DailyPlanning() {
                 {/* File Upload */}
                 <div>
                   <h4 className="text-sm font-medium text-gray-900 mb-3">사진 및 파일</h4>
-                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition-colors">
+                  <div className="border-2 border-dashed border-gray-300 rounded-lg px-6 py-3 text-center hover:border-gray-400 transition-colors">
                     <p className="text-sm text-gray-600 mb-4">파일을 여기에 드래그하거나 아래 버튼을 클릭하세요</p>
                     
                     <div className="flex justify-center space-x-4 mb-4">
