@@ -456,16 +456,16 @@ export default function Calendar() {
   // Handle slot selection (drag to create event)
   const handleSelectSlot = useCallback(({ start, end }: { start: Date; end: Date }) => {
     setSelectedSlot({ start, end });
-    setEventForm({
-      ...eventForm,
+    setEventForm(prev => ({
+      ...prev,
       startDate: format(start, 'yyyy-MM-dd'),
       endDate: format(end, 'yyyy-MM-dd'),
       startTime: format(start, 'HH:mm'),
       endTime: format(end, 'HH:mm'),
       isAllDay: format(start, 'HH:mm') === '00:00' && format(end, 'HH:mm') === '00:00'
-    });
+    }));
     setShowEventDialog(true);
-  }, [eventForm]);
+  }, []);
 
   // Handle event resize
   const handleEventResize = useCallback((args: any) => {
