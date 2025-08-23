@@ -700,11 +700,6 @@ function TaskManagement({ highlightTaskId }: TaskManagementProps) {
                 <div className="flex items-center space-x-2">
                   <div className="flex items-center space-x-1">
                     <Badge variant="secondary">{tasksByPriority[priority].length}</Badge>
-                    {!showCompletedTasks && completedTasksByPriority[priority] > 0 && (
-                      <Badge variant="outline" className="text-green-600 border-green-300">
-                        +{completedTasksByPriority[priority]}
-                      </Badge>
-                    )}
                   </div>
                   <Button
                     size="sm"
