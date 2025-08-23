@@ -1486,18 +1486,6 @@ export default function ProjectManagement() {
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => setShowCompletedTasks(prev => ({
-                        ...prev,
-                        [project.id]: !prev[project.id]
-                      }))}
-                      className="text-sm"
-                    >
-                      {showCompletedTasks[project.id] ? '완료된 할일 감추기' : '완료된 할일 보기'}
-                    </Button>
-                    
-                    <Button
-                      variant="outline"
-                      size="sm"
                       onClick={() => openTaskDialog(project.id)}
                       className="flex items-center space-x-1"
                     >
@@ -1559,6 +1547,17 @@ export default function ProjectManagement() {
                           <h4 className="text-sm font-medium text-gray-600">📋 하위 할일 목록</h4>
                         </div>
                         <div className="flex items-center space-x-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setShowCompletedTasks(prev => ({
+                              ...prev,
+                              [project.id]: !prev[project.id]
+                            }))}
+                            className="text-xs h-7"
+                          >
+                            {showCompletedTasks[project.id] ? '완료된 할일 감추기' : '완료된 할일 보기'}
+                          </Button>
                           <Select value={taskSortBy} onValueChange={(value: 'priority' | 'date' | 'title') => setTaskSortBy(value)}>
                             <SelectTrigger className="w-20 h-7 text-xs">
                               <SelectValue />
