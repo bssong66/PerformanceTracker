@@ -68,6 +68,7 @@ export default function ProjectManagement() {
   const [projectToClone, setProjectToClone] = useState<Project | null>(null);
   const [previewFile, setPreviewFile] = useState<{url: string, name: string, type: 'image' | 'pdf'} | null>(null);
   const [showCompletedProjects, setShowCompletedProjects] = useState(false);
+  const [showCompletedTasks, setShowCompletedTasks] = useState<{[projectId: number]: boolean}>({});
 
   // Project detail popup states
   const [showProjectDetailDialog, setShowProjectDetailDialog] = useState(false);
@@ -1485,6 +1486,18 @@ export default function ProjectManagement() {
                     <Button
                       variant="outline"
                       size="sm"
+                      onClick={() => setShowCompletedTasks(prev => ({
+                        ...prev,
+                        [project.id]: !prev[project.id]
+                      }))}
+                      className="text-sm"
+                    >
+                      {showCompletedTasks[project.id] ? '완료된 할일 감추기' : '완료된 할일 보기'}
+                    </Button>
+                    
+                    <Button
+                      variant="outline"
+                      size="sm"
                       onClick={() => openTaskDialog(project.id)}
                       className="flex items-center space-x-1"
                     >
@@ -1567,7 +1580,10 @@ export default function ProjectManagement() {
                         </div>
                       </div>
                       <div className="space-y-3">
-                        {sortTasks(projectTasks).map((task: any, index: number) => (
+                        {sortTasks(projectTasks).filter((task: any) => {
+                          if (showCompletedTasks[project.id]) return true;
+                          return !task.completed;
+                        }).map((task: any, index: number) => (
                         <div key={task.id}>
                           <div className="flex items-start space-x-3 bg-white p-3 rounded-lg border shadow-sm">
                             <input
