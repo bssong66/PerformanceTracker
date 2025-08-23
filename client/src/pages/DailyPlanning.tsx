@@ -1539,7 +1539,7 @@ export default function DailyPlanning() {
             </Card>
 
             {/* 고정된 저장 버튼 - 오늘의 기록 탭에서만 표시 */}
-            <div className="absolute top-0 z-50" style={{ right: 'calc(0px + 75px)', transform: 'translateY(calc(-40px + 96px))' }}>
+            <div className="absolute top-0 z-50" style={{ right: 'calc(0px + 75px)', transform: 'translateY(calc(-40px + 91px))' }}>
               <Button 
                 onClick={handleSaveReflection}
                 disabled={saveReflectionMutation.isPending}
