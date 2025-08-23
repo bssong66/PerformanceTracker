@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -61,6 +61,8 @@ export default function DailyPlanning() {
   const [showATasksOnly, setShowATasksOnly] = useState(false);
   const [completedSessions, setCompletedSessions] = useState(0);
   const [showCompletionDialog, setShowCompletionDialog] = useState(false);
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [notificationPermission, setNotificationPermission] = useState<NotificationPermission>('default');
   
   
@@ -661,6 +663,25 @@ export default function DailyPlanning() {
     }
     reset();
     setCompletedSessions(prev => prev + 1);
+  };
+
+  // 파일 선택 처리
+  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (files) {
+      const newFiles = Array.from(files);
+      setSelectedFiles(prev => [...prev, ...newFiles]);
+    }
+  };
+
+  // 파일 선택 버튼 클릭
+  const handleFileButtonClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  // 파일 제거
+  const removeFile = (index: number) => {
+    setSelectedFiles(prev => prev.filter((_, i) => i !== index));
   };
 
   if (tasksLoading) {
@@ -1305,11 +1326,44 @@ export default function DailyPlanning() {
                   <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition-colors">
                     <Upload className="h-8 w-8 mx-auto mb-2 text-gray-400" />
                     <p className="text-sm text-gray-600 mb-2">파일을 드래그하거나 클릭하여 업로드</p>
-                    <Button variant="outline" size="sm">
+                    <input
+                      type="file"
+                      ref={fileInputRef}
+                      onChange={handleFileSelect}
+                      multiple
+                      accept="image/*,.pdf,.doc,.docx,.txt"
+                      className="hidden"
+                    />
+                    <Button variant="outline" size="sm" onClick={handleFileButtonClick}>
                       파일 선택
                     </Button>
                     <p className="text-xs text-gray-500 mt-2">이미지, 문서, 최대 10MB</p>
                   </div>
+                  
+                  {/* 선택된 파일 목록 */}
+                  {selectedFiles.length > 0 && (
+                    <div className="mt-3 space-y-2">
+                      <h5 className="text-sm font-medium text-gray-900">선택된 파일</h5>
+                      {selectedFiles.map((file, index) => (
+                        <div key={index} className="flex items-center justify-between p-2 bg-gray-50 rounded border">
+                          <span className="text-sm text-gray-700 truncate">{file.name}</span>
+                          <div className="flex items-center space-x-2">
+                            <span className="text-xs text-gray-500">
+                              {(file.size / 1024 / 1024).toFixed(2)} MB
+                            </span>
+                            <Button
+                              onClick={() => removeFile(index)}
+                              size="sm"
+                              variant="ghost"
+                              className="h-6 w-6 p-0 text-red-500 hover:text-red-700"
+                            >
+                              ×
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>
