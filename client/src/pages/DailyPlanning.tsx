@@ -63,6 +63,7 @@ export default function DailyPlanning() {
   const [showCompletionDialog, setShowCompletionDialog] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [savedFiles, setSavedFiles] = useState<any[]>([]);
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [notificationPermission, setNotificationPermission] = useState<NotificationPermission>('default');
   
@@ -1429,19 +1430,23 @@ export default function DailyPlanning() {
                         {savedFiles.map((file, index) => (
                           <div key={index} className="p-2 bg-blue-50 rounded border border-blue-200">
                             {file.type?.startsWith('image/') ? (
-                              <div className="text-center">
+                              <div className="text-center cursor-pointer" onClick={() => setPreviewImage(file.url)}>
                                 <img 
                                   src={file.url} 
                                   alt={file.name}
-                                  className="w-full h-20 object-cover rounded mb-2"
+                                  className="w-full h-20 object-cover rounded mb-2 hover:opacity-75 transition-opacity"
                                 />
                                 <span className="text-xs text-gray-600 truncate block">{file.name}</span>
                               </div>
                             ) : (
-                              <div className="flex items-center space-x-2">
+                              <a 
+                                href={file.url} 
+                                download={file.name}
+                                className="flex items-center space-x-2 hover:bg-blue-100 p-1 rounded transition-colors"
+                              >
                                 <span className="text-lg">📄</span>
                                 <span className="text-sm text-gray-700 truncate flex-1">{file.name}</span>
-                              </div>
+                              </a>
                             )}
                           </div>
                         ))}
@@ -1730,6 +1735,34 @@ export default function DailyPlanning() {
                   {editingTimeBlock ? '수정' : '추가'}
                 </Button>
               </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* 이미지 미리보기 다이얼로그 */}
+        <Dialog open={!!previewImage} onOpenChange={() => setPreviewImage(null)}>
+          <DialogContent className="sm:max-w-3xl">
+            <DialogHeader>
+              <DialogTitle>이미지 미리보기</DialogTitle>
+              <DialogDescription>
+                이미지를 확대해서 볼 수 있습니다.
+              </DialogDescription>
+            </DialogHeader>
+            
+            {previewImage && (
+              <div className="flex justify-center">
+                <img 
+                  src={previewImage} 
+                  alt="미리보기"
+                  className="max-w-full max-h-96 object-contain rounded"
+                />
+              </div>
+            )}
+            
+            <div className="flex justify-end">
+              <Button onClick={() => setPreviewImage(null)}>
+                닫기
+              </Button>
             </div>
           </DialogContent>
         </Dialog>

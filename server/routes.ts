@@ -966,7 +966,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Process uploaded files
       const fileData = files?.map(file => ({
-        name: file.originalname,
+        name: Buffer.from(file.originalname, 'latin1').toString('utf8'),
         url: `/uploads/daily-reflections/${file.filename}`,
         type: file.mimetype,
         size: file.size
