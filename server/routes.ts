@@ -966,6 +966,112 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Copy time blocks from previous day
+  app.post("/api/time-blocks/copy/:userId/:fromDate/:toDate", async (req, res) => {
+    try {
+      const { userId, fromDate, toDate } = req.params;
+      const fromBlocks = await storage.getTimeBlocks(userId, fromDate);
+      
+      // Check if target date already has time blocks
+      const existingBlocks = await storage.getTimeBlocks(userId, toDate);
+      if (existingBlocks.length > 0) {
+        return res.status(400).json({ message: "Target date already has time blocks" });
+      }
+      
+      // Copy blocks to new date
+      const copiedBlocks = [];
+      for (const block of fromBlocks) {
+        const newBlock = {
+          userId: block.userId,
+          date: toDate,
+          startTime: block.startTime,
+          endTime: block.endTime,
+          type: block.type,
+          title: block.title,
+          description: block.description,
+          projectId: block.projectId,
+          taskId: block.taskId
+        };
+        const created = await storage.createTimeBlock(newBlock);
+        copiedBlocks.push(created);
+      }
+      
+      res.json(copiedBlocks);
+    } catch (error) {
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Generate suggested break times
+  app.post("/api/time-blocks/suggest-breaks/:userId/:date", async (req, res) => {
+    try {
+      const { userId, date } = req.params;
+      const blocks = await storage.getTimeBlocks(userId, date);
+      
+      const suggestedBreaks = [];
+      
+      // Sort blocks by start time
+      const sortedBlocks = blocks.sort((a, b) => a.startTime.localeCompare(b.startTime));
+      
+      for (let i = 0; i < sortedBlocks.length - 1; i++) {
+        const currentBlock = sortedBlocks[i];
+        const nextBlock = sortedBlocks[i + 1];
+        
+        // Check if there's a gap between blocks
+        const currentEndTime = currentBlock.endTime;
+        const nextStartTime = nextBlock.startTime;
+        
+        if (currentEndTime !== nextStartTime) {
+          const gap = calculateTimeDifference(currentEndTime, nextStartTime);
+          
+          // If gap is between 15 minutes and 2 hours, suggest a break
+          if (gap >= 15 && gap <= 120) {
+            let breakDuration = 15; // Default 15 minutes
+            if (gap >= 60) breakDuration = 30; // 30 minutes for longer gaps
+            
+            const breakEndTime = addMinutesToTime(currentEndTime, breakDuration);
+            
+            suggestedBreaks.push({
+              startTime: currentEndTime,
+              endTime: breakEndTime,
+              type: 'break',
+              title: gap >= 60 ? '점심시간' : '휴식시간',
+              description: null,
+              projectId: null,
+              taskId: null
+            });
+          }
+        }
+      }
+      
+      res.json(suggestedBreaks);
+    } catch (error) {
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Helper function to calculate time difference in minutes
+  function calculateTimeDifference(startTime: string, endTime: string): number {
+    const [startHour, startMin] = startTime.split(':').map(Number);
+    const [endHour, endMin] = endTime.split(':').map(Number);
+    
+    const startMinutes = startHour * 60 + startMin;
+    const endMinutes = endHour * 60 + endMin;
+    
+    return endMinutes - startMinutes;
+  }
+
+  // Helper function to add minutes to time
+  function addMinutesToTime(time: string, minutes: number): string {
+    const [hour, min] = time.split(':').map(Number);
+    const totalMinutes = hour * 60 + min + minutes;
+    
+    const newHour = Math.floor(totalMinutes / 60);
+    const newMin = totalMinutes % 60;
+    
+    return `${newHour.toString().padStart(2, '0')}:${newMin.toString().padStart(2, '0')}`;
+  }
+
   // User settings routes
   app.get("/api/user-settings/:userId", async (req, res) => {
     try {

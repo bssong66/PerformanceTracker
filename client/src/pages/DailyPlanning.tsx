@@ -35,12 +35,24 @@ export default function DailyPlanning() {
     endTime: string;
     title: string;
     type: "focus" | "meeting" | "break";
+    projectId?: number | null;
+    taskId?: number | null;
+    description?: string;
   }>({
     startTime: "",
     endTime: "",
     title: "",
     type: "focus",
+    projectId: null,
+    taskId: null,
+    description: "",
   });
+
+  // Time block management states
+  const [editingTimeBlock, setEditingTimeBlock] = useState<any>(null);
+  const [showTimeBlockDialog, setShowTimeBlockDialog] = useState(false);
+  const [suggestedBreaks, setSuggestedBreaks] = useState<any[]>([]);
+  const [showBreakSuggestions, setShowBreakSuggestions] = useState(false);
   
   // Focus Mode states
   const [selectedTask, setSelectedTask] = useState<any>(null);
@@ -122,9 +134,18 @@ export default function DailyPlanning() {
     enabled: !!user?.id,
   });
 
-  const { data: timeBlocks = [] } = useQuery({
+  const { data: timeBlocks = [], refetch: refetchTimeBlocks } = useQuery({
     queryKey: ['timeBlocks', user?.id, today],
     queryFn: () => fetch(api.timeBlocks.list(user!.id, today)).then(res => res.json()),
+    enabled: !!user?.id,
+  });
+
+  // Yesterday's date for copying time blocks
+  const yesterday = format(new Date(new Date().setDate(new Date().getDate() - 1)), 'yyyy-MM-dd');
+  
+  const { data: yesterdayTimeBlocks = [] } = useQuery({
+    queryKey: ['timeBlocks', user?.id, yesterday],
+    queryFn: () => fetch(api.timeBlocks.list(user!.id, yesterday)).then(res => res.json()),
     enabled: !!user?.id,
   });
 
@@ -184,6 +205,75 @@ export default function DailyPlanning() {
         endTime: "",
         title: "",
         type: "focus",
+        projectId: null,
+        taskId: null,
+        description: "",
+      });
+      setShowTimeBlockDialog(false);
+      toast({ title: "시간 블록이 추가되었습니다." });
+    },
+    onError: () => {
+      toast({
+        title: "오류",
+        description: "시간 블록 추가에 실패했습니다.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const updateTimeBlockMutation = useMutation({
+    mutationFn: ({ id, updates }: { id: number; updates: any }) => 
+      fetch(`/api/time-blocks/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updates),
+      }).then(res => res.json()),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['timeBlocks', user?.id, today] });
+      setEditingTimeBlock(null);
+      setShowTimeBlockDialog(false);
+      toast({ title: "시간 블록이 수정되었습니다." });
+    },
+    onError: () => {
+      toast({
+        title: "오류",
+        description: "시간 블록 수정에 실패했습니다.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const deleteTimeBlockMutation = useMutation({
+    mutationFn: (id: number) => 
+      fetch(`/api/time-blocks/${id}`, { method: 'DELETE' }).then(res => res.json()),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['timeBlocks', user?.id, today] });
+      toast({ title: "시간 블록이 삭제되었습니다." });
+    },
+    onError: () => {
+      toast({
+        title: "오류",
+        description: "시간 블록 삭제에 실패했습니다.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const copyTimeBlocksMutation = useMutation({
+    mutationFn: () => 
+      fetch(`/api/time-blocks/copy/${user!.id}/${yesterday}/${today}`, {
+        method: 'POST',
+      }).then(res => res.json()),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['timeBlocks', user?.id, today] });
+      toast({ title: "어제 시간 블록이 복사되었습니다." });
+    },
+    onError: (error: any) => {
+      const message = error.message || "시간 블록 복사에 실패했습니다.";
+      toast({
+        title: "오류",
+        description: message,
+        variant: "destructive",
       });
     },
   });
@@ -338,11 +428,90 @@ export default function DailyPlanning() {
       return;
     }
 
+    if (editingTimeBlock) {
+      updateTimeBlockMutation.mutate({
+        id: editingTimeBlock.id,
+        updates: {
+          startTime: newTimeBlock.startTime,
+          endTime: newTimeBlock.endTime,
+          title: newTimeBlock.title,
+          type: newTimeBlock.type,
+          description: newTimeBlock.description,
+          projectId: newTimeBlock.projectId,
+          taskId: newTimeBlock.taskId,
+        },
+      });
+    } else {
+      addTimeBlockMutation.mutate({
+        userId: user!.id,
+        date: today,
+        ...newTimeBlock,
+      });
+    }
+  };
+
+  const openTimeBlockDialog = (block?: any) => {
+    if (block) {
+      setEditingTimeBlock(block);
+      setNewTimeBlock({
+        startTime: block.startTime,
+        endTime: block.endTime,
+        title: block.title,
+        type: block.type,
+        description: block.description || "",
+        projectId: block.projectId,
+        taskId: block.taskId,
+      });
+    } else {
+      setEditingTimeBlock(null);
+      setNewTimeBlock({
+        startTime: "",
+        endTime: "",
+        title: "",
+        type: "focus",
+        projectId: null,
+        taskId: null,
+        description: "",
+      });
+    }
+    setShowTimeBlockDialog(true);
+  };
+
+  const getSuggestedBreaks = async () => {
+    try {
+      const response = await fetch(`/api/time-blocks/suggest-breaks/${user!.id}/${today}`, {
+        method: 'POST',
+      });
+      const breaks = await response.json();
+      setSuggestedBreaks(breaks);
+      setShowBreakSuggestions(true);
+    } catch (error) {
+      toast({
+        title: "오류",
+        description: "휴식 시간 제안을 가져오는데 실패했습니다.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const addSuggestedBreak = (breakBlock: any) => {
     addTimeBlockMutation.mutate({
       userId: user!.id,
       date: today,
-      ...newTimeBlock,
+      ...breakBlock,
     });
+  };
+
+  const getProjectName = (projectId: number | null) => {
+    if (!projectId) return null;
+    const project = projects.find((p: any) => p.id === projectId);
+    return project?.title;
+  };
+
+  const getTaskName = (taskId: number | null) => {
+    if (!taskId) return null;
+    const task = allTasks.find((t: any) => t.id === taskId);
+    return task?.title;
   };
 
   const handleTaskSelect = (taskId: string) => {
@@ -699,49 +868,154 @@ export default function DailyPlanning() {
                 <CardContent className="space-y-3">
                   {/* Time Blocks */}
                   <div>
-                    <h4 className="text-sm font-medium text-gray-900 mb-2">시간 블록</h4>
-                    <div className="grid grid-cols-12 gap-1 mb-2 items-end">
-                      <div className="col-span-2">
-                        <Input
-                          type="text"
-                          value={newTimeBlock.startTime}
-                          onClick={() => openTimePicker('start')}
-                          readOnly
-                          placeholder="시작시간"
-                          className="h-7 text-xs cursor-pointer"
-                        />
-                      </div>
-                      <div className="col-span-2">
-                        <Input
-                          type="text"
-                          value={newTimeBlock.endTime}
-                          onClick={() => openTimePicker('end')}
-                          readOnly
-                          placeholder="종료시간"
-                          className="h-7 text-xs cursor-pointer"
-                        />
-                      </div>
-                      <div className="col-span-6">
-                        <Input
-                          placeholder="활동 제목"
-                          value={newTimeBlock.title}
-                          onChange={(e) => setNewTimeBlock(prev => ({ ...prev, title: e.target.value }))}
+                    <div className="flex items-center justify-between mb-3">
+                      <h4 className="text-sm font-medium text-gray-900">시간 블록</h4>
+                      <div className="flex items-center space-x-2">
+                        {yesterdayTimeBlocks.length > 0 && timeBlocks.length === 0 && (
+                          <Button
+                            onClick={() => copyTimeBlocksMutation.mutate()}
+                            size="sm"
+                            variant="outline"
+                            className="h-7 text-xs"
+                            disabled={copyTimeBlocksMutation.isPending}
+                          >
+                            어제 복사
+                          </Button>
+                        )}
+                        {timeBlocks.length > 1 && (
+                          <Button
+                            onClick={getSuggestedBreaks}
+                            size="sm"
+                            variant="outline"
+                            className="h-7 text-xs"
+                          >
+                            휴식 제안
+                          </Button>
+                        )}
+                        <Button
+                          onClick={() => openTimeBlockDialog()}
+                          size="sm"
                           className="h-7 text-xs"
-                        />
-                      </div>
-                      <div className="col-span-1">
-                        <Button onClick={handleAddTimeBlock} size="sm" className="h-7 w-7 p-0">
-                          <Plus className="h-3 w-3" />
+                        >
+                          <Plus className="h-3 w-3 mr-1" />
+                          추가
                         </Button>
                       </div>
                     </div>
-                    <div className="space-y-1">
-                      {(timeBlocks as any[]).slice(0, 3).map((block: any) => (
-                        <div key={block.id} className="text-xs text-gray-600 bg-gray-50 px-2 py-1 rounded">
-                          {block.startTime}-{block.endTime} {block.title}
+                    
+                    {/* Time Block List */}
+                    <div className="space-y-2 max-h-64 overflow-y-auto">
+                      {timeBlocks.length === 0 ? (
+                        <div className="text-center py-4 text-gray-500 bg-gray-50 rounded-lg">
+                          <Clock className="h-8 w-8 mx-auto mb-2 text-gray-400" />
+                          <p className="text-sm mb-2">등록된 시간 블록이 없습니다</p>
+                          {yesterdayTimeBlocks.length > 0 && (
+                            <Button
+                              onClick={() => copyTimeBlocksMutation.mutate()}
+                              size="sm"
+                              variant="outline"
+                              disabled={copyTimeBlocksMutation.isPending}
+                            >
+                              어제 일정 복사하기
+                            </Button>
+                          )}
                         </div>
-                      ))}
+                      ) : (
+                        (timeBlocks as any[]).map((block: any) => (
+                          <div 
+                            key={block.id} 
+                            className="bg-white border rounded-lg p-3 hover:shadow-sm transition-shadow"
+                          >
+                            <div className="flex items-start justify-between">
+                              <div className="flex-1">
+                                <div className="flex items-center space-x-2 mb-1">
+                                  <span className="text-sm font-medium text-gray-900">
+                                    {block.startTime} - {block.endTime}
+                                  </span>
+                                  <span className={`text-xs px-2 py-1 rounded-full ${
+                                    block.type === 'focus' ? 'bg-blue-100 text-blue-700' :
+                                    block.type === 'meeting' ? 'bg-green-100 text-green-700' :
+                                    'bg-orange-100 text-orange-700'
+                                  }`}>
+                                    {block.type === 'focus' ? '집중' : 
+                                     block.type === 'meeting' ? '회의' : '휴식'}
+                                  </span>
+                                </div>
+                                <p className="text-sm text-gray-900 font-medium mb-1">{block.title}</p>
+                                {(getProjectName(block.projectId) || getTaskName(block.taskId)) && (
+                                  <div className="flex items-center space-x-2 text-xs text-gray-600">
+                                    {getProjectName(block.projectId) && (
+                                      <span className="bg-purple-100 text-purple-700 px-2 py-1 rounded">
+                                        📁 {getProjectName(block.projectId)}
+                                      </span>
+                                    )}
+                                    {getTaskName(block.taskId) && (
+                                      <span className="bg-green-100 text-green-700 px-2 py-1 rounded">
+                                        ✓ {getTaskName(block.taskId)}
+                                      </span>
+                                    )}
+                                  </div>
+                                )}
+                                {block.description && (
+                                  <p className="text-xs text-gray-600 mt-1">{block.description}</p>
+                                )}
+                              </div>
+                              <div className="flex items-center space-x-1 ml-2">
+                                <Button
+                                  onClick={() => openTimeBlockDialog(block)}
+                                  size="sm"
+                                  variant="ghost"
+                                  className="h-7 w-7 p-0"
+                                >
+                                  <div className="h-3 w-3 border border-gray-400 rounded-sm" />
+                                </Button>
+                                <Button
+                                  onClick={() => deleteTimeBlockMutation.mutate(block.id)}
+                                  size="sm"
+                                  variant="ghost"
+                                  className="h-7 w-7 p-0 text-red-500 hover:text-red-700"
+                                >
+                                  <X className="h-3 w-3" />
+                                </Button>
+                              </div>
+                            </div>
+                          </div>
+                        ))
+                      )}
                     </div>
+                    
+                    {/* Break Suggestions Dialog */}
+                    {showBreakSuggestions && (
+                      <div className="mt-3 p-3 bg-orange-50 border border-orange-200 rounded-lg">
+                        <div className="flex items-center justify-between mb-2">
+                          <h5 className="text-sm font-medium text-orange-800">제안된 휴식 시간</h5>
+                          <Button
+                            onClick={() => setShowBreakSuggestions(false)}
+                            size="sm"
+                            variant="ghost"
+                            className="h-6 w-6 p-0"
+                          >
+                            <X className="h-3 w-3" />
+                          </Button>
+                        </div>
+                        <div className="space-y-2">
+                          {suggestedBreaks.map((breakBlock, index) => (
+                            <div key={index} className="flex items-center justify-between bg-white p-2 rounded border">
+                              <span className="text-sm">
+                                {breakBlock.startTime} - {breakBlock.endTime}: {breakBlock.title}
+                              </span>
+                              <Button
+                                onClick={() => addSuggestedBreak(breakBlock)}
+                                size="sm"
+                                className="h-6 text-xs"
+                              >
+                                추가
+                              </Button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
 
                   {/* Today's Habits */}
@@ -1034,6 +1308,156 @@ export default function DailyPlanning() {
                   </Button>
                 </div>
               )}
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Time Block Edit Dialog */}
+        <Dialog open={showTimeBlockDialog} onOpenChange={setShowTimeBlockDialog}>
+          <DialogContent className="sm:max-w-lg">
+            <DialogHeader>
+              <DialogTitle>{editingTimeBlock ? '시간 블록 수정' : '시간 블록 추가'}</DialogTitle>
+              <DialogDescription>
+                시간 블록 정보를 입력해주세요.
+              </DialogDescription>
+            </DialogHeader>
+            
+            <div className="space-y-4">
+              {/* Time Settings */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="start-time" className="text-sm font-medium">시작 시간</Label>
+                  <Input
+                    id="start-time"
+                    type="text"
+                    value={newTimeBlock.startTime}
+                    onClick={() => openTimePicker('start')}
+                    readOnly
+                    placeholder="시작시간"
+                    className="cursor-pointer"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="end-time" className="text-sm font-medium">종료 시간</Label>
+                  <Input
+                    id="end-time"
+                    type="text"
+                    value={newTimeBlock.endTime}
+                    onClick={() => openTimePicker('end')}
+                    readOnly
+                    placeholder="종료시간"
+                    className="cursor-pointer"
+                  />
+                </div>
+              </div>
+
+              {/* Activity Title */}
+              <div>
+                <Label htmlFor="activity-title" className="text-sm font-medium">활동 제목</Label>
+                <Input
+                  id="activity-title"
+                  placeholder="활동 제목을 입력하세요"
+                  value={newTimeBlock.title}
+                  onChange={(e) => setNewTimeBlock(prev => ({ ...prev, title: e.target.value }))}
+                />
+              </div>
+
+              {/* Activity Type */}
+              <div>
+                <Label className="text-sm font-medium">활동 유형</Label>
+                <Select 
+                  value={newTimeBlock.type} 
+                  onValueChange={(value: any) => setNewTimeBlock(prev => ({ ...prev, type: value }))}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="활동 유형 선택" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="focus">집중</SelectItem>
+                    <SelectItem value="meeting">회의</SelectItem>
+                    <SelectItem value="break">휴식</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Project Selection */}
+              <div>
+                <Label className="text-sm font-medium">연결된 프로젝트 (선택사항)</Label>
+                <Select 
+                  value={newTimeBlock.projectId?.toString() || ""} 
+                  onValueChange={(value) => setNewTimeBlock(prev => ({ 
+                    ...prev, 
+                    projectId: value ? parseInt(value) : null,
+                    taskId: null // Reset task when project changes
+                  }))}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="프로젝트 선택 (선택사항)" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">프로젝트 없음</SelectItem>
+                    {projects.map((project: any) => (
+                      <SelectItem key={project.id} value={project.id.toString()}>
+                        {project.title}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Task Selection */}
+              <div>
+                <Label className="text-sm font-medium">연결된 할일 (선택사항)</Label>
+                <Select 
+                  value={newTimeBlock.taskId?.toString() || ""} 
+                  onValueChange={(value) => setNewTimeBlock(prev => ({ 
+                    ...prev, 
+                    taskId: value ? parseInt(value) : null 
+                  }))}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="할일 선택 (선택사항)" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">할일 없음</SelectItem>
+                    {allTasks
+                      .filter((task: any) => !newTimeBlock.projectId || task.projectId === newTimeBlock.projectId)
+                      .map((task: any) => (
+                        <SelectItem key={task.id} value={task.id.toString()}>
+                          [{task.priority}] {task.title}
+                        </SelectItem>
+                      ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Description */}
+              <div>
+                <Label htmlFor="description" className="text-sm font-medium">설명 (선택사항)</Label>
+                <Textarea
+                  id="description"
+                  placeholder="추가 설명을 입력하세요"
+                  value={newTimeBlock.description}
+                  onChange={(e) => setNewTimeBlock(prev => ({ ...prev, description: e.target.value }))}
+                  rows={3}
+                />
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex justify-end space-x-2">
+                <Button
+                  onClick={() => setShowTimeBlockDialog(false)}
+                  variant="outline"
+                >
+                  취소
+                </Button>
+                <Button
+                  onClick={handleAddTimeBlock}
+                  disabled={addTimeBlockMutation.isPending || updateTimeBlockMutation.isPending}
+                >
+                  {editingTimeBlock ? '수정' : '추가'}
+                </Button>
+              </div>
             </div>
           </DialogContent>
         </Dialog>

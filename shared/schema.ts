@@ -208,6 +208,8 @@ export const timeBlocks = pgTable("time_blocks", {
   type: text("type").notNull(), // 'focus', 'meeting', 'break'
   title: text("title").notNull(),
   description: text("description"),
+  projectId: integer("project_id"), // nullable - linked project
+  taskId: integer("task_id"), // nullable - linked task
   createdAt: timestamp("created_at").defaultNow(),
 });
 
