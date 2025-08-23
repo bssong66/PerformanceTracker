@@ -1021,11 +1021,7 @@ export default function DailyPlanning() {
                             <div className="flex-1">
                               <div className="flex items-center space-x-2 mb-1">
                                 <span 
-                                  className="text-sm font-medium text-gray-900 cursor-pointer hover:text-blue-600 transition-colors"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    openTimeBlockDialog(block);
-                                  }}
+                                  className="text-sm font-medium text-gray-900"
                                 >
                                   {block.startTime} - {block.endTime}
                                 </span>
@@ -1039,11 +1035,7 @@ export default function DailyPlanning() {
                                 </span>
                               </div>
                               <p 
-                                className="text-sm text-gray-900 font-medium mb-1 cursor-pointer hover:text-blue-600 transition-colors"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  openTimeBlockDialog(block);
-                                }}
+                                className="text-sm text-gray-900 font-medium mb-1"
                               >
                                 {block.title}
                               </p>
