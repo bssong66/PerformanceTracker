@@ -1218,6 +1218,65 @@ export default function DailyPlanning() {
                       ))}
                     </div>
                   </div>
+
+                  {/* 텍스트 서식 도구 */}
+                  <div className="mb-3">
+                    <Label className="text-xs text-gray-600 mb-2 block">텍스트 서식</Label>
+                    <div className="flex space-x-2 flex-wrap gap-2">
+                      <Button
+                        onClick={() => setReflection(prev => prev + '\n1. ')}
+                        variant="outline"
+                        size="sm"
+                        className="h-7 px-2 text-xs"
+                      >
+                        1. 번호
+                      </Button>
+                      <Button
+                        onClick={() => setReflection(prev => prev + '\n• ')}
+                        variant="outline"
+                        size="sm"
+                        className="h-7 px-2 text-xs"
+                      >
+                        • 목록
+                      </Button>
+                      <Button
+                        onClick={() => setReflection(prev => prev + '\n# ')}
+                        variant="outline"
+                        size="sm"
+                        className="h-7 px-2 text-xs"
+                      >
+                        # 제목
+                      </Button>
+                      <Button
+                        onClick={() => setReflection(prev => prev + '\n## ')}
+                        variant="outline"
+                        size="sm"
+                        className="h-7 px-2 text-xs"
+                      >
+                        ## 소제목
+                      </Button>
+                      <Button
+                        onClick={() => {
+                          const now = new Date();
+                          const timeStr = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+                          setReflection(prev => prev + `[${timeStr}] `);
+                        }}
+                        variant="outline"
+                        size="sm"
+                        className="h-7 px-2 text-xs"
+                      >
+                        🕐 시간
+                      </Button>
+                      <Button
+                        onClick={() => setReflection(prev => prev + '\n---\n')}
+                        variant="outline"
+                        size="sm"
+                        className="h-7 px-2 text-xs"
+                      >
+                        --- 구분선
+                      </Button>
+                    </div>
+                  </div>
                   
                   <Textarea
                     placeholder="오늘 하루를 돌아보며...\n\n• 잘한 점:\n• 아쉬운 점:\n• 내일 계획:"
