@@ -1,5 +1,9 @@
 import type { Express } from "express";
+import express from "express";
 import { createServer, type Server } from "http";
+import multer from "multer";
+import path from "path";
+import fs from "fs";
 import { storage } from "./storage";
 import { 
   insertFoundationSchema, insertAnnualGoalSchema, insertProjectSchema,
@@ -14,6 +18,46 @@ import {
 import { setupAuth, isAuthenticated } from "./replitAuth";
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Create uploads directory if it doesn't exist
+  const uploadsDir = path.join(process.cwd(), 'uploads', 'daily-reflections');
+  if (!fs.existsSync(uploadsDir)) {
+    fs.mkdirSync(uploadsDir, { recursive: true });
+  }
+
+  // Multer configuration for file uploads
+  const storage_multer = multer.diskStorage({
+    destination: function (req, file, cb) {
+      cb(null, uploadsDir);
+    },
+    filename: function (req, file, cb) {
+      const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+      cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
+    }
+  });
+
+  const upload = multer({ 
+    storage: storage_multer,
+    limits: {
+      fileSize: 50 * 1024 * 1024, // 50MB
+      files: 15 // Maximum 15 files
+    },
+    fileFilter: function (req, file, cb) {
+      // Accept images, PDFs, Word docs, and text files
+      const allowedTypes = /jpeg|jpg|png|gif|pdf|doc|docx|txt/;
+      const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
+      const mimetype = allowedTypes.test(file.mimetype);
+      
+      if (mimetype && extname) {
+        return cb(null, true);
+      } else {
+        cb(new Error('Only images, PDFs, Word documents, and text files are allowed'));
+      }
+    }
+  });
+
+  // Serve uploaded files statically
+  app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
+
   // Auth middleware
   await setupAuth(app);
 
@@ -910,6 +954,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(reflection);
     } catch (error) {
       res.status(400).json({ message: "Invalid daily reflection data" });
+    }
+  });
+
+  // Daily reflection with file upload
+  app.post("/api/daily-reflection/:userId/:date", upload.array('files', 15), async (req, res) => {
+    try {
+      const { userId, date } = req.params;
+      const { content } = req.body;
+      const files = req.files as Express.Multer.File[];
+
+      // Process uploaded files
+      const fileData = files?.map(file => ({
+        name: file.originalname,
+        url: `/uploads/daily-reflections/${file.filename}`,
+        type: file.mimetype,
+        size: file.size
+      })) || [];
+
+      // Create reflection data
+      const reflectionData = {
+        userId,
+        date,
+        content: content || "",
+        files: fileData
+      };
+
+      const reflection = await storage.upsertDailyReflection(reflectionData);
+      res.json({ ...reflection, files: fileData });
+    } catch (error) {
+      console.error("Error saving daily reflection with files:", error);
+      res.status(500).json({ message: "Failed to save daily reflection" });
     }
   });
 

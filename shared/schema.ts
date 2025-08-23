@@ -193,9 +193,11 @@ export const dailyReflections = pgTable("daily_reflections", {
   id: serial("id").primaryKey(),
   userId: varchar("user_id").notNull(),
   date: date("date").notNull(),
+  content: text("content"), // Changed from 'reflection' to 'content'
   reflection: text("reflection"),
   imageUrls: text("image_urls").array(),
   imageNames: text("image_names").array(),
+  files: jsonb("files"), // Array of file objects: {name, url, type, size}
   createdAt: timestamp("created_at").defaultNow(),
 });
 

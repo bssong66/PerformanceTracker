@@ -62,6 +62,7 @@ export default function DailyPlanning() {
   const [completedSessions, setCompletedSessions] = useState(0);
   const [showCompletionDialog, setShowCompletionDialog] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [savedFiles, setSavedFiles] = useState<any[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [notificationPermission, setNotificationPermission] = useState<NotificationPermission>('default');
   
@@ -153,6 +154,14 @@ export default function DailyPlanning() {
     queryFn: () => fetch(`/api/daily-reflection/${user!.id}/${today}`).then(res => res.json()).catch(() => null),
     enabled: !!user?.id,
   });
+
+  // Load reflection data and files when dailyReflection changes
+  useEffect(() => {
+    if (dailyReflection) {
+      setReflection(dailyReflection.content || "");
+      setSavedFiles(dailyReflection.files || []);
+    }
+  }, [dailyReflection]);
 
   // Mutations
   const addTaskMutation = useMutation({
@@ -397,12 +406,40 @@ export default function DailyPlanning() {
     });
   };
 
-  const handleSaveReflection = () => {
-    saveReflectionMutation.mutate({
-      userId: user!.id,
-      date: today,
-      content: reflection,
+  const handleSaveReflection = async () => {
+    const formData = new FormData();
+    formData.append('userId', user!.id);
+    formData.append('date', today);
+    formData.append('content', reflection);
+    
+    // Add all selected files to FormData
+    selectedFiles.forEach((file, index) => {
+      formData.append(`files`, file);
     });
+
+    try {
+      const response = await fetch(`/api/daily-reflection/${user!.id}/${today}`, {
+        method: 'POST',
+        body: formData,
+      });
+      
+      if (response.ok) {
+        const result = await response.json();
+        setSavedFiles(result.files || []);
+        setSelectedFiles([]);
+        queryClient.invalidateQueries({ queryKey: ['dailyReflection', user!.id, today] });
+        toast({
+          title: "성공",
+          description: "일기가 저장되었습니다.",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "오류",
+        description: "저장 중 오류가 발생했습니다.",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleAddTimeBlock = () => {
@@ -1381,6 +1418,34 @@ export default function DailyPlanning() {
                           </div>
                         </div>
                       ))}
+                    </div>
+                  )}
+
+                  {/* 저장된 파일 목록 */}
+                  {savedFiles.length > 0 && (
+                    <div className="mt-3 space-y-2">
+                      <h5 className="text-sm font-medium text-gray-900">저장된 파일</h5>
+                      <div className="grid grid-cols-2 gap-2">
+                        {savedFiles.map((file, index) => (
+                          <div key={index} className="p-2 bg-blue-50 rounded border border-blue-200">
+                            {file.type?.startsWith('image/') ? (
+                              <div className="text-center">
+                                <img 
+                                  src={file.url} 
+                                  alt={file.name}
+                                  className="w-full h-20 object-cover rounded mb-2"
+                                />
+                                <span className="text-xs text-gray-600 truncate block">{file.name}</span>
+                              </div>
+                            ) : (
+                              <div className="flex items-center space-x-2">
+                                <span className="text-lg">📄</span>
+                                <span className="text-sm text-gray-700 truncate flex-1">{file.name}</span>
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   )}
                 </div>
