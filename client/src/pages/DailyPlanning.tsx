@@ -863,7 +863,7 @@ export default function DailyPlanning() {
           <TabsList className="grid w-full grid-cols-3 h-16 bg-gray-50/50 backdrop-blur-sm rounded-xl border border-gray-200/50">
             <TabsTrigger 
               value="planning" 
-              className="flex flex-col items-center justify-center space-y-1 h-full rounded-lg text-xs font-medium transition-all duration-200 data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-blue-600"
+              className="flex flex-col items-center justify-center space-y-1 h-full rounded-lg text-xs font-medium transition-all duration-200 data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-gray-700"
             >
               <CalendarDays className="h-4 w-4 transition-transform data-[state=active]:scale-110" />
               <span className="hidden sm:block">오늘의 계획</span>
@@ -871,7 +871,7 @@ export default function DailyPlanning() {
             </TabsTrigger>
             <TabsTrigger 
               value="timeblocks" 
-              className="flex flex-col items-center justify-center space-y-1 h-full rounded-lg text-xs font-medium transition-all duration-200 data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-orange-600"
+              className="flex flex-col items-center justify-center space-y-1 h-full rounded-lg text-xs font-medium transition-all duration-200 data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-gray-700"
             >
               <Clock className="h-4 w-4 transition-transform data-[state=active]:scale-110" />
               <span className="hidden sm:block">시간블록</span>
@@ -879,7 +879,7 @@ export default function DailyPlanning() {
             </TabsTrigger>
             <TabsTrigger 
               value="records" 
-              className="flex flex-col items-center justify-center space-y-1 h-full rounded-lg text-xs font-medium transition-all duration-200 data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-green-600"
+              className="flex flex-col items-center justify-center space-y-1 h-full rounded-lg text-xs font-medium transition-all duration-200 data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-gray-700"
             >
               <FileText className="h-4 w-4 transition-transform data-[state=active]:scale-110" />
               <span className="hidden sm:block">오늘의 기록</span>
