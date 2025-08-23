@@ -1301,6 +1301,33 @@ export default function DailyPlanning() {
                   <div className="text-lg font-medium text-gray-600">
                     {isBreak ? '휴식 시간' : '집중 시간'}
                   </div>
+                  
+                  {/* Selected Time Block Info */}
+                  {selectedTimeBlock && (
+                    <div className="bg-blue-50 p-3 rounded-lg space-y-2">
+                      <div className="flex items-center justify-center space-x-2">
+                        <span className={`text-xs px-2 py-1 rounded-full ${
+                          selectedTimeBlock.type === 'focus' ? 'bg-blue-100 text-blue-700' :
+                          selectedTimeBlock.type === 'meeting' ? 'bg-green-100 text-green-700' :
+                          'bg-orange-100 text-orange-700'
+                        }`}>
+                          {selectedTimeBlock.type === 'focus' ? '집중' : 
+                           selectedTimeBlock.type === 'meeting' ? '회의' : '휴식'}
+                        </span>
+                        <span className="text-sm text-gray-600">
+                          {selectedTimeBlock.startTime} - {selectedTimeBlock.endTime}
+                        </span>
+                      </div>
+                      <div className="text-sm font-medium text-gray-900 text-center">
+                        {selectedTimeBlock.title}
+                      </div>
+                      {selectedTimeBlock.taskId && (
+                        <div className="text-xs text-gray-600 text-center">
+                          📝 {getTaskName(selectedTimeBlock.taskId)}
+                        </div>
+                      )}
+                    </div>
+                  )}
 
                   {/* Controls */}
                   <div className="flex justify-center space-x-4">
