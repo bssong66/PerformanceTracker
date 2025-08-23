@@ -827,18 +827,6 @@ export default function DailyPlanning() {
         </div>
 
         <Tabs defaultValue="planning" className="space-y-4">
-          {/* 플로팅 저장 버튼 */}
-          <div className="fixed z-50" style={{ top: '60px', right: '80px' }}>
-            <Button 
-              onClick={handleSaveReflection}
-              disabled={saveReflectionMutation.isPending}
-              size="sm"
-              className="shadow-lg hover:shadow-xl transition-shadow bg-gray-800/50 hover:bg-gray-700/60 text-white backdrop-blur-sm"
-            >
-              <Save className="h-3 w-3 mr-1" />
-              저장
-            </Button>
-          </div>
           
           <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="planning" className="flex items-center justify-center space-x-1 text-xs sm:text-sm">
@@ -1291,6 +1279,19 @@ export default function DailyPlanning() {
           </TabsContent>
 
           <TabsContent value="records" className="space-y-4">
+            {/* 플로팅 저장 버튼 - 오늘의 기록 탭에서만 표시 */}
+            <div className="fixed z-50" style={{ top: '60px', right: '80px' }}>
+              <Button 
+                onClick={handleSaveReflection}
+                disabled={saveReflectionMutation.isPending}
+                size="sm"
+                className="shadow-lg hover:shadow-xl transition-shadow bg-gray-800/50 hover:bg-gray-700/60 text-white backdrop-blur-sm"
+              >
+                <Save className="h-3 w-3 mr-1" />
+                저장
+              </Button>
+            </div>
+
             {/* 오늘의 기록 */}
             <Card>
               <CardHeader>
