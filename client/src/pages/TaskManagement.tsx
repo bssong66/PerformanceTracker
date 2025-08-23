@@ -663,7 +663,7 @@ function TaskManagement({ highlightTaskId }: TaskManagementProps) {
                       {editingTask ? '수정 중...' : '생성 중...'}
                     </div>
                   ) : (
-                    editingTask ? '수정' : '생성'
+                    '저장'
                   )}
                 </Button>
               </div>
