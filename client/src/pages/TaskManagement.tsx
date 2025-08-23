@@ -315,8 +315,22 @@ function TaskManagement({ highlightTaskId }: TaskManagementProps) {
 
   const openTaskDetailDialog = (task: Task) => {
     setSelectedTask(task);
+    setTaskForm({
+      title: task.title || '',
+      priority: task.priority || 'B',
+      startDate: task.startDate || '',
+      endDate: task.endDate || '',
+      notes: task.notes || '',
+      result: task.result || '',
+      completed: task.completed || false,
+      imageUrls: task.imageUrls || [],
+      fileUrls: task.fileUrls || [],
+      resultImageUrls: task.resultImageUrls || [],
+      resultFileUrls: task.resultFileUrls || []
+    });
+    setEditingTask(task);
     setShowTaskDetailDialog(true);
-    setIsEditMode(false);
+    setIsEditMode(true);
   };
 
   const handleEditModeToggle = () => {
@@ -344,7 +358,7 @@ function TaskManagement({ highlightTaskId }: TaskManagementProps) {
 
   const handleSaveFromDetail = () => {
     if (!selectedTask) return;
-    
+
     const taskData = {
       ...taskForm,
       userId: user?.id,
@@ -435,6 +449,12 @@ function TaskManagement({ highlightTaskId }: TaskManagementProps) {
     C: filteredTasks.filter((task: Task) => task.priority === 'C' && task.completed).length
   };
 
+  const handleTaskToggle = (taskId: number, currentCompletedStatus: boolean) => {
+    const taskToToggle = tasks.find(task => task.id === taskId);
+    if (taskToToggle) {
+      toggleTaskMutation.mutate(taskToToggle);
+    }
+  };
 
 
   return (
@@ -472,7 +492,7 @@ function TaskManagement({ highlightTaskId }: TaskManagementProps) {
                 {/* 좌측: 할일 계획 */}
                 <div className="space-y-4 md:pr-6">
                   <h3 className="text-lg font-semibold border-b pb-2">할일: 내용</h3>
-                  
+
                   <div>
                     <Label htmlFor="title">할일 제목</Label>
                     <Input
@@ -619,7 +639,7 @@ function TaskManagement({ highlightTaskId }: TaskManagementProps) {
                       </Label>
                     </div>
                   </div>
-                  
+
                   <div>
                     <Label htmlFor="taskResult">결과 기록</Label>
                     <Textarea
