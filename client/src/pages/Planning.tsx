@@ -25,7 +25,7 @@ export default function Planning() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-        <TabsList className="grid w-full max-w-md grid-cols-3">
+        <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="projects" className="flex items-center space-x-2">
             <FolderOpen className="h-4 w-4" />
             <span>프로젝트관리</span>
