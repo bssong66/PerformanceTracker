@@ -1437,6 +1437,16 @@ export default function DailyPlanning() {
                     value={reflection}
                     onChange={(e) => setReflection(e.target.value)}
                     onKeyDown={handleReflectionKeyDown}
+                    onFocus={(e) => {
+                      const placeholderText = `오늘 하루를 돌아보며...
+
+• 잘한 점:
+• 아쉬운 점:
+• 내일 계획:`;
+                      if (reflection === placeholderText) {
+                        setReflection("");
+                      }
+                    }}
                     className="min-h-[200px] text-sm"
                   />
                 </div>
