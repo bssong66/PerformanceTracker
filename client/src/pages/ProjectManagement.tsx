@@ -2292,7 +2292,7 @@ export default function ProjectManagement() {
                   </div>
                 </div>
               </form>
-            )}
+            </div>
           </DialogContent>
         </Dialog>
       )}
