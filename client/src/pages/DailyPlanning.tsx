@@ -1307,6 +1307,7 @@ export default function DailyPlanning() {
                                   completed: checked as boolean
                                 });
                               }}
+                              className="h-4 w-4"
                             />
                             <label 
                               htmlFor={`habit-${habit.id}`}
