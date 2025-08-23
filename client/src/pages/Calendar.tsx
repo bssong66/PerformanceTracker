@@ -393,13 +393,14 @@ export default function Calendar() {
     const safeProjects = Array.isArray(projects) ? projects : [];
     
     // Debug: Log data and loading states
-    console.log('Calendar Debug:', {
+      console.log('Calendar Debug:', {
       user: (user as any)?.id,
       eventsCount: safeEvents.length,
       tasksCount: safeTasks.length,
       projectsCount: safeProjects.length,
       currentDate: date,
       view: view,
+      showEventDialog: showEventDialog,
       loading: {
         events: eventsLoading,
         tasks: tasksLoading,
@@ -940,6 +941,7 @@ export default function Calendar() {
 
         {/* Event Dialog */}
         <Dialog open={showEventDialog} onOpenChange={(open) => {
+          console.log('Dialog onOpenChange called:', open);
           setShowEventDialog(open);
           if (!open) resetEventForm();
         }}>
