@@ -1233,7 +1233,15 @@ export default function DailyPlanning() {
                                       <Checkbox
                                         checked={allTasks.find((t: any) => t.id === block.taskId)?.completed || false}
                                         onCheckedChange={(checked) => {
-                                          if (block.taskId) {
+                                          if (block.taskId && !updateTaskMutation.isPending) {
+                                            // Optimistic update: UI 즉시 업데이트
+                                            queryClient.setQueryData(['tasks', user!.id], (oldTasks: any) => {
+                                              return oldTasks?.map((task: any) => 
+                                                task.id === block.taskId 
+                                                  ? { ...task, completed: checked } 
+                                                  : task
+                                              ) || [];
+                                            });
                                             handleToggleTask(block.taskId, checked as boolean);
                                           }
                                         }}
