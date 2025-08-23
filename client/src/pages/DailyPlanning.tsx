@@ -471,6 +471,55 @@ export default function DailyPlanning() {
     }
   };
 
+  const handleReflectionKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Enter') {
+      const textarea = e.target as HTMLTextAreaElement;
+      const value = textarea.value;
+      const cursorPosition = textarea.selectionStart;
+      
+      // 현재 줄의 시작 위치 찾기
+      const beforeCursor = value.substring(0, cursorPosition);
+      const lines = beforeCursor.split('\n');
+      const currentLine = lines[lines.length - 1];
+      
+      // 번호 목록 패턴 확인 (1., 2., 3., ...)
+      const numberMatch = currentLine.match(/^(\s*)(\d+)\.\s/);
+      if (numberMatch) {
+        e.preventDefault();
+        const indent = numberMatch[1];
+        const currentNumber = parseInt(numberMatch[2]);
+        const nextNumber = currentNumber + 1;
+        const newText = `\n${indent}${nextNumber}. `;
+        
+        const newValue = value.substring(0, cursorPosition) + newText + value.substring(cursorPosition);
+        setReflection(newValue);
+        
+        // 커서 위치를 새로운 번호 뒤로 이동
+        setTimeout(() => {
+          textarea.setSelectionRange(cursorPosition + newText.length, cursorPosition + newText.length);
+        }, 0);
+        return;
+      }
+      
+      // 불릿 목록 패턴 확인 (• )
+      const bulletMatch = currentLine.match(/^(\s*)•\s/);
+      if (bulletMatch) {
+        e.preventDefault();
+        const indent = bulletMatch[1];
+        const newText = `\n${indent}• `;
+        
+        const newValue = value.substring(0, cursorPosition) + newText + value.substring(cursorPosition);
+        setReflection(newValue);
+        
+        // 커서 위치를 새로운 불릿 뒤로 이동
+        setTimeout(() => {
+          textarea.setSelectionRange(cursorPosition + newText.length, cursorPosition + newText.length);
+        }, 0);
+        return;
+      }
+    }
+  };
+
   const handleAddTimeBlock = () => {
     if (!newTimeBlock.startTime || !newTimeBlock.endTime || !newTimeBlock.title.trim()) {
       toast({
@@ -1373,6 +1422,7 @@ export default function DailyPlanning() {
 • 내일 계획:`}
                     value={reflection}
                     onChange={(e) => setReflection(e.target.value)}
+                    onKeyDown={handleReflectionKeyDown}
                     className="min-h-[200px] text-sm"
                   />
                   <Button 
