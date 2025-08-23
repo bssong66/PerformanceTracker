@@ -431,7 +431,7 @@ export default function DailyPlanning() {
         queryClient.invalidateQueries({ queryKey: ['dailyReflection', user!.id, today] });
         toast({
           title: "성공",
-          description: "일기가 저장되었습니다.",
+          description: "오늘의 기록이 저장되었습니다.",
         });
       }
     } catch (error) {
