@@ -1226,9 +1226,21 @@ export default function DailyPlanning() {
                                     </span>
                                   )}
                                   {getTaskName(block.taskId) && (
-                                    <span className="bg-green-100 text-green-700 px-2 py-1 rounded">
-                                      ✓ {getTaskName(block.taskId)}
-                                    </span>
+                                    <div 
+                                      className="bg-green-100 text-green-700 px-2 py-1 rounded flex items-center space-x-1"
+                                      onClick={(e) => e.stopPropagation()}
+                                    >
+                                      <Checkbox
+                                        checked={allTasks.find((t: any) => t.id === block.taskId)?.completed || false}
+                                        onCheckedChange={(checked) => {
+                                          if (block.taskId) {
+                                            handleToggleTask(block.taskId, checked as boolean);
+                                          }
+                                        }}
+                                        className="h-3 w-3"
+                                      />
+                                      <span>✓ {getTaskName(block.taskId)}</span>
+                                    </div>
                                   )}
                                 </div>
                               )}
