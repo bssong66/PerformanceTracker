@@ -2099,19 +2099,20 @@ export default function ProjectManagement() {
 
                   {/* 오른쪽: 할일 결과 */}
                   <div className="space-y-4">
-                    <h3 className="text-lg font-semibold border-b pb-2">할일: 결과</h3>
-                    
-                    <div className="flex items-center space-x-2 p-3 bg-gray-50 rounded-lg">
-                      <Checkbox
-                        id="taskCompleted"
-                        checked={taskForm.completed || false}
-                        onCheckedChange={(checked) => 
-                          setTaskForm(prev => ({ ...prev, completed: checked === true }))
-                        }
-                      />
-                      <Label htmlFor="taskCompleted" className="text-sm font-medium cursor-pointer">
-                        할일 완료
-                      </Label>
+                    <div className="flex items-center justify-between border-b pb-2">
+                      <h3 className="text-lg font-semibold">할일: 결과</h3>
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          id="taskCompleted"
+                          checked={taskForm.completed || false}
+                          onCheckedChange={(checked) => 
+                            setTaskForm(prev => ({ ...prev, completed: checked === true }))
+                          }
+                        />
+                        <Label htmlFor="taskCompleted" className="text-sm font-medium cursor-pointer">
+                          할일 완료
+                        </Label>
+                      </div>
                     </div>
 
                     <div>
