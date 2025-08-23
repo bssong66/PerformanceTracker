@@ -1324,8 +1324,29 @@ export default function DailyPlanning() {
                 <div>
                   <h4 className="text-sm font-medium text-gray-900 mb-3">사진 및 파일</h4>
                   <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition-colors">
-                    <Upload className="h-8 w-8 mx-auto mb-2 text-gray-400" />
-                    <p className="text-sm text-gray-600 mb-2">파일을 드래그하거나 클릭하여 업로드</p>
+                    <p className="text-sm text-gray-600 mb-4">파일을 여기에 드래그하거나 아래 버튼을 클릭하세요</p>
+                    
+                    <div className="flex justify-center space-x-4 mb-4">
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={handleFileButtonClick}
+                        className="flex items-center space-x-2"
+                      >
+                        <span className="text-lg">📷</span>
+                        <span>사진</span>
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={handleFileButtonClick}
+                        className="flex items-center space-x-2"
+                      >
+                        <span className="text-lg">📄</span>
+                        <span>파일</span>
+                      </Button>
+                    </div>
+                    
                     <input
                       type="file"
                       ref={fileInputRef}
@@ -1334,10 +1355,8 @@ export default function DailyPlanning() {
                       accept="image/*,.pdf,.doc,.docx,.txt"
                       className="hidden"
                     />
-                    <Button variant="outline" size="sm" onClick={handleFileButtonClick}>
-                      파일 선택
-                    </Button>
-                    <p className="text-xs text-gray-500 mt-2">이미지, 문서, 최대 10MB</p>
+                    
+                    <p className="text-xs text-gray-500">최대 15개, 개당 50 MB 이하</p>
                   </div>
                   
                   {/* 선택된 파일 목록 */}
