@@ -76,6 +76,15 @@ export default function DailyPlanning() {
   const [showATasksOnly, setShowATasksOnly] = useState(false);
   const [completedSessions, setCompletedSessions] = useState(0);
   const [showCompletionDialog, setShowCompletionDialog] = useState(false);
+
+  // 집중관리 타이머 states
+  const [selectedFocusTask, setSelectedFocusTask] = useState<any>(null);
+  const [customTimerHours, setCustomTimerHours] = useState("0");
+  const [customTimerMinutes, setCustomTimerMinutes] = useState("25");
+  const [customTimerSeconds, setCustomTimerSeconds] = useState(0);
+  const [isCustomTimerRunning, setIsCustomTimerRunning] = useState(false);
+  const [customTotalSeconds, setCustomTotalSeconds] = useState(25 * 60);
+  const [showCustomCompletionDialog, setShowCustomCompletionDialog] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [savedFiles, setSavedFiles] = useState<any[]>([]);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
@@ -107,6 +116,103 @@ export default function DailyPlanning() {
       setShowCompletionDialog(true);
     }
   }, [isCompleted]);
+
+  // 커스텀 타이머 로직
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    
+    if (isCustomTimerRunning && customTimerSeconds > 0) {
+      interval = setInterval(() => {
+        setCustomTimerSeconds(prev => {
+          if (prev <= 1) {
+            // 타이머 완료
+            setIsCustomTimerRunning(false);
+            playCompletionSound();
+            setShowCustomCompletionDialog(true);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    }
+
+    return () => clearInterval(interval);
+  }, [isCustomTimerRunning, customTimerSeconds]);
+
+  // 알림음 재생 함수
+  const playCompletionSound = () => {
+    try {
+      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const frequencies = [523.25, 659.25, 783.99]; // C-E-G
+      
+      frequencies.forEach((freq, index) => {
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+        
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+        
+        oscillator.frequency.value = freq;
+        oscillator.type = 'sine';
+        
+        gainNode.gain.setValueAtTime(0.3, audioContext.currentTime + index * 0.3);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + index * 0.3 + 0.5);
+        
+        oscillator.start(audioContext.currentTime + index * 0.3);
+        oscillator.stop(audioContext.currentTime + index * 0.3 + 0.5);
+      });
+    } catch (error) {
+      console.log('오디오 재생 실패:', error);
+    }
+  };
+
+  // 할일 카드 클릭 핸들러
+  const handleFocusTaskClick = (task: any) => {
+    setSelectedFocusTask(task);
+  };
+
+  // 커스텀 타이머 시작
+  const startCustomTimer = () => {
+    const totalSeconds = parseInt(customTimerHours) * 3600 + parseInt(customTimerMinutes) * 60;
+    setCustomTotalSeconds(totalSeconds);
+    setCustomTimerSeconds(totalSeconds);
+    setIsCustomTimerRunning(true);
+  };
+
+  // 커스텀 타이머 일시정지/재개
+  const toggleCustomTimer = () => {
+    setIsCustomTimerRunning(!isCustomTimerRunning);
+  };
+
+  // 커스텀 타이머 리셋
+  const resetCustomTimer = () => {
+    setIsCustomTimerRunning(false);
+    const totalSeconds = parseInt(customTimerHours) * 3600 + parseInt(customTimerMinutes) * 60;
+    setCustomTimerSeconds(totalSeconds);
+  };
+
+  // 시간 포맷 함수
+  const formatTime = (seconds: number) => {
+    const hrs = Math.floor(seconds / 3600);
+    const mins = Math.floor((seconds % 3600) / 60);
+    const secs = seconds % 60;
+    
+    if (hrs > 0) {
+      return `${hrs.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    } else {
+      return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    }
+  };
+
+  // 할일 완료 처리
+  const handleCompleteTask = () => {
+    if (selectedFocusTask) {
+      handleToggleTask(selectedFocusTask.id, true);
+      setSelectedFocusTask(null);
+      setShowCustomCompletionDialog(false);
+      setIsCustomTimerRunning(false);
+    }
+  };
 
   // 오늘 날짜의 모든 할일 가져오기 (날짜 필터 제거)
   const { data: allTasks = [], isLoading: tasksLoading } = useQuery({
@@ -1577,7 +1683,7 @@ export default function DailyPlanning() {
                 <CardHeader>
                   <CardTitle className="flex items-center space-x-2">
                     <Calendar className="h-5 w-5" />
-                    <span>시간 블록</span>
+                    <span>오늘의 중요 할일</span>
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
@@ -1591,12 +1697,19 @@ export default function DailyPlanning() {
                           tasksByPriority['A'].slice(0, 3).map((task: any) => {
                             const taskProject = projects?.find((p: any) => p.id === task.projectId);
                             return (
-                              <div key={task.id} className="flex items-center space-x-2 text-xs bg-gray-50 rounded p-2 border">
+                              <div 
+                                key={task.id} 
+                                className={`flex items-center space-x-2 text-xs bg-gray-50 rounded p-2 border cursor-pointer hover:bg-blue-50 transition-colors ${
+                                  selectedFocusTask?.id === task.id ? 'ring-2 ring-blue-500 bg-blue-100' : ''
+                                }`}
+                                onClick={() => handleFocusTaskClick(task)}
+                              >
                                 <Checkbox
                                   checked={task.completed}
                                   onCheckedChange={(checked) => {
                                     handleToggleTask(task.id, checked as boolean);
                                   }}
+                                  onClick={(e) => e.stopPropagation()}
                                   className="h-3 w-3"
                                 />
                                 
@@ -1836,58 +1949,90 @@ export default function DailyPlanning() {
                 <CardHeader>
                   <CardTitle className="flex items-center space-x-2">
                     <Clock className="h-5 w-5" />
-                    <span>포모도로 타이머</span>
+                    <span>집중관리 타이머</span>
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="text-center space-y-6">
-                  {/* Timer Display */}
-                  <div className="text-6xl font-mono font-bold text-gray-900">
-                    {String(minutes).padStart(2, '0')}:{String(seconds).padStart(2, '0')}
-                  </div>
-
-                  {/* Timer Type */}
-                  <div className="text-lg font-medium text-gray-600">
-                    {isBreak ? '휴식 시간' : '집중 시간'}
-                  </div>
-
-                  {/* Selected Time Block Info */}
-                  {selectedTimeBlock && (
+                  {/* Selected Task Display */}
+                  {selectedFocusTask && (
                     <div className="bg-blue-50 p-3 rounded-lg space-y-2">
-                      <div className="flex items-center justify-center space-x-2">
-                        <span className={`text-xs px-2 py-1 rounded-full ${
-                          selectedTimeBlock.type === 'focus' ? 'bg-blue-100 text-blue-700' :
-                          selectedTimeBlock.type === 'meeting' ? 'bg-green-100 text-green-700' :
-                          'bg-orange-100 text-orange-700'
-                        }`}>
-                          {selectedTimeBlock.type === 'focus' ? '집중' : 
-                           selectedTimeBlock.type === 'meeting' ? '회의' : '휴식'}
-                        </span>
-                        <span className="text-sm text-gray-600">
-                          {selectedTimeBlock.startTime} - {selectedTimeBlock.endTime}
-                        </span>
+                      <div className="text-sm font-medium text-gray-900">선택된 할일</div>
+                      <div className="text-lg font-bold text-blue-800">
+                        {selectedFocusTask.title}
                       </div>
-                      <div className="text-sm font-medium text-gray-900 text-center">
-                        {selectedTimeBlock.title}
-                      </div>
-                      {selectedTimeBlock.taskId && (
-                        <div className="text-xs text-gray-600 text-center">
-                          📝 {getTaskName(selectedTimeBlock.taskId)}
+                      {selectedFocusTask.coreValue && selectedFocusTask.coreValue !== 'none' && (
+                        <div className="text-xs text-gray-600">
+                          🎯 {selectedFocusTask.coreValue}
                         </div>
                       )}
                     </div>
                   )}
 
+                  {/* Time Setting */}
+                  {!isCustomTimerRunning && (
+                    <div className="space-y-3">
+                      <div className="text-sm font-medium text-gray-700">시간 설정</div>
+                      <div className="flex items-center justify-center space-x-2">
+                        <Select value={customTimerHours} onValueChange={setCustomTimerHours}>
+                          <SelectTrigger className="w-20">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {Array.from({ length: 24 }, (_, i) => (
+                              <SelectItem key={i} value={i.toString()}>
+                                {i}시간
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <Select value={customTimerMinutes} onValueChange={setCustomTimerMinutes}>
+                          <SelectTrigger className="w-20">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {Array.from({ length: 60 }, (_, i) => (
+                              <SelectItem key={i} value={i.toString()}>
+                                {i}분
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Timer Display */}
+                  <div className="text-6xl font-mono font-bold text-gray-900">
+                    {formatTime(customTimerSeconds)}
+                  </div>
+
+                  {/* Timer Status */}
+                  <div className="text-lg font-medium text-gray-600">
+                    {isCustomTimerRunning ? '집중 시간' : '준비 중'}
+                  </div>
+
                   {/* Controls */}
                   <div className="flex justify-center space-x-4">
+                    {!isCustomTimerRunning && customTimerSeconds === (parseInt(customTimerHours) * 3600 + parseInt(customTimerMinutes) * 60) ? (
+                      <Button
+                        onClick={startCustomTimer}
+                        size="lg"
+                        className="w-16 h-16 rounded-full"
+                        disabled={!selectedFocusTask}
+                      >
+                        <Play className="h-6 w-6" />
+                      </Button>
+                    ) : (
+                      <Button
+                        onClick={toggleCustomTimer}
+                        size="lg"
+                        className="w-16 h-16 rounded-full"
+                      >
+                        {isCustomTimerRunning ? <Pause className="h-6 w-6" /> : <Play className="h-6 w-6" />}
+                      </Button>
+                    )}
                     <Button
-                      onClick={isRunning ? pause : start}
-                      size="lg"
-                      className="w-16 h-16 rounded-full"
-                    >
-                      {isRunning ? <Pause className="h-6 w-6" /> : <Play className="h-6 w-6" />}
-                    </Button>
-                    <Button
-                      onClick={reset}
+                      onClick={resetCustomTimer}
                       variant="outline"
                       size="lg"
                       className="w-16 h-16 rounded-full"
@@ -1896,23 +2041,12 @@ export default function DailyPlanning() {
                     </Button>
                   </div>
 
-                  {/* Session Counter */}
-                  <div className="bg-gray-50 p-4 rounded-lg">
-                    <div className="text-sm text-gray-600">완료한 세션</div>
-                    <div className="text-2xl font-bold text-green-600">{completedSessions}</div>
-                  </div>
-
-                  {/* Quick Actions */}
-                  <div className="space-y-2">
-                    <Button
-                      onClick={handleCompleteTaskAndEndSession}
-                      disabled={!selectedTask}
-                      className="w-full"
-                    >
-                      <CheckCircle className="h-4 w-4 mr-2" />
-                      할일 완료 및 세션 종료
-                    </Button>
-                  </div>
+                  {/* Instructions */}
+                  {!selectedFocusTask && (
+                    <div className="text-sm text-gray-500 bg-yellow-50 p-3 rounded-lg">
+                      위의 중요한 할일 카드를 클릭하여 선택하세요
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </div>
@@ -2818,6 +2952,83 @@ export default function DailyPlanning() {
                 </div>
               </div>
             )}
+          </DialogContent>
+        </Dialog>
+
+        {/* 집중관리 완료 다이얼로그 */}
+        <Dialog open={showCustomCompletionDialog} onOpenChange={setShowCustomCompletionDialog}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>집중 시간 완료!</DialogTitle>
+              <DialogDescription>
+                설정한 시간이 모두 완료되었습니다. 다음 작업을 선택해주세요.
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="space-y-4">
+              {selectedFocusTask && (
+                <div className="bg-blue-50 p-3 rounded-lg">
+                  <div className="text-sm font-medium text-gray-900">완료한 할일</div>
+                  <div className="text-lg font-bold text-blue-800">
+                    {selectedFocusTask.title}
+                  </div>
+                </div>
+              )}
+
+              <div className="flex flex-col space-y-2">
+                <Button
+                  onClick={handleCompleteTask}
+                  className="w-full"
+                >
+                  <CheckCircle className="h-4 w-4 mr-2" />
+                  할일 완료
+                </Button>
+                
+                <div className="flex space-x-2">
+                  <Button
+                    onClick={() => {
+                      setCustomTimerSeconds(customTimerSeconds + 600); // 10분 추가
+                      setShowCustomCompletionDialog(false);
+                      setIsCustomTimerRunning(true);
+                    }}
+                    variant="outline"
+                    className="flex-1"
+                  >
+                    +10분
+                  </Button>
+                  <Button
+                    onClick={() => {
+                      setCustomTimerSeconds(customTimerSeconds + 900); // 15분 추가
+                      setShowCustomCompletionDialog(false);
+                      setIsCustomTimerRunning(true);
+                    }}
+                    variant="outline"
+                    className="flex-1"
+                  >
+                    +15분
+                  </Button>
+                  <Button
+                    onClick={() => {
+                      setCustomTimerSeconds(customTimerSeconds + 1500); // 25분 추가
+                      setShowCustomCompletionDialog(false);
+                      setIsCustomTimerRunning(true);
+                    }}
+                    variant="outline"
+                    className="flex-1"
+                  >
+                    +25분
+                  </Button>
+                </div>
+
+                <Button
+                  onClick={() => setShowCustomCompletionDialog(false)}
+                  variant="outline"
+                  className="w-full"
+                >
+                  나중에 결정
+                </Button>
+              </div>
+            </div>
           </DialogContent>
         </Dialog>
 
