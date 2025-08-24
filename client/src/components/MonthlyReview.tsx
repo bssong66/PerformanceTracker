@@ -631,7 +631,7 @@ export default function MonthlyReview() {
                   </div>
                   <div className="space-y-1 max-h-26 overflow-y-auto">
                     {(habits as any[]).map((habit: any, index: number) => (
-                      <div key={habit.id} className="flex items-center justify-between py-0.5 px-1 bg-gradient-to-r from-gray-50 to-gray-100 rounded border border-gray-200 hover:shadow-sm transition-shadow">
+                      <div key={habit.id} className="flex items-center justify-between py-0 px-1 bg-gradient-to-r from-gray-50 to-gray-100 rounded border border-gray-200 hover:shadow-sm transition-shadow">
                         <div className="flex items-center space-x-2">
                           {getHabitIcon(habit.name)}
                           <span className="text-sm font-medium text-gray-700">{habit.name}</span>
