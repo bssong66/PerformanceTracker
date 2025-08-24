@@ -2459,28 +2459,10 @@ export default function DailyPlanning() {
         <Dialog open={showEventEditDialog} onOpenChange={setShowEventEditDialog}>
           <DialogContent className="sm:max-w-lg">
             <DialogHeader>
-              <div className="flex items-center justify-between">
-                <div>
-                  <DialogTitle>일정 수정</DialogTitle>
-                  <DialogDescription>
-                    일정 정보를 수정할 수 있습니다.
-                  </DialogDescription>
-                </div>
-                <Button
-                  onClick={() => {
-                    if (editingEvent) {
-                      deleteEventMutation.mutate(editingEvent.id);
-                      setShowEventEditDialog(false);
-                      setEditingEvent(null);
-                    }
-                  }}
-                  size="sm"
-                  variant="ghost"
-                  className="h-8 w-8 p-0 text-red-500 hover:text-red-700"
-                >
-                  <X className="h-4 w-4" />
-                </Button>
-              </div>
+              <DialogTitle>일정 수정</DialogTitle>
+              <DialogDescription>
+                일정 정보를 수정할 수 있습니다.
+              </DialogDescription>
             </DialogHeader>
 
             {editingEvent && (
@@ -2676,28 +2658,10 @@ export default function DailyPlanning() {
         <Dialog open={showTaskEditDialog} onOpenChange={setShowTaskEditDialog}>
           <DialogContent className="sm:max-w-lg">
             <DialogHeader>
-              <div className="flex items-center justify-between">
-                <div>
-                  <DialogTitle>할일 수정</DialogTitle>
-                  <DialogDescription>
-                    할일 정보를 수정할 수 있습니다.
-                  </DialogDescription>
-                </div>
-                <Button
-                  onClick={() => {
-                    if (editingTask) {
-                      deleteTaskMutation.mutate(editingTask.id);
-                      setShowTaskEditDialog(false);
-                      setEditingTask(null);
-                    }
-                  }}
-                  size="sm"
-                  variant="ghost"
-                  className="h-8 w-8 p-0 text-red-500 hover:text-red-700"
-                >
-                  <X className="h-4 w-4" />
-                </Button>
-              </div>
+              <DialogTitle>할일 수정</DialogTitle>
+              <DialogDescription>
+                할일 정보를 수정할 수 있습니다.
+              </DialogDescription>
             </DialogHeader>
 
             {editingTask && (
