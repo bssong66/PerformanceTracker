@@ -1580,7 +1580,7 @@ export default function DailyPlanning() {
                     <span>시간 블록</span>
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-4 pt-[15px]">
+                <CardContent className="space-y-4">
                   <div className="flex items-center justify-end mb-3">
                     <div className="flex items-center space-x-2">
                       {yesterdayTimeBlocks?.length > 0 && (timeBlocks?.length || 0) === 0 && (
