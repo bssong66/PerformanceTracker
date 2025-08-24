@@ -208,6 +208,7 @@ export default function DailyPlanning() {
       }).then(res => res.json()),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['events', user!.id, today] });
+      queryClient.invalidateQueries({ queryKey: ['/api/events'] });
     },
   });
 
@@ -220,6 +221,7 @@ export default function DailyPlanning() {
       }).then(res => res.json()),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['events', user!.id, today] });
+      queryClient.invalidateQueries({ queryKey: ['/api/events'] });
       setShowEventEditDialog(false);
       setEditingEvent(null);
       toast({
@@ -243,6 +245,7 @@ export default function DailyPlanning() {
       }).then(res => res.json()),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['events', user!.id, today] });
+      queryClient.invalidateQueries({ queryKey: ['/api/events'] });
       toast({
         title: "일정 삭제",
         description: "일정이 삭제되었습니다.",
@@ -271,6 +274,7 @@ export default function DailyPlanning() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['events', user!.id, today] });
+      queryClient.invalidateQueries({ queryKey: ['/api/events'] });
       setNewEvent("");
       setStartHour("9");
       setStartMinute("00");
