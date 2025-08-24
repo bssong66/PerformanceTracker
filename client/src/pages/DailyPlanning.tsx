@@ -1241,9 +1241,17 @@ export default function DailyPlanning() {
                             </SelectTrigger>
                             <SelectContent>
                               <SelectItem value="00">00</SelectItem>
+                              <SelectItem value="05">05</SelectItem>
+                              <SelectItem value="10">10</SelectItem>
                               <SelectItem value="15">15</SelectItem>
+                              <SelectItem value="20">20</SelectItem>
+                              <SelectItem value="25">25</SelectItem>
                               <SelectItem value="30">30</SelectItem>
+                              <SelectItem value="35">35</SelectItem>
+                              <SelectItem value="40">40</SelectItem>
                               <SelectItem value="45">45</SelectItem>
+                              <SelectItem value="50">50</SelectItem>
+                              <SelectItem value="55">55</SelectItem>
                             </SelectContent>
                           </Select>
                           <Select value={startPeriod} onValueChange={(value: 'AM' | 'PM') => setStartPeriod(value)}>
@@ -1278,9 +1286,17 @@ export default function DailyPlanning() {
                             </SelectTrigger>
                             <SelectContent>
                               <SelectItem value="00">00</SelectItem>
+                              <SelectItem value="05">05</SelectItem>
+                              <SelectItem value="10">10</SelectItem>
                               <SelectItem value="15">15</SelectItem>
+                              <SelectItem value="20">20</SelectItem>
+                              <SelectItem value="25">25</SelectItem>
                               <SelectItem value="30">30</SelectItem>
+                              <SelectItem value="35">35</SelectItem>
+                              <SelectItem value="40">40</SelectItem>
                               <SelectItem value="45">45</SelectItem>
+                              <SelectItem value="50">50</SelectItem>
+                              <SelectItem value="55">55</SelectItem>
                             </SelectContent>
                           </Select>
                           <Select value={endPeriod} onValueChange={(value: 'AM' | 'PM') => setEndPeriod(value)}>
