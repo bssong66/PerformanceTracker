@@ -52,8 +52,6 @@ export default function WeeklyReview() {
 
 
   const [reflection, setReflection] = useState("");
-  const [workHours, setWorkHours] = useState(0);
-  const [personalHours, setPersonalHours] = useState(0);
   const [valueAlignments, setValueAlignments] = useState([85, 90, 65]);
   const [selectedImages, setSelectedImages] = useState<File[]>([]);
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
@@ -544,34 +542,6 @@ export default function WeeklyReview() {
                   </div>
                 </div>
 
-                {/* Work-Life Balance */}
-                <div>
-                  <div className="flex items-center justify-between mb-4">
-                    <h4 className="text-sm font-semibold text-gray-900">일과 개인 시간 균형</h4>
-                  </div>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="relative p-1.5 bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg border border-blue-200 shadow-sm">
-                      <div className="text-center">
-                        <div className="text-sm text-blue-700 font-normal">
-                          {workHours} 업무 시간
-                        </div>
-                      </div>
-                      <div className="absolute top-1 right-1">
-                        <div className="w-1.5 h-1.5 bg-blue-400 rounded-full"></div>
-                      </div>
-                    </div>
-                    <div className="relative p-1.5 bg-gradient-to-br from-green-50 to-green-100 rounded-lg border border-green-200 shadow-sm">
-                      <div className="text-center">
-                        <div className="text-green-700 font-normal text-[14px]">
-                          {personalHours} 개인 시간
-                        </div>
-                      </div>
-                      <div className="absolute top-1 right-1">
-                        <div className="w-1.5 h-1.5 bg-green-400 rounded-full"></div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
 
                 {/* Value Alignment Check */}
                 <div>
