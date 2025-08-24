@@ -82,6 +82,10 @@ export default function DailyPlanning() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [notificationPermission, setNotificationPermission] = useState<NotificationPermission>('default');
 
+  // Event Edit Dialog states
+  const [showEventEditDialog, setShowEventEditDialog] = useState(false);
+  const [editingEvent, setEditingEvent] = useState<any>(null);
+
 
   const timer = useTimer(0); // 테스트용 10초
   const { minutes, seconds, isRunning, isBreak, isCompleted, start, pause, reset, startBreak, extendSession, acknowledgeCompletion } = timer;
@@ -204,6 +208,31 @@ export default function DailyPlanning() {
       }).then(res => res.json()),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['events', user!.id, today] });
+    },
+  });
+
+  const editEventMutation = useMutation({
+    mutationFn: ({ id, updates }: { id: number; updates: any }) =>
+      fetch(`/api/events/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updates)
+      }).then(res => res.json()),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['events', user!.id, today] });
+      setShowEventEditDialog(false);
+      setEditingEvent(null);
+      toast({
+        title: "일정 수정",
+        description: "일정이 수정되었습니다.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "오류",
+        description: "일정 수정에 실패했습니다.",
+        variant: "destructive",
+      });
     },
   });
 
@@ -491,6 +520,82 @@ export default function DailyPlanning() {
         description: "훌륭합니다! 다음 할일로 넘어가세요.",
       });
     }
+  };
+
+  const handleEventClick = (event: any) => {
+    // Convert 24-hour format to 12-hour format
+    const convertTo12Hour = (time: string) => {
+      if (!time) return { hour: "9", minute: "00", period: "AM" as const };
+      const [hour, minute] = time.split(':');
+      const hour24 = parseInt(hour);
+      let hour12 = hour24;
+      let period: 'AM' | 'PM' = 'AM';
+      
+      if (hour24 === 0) {
+        hour12 = 12;
+        period = 'AM';
+      } else if (hour24 === 12) {
+        hour12 = 12;
+        period = 'PM';
+      } else if (hour24 > 12) {
+        hour12 = hour24 - 12;
+        period = 'PM';
+      }
+      
+      return { hour: hour12.toString(), minute, period };
+    };
+
+    const startTime = convertTo12Hour(event.startTime);
+    const endTime = convertTo12Hour(event.endTime);
+
+    setEditingEvent({
+      ...event,
+      editStartHour: startTime.hour,
+      editStartMinute: startTime.minute,
+      editStartPeriod: startTime.period,
+      editEndHour: endTime.hour,
+      editEndMinute: endTime.minute,
+      editEndPeriod: endTime.period,
+    });
+    setShowEventEditDialog(true);
+  };
+
+  const handleSaveEditedEvent = () => {
+    if (!editingEvent || !editingEvent.title?.trim()) {
+      toast({
+        title: "입력 오류",
+        description: "일정 제목을 입력해주세요.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Convert 12-hour format to 24-hour format
+    const convertTo24Hour = (hour: string, minute: string, period: 'AM' | 'PM') => {
+      let hour24 = parseInt(hour);
+      if (period === 'PM' && hour24 !== 12) {
+        hour24 += 12;
+      } else if (period === 'AM' && hour24 === 12) {
+        hour24 = 0;
+      }
+      return `${hour24.toString().padStart(2, '0')}:${minute}`;
+    };
+
+    const startTime = convertTo24Hour(editingEvent.editStartHour, editingEvent.editStartMinute, editingEvent.editStartPeriod);
+    const endTime = convertTo24Hour(editingEvent.editEndHour, editingEvent.editEndMinute, editingEvent.editEndPeriod);
+
+    editEventMutation.mutate({
+      id: editingEvent.id,
+      updates: {
+        title: editingEvent.title.trim(),
+        startTime: startTime,
+        endTime: endTime,
+        priority: editingEvent.priority,
+        coreValue: editingEvent.coreValue,
+        annualGoal: editingEvent.annualGoal,
+        color: editingEvent.priority === 'high' ? '#ef4444' : editingEvent.priority === 'low' ? '#64748B' : '#16a34a',
+      }
+    });
   };
 
   const handleToggleEvent = (id: number, completed: boolean) => {
@@ -1217,15 +1322,20 @@ export default function DailyPlanning() {
                         <p className="text-xs text-gray-400 italic">예정된 일정이 없습니다.</p>
                       ) : (
                         todayEvents.map((event: any) => (
-                          <div key={event.id} className={`flex items-center space-x-2 p-2 rounded border ${
-                            event.completed 
-                              ? 'bg-gray-50 border-gray-200 opacity-75' 
-                              : 'bg-green-50 border-green-200'
-                          }`}>
+                          <div 
+                            key={event.id} 
+                            className={`flex items-center space-x-2 p-2 rounded border cursor-pointer hover:shadow-sm transition-shadow ${
+                              event.completed 
+                                ? 'bg-gray-50 border-gray-200 opacity-75' 
+                                : 'bg-green-50 border-green-200'
+                            }`}
+                            onClick={() => handleEventClick(event)}
+                          >
                             <Checkbox
                               id={`event-${event.id}`}
                               checked={event.completed || false}
                               onCheckedChange={(checked) => handleToggleEvent(event.id, checked === true)}
+                              onClick={(e) => e.stopPropagation()}
                               className="w-4 h-4"
                             />
                             <div className="flex-1">
@@ -2219,7 +2329,204 @@ export default function DailyPlanning() {
           </DialogContent>
         </Dialog>
 
+        {/* 일정 편집 다이얼로그 */}
+        <Dialog open={showEventEditDialog} onOpenChange={setShowEventEditDialog}>
+          <DialogContent className="sm:max-w-lg">
+            <DialogHeader>
+              <DialogTitle>일정 수정</DialogTitle>
+              <DialogDescription>
+                일정 정보를 수정할 수 있습니다.
+              </DialogDescription>
+            </DialogHeader>
 
+            {editingEvent && (
+              <div className="space-y-4">
+                {/* Event Title */}
+                <div>
+                  <Label className="text-sm font-medium">일정 제목</Label>
+                  <Input
+                    value={editingEvent.title || ""}
+                    onChange={(e) => setEditingEvent(prev => ({ ...prev, title: e.target.value }))}
+                    placeholder="일정 제목을 입력하세요"
+                  />
+                </div>
+
+                {/* Time Selection */}
+                <div className="grid grid-cols-2 gap-3">
+                  {/* Start Time */}
+                  <div className="space-y-1">
+                    <Label className="text-xs text-gray-600">시작 시간</Label>
+                    <div className="flex space-x-1">
+                      <Select 
+                        value={editingEvent.editStartHour} 
+                        onValueChange={(value) => setEditingEvent(prev => ({ ...prev, editStartHour: value }))}
+                      >
+                        <SelectTrigger className="w-16 h-8 text-xs">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {Array.from({length: 12}, (_, i) => i + 1).map(hour => (
+                            <SelectItem key={hour} value={hour.toString()}>{hour}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <Select 
+                        value={editingEvent.editStartMinute} 
+                        onValueChange={(value) => setEditingEvent(prev => ({ ...prev, editStartMinute: value }))}
+                      >
+                        <SelectTrigger className="w-16 h-8 text-xs">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="00">00</SelectItem>
+                          <SelectItem value="15">15</SelectItem>
+                          <SelectItem value="30">30</SelectItem>
+                          <SelectItem value="45">45</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <Select 
+                        value={editingEvent.editStartPeriod} 
+                        onValueChange={(value: 'AM' | 'PM') => setEditingEvent(prev => ({ ...prev, editStartPeriod: value }))}
+                      >
+                        <SelectTrigger className="w-16 h-8 text-xs">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="AM">AM</SelectItem>
+                          <SelectItem value="PM">PM</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                  
+                  {/* End Time */}
+                  <div className="space-y-1">
+                    <Label className="text-xs text-gray-600">종료 시간</Label>
+                    <div className="flex space-x-1">
+                      <Select 
+                        value={editingEvent.editEndHour} 
+                        onValueChange={(value) => setEditingEvent(prev => ({ ...prev, editEndHour: value }))}
+                      >
+                        <SelectTrigger className="w-16 h-8 text-xs">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {Array.from({length: 12}, (_, i) => i + 1).map(hour => (
+                            <SelectItem key={hour} value={hour.toString()}>{hour}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <Select 
+                        value={editingEvent.editEndMinute} 
+                        onValueChange={(value) => setEditingEvent(prev => ({ ...prev, editEndMinute: value }))}
+                      >
+                        <SelectTrigger className="w-16 h-8 text-xs">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="00">00</SelectItem>
+                          <SelectItem value="15">15</SelectItem>
+                          <SelectItem value="30">30</SelectItem>
+                          <SelectItem value="45">45</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <Select 
+                        value={editingEvent.editEndPeriod} 
+                        onValueChange={(value: 'AM' | 'PM') => setEditingEvent(prev => ({ ...prev, editEndPeriod: value }))}
+                      >
+                        <SelectTrigger className="w-16 h-8 text-xs">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="AM">AM</SelectItem>
+                          <SelectItem value="PM">PM</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Priority Selection */}
+                <div>
+                  <Label className="text-sm font-medium">우선순위</Label>
+                  <Select 
+                    value={editingEvent.priority} 
+                    onValueChange={(value: 'high' | 'medium' | 'low') => setEditingEvent(prev => ({ ...prev, priority: value }))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="high">높음</SelectItem>
+                      <SelectItem value="medium">중간</SelectItem>
+                      <SelectItem value="low">낮음</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Core Value and Annual Goal */}
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label className="text-sm font-medium">핵심가치</Label>
+                    <Select 
+                      value={editingEvent.coreValue || 'none'} 
+                      onValueChange={(value) => setEditingEvent(prev => ({ ...prev, coreValue: value === 'none' ? null : value }))}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="핵심가치" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">선택 안함</SelectItem>
+                        {foundation?.coreValue1 && (
+                          <SelectItem value={foundation.coreValue1}>{foundation.coreValue1}</SelectItem>
+                        )}
+                        {foundation?.coreValue2 && (
+                          <SelectItem value={foundation.coreValue2}>{foundation.coreValue2}</SelectItem>
+                        )}
+                        {foundation?.coreValue3 && (
+                          <SelectItem value={foundation.coreValue3}>{foundation.coreValue3}</SelectItem>
+                        )}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label className="text-sm font-medium">연간목표</Label>
+                    <Select 
+                      value={editingEvent.annualGoal || 'none'} 
+                      onValueChange={(value) => setEditingEvent(prev => ({ ...prev, annualGoal: value === 'none' ? null : value }))}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="연간목표" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">선택 안함</SelectItem>
+                        {annualGoals.map((goal: any) => (
+                          <SelectItem key={goal.id} value={goal.title}>{goal.title}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                {/* Action Buttons */}
+                <div className="flex justify-end space-x-2">
+                  <Button
+                    onClick={() => setShowEventEditDialog(false)}
+                    variant="outline"
+                  >
+                    취소
+                  </Button>
+                  <Button
+                    onClick={handleSaveEditedEvent}
+                    disabled={editEventMutation.isPending}
+                  >
+                    저장
+                  </Button>
+                </div>
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
 
       </div>
     </div>
