@@ -90,9 +90,10 @@ function TaskManagement({ highlightTaskId }: TaskManagementProps) {
 
   // Fetch foundations for core values
   const { data: foundation, refetch: refetchFoundation, isLoading: foundationLoading } = useQuery({
-    queryKey: ['foundation', user?.id],
+    queryKey: ['foundation', user?.id, new Date().getFullYear()],
     queryFn: async () => {
-      const response = await fetch(`/api/foundation/${user?.id}`);
+      const currentYear = new Date().getFullYear();
+      const response = await fetch(`/api/foundation/${user?.id}?year=${currentYear}`);
       if (!response.ok && response.status !== 404) {
         throw new Error('Failed to fetch foundation');
       }

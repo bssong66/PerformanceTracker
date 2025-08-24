@@ -69,24 +69,32 @@ export default function WeeklyReview() {
   });
 
   const { data: foundation } = useQuery({
-    queryKey: ['/api/foundation/auth'],
+    queryKey: ['foundation', 'auth', new Date().getFullYear()],
+    queryFn: async () => {
+      const currentYear = new Date().getFullYear();
+      const response = await fetch(`/api/foundation/auth?year=${currentYear}`);
+      if (!response.ok) {
+        return null;
+      }
+      return response.json();
+    },
     retry: false,
   });
 
   const { data: habits = [] } = useQuery({
-    queryKey: ['/api/habits/1'],
+    queryKey: ['/api/habits/auth'],
     retry: false,
   });
 
   // Get tasks for the past week to calculate completion stats
   const { data: weekTasks = [] } = useQuery({
-    queryKey: [`/api/tasks/1?startDate=${format(subDays(weekStart, 7), 'yyyy-MM-dd')}&endDate=${format(weekEnd, 'yyyy-MM-dd')}`],
+    queryKey: [`/api/tasks/auth?startDate=${format(subDays(weekStart, 7), 'yyyy-MM-dd')}&endDate=${format(weekEnd, 'yyyy-MM-dd')}`],
     retry: false,
   });
 
   // Get projects to display project names with tasks
   const { data: projects = [] } = useQuery({
-    queryKey: ['/api/projects/1'],
+    queryKey: ['/api/projects/auth'],
     retry: false,
   });
 
@@ -97,7 +105,7 @@ export default function WeeklyReview() {
       const days = [];
       for (let i = 0; i < 7; i++) {
         const date = format(subDays(weekStart, 7 - i), 'yyyy-MM-dd');
-        const dayBlocks = await fetch(`/api/time-blocks?date=${date}`).then(res => res.json());
+        const dayBlocks = await fetch(`/api/time-blocks/auth/${date}`).then(res => res.json());
         days.push(...dayBlocks);
       }
       return days;

@@ -66,9 +66,10 @@ export default function HabitManagement() {
 
   // Fetch foundation for core values
   const { data: foundation } = useQuery({
-    queryKey: ['foundation', user?.id],
+    queryKey: ['foundation', user?.id, new Date().getFullYear()],
     queryFn: async () => {
-      const response = await fetch(`/api/foundation/${user?.id}`);
+      const currentYear = new Date().getFullYear();
+      const response = await fetch(`/api/foundation/${user?.id}?year=${currentYear}`);
       if (!response.ok) {
         return null;
       }
