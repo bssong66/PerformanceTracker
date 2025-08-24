@@ -1416,7 +1416,6 @@ export default function DailyPlanning() {
                   <div className="mb-4">
                     <div className="flex items-center space-x-2 mb-2">
                       <div className="w-1 h-4 bg-gradient-to-b from-green-500 to-green-600 rounded-full"></div>
-                      <h4 className="text-sm font-semibold text-gray-800">오늘의 일정</h4>
                       <span className="text-xs text-gray-500">
                         ({todayEvents.length}개)
                       </span>
