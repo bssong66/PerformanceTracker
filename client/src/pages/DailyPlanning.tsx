@@ -567,11 +567,11 @@ export default function DailyPlanning() {
   const tasks = todayTasks;
   const focusTasks = todayTasks;
 
-  // Group tasks by priority
+  // Group tasks by priority - 완료된 할일도 항상 표시, 토글로만 제어
   const tasksByPriority = {
-    A: (tasks as any[]).filter((t: any) => t.priority === 'A' && (showCompletedTasks || !t.completed)),
-    B: (tasks as any[]).filter((t: any) => t.priority === 'B' && (showCompletedTasks || !t.completed)),
-    C: (tasks as any[]).filter((t: any) => t.priority === 'C' && (showCompletedTasks || !t.completed)),
+    A: (tasks as any[]).filter((t: any) => t.priority === 'A').filter((t: any) => showCompletedTasks || !t.completed),
+    B: (tasks as any[]).filter((t: any) => t.priority === 'B').filter((t: any) => showCompletedTasks || !t.completed),
+    C: (tasks as any[]).filter((t: any) => t.priority === 'C').filter((t: any) => showCompletedTasks || !t.completed),
   };
 
   // Focus Mode functions
@@ -1729,9 +1729,8 @@ export default function DailyPlanning() {
                         {(() => {
                           const today = format(new Date(), 'yyyy-MM-dd');
                           const todayTasks = allTasks.filter((task: any) => 
-                            (task.startDate === today || task.endDate === today) && 
-                            (showCompletedTasks || !task.completed)
-                          );
+                            task.startDate === today || task.endDate === today
+                          ).filter((task: any) => showCompletedTasks || !task.completed);
                           
                           return todayTasks.length === 0 ? (
                             <p className="text-xs text-gray-400 italic">오늘 일정이 잡힌 할일이 없습니다.</p>
