@@ -666,7 +666,7 @@ export default function WeeklyReview() {
                     <Zap className="h-4 w-4 text-amber-500" />
                     <h4 className="text-sm font-semibold text-gray-900">습관 실행률</h4>
                   </div>
-                  <div className="space-y-1 max-h-26 overflow-y-auto">
+                  <div className={`space-y-1 overflow-y-auto ${(habits as any[]).length > 4 ? 'max-h-20' : 'max-h-auto'}`}>
                     {(habits as any[]).map((habit: any, index: number) => (
                       <div key={habit.id} className="flex items-center justify-between py-0 px-1 bg-gradient-to-r from-gray-50 to-gray-100 rounded border border-gray-200 hover:shadow-sm transition-shadow">
                         <div className="flex items-center space-x-2">
