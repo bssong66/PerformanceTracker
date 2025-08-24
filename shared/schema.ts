@@ -171,6 +171,8 @@ export const weeklyReviews = pgTable("weekly_reviews", {
   valueAlignment2: integer("value_alignment_2").default(0), // 0-100
   valueAlignment3: integer("value_alignment_3").default(0), // 0-100
   imageUrls: text("image_urls").array(),
+  fileUrls: text("file_urls").array(), // For file download URLs
+  fileNames: text("file_names").array(), // For file names
   createdAt: timestamp("created_at").defaultNow(),
 });
 

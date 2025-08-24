@@ -9,7 +9,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { ProgressBar } from "@/components/ProgressBar";
 import { PriorityBadge } from "@/components/PriorityBadge";
-import { Save, TrendingUp, BarChart3, Target, Plus, X, ChevronLeft, ChevronRight, Siren, Calendar as CalendarIcon, Activity, Heart, Dumbbell, Coffee, Book, Moon, Sunrise, Timer, Zap, Type, Hash, List, Clock, Minus } from "lucide-react";
+import { Save, TrendingUp, BarChart3, Target, Plus, X, ChevronLeft, ChevronRight, Siren, Calendar as CalendarIcon, Activity, Heart, Dumbbell, Coffee, Book, Moon, Sunrise, Timer, Zap, Type, Hash, List, Clock, Minus, FileText, Download } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { api, saveWeeklyReview } from "@/lib/api";
 import { queryClient } from "@/lib/queryClient";
@@ -57,6 +57,10 @@ export default function WeeklyReview() {
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [showImageViewer, setShowImageViewer] = useState(false);
+  
+  // 파일 업로드 관련 상태
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [fileUrls, setFileUrls] = useState<string[]>([]);
 
   const { data: weeklyReview } = useQuery({
     queryKey: ['/api/weekly-reviews', weekStartDate],
@@ -275,6 +279,35 @@ export default function WeeklyReview() {
     }
   };
 
+  // 파일 선택 핸들러
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length > 0) {
+      setSelectedFiles(prev => [...prev, ...files]);
+      
+      // 파일 URL 생성 (다운로드용)
+      files.forEach(file => {
+        const fileUrl = URL.createObjectURL(file);
+        setFileUrls(prev => [...prev, fileUrl]);
+      });
+    }
+  };
+
+  // 파일 제거 핸들러
+  const handleRemoveFile = (index: number) => {
+    setSelectedFiles(prev => prev.filter((_, i) => i !== index));
+    setFileUrls(prev => prev.filter((_, i) => i !== index));
+  };
+
+  // 파일 크기 포맷팅 함수
+  const formatFileSize = (bytes: number) => {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  };
+
   // Auto-resize textarea
   const handleReflectionChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const textarea = e.target;
@@ -401,23 +434,32 @@ export default function WeeklyReview() {
   useEffect(() => {
     if (weeklyReview) {
       setReflection((weeklyReview as any).reflection || "");
-      // Only override calculated hours if they exist in saved review
-      if ((weeklyReview as any).workHours !== undefined) {
-        setWorkHours((weeklyReview as any).workHours);
-      }
-      if ((weeklyReview as any).personalHours !== undefined) {
-        setPersonalHours((weeklyReview as any).personalHours);
-      }
       setValueAlignments([
         (weeklyReview as any).valueAlignment1 || 0,
         (weeklyReview as any).valueAlignment2 || 0,
         (weeklyReview as any).valueAlignment3 || 0,
       ]);
-      if ((weeklyReview as any).imageUrls) {
-        setImagePreviews((weeklyReview as any).imageUrls);
+      
+      const savedImageUrls = (weeklyReview as any).imageUrls;
+      if (savedImageUrls && savedImageUrls.length > 0) {
+        setImagePreviews(savedImageUrls);
+      }
+      
+      const savedFileUrls = (weeklyReview as any).fileUrls;
+      const savedFileNames = (weeklyReview as any).fileNames;
+      if (savedFileUrls && savedFileNames && savedFileNames.length > 0) {
+        setFileUrls(savedFileUrls);
+        
+        // 저장된 파일을 표시하기 위한 Mock File 객체 생성
+        const mockFiles = savedFileNames.map((name: string) => {
+          const file = new File([], name, { type: 'application/octet-stream' });
+          Object.defineProperty(file, 'size', { value: 0, writable: false });
+          return file;
+        });
+        setSelectedFiles(mockFiles);
       }
     }
-  }, [weeklyReview]);
+  }, [weeklyReview?.id]); // weeklyReview.id만 의존성으로 사용하여 무한 루프 방지
 
   const saveReviewMutation = useMutation({
     mutationFn: saveWeeklyReview,
@@ -444,13 +486,13 @@ export default function WeeklyReview() {
   const handleSaveReview = () => {
     saveReviewMutation.mutate({
       weekStartDate,
-      workHours,
-      personalHours,
       reflection,
       valueAlignment1: valueAlignments[0],
       valueAlignment2: valueAlignments[1],
       valueAlignment3: valueAlignments[2],
       imageUrls: imagePreviews,
+      fileUrls: fileUrls,
+      fileNames: selectedFiles.map(file => file.name)
     });
   };
 
@@ -777,9 +819,10 @@ export default function WeeklyReview() {
                     style={{ height: 'auto' }}
                   />
                   
-                  {/* Image Upload */}
+                  {/* File Upload */}
                   <div className="mt-4">
-                    <div className="mb-2">
+                    <div className="mb-2 flex gap-2">
+                      {/* 이미지 업로드 */}
                       <input
                         type="file"
                         id="weekly-image-upload"
@@ -797,11 +840,30 @@ export default function WeeklyReview() {
                         <Plus className="h-4 w-4 mr-1" />
                         이미지 추가
                       </Button>
+                      
+                      {/* 파일 업로드 */}
+                      <input
+                        type="file"
+                        id="weekly-file-upload"
+                        multiple
+                        onChange={handleFileSelect}
+                        className="hidden"
+                      />
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => document.getElementById('weekly-file-upload')?.click()}
+                        className="h-8 px-3 text-sm"
+                      >
+                        <FileText className="h-4 w-4 mr-1" />
+                        파일 추가
+                      </Button>
                     </div>
                     
                     {/* Image Previews */}
                     {imagePreviews.length > 0 && (
-                      <div className="space-y-2">
+                      <div className="space-y-2 mb-4">
+                        <h5 className="text-sm font-medium text-gray-700">이미지</h5>
                         <div className="flex flex-wrap gap-2">
                           {imagePreviews.map((preview, index) => (
                             <div key={index} className="relative group">
@@ -820,6 +882,56 @@ export default function WeeklyReview() {
                               >
                                 ×
                               </button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    
+                    {/* File List */}
+                    {selectedFiles.length > 0 && (
+                      <div className="space-y-2">
+                        <h5 className="text-sm font-medium text-gray-700">첨부 파일</h5>
+                        <div className="space-y-2">
+                          {selectedFiles.map((file, index) => (
+                            <div key={index} className="flex items-center justify-between p-2 bg-gray-50 rounded-lg border">
+                              <div className="flex items-center space-x-3 flex-1">
+                                <FileText className="h-4 w-4 text-gray-500" />
+                                <div className="flex-1 min-w-0">
+                                  <div className="text-sm font-medium text-gray-900 truncate">
+                                    {file.name}
+                                  </div>
+                                  <div className="text-xs text-gray-500">
+                                    {file.size > 0 ? formatFileSize(file.size) : '저장된 파일'}
+                                  </div>
+                                </div>
+                              </div>
+                              <div className="flex items-center space-x-1">
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => {
+                                    const url = fileUrls[index];
+                                    const a = document.createElement('a');
+                                    a.href = url;
+                                    a.download = file.name;
+                                    a.click();
+                                  }}
+                                  className="h-6 w-6 p-0"
+                                  title="다운로드"
+                                >
+                                  <Download className="h-3 w-3" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => handleRemoveFile(index)}
+                                  className="h-6 w-6 p-0 text-red-500 hover:text-red-700"
+                                  title="제거"
+                                >
+                                  <X className="h-3 w-3" />
+                                </Button>
+                              </div>
                             </div>
                           ))}
                         </div>
