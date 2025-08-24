@@ -1581,7 +1581,6 @@ export default function DailyPlanning() {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="flex items-center justify-between mb-3">
-                    <h4 className="text-sm font-medium text-gray-900">오늘의 일정</h4>
                     <div className="flex items-center space-x-2">
                       {yesterdayTimeBlocks?.length > 0 && (timeBlocks?.length || 0) === 0 && (
                         <Button
