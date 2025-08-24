@@ -662,9 +662,43 @@ export default function WeeklyReview() {
               <CardContent className="space-y-6 pt-6">
                 {/* Habit Summary */}
                 <div>
-                  <div className="flex items-center space-x-2 mb-4">
-                    <Zap className="h-4 w-4 text-amber-500" />
-                    <h4 className="text-sm font-semibold text-gray-900">습관 실행률</h4>
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center space-x-2">
+                      <Zap className="h-4 w-4 text-amber-500" />
+                      <h4 className="text-sm font-semibold text-gray-900">습관 실행률</h4>
+                    </div>
+                    
+                    {/* Overall Habit Completion Rate */}
+                    {(habits as any[]).length > 0 && (() => {
+                      let totalCompletionRate = 0;
+                      let habitCount = 0;
+                      
+                      (habits as any[]).forEach((habit: any) => {
+                        const habitLogsForHabit = (weekHabitLogs as any[]).filter((log: any) => log.habitId === habit.id && log.completed);
+                        const completedDays = habitLogsForHabit.length;
+                        const completionRate = Math.round((completedDays / 7) * 100);
+                        totalCompletionRate += completionRate;
+                        habitCount++;
+                      });
+                      
+                      const overallRate = habitCount > 0 ? Math.round(totalCompletionRate / habitCount) : 0;
+                      
+                      return (
+                        <div className="flex items-center space-x-2">
+                          <span className="text-xs text-gray-600 font-medium">{overallRate}%</span>
+                          <div className="w-16 h-2 bg-gray-200 rounded-full overflow-hidden">
+                            <div 
+                              className={`h-full transition-all duration-300 ${
+                                overallRate >= 80 ? 'bg-emerald-500' :
+                                overallRate >= 60 ? 'bg-yellow-500' :
+                                overallRate >= 40 ? 'bg-orange-500' : 'bg-red-500'
+                              }`}
+                              style={{ width: `${overallRate}%` }}
+                            />
+                          </div>
+                        </div>
+                      );
+                    })()}
                   </div>
                   <div className={`space-y-1 overflow-y-auto ${(habits as any[]).length > 4 ? 'max-h-32' : ''}`}>
                     {(habits as any[]).map((habit: any, index: number) => (
