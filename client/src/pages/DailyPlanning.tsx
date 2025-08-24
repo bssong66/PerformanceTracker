@@ -103,7 +103,7 @@ export default function DailyPlanning() {
   const [showCompletedEvents, setShowCompletedEvents] = useState(true);
   
   // 완료된 할일 보기/감추기 상태
-  const [showCompletedTasks, setShowCompletedTasks] = useState(true);
+  const [showCompletedTasks, setShowCompletedTasks] = useState(false);
 
 
   const timer = useTimer(0); // 테스트용 10초
