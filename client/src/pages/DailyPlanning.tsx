@@ -314,7 +314,32 @@ export default function DailyPlanning() {
 
   const updateTaskMutation = useMutation({
     mutationFn: ({ id, updates }: { id: number; updates: any }) => updateTask(id, updates),
+    onMutate: async ({ id, updates }) => {
+      // 진행 중인 쿼리 취소
+      await queryClient.cancelQueries({ queryKey: ['tasks', user!.id] });
+      
+      // 이전 데이터 백업
+      const previousTasks = queryClient.getQueryData(['tasks', user!.id]);
+      
+      // Optimistic update: 즉시 캐시 업데이트
+      queryClient.setQueryData(['tasks', user!.id], (oldTasks: any) => {
+        return oldTasks?.map((task: any) => 
+          task.id === id 
+            ? { ...task, ...updates } 
+            : task
+        ) || [];
+      });
+      
+      return { previousTasks };
+    },
+    onError: (err, variables, context) => {
+      // 에러 발생 시 이전 데이터로 롤백
+      if (context?.previousTasks) {
+        queryClient.setQueryData(['tasks', user!.id], context.previousTasks);
+      }
+    },
     onSuccess: () => {
+      // 최종 데이터 동기화
       queryClient.invalidateQueries({ queryKey: ['tasks', user!.id] });
     },
   });
