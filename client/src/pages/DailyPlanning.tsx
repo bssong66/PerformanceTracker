@@ -1653,26 +1653,6 @@ export default function DailyPlanning() {
                                     </span>
                                   )}
                                 </div>
-                                
-                                {/* 편집/삭제 버튼 */}
-                                <div className="flex items-center space-x-1">
-                                  <Button
-                                    onClick={() => handleEditTask(task.id)}
-                                    size="sm"
-                                    variant="ghost"
-                                    className="h-6 w-6 p-0"
-                                  >
-                                    <Edit className="h-3 w-3" />
-                                  </Button>
-                                  <Button
-                                    onClick={() => handleDeleteTask(task.id)}
-                                    size="sm"
-                                    variant="ghost"
-                                    className="h-6 w-6 p-0 text-red-500 hover:text-red-700"
-                                  >
-                                    <X className="h-3 w-3" />
-                                  </Button>
-                                </div>
                               </div>
                             );
                           })
