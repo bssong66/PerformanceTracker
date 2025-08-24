@@ -53,8 +53,6 @@ export default function MonthlyReview() {
 
 
   const [reflection, setReflection] = useState("");
-  const [workHours, setWorkHours] = useState(0);
-  const [personalHours, setPersonalHours] = useState(0);
   const [valueAlignments, setValueAlignments] = useState([85, 90, 65]);
   const [selectedImages, setSelectedImages] = useState<File[]>([]);
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
@@ -141,49 +139,6 @@ export default function MonthlyReview() {
     },
   });
 
-  // Calculate work and personal hours from time blocks
-  useEffect(() => {
-    if (monthTimeBlocks && monthTimeBlocks.length > 0) {
-      let workHoursTotal = 0;
-      let personalHoursTotal = 0;
-
-      monthTimeBlocks.forEach((block: any) => {
-        if (!block.startTime || !block.endTime) return;
-
-        // Parse time and calculate duration
-        const [startHour, startMinute] = block.startTime.split(':').map(Number);
-        const [endHour, endMinute] = block.endTime.split(':').map(Number);
-        
-        const startTotalMinutes = startHour * 60 + startMinute;
-        const endTotalMinutes = endHour * 60 + endMinute;
-        const durationMinutes = endTotalMinutes - startTotalMinutes;
-        const durationHours = durationMinutes / 60;
-
-        // Categorize activities as work or personal
-        const workActivities = ['회의', '업무', '학습', '프로젝트', '작업', '개발'];
-        const personalActivities = ['휴식', '운동', '식사', '이동', '개인시간', '취미', '가족시간'];
-
-        // Check both title and description for keywords
-        const blockText = `${block.title || ''} ${block.description || ''}`.toLowerCase();
-        
-        if (workActivities.some(activity => blockText.includes(activity)) || block.type === 'work' || block.type === 'focus') {
-          workHoursTotal += durationHours;
-        } else if (personalActivities.some(activity => blockText.includes(activity)) || block.type === 'personal') {
-          personalHoursTotal += durationHours;
-        } else {
-          // Default categorization - if unclear, check title for work-related keywords
-          if (blockText.includes('업무') || blockText.includes('회의') || blockText.includes('작업') || blockText.includes('프로젝트')) {
-            workHoursTotal += durationHours;
-          } else {
-            personalHoursTotal += durationHours;
-          }
-        }
-      });
-
-      setWorkHours(Math.round(workHoursTotal));
-      setPersonalHours(Math.round(personalHoursTotal));
-    }
-  }, [monthTimeBlocks]);
 
   // Calculate value alignment based on tasks, events, and time blocks
   useEffect(() => {
@@ -309,13 +264,6 @@ export default function MonthlyReview() {
   useEffect(() => {
     if (monthlyReview) {
       setReflection((monthlyReview as any).reflection || "");
-      // Only override calculated hours if they exist in saved review
-      if ((monthlyReview as any).workHours !== undefined) {
-        setWorkHours((monthlyReview as any).workHours);
-      }
-      if ((monthlyReview as any).personalHours !== undefined) {
-        setPersonalHours((monthlyReview as any).personalHours);
-      }
       setValueAlignments([
         (monthlyReview as any).valueAlignment1 || 0,
         (monthlyReview as any).valueAlignment2 || 0,
@@ -354,8 +302,6 @@ export default function MonthlyReview() {
     saveReviewMutation.mutate({
       year: currentYear,
       month: currentMonth,
-      workHours,
-      personalHours,
       reflection,
       valueAlignment1: valueAlignments[0],
       valueAlignment2: valueAlignments[1],
@@ -569,34 +515,6 @@ export default function MonthlyReview() {
                   </div>
                 </div>
 
-                {/* Work-Life Balance */}
-                <div>
-                  <div className="flex items-center justify-between mb-4">
-                    <h4 className="text-sm font-semibold text-gray-900">일과 개인 시간 균형</h4>
-                  </div>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="relative p-1.5 bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg border border-blue-200 shadow-sm">
-                      <div className="text-center">
-                        <div className="text-sm text-blue-700 font-normal">
-                          {workHours} 업무 시간
-                        </div>
-                      </div>
-                      <div className="absolute top-1 right-1">
-                        <div className="w-1.5 h-1.5 bg-blue-400 rounded-full"></div>
-                      </div>
-                    </div>
-                    <div className="relative p-1.5 bg-gradient-to-br from-green-50 to-green-100 rounded-lg border border-green-200 shadow-sm">
-                      <div className="text-center">
-                        <div className="text-green-700 font-normal text-[14px]">
-                          {personalHours} 개인 시간
-                        </div>
-                      </div>
-                      <div className="absolute top-1 right-1">
-                        <div className="w-1.5 h-1.5 bg-green-400 rounded-full"></div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
 
                 {/* Value Alignment Check */}
                 <div>
