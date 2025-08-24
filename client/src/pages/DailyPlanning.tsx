@@ -1713,7 +1713,7 @@ export default function DailyPlanning() {
                   </div>
 
                   {/* Today's High Priority Tasks Summary */}
-                  <div className="pt-4 border-t">
+                  <div className="-mt-[30px] pt-4 border-t">
                     <div>
                       <h4 className="text-sm font-medium text-gray-900 mb-2">오늘의 중요 할일</h4>
                       <div className="space-y-1 max-h-32 overflow-y-auto">
