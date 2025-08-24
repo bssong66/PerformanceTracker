@@ -1574,36 +1574,13 @@ export default function DailyPlanning() {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
               {/* 시간 블록 관리 */}
               <Card>
-                <CardHeader className="py-3">
+                <CardHeader>
                   <CardTitle className="flex items-center space-x-2">
                     <Calendar className="h-5 w-5" />
                     <span>시간 블록</span>
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="p-6 pt-0 space-y-4">
-                  {/* Today's High Priority Tasks Summary */}
-                  <div className="border-t">
-                    <div>
-                      <div className="space-y-1 max-h-32 overflow-y-auto">
-                        {tasksByPriority['A'].length === 0 ? (
-                          <p className="text-xs text-gray-400 italic">중요한 할일이 없습니다.</p>
-                        ) : (
-                          tasksByPriority['A'].slice(0, 3).map((task: any) => (
-                            <div key={task.id} className="flex items-center space-x-2 text-xs">
-                              <div className="w-2 h-2 rounded-full bg-red-400" />
-                              <span className={`flex-1 truncate ${task.completed ? 'line-through text-gray-500' : ''}`}>
-                                {task.title}
-                              </span>
-                            </div>
-                          ))
-                        )}
-                        {tasksByPriority['A'].length > 3 && (
-                          <p className="text-xs text-gray-500">+{tasksByPriority['A'].length - 3}개 더</p>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-
+                <CardContent className="space-y-4">
                   <div className="flex items-center justify-end mb-3">
                     <div className="flex items-center space-x-2">
                       {yesterdayTimeBlocks?.length > 0 && (timeBlocks?.length || 0) === 0 && (
@@ -1735,6 +1712,28 @@ export default function DailyPlanning() {
                     ))}
                   </div>
 
+                  {/* Today's High Priority Tasks Summary */}
+                  <div className="-mt-[30px] pt-4 border-t">
+                    <div>
+                      <div className="space-y-1 max-h-32 overflow-y-auto">
+                        {tasksByPriority['A'].length === 0 ? (
+                          <p className="text-xs text-gray-400 italic">중요한 할일이 없습니다.</p>
+                        ) : (
+                          tasksByPriority['A'].slice(0, 3).map((task: any) => (
+                            <div key={task.id} className="flex items-center space-x-2 text-xs">
+                              <div className="w-2 h-2 rounded-full bg-red-400" />
+                              <span className={`flex-1 truncate ${task.completed ? 'line-through text-gray-500' : ''}`}>
+                                {task.title}
+                              </span>
+                            </div>
+                          ))
+                        )}
+                        {tasksByPriority['A'].length > 3 && (
+                          <p className="text-xs text-gray-500">+{tasksByPriority['A'].length - 3}개 더</p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
 
                   {/* Break Suggestions Dialog */}
                   {showBreakSuggestions && (
@@ -1774,7 +1773,7 @@ export default function DailyPlanning() {
 
               {/* 포모도로 타이머 */}
               <Card>
-                <CardHeader className="py-3">
+                <CardHeader>
                   <CardTitle className="flex items-center space-x-2">
                     <Clock className="h-5 w-5" />
                     <span>포모도로 타이머</span>
@@ -1863,7 +1862,7 @@ export default function DailyPlanning() {
 
             {/* 오늘의 기록 */}
             <Card>
-              <CardHeader className="py-3">
+              <CardHeader>
                 <CardTitle className="flex items-center space-x-2">
                   <FileText className="h-5 w-5" />
                   <span>오늘의 기록</span>
