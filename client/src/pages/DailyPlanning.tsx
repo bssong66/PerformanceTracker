@@ -1699,69 +1699,73 @@ export default function DailyPlanning() {
                             return (
                               <div 
                                 key={task.id} 
-                                className={`flex items-center space-x-2 text-xs bg-gray-50 rounded p-2 border cursor-pointer hover:bg-blue-50 transition-colors ${
+                                className={`bg-gray-50 rounded p-3 border cursor-pointer hover:bg-blue-50 transition-colors ${
                                   selectedFocusTask?.id === task.id ? 'ring-2 ring-blue-500 bg-blue-100' : ''
                                 }`}
                                 onClick={() => handleFocusTaskClick(task)}
                               >
-                                <Checkbox
-                                  checked={task.completed}
-                                  onCheckedChange={(checked) => {
-                                    handleToggleTask(task.id, checked as boolean);
-                                  }}
-                                  onClick={(e) => e.stopPropagation()}
-                                  className="h-3 w-3"
-                                />
-                                
-                                <div className="flex items-center space-x-1 flex-1">
+                                {/* 윗줄: 체크박스, 중요도, 할일 제목 */}
+                                <div className="flex items-center space-x-2 mb-2">
+                                  <Checkbox
+                                    checked={task.completed}
+                                    onCheckedChange={(checked) => {
+                                      handleToggleTask(task.id, checked as boolean);
+                                    }}
+                                    onClick={(e) => e.stopPropagation()}
+                                    className="h-4 w-4"
+                                  />
+                                  
                                   {/* 중요도 표시 */}
-                                  <span className="px-1 py-0 bg-red-100 text-red-700 rounded text-xs font-semibold">
+                                  <span className="px-2 py-1 bg-red-100 text-red-700 rounded text-sm font-semibold">
                                     A
                                   </span>
                                   
                                   {/* 이월 표시 */}
                                   {task.isCarriedOver && (
-                                    <AlertTriangle className="h-3 w-3 text-orange-500" />
+                                    <AlertTriangle className="h-4 w-4 text-orange-500" />
                                   )}
                                   
                                   {/* 프로젝트 색상 점 */}
                                   {taskProject && (
                                     <div 
-                                      className="w-2 h-2 rounded-full" 
+                                      className="w-3 h-3 rounded-full" 
                                       style={{ backgroundColor: taskProject.color }}
                                     />
                                   )}
                                   
                                   {/* 할일 제목 */}
-                                  <span className={`truncate ${task.completed ? 'line-through text-gray-500' : 'text-gray-900'}`}>
+                                  <span className={`flex-1 text-sm font-medium ${task.completed ? 'line-through text-gray-500' : 'text-gray-900'}`}>
                                     {task.title}
                                   </span>
-                                  
+                                </div>
+                                
+                                {/* 아랫줄: 핵심가치, 연간목표 */}
+                                <div className="flex items-center space-x-2 text-sm">
                                   {/* 핵심가치 */}
                                   {task.coreValue && task.coreValue !== 'none' && (
-                                    <span className="px-1 py-0 bg-blue-100 text-blue-600 rounded text-xs">
+                                    <span className="px-2 py-1 bg-blue-100 text-blue-600 rounded text-sm">
                                       🎯 {task.coreValue}
                                     </span>
                                   )}
                                   
                                   {/* 연간목표 */}
                                   {task.annualGoal && task.annualGoal !== 'none' && (
-                                    <span className="px-1 py-0 bg-purple-100 text-purple-600 rounded text-xs">
+                                    <span className="px-2 py-1 bg-purple-100 text-purple-600 rounded text-sm">
                                       📅 {task.annualGoal}
                                     </span>
                                   )}
                                   
                                   {/* 이월 상태 */}
                                   {task.isCarriedOver && (
-                                    <span className="px-1 py-0 bg-orange-100 text-orange-600 rounded text-xs flex items-center space-x-1">
-                                      <AlertTriangle className="h-2 w-2" />
+                                    <span className="px-2 py-1 bg-orange-100 text-orange-600 rounded text-sm flex items-center space-x-1">
+                                      <AlertTriangle className="h-3 w-3" />
                                       <span>이월</span>
                                     </span>
                                   )}
                                   
                                   {/* 프로젝트 명 */}
                                   {taskProject && (
-                                    <span className="px-1 py-0 bg-purple-100 text-purple-700 rounded text-xs">
+                                    <span className="px-2 py-1 bg-purple-100 text-purple-700 rounded text-sm">
                                       📁 {taskProject.title}
                                     </span>
                                   )}
