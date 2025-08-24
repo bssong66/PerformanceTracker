@@ -33,6 +33,14 @@ export default function DailyPlanning() {
   const [selectedAnnualGoal, setSelectedAnnualGoal] = useState<string>('none');
   const [selectedProject, setSelectedProject] = useState<number | null>(null);
   const [reflection, setReflection] = useState("");
+  
+  // Quick Event Input states
+  const [newEvent, setNewEvent] = useState("");
+  const [selectedEventStartTime, setSelectedEventStartTime] = useState("");
+  const [selectedEventEndTime, setSelectedEventEndTime] = useState("");
+  const [selectedEventPriority, setSelectedEventPriority] = useState<'high' | 'medium' | 'low'>('medium');
+  const [selectedEventCoreValue, setSelectedEventCoreValue] = useState<string>('none');
+  const [selectedEventAnnualGoal, setSelectedEventAnnualGoal] = useState<string>('none');
   const [newTimeBlock, setNewTimeBlock] = useState<{
     startTime: string;
     endTime: string;
@@ -192,6 +200,40 @@ export default function DailyPlanning() {
       }).then(res => res.json()),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['events', user!.id, today] });
+    },
+  });
+
+  const addEventMutation = useMutation({
+    mutationFn: async (eventData: any) => {
+      const response = await fetch('/api/events', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(eventData)
+      });
+      if (!response.ok) {
+        throw new Error('Failed to create event');
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['events', user!.id, today] });
+      setNewEvent("");
+      setSelectedEventStartTime("");
+      setSelectedEventEndTime("");
+      setSelectedEventPriority('medium');
+      setSelectedEventCoreValue('none');
+      setSelectedEventAnnualGoal('none');
+      toast({
+        title: "일정 생성",
+        description: "새 일정이 추가되었습니다.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "오류",
+        description: "일정 생성에 실패했습니다.",
+        variant: "destructive",
+      });
     },
   });
 
@@ -387,6 +429,40 @@ export default function DailyPlanning() {
       dueDate: today,
       startDate: today,
       endDate: today,
+    });
+  };
+
+  const handleAddEvent = () => {
+    if (!newEvent.trim()) {
+      toast({
+        title: "입력 오류",
+        description: "일정 제목을 입력해주세요.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!selectedEventStartTime || !selectedEventEndTime) {
+      toast({
+        title: "입력 오류",
+        description: "시작 시간과 종료 시간을 선택해주세요.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    addEventMutation.mutate({
+      userId: user!.id,
+      title: newEvent.trim(),
+      startDate: today,
+      endDate: today,
+      startTime: selectedEventStartTime,
+      endTime: selectedEventEndTime,
+      priority: selectedEventPriority,
+      coreValue: selectedEventCoreValue === 'none' ? null : selectedEventCoreValue,
+      annualGoal: selectedEventAnnualGoal === 'none' ? null : selectedEventAnnualGoal,
+      isAllDay: false,
+      color: selectedEventPriority === 'high' ? '#ef4444' : selectedEventPriority === 'low' ? '#64748B' : '#16a34a',
     });
   };
 
@@ -955,6 +1031,85 @@ export default function DailyPlanning() {
                         </SelectContent>
                       </Select>
                       <Select value={selectedAnnualGoal} onValueChange={setSelectedAnnualGoal}>
+                        <SelectTrigger className="h-8 text-xs">
+                          <SelectValue placeholder="연간목표" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="none">선택 안함</SelectItem>
+                          {annualGoals.map((goal: any) => (
+                            <SelectItem key={goal.id} value={goal.title}>{goal.title}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+
+                  {/* Quick Add Event */}
+                  <div className="space-y-2">
+                    <div className="flex items-center space-x-2 mb-3">
+                      <div className="flex items-center space-x-2">
+                        <div className="w-1 h-4 bg-gradient-to-b from-purple-500 to-purple-600 rounded-full"></div>
+                        <h4 className="text-sm font-semibold text-gray-800">빠른 일정 입력</h4>
+                      </div>
+                      <div className="flex-1 h-px bg-gradient-to-r from-gray-200 to-transparent"></div>
+                    </div>
+                    <div className="flex space-x-2">
+                      <Input
+                        placeholder="일정을 입력하세요..."
+                        value={newEvent}
+                        onChange={(e) => setNewEvent(e.target.value)}
+                        onKeyPress={(e) => e.key === 'Enter' && handleAddEvent()}
+                        className="flex-1"
+                      />
+                      <Input
+                        type="time"
+                        value={selectedEventStartTime}
+                        onChange={(e) => setSelectedEventStartTime(e.target.value)}
+                        className="w-24"
+                        placeholder="시작"
+                      />
+                      <Input
+                        type="time"
+                        value={selectedEventEndTime}
+                        onChange={(e) => setSelectedEventEndTime(e.target.value)}
+                        className="w-24"
+                        placeholder="종료"
+                      />
+                      <Select value={selectedEventPriority} onValueChange={(value: 'high' | 'medium' | 'low') => setSelectedEventPriority(value)}>
+                        <SelectTrigger className="w-16">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="high">높음</SelectItem>
+                          <SelectItem value="medium">중간</SelectItem>
+                          <SelectItem value="low">낮음</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <Button onClick={handleAddEvent} disabled={!newEvent.trim() || addEventMutation.isPending} size="sm">
+                        <Plus className="h-4 w-4" />
+                      </Button>
+                    </div>
+
+                    {/* Event Value Selection */}
+                    <div className="flex space-x-2">
+                      <Select value={selectedEventCoreValue} onValueChange={setSelectedEventCoreValue}>
+                        <SelectTrigger className="h-8 text-xs">
+                          <SelectValue placeholder="핵심가치" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="none">선택 안함</SelectItem>
+                          {foundation?.coreValue1 && (
+                            <SelectItem value={foundation.coreValue1}>{foundation.coreValue1}</SelectItem>
+                          )}
+                          {foundation?.coreValue2 && (
+                            <SelectItem value={foundation.coreValue2}>{foundation.coreValue2}</SelectItem>
+                          )}
+                          {foundation?.coreValue3 && (
+                            <SelectItem value={foundation.coreValue3}>{foundation.coreValue3}</SelectItem>
+                          )}
+                        </SelectContent>
+                      </Select>
+                      <Select value={selectedEventAnnualGoal} onValueChange={setSelectedEventAnnualGoal}>
                         <SelectTrigger className="h-8 text-xs">
                           <SelectValue placeholder="연간목표" />
                         </SelectTrigger>
