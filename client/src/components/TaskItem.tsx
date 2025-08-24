@@ -95,7 +95,7 @@ export function TaskItem({
             variant="ghost"
             size="sm"
             onClick={handleEdit}
-            className="opacity-0 group-hover:opacity-100 transition-opacity h-4 w-4 p-0"
+            className="h-4 w-4 p-0"
           >
             <Edit className="h-2 w-2 text-gray-400" />
           </Button>
@@ -105,7 +105,7 @@ export function TaskItem({
             variant="ghost"
             size="sm"
             onClick={handleDelete}
-            className="opacity-0 group-hover:opacity-100 transition-opacity h-4 w-4 p-0"
+            className="h-4 w-4 p-0"
           >
             <Trash2 className="h-2 w-2 text-gray-400" />
           </Button>
