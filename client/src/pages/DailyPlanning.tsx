@@ -1166,8 +1166,8 @@ export default function DailyPlanning() {
               className="flex flex-col items-center justify-center space-y-1 h-full rounded-lg text-xs font-medium transition-all duration-200 data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-gray-700"
             >
               <Clock className="h-4 w-4 transition-transform data-[state=active]:scale-110" />
-              <span className="hidden sm:block">포커스 모드</span>
-              <span className="block sm:hidden">포커스</span>
+              <span className="hidden sm:block">시간블록</span>
+              <span className="block sm:hidden">시간</span>
             </TabsTrigger>
             <TabsTrigger 
               value="records" 
@@ -1416,6 +1416,7 @@ export default function DailyPlanning() {
                   <div className="mb-4">
                     <div className="flex items-center space-x-2 mb-2">
                       <div className="w-1 h-4 bg-gradient-to-b from-green-500 to-green-600 rounded-full"></div>
+                      <h4 className="text-sm font-semibold text-gray-800">오늘의 일정</h4>
                       <span className="text-xs text-gray-500">
                         ({todayEvents.length}개)
                       </span>
@@ -1581,6 +1582,7 @@ export default function DailyPlanning() {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="flex items-center justify-between mb-3">
+                    <h4 className="text-sm font-medium text-gray-900">오늘의 일정</h4>
                     <div className="flex items-center space-x-2">
                       {yesterdayTimeBlocks?.length > 0 && (timeBlocks?.length || 0) === 0 && (
                         <Button
@@ -1695,7 +1697,7 @@ export default function DailyPlanning() {
                             <Button
                               onClick={(e) => {
                                 e.stopPropagation();
-                                if (window.confirm('\uc815\ub9d0 \uc774 \uc2dc\uac04 \ube14\ub85d\uc744 \uc0ad\uc81c\ud558\uc2dc\uaca0\uc2b5\ub2c8\uae4c?')) {
+                                if (window.confirm('정말 이 시간 블록을 삭제하시겠습니까?')) {
                                   deleteTimeBlockMutation.mutate(block.id);
                                 }
                               }}
@@ -1743,32 +1745,31 @@ export default function DailyPlanning() {
                       </div>
                     </div>
                   )}
-                </div>
 
-                {/* Today's High Priority Tasks Summary */}
-                <div className="pt-4 border-t">
-                  <div>
-                    <h4 className="text-sm font-medium text-gray-900 mb-2">오늘의 중요 할일</h4>
-                    <div className="space-y-1 max-h-32 overflow-y-auto">
-                      {tasksByPriority['A'].length === 0 ? (
-                        <p className="text-xs text-gray-400 italic">중요한 할일이 없습니다.</p>
-                      ) : (
-                        tasksByPriority['A'].slice(0, 3).map((task: any) => (
-                          <div key={task.id} className="flex items-center space-x-2 text-xs">
-                            <div className="w-2 h-2 rounded-full bg-red-400" />
-                            <span className={`flex-1 truncate ${task.completed ? 'line-through text-gray-500' : ''}`}>
-                              {task.title}
-                            </span>
-                          </div>
-                        ))
-                      )}
-                      {tasksByPriority['A'].length > 3 && (
-                        <p className="text-xs text-gray-500">+{tasksByPriority['A'].length - 3}개 더</p>
-                      )}
+                  {/* Today's High Priority Tasks Summary */}
+                  <div className="pt-4 border-t">
+                    <div>
+                      <h4 className="text-sm font-medium text-gray-900 mb-2">오늘의 중요 할일</h4>
+                      <div className="space-y-1 max-h-32 overflow-y-auto">
+                        {tasksByPriority['A'].length === 0 ? (
+                          <p className="text-xs text-gray-400 italic">중요한 할일이 없습니다.</p>
+                        ) : (
+                          tasksByPriority['A'].slice(0, 3).map((task: any) => (
+                            <div key={task.id} className="flex items-center space-x-2 text-xs">
+                              <div className="w-2 h-2 rounded-full bg-red-400" />
+                              <span className={`flex-1 truncate ${task.completed ? 'line-through text-gray-500' : ''}`}>
+                                {task.title}
+                              </span>
+                            </div>
+                          ))
+                        )}
+                        {tasksByPriority['A'].length > 3 && (
+                          <p className="text-xs text-gray-500">+{tasksByPriority['A'].length - 3}개 더</p>
+                        )}
+                      </div>
                     </div>
                   </div>
-                </div>
-              </CardContent>
+                </CardContent>
               </Card>
 
               {/* 포모도로 타이머 */}
