@@ -60,8 +60,6 @@ export default function MonthlyReview() {
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [showImageViewer, setShowImageViewer] = useState(false);
-  const [taskRolloverDates, setTaskRolloverDates] = useState<{[taskId: number]: Date}>({});
-  const [openPopovers, setOpenPopovers] = useState<{[taskId: number]: boolean}>({});
 
   const { data: monthlyReview } = useQuery({
     queryKey: ['/api/monthly-reviews', currentYear, currentMonth],
@@ -349,67 +347,8 @@ export default function MonthlyReview() {
     },
   });
 
-  // Initialize rollover dates for incomplete tasks
-  useEffect(() => {
-    const incompleteTasks = (monthTasks as any[]).filter((task: any) => !task.completed);
-    const newRolloverDates: {[taskId: number]: Date} = {};
-    
-    incompleteTasks.forEach((task: any) => {
-      if (!taskRolloverDates[task.id]) {
-        newRolloverDates[task.id] = addDays(monthEnd, 1); // Default to next month start
-      }
-    });
-    
-    if (Object.keys(newRolloverDates).length > 0) {
-      setTaskRolloverDates(prev => ({...prev, ...newRolloverDates}));
-    }
-  }, [monthTasks, monthEnd]);
 
   // Rollover tasks mutation
-  const rolloverTasksMutation = useMutation({
-    mutationFn: async () => {
-      const incompleteTasks = (monthTasks as any[]).filter((task: any) => !task.completed);
-      
-      // Update each incomplete task to its individual rollover date
-      const updatePromises = incompleteTasks.map(async (task: any) => {
-        const rolloverDate = taskRolloverDates[task.id] || addDays(monthEnd, 1);
-        const rolloverDateStr = format(rolloverDate, 'yyyy-MM-dd');
-        
-        const updatedTask = {
-          ...task,
-          scheduledDate: rolloverDateStr,
-          startDate: rolloverDateStr,
-          endDate: task.endDate ? rolloverDateStr : rolloverDateStr
-        };
-        
-        return fetch(api.tasks.update(task.id), {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(updatedTask)
-        });
-      });
-      
-      await Promise.all(updatePromises);
-      return incompleteTasks.length;
-    },
-    onSuccess: (count) => {
-      toast({
-        title: "할일 이월 완료",
-        description: `${count}개의 미완료 할일이 선택한 날짜로 이월되었습니다.`,
-      });
-      // Invalidate queries to refresh the data
-      queryClient.invalidateQueries({ 
-        queryKey: [`/api/tasks/1?startDate=${format(monthStart, 'yyyy-MM-dd')}&endDate=${format(monthEnd, 'yyyy-MM-dd')}`] 
-      });
-    },
-    onError: () => {
-      toast({
-        title: "이월 실패",
-        description: "할일 이월 중 오류가 발생했습니다.",
-        variant: "destructive",
-      });
-    },
-  });
 
   const handleSaveReview = () => {
     saveReviewMutation.mutate({
@@ -425,9 +364,6 @@ export default function MonthlyReview() {
     });
   };
 
-  const handleRolloverTasks = () => {
-    rolloverTasksMutation.mutate();
-  };
 
 
 
@@ -525,28 +461,6 @@ export default function MonthlyReview() {
                 <div className="flex-1 flex flex-col">
                   <div className="flex items-center justify-between mb-2">
                     <h4 className="text-sm font-semibold text-gray-900">이번달 미완료된 할일</h4>
-                    {(monthTasks as any[]).filter((task: any) => !task.completed).length > 0 && (
-                      <Button
-                        variant="default"
-                        size="sm"
-                        onClick={handleRolloverTasks}
-                        disabled={rolloverTasksMutation.isPending}
-                        className="h-8 px-4 text-xs font-medium bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white border-0 shadow-md hover:shadow-lg transition-all duration-200"
-                      >
-                        <svg className="w-3 h-3 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 9l3 3m0 0l-3 3m3-3H8m13 0a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                        {rolloverTasksMutation.isPending ? '처리중...' : '다음달로 일괄 이월'}
-                      </Button>
-                    )}
-                  </div>
-                  <div className="flex items-center mb-4">
-                    <div className="flex items-center space-x-1 text-xs text-gray-500 bg-blue-50 px-2 py-1 rounded-full">
-                      <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 9l3 3m0 0l-3 3m3-3H8m13 0a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                      <span className="text-xs">미완료된 할일을 선택한 날짜로 이월할 수 있습니다</span>
-                    </div>
                   </div>
                   
                   <div className="h-[35rem] overflow-y-auto space-y-3 pr-2">
@@ -568,53 +482,6 @@ export default function MonthlyReview() {
                               {task.description && (
                                 <div className="text-xs text-gray-500 mt-1">{task.description}</div>
                               )}
-                              <div className="flex items-center space-x-2 mt-1">
-                                <span className="text-xs text-orange-600">→ 이월 날짜:</span>
-                                <Popover 
-                                  open={openPopovers[task.id] || false}
-                                  onOpenChange={(open) => {
-                                    setOpenPopovers(prev => ({
-                                      ...prev,
-                                      [task.id]: open
-                                    }));
-                                  }}
-                                >
-                                  <PopoverTrigger asChild>
-                                    <Button 
-                                      variant="outline" 
-                                      size="sm"
-                                      className="h-6 px-2 text-xs font-normal"
-                                    >
-                                      <CalendarIcon className="h-3 w-3 mr-1" />
-                                      {taskRolloverDates[task.id] ? 
-                                        format(taskRolloverDates[task.id], 'M월 d일', { locale: ko }) : 
-                                        format(addDays(monthEnd, 1), 'M월 d일', { locale: ko })
-                                      }
-                                    </Button>
-                                  </PopoverTrigger>
-                                  <PopoverContent className="w-auto p-0" align="start">
-                                    <Calendar
-                                      mode="single"
-                                      selected={taskRolloverDates[task.id] || addDays(monthEnd, 1)}
-                                      onSelect={(date) => {
-                                        if (date) {
-                                          setTaskRolloverDates(prev => ({
-                                            ...prev,
-                                            [task.id]: date
-                                          }));
-                                          // Close the popover after date selection
-                                          setOpenPopovers(prev => ({
-                                            ...prev,
-                                            [task.id]: false
-                                          }));
-                                        }
-                                      }}
-                                      disabled={(date) => date < new Date()}
-                                      initialFocus
-                                    />
-                                  </PopoverContent>
-                                </Popover>
-                              </div>
                             </div>
                           </div>
                           <div className="text-xs text-red-600 font-medium">
