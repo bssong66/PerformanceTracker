@@ -1386,7 +1386,8 @@ export default function DailyPlanning() {
                                       'bg-gray-100 text-gray-800'
                                     }`}>
                                       {event.priority === 'A' ? '중요&긴급' : 
-                                       event.priority === 'B' ? '중요' : '기타'}
+                                       event.priority === 'B' ? '중요' : 
+                                       event.priority === 'C' ? '낮음' : '우선순위 없음'}
                                     </span>
                                   )}
                                   {event.coreValue && (
