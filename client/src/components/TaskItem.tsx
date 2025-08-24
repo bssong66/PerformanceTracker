@@ -34,7 +34,9 @@ export function TaskItem({
 
   const handleDelete = () => {
     if (onDelete) {
-      onDelete(task.id);
+      if (window.confirm('정말 이 할일을 삭제하시겠습니까?')) {
+        onDelete(task.id);
+      }
     }
   };
 

@@ -730,6 +730,10 @@ export default function DailyPlanning() {
   };
 
   const handleDeleteFile = async (fileIndex: number) => {
+    if (!window.confirm('정말 이 파일을 삭제하시겠습니까?')) {
+      return;
+    }
+
     try {
       const fileToDelete = savedFiles[fileIndex];
 
@@ -1085,7 +1089,9 @@ export default function DailyPlanning() {
 
   // 파일 제거
   const removeFile = (index: number) => {
-    setSelectedFiles(prev => prev.filter((_, i) => i !== index));
+    if (window.confirm('정말 이 파일을 제거하시겠습니까?')) {
+      setSelectedFiles(prev => prev.filter((_, i) => i !== index));
+    }
   };
 
   if (tasksLoading) {
@@ -1497,7 +1503,11 @@ export default function DailyPlanning() {
                                 <Edit className="h-3 w-3" />
                               </Button>
                               <Button
-                                onClick={() => deleteEventMutation.mutate(event.id)}
+                                onClick={() => {
+                                  if (window.confirm('정말 이 일정을 삭제하시겠습니까?')) {
+                                    deleteEventMutation.mutate(event.id);
+                                  }
+                                }}
                                 size="sm"
                                 variant="ghost"
                                 className="h-7 w-7 p-0 text-red-500 hover:text-red-700"
@@ -1687,7 +1697,9 @@ export default function DailyPlanning() {
                             <Button
                               onClick={(e) => {
                                 e.stopPropagation();
-                                deleteTimeBlockMutation.mutate(block.id);
+                                if (window.confirm('정말 이 시간 블록을 삭제하시겠습니까?')) {
+                                  deleteTimeBlockMutation.mutate(block.id);
+                                }
                               }}
                               size="sm"
                               variant="ghost"
