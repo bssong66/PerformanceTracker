@@ -675,13 +675,10 @@ export default function DailyPlanning() {
   const handleToggleTask = (id: number, completed: boolean) => {
     updateTaskMutation.mutate({ id, updates: { completed } });
 
-    if (completed && selectedTask?.id === id) {
-      const nextTask = filteredTasks.find((t: any) => t.id !== id && !t.completed);
-      setSelectedTask(nextTask || null);
-
+    if (completed) {
       toast({
         title: "할일 완료!",
-        description: "훌륭합니다! 다음 할일로 넘어가세요.",
+        description: "훌륭합니다! 할일이 완료되었습니다.",
       });
     }
   };
