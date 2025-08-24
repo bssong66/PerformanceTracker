@@ -629,10 +629,10 @@ export default function MonthlyReview() {
                     <Zap className="h-4 w-4 text-amber-500" />
                     <h4 className="text-sm font-semibold text-gray-900">습관 실행률</h4>
                   </div>
-                  <div className="space-y-3 max-h-52 overflow-y-auto">
+                  <div className="space-y-1 max-h-26 overflow-y-auto">
                     {(habits as any[]).map((habit: any, index: number) => (
-                      <div key={habit.id} className="flex items-center justify-between p-1 bg-gradient-to-r from-gray-50 to-gray-100 rounded-lg border border-gray-200 hover:shadow-sm transition-shadow">
-                        <div className="flex items-center space-x-3">
+                      <div key={habit.id} className="flex items-center justify-between py-0.5 px-1 bg-gradient-to-r from-gray-50 to-gray-100 rounded border border-gray-200 hover:shadow-sm transition-shadow">
+                        <div className="flex items-center space-x-2">
                           {getHabitIcon(habit.name)}
                           <span className="text-sm font-medium text-gray-700">{habit.name}</span>
                         </div>
@@ -661,8 +661,8 @@ export default function MonthlyReview() {
                               );
                             })()}
                           </div>
-                          <div className="w-8 h-8 bg-emerald-100 rounded-full flex items-center justify-center">
-                            <div className="w-2 h-2 bg-emerald-500 rounded-full"></div>
+                          <div className="w-6 h-6 bg-emerald-100 rounded-full flex items-center justify-center">
+                            <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full"></div>
                           </div>
                         </div>
                       </div>
