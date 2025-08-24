@@ -9,7 +9,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { ProgressBar } from "@/components/ProgressBar";
 import { PriorityBadge } from "@/components/PriorityBadge";
-import { Save, TrendingUp, BarChart3, Target, Plus, X, ChevronLeft, ChevronRight, Siren, Calendar as CalendarIcon, Activity, Heart, Dumbbell, Coffee, Book, Moon, Sunrise, Timer, Zap, Type, Hash, List, Clock, Minus } from "lucide-react";
+import { Save, TrendingUp, BarChart3, Target, Plus, X, ChevronLeft, ChevronRight, Siren, Calendar as CalendarIcon, Activity, Heart, Dumbbell, Coffee, Book, Moon, Sunrise, Timer, Zap, Type, Hash, List, Clock, Minus, FileText, Download } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { api, saveMonthlyReview } from "@/lib/api";
 import { queryClient } from "@/lib/queryClient";
@@ -58,6 +58,10 @@ export default function MonthlyReview() {
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [showImageViewer, setShowImageViewer] = useState(false);
+  
+  // 파일 업로드 관련 상태
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [fileUrls, setFileUrls] = useState<string[]>([]);
 
   const { data: monthlyReview } = useQuery({
     queryKey: ['/api/monthly-reviews', currentYear, currentMonth],
@@ -249,6 +253,35 @@ export default function MonthlyReview() {
     }
   };
 
+  // 파일 선택 핸들러
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length > 0) {
+      setSelectedFiles(prev => [...prev, ...files]);
+      
+      // 파일 URL 생성 (다운로드용)
+      files.forEach(file => {
+        const fileUrl = URL.createObjectURL(file);
+        setFileUrls(prev => [...prev, fileUrl]);
+      });
+    }
+  };
+
+  // 파일 제거 핸들러
+  const handleRemoveFile = (index: number) => {
+    setSelectedFiles(prev => prev.filter((_, i) => i !== index));
+    setFileUrls(prev => prev.filter((_, i) => i !== index));
+  };
+
+  // 파일 크기 포맷팅 함수
+  const formatFileSize = (bytes: number) => {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  };
+
   // Auto-resize textarea
   const handleReflectionChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const textarea = e.target;
@@ -383,6 +416,20 @@ export default function MonthlyReview() {
       if ((monthlyReview as any).imageUrls) {
         setImagePreviews((monthlyReview as any).imageUrls);
       }
+      
+      const savedFileUrls = (monthlyReview as any).fileUrls;
+      const savedFileNames = (monthlyReview as any).fileNames;
+      if (savedFileUrls && savedFileNames && savedFileNames.length > 0) {
+        setFileUrls(savedFileUrls);
+        
+        // 저장된 파일을 표시하기 위한 Mock File 객체 생성
+        const mockFiles = savedFileNames.map((name: string) => {
+          const file = new File([], name, { type: 'application/octet-stream' });
+          Object.defineProperty(file, 'size', { value: 0, writable: false });
+          return file;
+        });
+        setSelectedFiles(mockFiles);
+      }
     }
   }, [monthlyReview]);
 
@@ -418,6 +465,8 @@ export default function MonthlyReview() {
       valueAlignment2: valueAlignments[1],
       valueAlignment3: valueAlignments[2],
       imageUrls: imagePreviews,
+      fileUrls: fileUrls,
+      fileNames: selectedFiles.map(file => file.name),
     });
   };
 
@@ -768,6 +817,24 @@ export default function MonthlyReview() {
                         <Plus className="h-4 w-4 mr-1" />
                         이미지 추가
                       </Button>
+                      
+                      {/* File Upload Button */}
+                      <input
+                        type="file"
+                        id="monthly-file-upload"
+                        multiple
+                        onChange={handleFileSelect}
+                        className="hidden"
+                      />
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => document.getElementById('monthly-file-upload')?.click()}
+                        className="h-8 px-3 text-sm ml-2"
+                      >
+                        <FileText className="h-4 w-4 mr-1" />
+                        파일 추가
+                      </Button>
                     </div>
                     
                     {/* Image Previews */}
@@ -791,6 +858,43 @@ export default function MonthlyReview() {
                               >
                                 ×
                               </button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    
+                    {/* File List */}
+                    {selectedFiles.length > 0 && (
+                      <div className="mt-4 space-y-2">
+                        <div className="text-sm font-medium text-gray-900">첨부된 파일</div>
+                        <div className="space-y-2">
+                          {selectedFiles.map((file, index) => (
+                            <div key={index} className="flex items-center justify-between p-2 bg-gray-50 rounded border">
+                              <div className="flex items-center space-x-2">
+                                <FileText className="h-4 w-4 text-gray-500" />
+                                <span className="text-sm text-gray-700">{file.name}</span>
+                                {file.size > 0 && (
+                                  <span className="text-xs text-gray-500">({formatFileSize(file.size)})</span>
+                                )}
+                              </div>
+                              <div className="flex items-center space-x-2">
+                                {fileUrls[index] && (
+                                  <a
+                                    href={fileUrls[index]}
+                                    download={file.name}
+                                    className="text-blue-600 hover:text-blue-800"
+                                  >
+                                    <Download className="h-4 w-4" />
+                                  </a>
+                                )}
+                                <button
+                                  onClick={() => handleRemoveFile(index)}
+                                  className="text-red-600 hover:text-red-800"
+                                >
+                                  <X className="h-4 w-4" />
+                                </button>
+                              </div>
                             </div>
                           ))}
                         </div>
