@@ -1696,36 +1696,8 @@ export default function DailyPlanning() {
                     </div>
                   )}
 
-                  {/* Today's Events and Tasks Summary */}
-                  <div className="space-y-4 pt-4 border-t">
-                    {/* Today's Events */}
-                    <div>
-                      <h4 className="text-sm font-medium text-gray-900 mb-2">오늘의 일정</h4>
-                      <div className="space-y-1 max-h-32 overflow-y-auto">
-                        {todayEvents.length === 0 ? (
-                          <p className="text-xs text-gray-400 italic">예정된 일정이 없습니다.</p>
-                        ) : (
-                          todayEvents.slice(0, 3).map((event: any) => (
-                            <div key={event.id} className="flex items-center space-x-2 text-xs">
-                              <div className={`w-2 h-2 rounded-full ${
-                                event.priority === 'high' ? 'bg-red-400' :
-                                event.priority === 'medium' ? 'bg-yellow-400' :
-                                'bg-gray-400'
-                              }`} />
-                              <span className="flex-1 truncate">{event.title}</span>
-                              {event.startTime && (
-                                <span className="text-gray-500">{event.startTime}</span>
-                              )}
-                            </div>
-                          ))
-                        )}
-                        {todayEvents.length > 3 && (
-                          <p className="text-xs text-gray-500">+{todayEvents.length - 3}개 더</p>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Today's High Priority Tasks */}
+                  {/* Today's High Priority Tasks Summary */}
+                  <div className="pt-4 border-t">
                     <div>
                       <h4 className="text-sm font-medium text-gray-900 mb-2">오늘의 중요 할일</h4>
                       <div className="space-y-1 max-h-32 overflow-y-auto">
