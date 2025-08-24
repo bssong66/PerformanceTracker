@@ -110,6 +110,15 @@ export default function DailyPlanning() {
     }
   }, []);
 
+  // 커스텀 타이머 초기화 및 설정 변경 감지
+  useEffect(() => {
+    if (!isCustomTimerRunning) {
+      const totalSeconds = parseInt(customTimerHours) * 3600 + parseInt(customTimerMinutes) * 60;
+      setCustomTimerSeconds(totalSeconds);
+      setCustomTotalSeconds(totalSeconds);
+    }
+  }, [customTimerHours, customTimerMinutes, isCustomTimerRunning]);
+
   // 포모도로 완료 처리
   useEffect(() => {
     if (isCompleted) {
