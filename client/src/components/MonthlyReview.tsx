@@ -69,6 +69,12 @@ export default function MonthlyReview() {
     retry: false,
   });
 
+  // Get authenticated user
+  const { data: user } = useQuery({
+    queryKey: ['/api/auth/user'],
+    retry: false,
+  });
+
   const { data: foundation } = useQuery({
     queryKey: ['foundation', 'auth', new Date().getFullYear()],
     queryFn: async () => {
@@ -131,18 +137,24 @@ export default function MonthlyReview() {
 
   // Get habit logs for the current month to calculate completion rates
   const { data: monthHabitLogs = [] } = useQuery({
-    queryKey: ['habitLogs', 'month', format(monthStart, 'yyyy-MM-dd')],
+    queryKey: ['habitLogs', 'month', format(monthStart, 'yyyy-MM-dd'), user?.id],
     queryFn: async () => {
+      if (!user?.id) return [];
       const logs = [];
       const currentDate = new Date(monthStart);
       while (currentDate <= monthEnd) {
         const date = format(currentDate, 'yyyy-MM-dd');
-        const dayLogs = await fetch(`/api/habit-logs?date=${date}`).then(res => res.json());
-        logs.push(...dayLogs);
+        const response = await fetch(`/api/habit-logs/${user.id}/${date}`);
+        if (response.ok) {
+          const dayLogs = await response.json();
+          logs.push(...dayLogs);
+        }
         currentDate.setDate(currentDate.getDate() + 1);
       }
       return logs;
     },
+    enabled: !!user?.id,
+    retry: false,
   });
 
 
