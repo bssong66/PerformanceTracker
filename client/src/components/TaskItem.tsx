@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { PriorityBadge } from "./PriorityBadge";
-import { Trash2, Clock, AlertTriangle } from "lucide-react";
+import { Trash2, Clock, AlertTriangle, Edit } from "lucide-react";
 import { type Task } from "@shared/schema";
 import { type Priority } from "@/lib/types";
 
@@ -10,6 +10,7 @@ interface TaskItemProps {
   task: Task;
   onToggleComplete: (id: number, completed: boolean) => void;
   onDelete?: (id: number) => void;
+  onEdit?: (id: number) => void;
   showTime?: boolean;
   showPriority?: boolean;
   project?: any;
@@ -19,6 +20,7 @@ export function TaskItem({
   task, 
   onToggleComplete, 
   onDelete, 
+  onEdit,
   showTime = false,
   showPriority = true,
   project
@@ -33,6 +35,12 @@ export function TaskItem({
   const handleDelete = () => {
     if (onDelete) {
       onDelete(task.id);
+    }
+  };
+
+  const handleEdit = () => {
+    if (onEdit) {
+      onEdit(task.id);
     }
   };
 
@@ -81,16 +89,28 @@ export function TaskItem({
         )}
       </div>
       
-      {onDelete && (
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={handleDelete}
-          className="opacity-0 group-hover:opacity-100 transition-opacity h-4 w-4 p-0"
-        >
-          <Trash2 className="h-2 w-2 text-gray-400" />
-        </Button>
-      )}
+      <div className="flex items-center space-x-1">
+        {onEdit && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleEdit}
+            className="opacity-0 group-hover:opacity-100 transition-opacity h-4 w-4 p-0"
+          >
+            <Edit className="h-2 w-2 text-gray-400" />
+          </Button>
+        )}
+        {onDelete && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleDelete}
+            className="opacity-0 group-hover:opacity-100 transition-opacity h-4 w-4 p-0"
+          >
+            <Trash2 className="h-2 w-2 text-gray-400" />
+          </Button>
+        )}
+      </div>
     </div>
   );
 }

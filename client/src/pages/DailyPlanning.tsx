@@ -86,6 +86,10 @@ export default function DailyPlanning() {
   const [showEventEditDialog, setShowEventEditDialog] = useState(false);
   const [editingEvent, setEditingEvent] = useState<any>(null);
 
+  // Task Edit Dialog states  
+  const [showTaskEditDialog, setShowTaskEditDialog] = useState(false);
+  const [editingTask, setEditingTask] = useState<any>(null);
+
 
   const timer = useTimer(0); // 테스트용 10초
   const { minutes, seconds, isRunning, isBreak, isCompleted, start, pause, reset, startBreak, extendSession, acknowledgeCompletion } = timer;
@@ -255,6 +259,27 @@ export default function DailyPlanning() {
       toast({
         title: "오류",
         description: "일정 삭제에 실패했습니다.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const deleteTaskMutation = useMutation({
+    mutationFn: (id: number) =>
+      fetch(`/api/tasks/${id}`, {
+        method: 'DELETE'
+      }).then(res => res.json()),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['tasks', user!.id] });
+      toast({
+        title: "할일 삭제",
+        description: "할일이 삭제되었습니다.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "오류",
+        description: "할일 삭제에 실패했습니다.",
         variant: "destructive",
       });
     },
@@ -630,6 +655,42 @@ export default function DailyPlanning() {
       title: completed ? "일정 완료!" : "일정 완료 취소",
       description: completed ? "일정이 완료되었습니다." : "일정이 미완료로 변경되었습니다.",
     });
+  };
+
+  const handleEditTask = (id: number) => {
+    const taskToEdit = allTasks.find((task: any) => task.id === id);
+    if (taskToEdit) {
+      setEditingTask({
+        ...taskToEdit,
+        editPriority: taskToEdit.priority,
+        editCoreValue: taskToEdit.coreValue || 'none',
+        editAnnualGoal: taskToEdit.annualGoal || 'none',
+      });
+      setShowTaskEditDialog(true);
+    }
+  };
+
+  const handleDeleteTask = (id: number) => {
+    if (window.confirm('이 할일을 삭제하시겠습니까?')) {
+      deleteTaskMutation.mutate(id);
+    }
+  };
+
+  const handleSaveEditedTask = () => {
+    if (!editingTask?.title?.trim()) return;
+
+    updateTaskMutation.mutate({
+      id: editingTask.id,
+      updates: {
+        title: editingTask.title.trim(),
+        priority: editingTask.editPriority,
+        coreValue: editingTask.editCoreValue,
+        annualGoal: editingTask.editAnnualGoal,
+      }
+    });
+    
+    setShowTaskEditDialog(false);
+    setEditingTask(null);
   };
 
   const handleSaveReflection = async () => {
@@ -1482,6 +1543,8 @@ export default function DailyPlanning() {
                                 key={task.id}
                                 task={task}
                                 onToggleComplete={handleToggleTask}
+                                onEdit={handleEditTask}
+                                onDelete={handleDeleteTask}
                                 showPriority={false}
                                 showTime={false}
                                 project={project}
@@ -2612,6 +2675,128 @@ export default function DailyPlanning() {
                   <Button
                     onClick={handleSaveEditedEvent}
                     disabled={editEventMutation.isPending}
+                  >
+                    저장
+                  </Button>
+                </div>
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
+
+        {/* 할일 편집 다이얼로그 */}
+        <Dialog open={showTaskEditDialog} onOpenChange={setShowTaskEditDialog}>
+          <DialogContent className="sm:max-w-lg">
+            <DialogHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <DialogTitle>할일 수정</DialogTitle>
+                  <DialogDescription>
+                    할일 정보를 수정할 수 있습니다.
+                  </DialogDescription>
+                </div>
+                <Button
+                  onClick={() => {
+                    if (editingTask) {
+                      deleteTaskMutation.mutate(editingTask.id);
+                      setShowTaskEditDialog(false);
+                      setEditingTask(null);
+                    }
+                  }}
+                  size="sm"
+                  variant="ghost"
+                  className="h-8 w-8 p-0 text-red-500 hover:text-red-700"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+            </DialogHeader>
+
+            {editingTask && (
+              <div className="space-y-4">
+                {/* Task Title */}
+                <div>
+                  <Label className="text-sm font-medium">할일 제목</Label>
+                  <Input
+                    value={editingTask.title || ""}
+                    onChange={(e) => setEditingTask(prev => ({ ...prev, title: e.target.value }))}
+                    placeholder="할일 제목을 입력하세요"
+                  />
+                </div>
+
+                {/* Priority Selection */}
+                <div>
+                  <Label className="text-sm font-medium">우선순위</Label>
+                  <Select 
+                    value={editingTask.editPriority} 
+                    onValueChange={(value: 'A' | 'B' | 'C') => setEditingTask(prev => ({ ...prev, editPriority: value }))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="A">중요</SelectItem>
+                      <SelectItem value="B">보통</SelectItem>
+                      <SelectItem value="C">낮음</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Core Value and Annual Goal */}
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label className="text-sm font-medium">핵심가치</Label>
+                    <Select 
+                      value={editingTask.editCoreValue || 'none'} 
+                      onValueChange={(value) => setEditingTask(prev => ({ ...prev, editCoreValue: value === 'none' ? null : value }))}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="핵심가치" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">선택 안함</SelectItem>
+                        {foundation?.coreValue1 && (
+                          <SelectItem value={foundation.coreValue1}>{foundation.coreValue1}</SelectItem>
+                        )}
+                        {foundation?.coreValue2 && (
+                          <SelectItem value={foundation.coreValue2}>{foundation.coreValue2}</SelectItem>
+                        )}
+                        {foundation?.coreValue3 && (
+                          <SelectItem value={foundation.coreValue3}>{foundation.coreValue3}</SelectItem>
+                        )}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label className="text-sm font-medium">연간목표</Label>
+                    <Select 
+                      value={editingTask.editAnnualGoal || 'none'} 
+                      onValueChange={(value) => setEditingTask(prev => ({ ...prev, editAnnualGoal: value === 'none' ? null : value }))}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="연간목표" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">선택 안함</SelectItem>
+                        {annualGoals.map((goal: any) => (
+                          <SelectItem key={goal.id} value={goal.title}>{goal.title}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                {/* Action Buttons */}
+                <div className="flex justify-end space-x-2">
+                  <Button
+                    onClick={() => setShowTaskEditDialog(false)}
+                    variant="outline"
+                  >
+                    취소
+                  </Button>
+                  <Button
+                    onClick={handleSaveEditedTask}
+                    disabled={updateTaskMutation.isPending}
                   >
                     저장
                   </Button>
