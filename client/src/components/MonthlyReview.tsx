@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -89,7 +89,7 @@ export default function MonthlyReview() {
 
   // Get tasks for the current month to calculate completion stats
   const { data: monthTasks = [] } = useQuery({
-    queryKey: [`/api/tasks/auth?startDate=${format(monthStart, 'yyyy-MM-dd')}&endDate=${format(monthEnd, 'yyyy-MM-dd')}`],
+    queryKey: ['/api/tasks/auth'],
     retry: false,
   });
 
@@ -122,7 +122,9 @@ export default function MonthlyReview() {
     queryFn: async () => {
       const startDate = format(monthStart, 'yyyy-MM-dd');
       const endDate = format(monthEnd, 'yyyy-MM-dd');
-      return [];
+      const response = await fetch(`/api/events/auth?startDate=${startDate}&endDate=${endDate}`);
+      if (!response.ok) return [];
+      return response.json();
     },
     retry: false,
   });
@@ -431,7 +433,7 @@ export default function MonthlyReview() {
         setSelectedFiles(mockFiles);
       }
     }
-  }, [monthlyReview]);
+  }, [monthlyReview?.id]);
 
   const saveReviewMutation = useMutation({
     mutationFn: saveMonthlyReview,
@@ -479,7 +481,7 @@ export default function MonthlyReview() {
     setValueAlignments(newAlignments);
   };
 
-  // Calculate task completion stats
+  // Calculate task completion stats (simplified without date filtering for now)
   const taskStats = {
     total: (monthTasks as any[]).length,
     completed: (monthTasks as any[]).filter((t: any) => t.completed).length,
