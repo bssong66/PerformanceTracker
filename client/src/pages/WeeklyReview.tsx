@@ -328,6 +328,75 @@ export default function WeeklyReview() {
     insertTextAtCursor('\n---\n');
   };
 
+  // 엔터 키 처리 - 자동 목록 생성
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Enter') {
+      const textarea = e.target as HTMLTextAreaElement;
+      const start = textarea.selectionStart;
+      const text = reflection;
+      
+      // 현재 줄의 시작점 찾기
+      const lineStart = text.lastIndexOf('\n', start - 1) + 1;
+      const currentLine = text.substring(lineStart, start);
+      
+      // 번호 목록 패턴 확인 (1. 2. 3. 등)
+      const numberedListMatch = currentLine.match(/^(\d+)\.\s/);
+      if (numberedListMatch) {
+        e.preventDefault();
+        const currentNumber = parseInt(numberedListMatch[1]);
+        const nextNumber = currentNumber + 1;
+        
+        // 현재 줄이 비어있으면 목록 종료
+        if (currentLine.trim() === `${currentNumber}.`) {
+          // 현재 줄의 번호 목록 마커 제거
+          const newText = text.substring(0, lineStart) + text.substring(start);
+          setReflection(newText);
+          setTimeout(() => {
+            textarea.focus();
+            textarea.setSelectionRange(lineStart, lineStart);
+          }, 0);
+        } else {
+          // 다음 번호 목록 추가
+          const nextListItem = `\n${nextNumber}. `;
+          const newText = text.substring(0, start) + nextListItem + text.substring(start);
+          setReflection(newText);
+          setTimeout(() => {
+            textarea.focus();
+            textarea.setSelectionRange(start + nextListItem.length, start + nextListItem.length);
+          }, 0);
+        }
+        return;
+      }
+      
+      // 불릿 목록 패턴 확인
+      const bulletListMatch = currentLine.match(/^•\s/);
+      if (bulletListMatch) {
+        e.preventDefault();
+        
+        // 현재 줄이 비어있으면 목록 종료
+        if (currentLine.trim() === '•') {
+          // 현재 줄의 불릿 마커 제거
+          const newText = text.substring(0, lineStart) + text.substring(start);
+          setReflection(newText);
+          setTimeout(() => {
+            textarea.focus();
+            textarea.setSelectionRange(lineStart, lineStart);
+          }, 0);
+        } else {
+          // 다음 불릿 목록 추가
+          const nextListItem = '\n• ';
+          const newText = text.substring(0, start) + nextListItem + text.substring(start);
+          setReflection(newText);
+          setTimeout(() => {
+            textarea.focus();
+            textarea.setSelectionRange(start + nextListItem.length, start + nextListItem.length);
+          }, 0);
+        }
+        return;
+      }
+    }
+  };
+
   // Set initial values when weekly review data loads
   useEffect(() => {
     if (weeklyReview) {
@@ -703,6 +772,7 @@ export default function WeeklyReview() {
                     placeholder="이번 주를 돌아보며 배운 점, 개선할 점을 기록하세요..."
                     value={reflection}
                     onChange={handleReflectionChange}
+                    onKeyDown={handleKeyDown}
                     className="resize-none min-h-[120px]"
                     style={{ height: 'auto' }}
                   />
