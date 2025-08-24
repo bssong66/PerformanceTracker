@@ -1991,20 +1991,7 @@ export default function DailyPlanning() {
                     </div>
                   )}
 
-                  {/* 3. Selected Task Display - 할일 제목 */}
-                  {selectedFocusTask && (
-                    <div className="bg-blue-50 p-3 rounded-lg space-y-2">
-                      <div className="text-sm font-medium text-gray-900">선택된 할일</div>
-                      <div className="text-lg font-bold text-blue-800">
-                        {selectedFocusTask.title}
-                      </div>
-                      {selectedFocusTask.coreValue && selectedFocusTask.coreValue !== 'none' && (
-                        <div className="text-xs text-gray-600">
-                          🎯 {selectedFocusTask.coreValue}
-                        </div>
-                      )}
-                    </div>
-                  )}
+                  
 
                   {/* 4. Controls - 스타트 버튼 */}
                   <div className="flex justify-center space-x-4">
