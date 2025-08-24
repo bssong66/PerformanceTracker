@@ -99,6 +99,9 @@ export default function DailyPlanning() {
   const [showTaskEditDialog, setShowTaskEditDialog] = useState(false);
   const [editingTask, setEditingTask] = useState<any>(null);
 
+  // 완료된 일정 보기/감추기 상태
+  const [showCompletedEvents, setShowCompletedEvents] = useState(true);
+
 
   const timer = useTimer(0); // 테스트용 10초
   const { minutes, seconds, isRunning, isBreak, isCompleted, start, pause, reset, startBreak, extendSession, acknowledgeCompletion } = timer;
@@ -1525,110 +1528,128 @@ export default function DailyPlanning() {
 
                   {/* Today's Events/Schedule */}
                   <div className="mb-4">
-                    <div className="flex items-center space-x-2 mb-2">
-                      <div className="w-1 h-4 bg-gradient-to-b from-green-500 to-green-600 rounded-full"></div>
-                      <h4 className="text-sm font-semibold text-gray-800">오늘의 일정</h4>
-                      <span className="text-xs text-gray-500">
-                        ({todayEvents.length}개)
-                      </span>
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center space-x-2">
+                        <div className="w-1 h-4 bg-gradient-to-b from-green-500 to-green-600 rounded-full"></div>
+                        <h4 className="text-sm font-semibold text-gray-800">오늘의 일정</h4>
+                        <span className="text-xs text-gray-500">
+                          ({todayEvents.length}개)
+                        </span>
+                      </div>
+                      <Button
+                        onClick={() => setShowCompletedEvents(!showCompletedEvents)}
+                        size="sm"
+                        variant="ghost"
+                        className="h-6 text-xs px-2 py-1"
+                      >
+                        {showCompletedEvents ? '완료된 일정 숨기기' : '완료된 일정 보기'}
+                      </Button>
                     </div>
                     <div className="space-y-1 mb-4">
-                      {todayEvents.length === 0 ? (
-                        <p className="text-xs text-gray-400 italic">예정된 일정이 없습니다.</p>
-                      ) : (
-                        todayEvents.map((event: any) => (
-                          <div 
-                            key={event.id} 
-                            className={`flex items-center space-x-2 p-2 rounded border ${
-                              event.completed 
-                                ? 'bg-gray-50 border-gray-200 opacity-75' 
-                                : 'bg-green-50 border-green-200'
-                            }`}
-                          >
-                            <Checkbox
-                              id={`event-${event.id}`}
-                              checked={event.completed || false}
-                              onCheckedChange={(checked) => handleToggleEvent(event.id, checked === true)}
-                              className="w-4 h-4"
-                            />
-                            <div className="flex-1">
-                              <div className={`text-sm font-medium ${
-                                event.completed ? 'text-gray-500 line-through' : 'text-green-800'
-                              }`}>
-                                {event.title}
+                      {(() => {
+                        const filteredEvents = showCompletedEvents 
+                          ? todayEvents 
+                          : todayEvents.filter((event: any) => !event.completed);
+                        
+                        return filteredEvents.length === 0 ? (
+                          <p className="text-xs text-gray-400 italic">
+                            {todayEvents.length === 0 ? '예정된 일정이 없습니다.' : '표시할 일정이 없습니다.'}
+                          </p>
+                        ) : (
+                          filteredEvents.map((event: any) => (
+                            <div 
+                              key={event.id} 
+                              className={`flex items-center space-x-2 p-2 rounded border ${
+                                event.completed 
+                                  ? 'bg-gray-50 border-gray-200 opacity-75' 
+                                  : 'bg-green-50 border-green-200'
+                              }`}
+                            >
+                              <Checkbox
+                                id={`event-${event.id}`}
+                                checked={event.completed || false}
+                                onCheckedChange={(checked) => handleToggleEvent(event.id, checked === true)}
+                                className="w-4 h-4"
+                              />
+                              <div className="flex-1">
+                                <div className={`text-sm font-medium ${
+                                  event.completed ? 'text-gray-500 line-through' : 'text-green-800'
+                                }`}>
+                                  {event.title}
+                                </div>
+                                {event.startTime && event.endTime && (
+                                  <div className={`text-xs ${
+                                    event.completed ? 'text-gray-400' : 'text-green-600'
+                                  }`}>
+                                    {event.startTime} - {event.endTime}
+                                  </div>
+                                )}
+                                {!event.startTime && !event.endTime && event.isAllDay && (
+                                  <div className={`text-xs ${
+                                    event.completed ? 'text-gray-400' : 'text-green-600'
+                                  }`}>
+                                    종일
+                                  </div>
+                                )}
+                                {(event.priority || event.coreValue || event.annualGoal) && (
+                                  <div className="flex items-center space-x-2 mt-1">
+                                    {event.priority && (
+                                      <span className={`text-xs px-2 py-1 rounded-full ${
+                                        event.priority === 'A' ? 'bg-red-100 text-red-800' :
+                                        event.priority === 'B' ? 'bg-yellow-100 text-yellow-800' :
+                                        event.priority === 'C' ? 'bg-gray-100 text-gray-800' :
+                                        event.priority === 'high' ? 'bg-red-100 text-red-800' :
+                                        event.priority === 'medium' ? 'bg-yellow-100 text-yellow-800' :
+                                        event.priority === 'low' ? 'bg-gray-100 text-gray-800' :
+                                        'bg-gray-100 text-gray-800'
+                                      }`}>
+                                        {event.priority === 'A' ? '중요&긴급' : 
+                                         event.priority === 'B' ? '중요' : 
+                                         event.priority === 'C' ? '낮음' :
+                                         event.priority === 'high' ? '중요' :
+                                         event.priority === 'medium' ? '보통' :
+                                         event.priority === 'low' ? '낮음' : '우선순위 없음'}
+                                      </span>
+                                    )}
+                                    {event.coreValue && (
+                                      <span className="text-xs px-2 py-1 bg-blue-100 text-blue-800 rounded-full">
+                                        {event.coreValue}
+                                      </span>
+                                    )}
+                                    {event.annualGoal && (
+                                      <span className="text-xs px-2 py-1 bg-purple-100 text-purple-800 rounded-full">
+                                        {event.annualGoal}
+                                      </span>
+                                    )}
+                                  </div>
+                                )}
                               </div>
-                              {event.startTime && event.endTime && (
-                                <div className={`text-xs ${
-                                  event.completed ? 'text-gray-400' : 'text-green-600'
-                                }`}>
-                                  {event.startTime} - {event.endTime}
-                                </div>
-                              )}
-                              {!event.startTime && !event.endTime && event.isAllDay && (
-                                <div className={`text-xs ${
-                                  event.completed ? 'text-gray-400' : 'text-green-600'
-                                }`}>
-                                  종일
-                                </div>
-                              )}
-                              {(event.priority || event.coreValue || event.annualGoal) && (
-                                <div className="flex items-center space-x-2 mt-1">
-                                  {event.priority && (
-                                    <span className={`text-xs px-2 py-1 rounded-full ${
-                                      event.priority === 'A' ? 'bg-red-100 text-red-800' :
-                                      event.priority === 'B' ? 'bg-yellow-100 text-yellow-800' :
-                                      event.priority === 'C' ? 'bg-gray-100 text-gray-800' :
-                                      event.priority === 'high' ? 'bg-red-100 text-red-800' :
-                                      event.priority === 'medium' ? 'bg-yellow-100 text-yellow-800' :
-                                      event.priority === 'low' ? 'bg-gray-100 text-gray-800' :
-                                      'bg-gray-100 text-gray-800'
-                                    }`}>
-                                      {event.priority === 'A' ? '중요&긴급' : 
-                                       event.priority === 'B' ? '중요' : 
-                                       event.priority === 'C' ? '낮음' :
-                                       event.priority === 'high' ? '중요' :
-                                       event.priority === 'medium' ? '보통' :
-                                       event.priority === 'low' ? '낮음' : '우선순위 없음'}
-                                    </span>
-                                  )}
-                                  {event.coreValue && (
-                                    <span className="text-xs px-2 py-1 bg-blue-100 text-blue-800 rounded-full">
-                                      {event.coreValue}
-                                    </span>
-                                  )}
-                                  {event.annualGoal && (
-                                    <span className="text-xs px-2 py-1 bg-purple-100 text-purple-800 rounded-full">
-                                      {event.annualGoal}
-                                    </span>
-                                  )}
-                                </div>
-                              )}
+                              <div className="flex items-center space-x-1">
+                                <Button
+                                  onClick={() => handleEventClick(event)}
+                                  size="sm"
+                                  variant="ghost"
+                                  className="h-7 w-7 p-0"
+                                >
+                                  <Edit className="h-3 w-3" />
+                                </Button>
+                                <Button
+                                  onClick={() => {
+                                    if (window.confirm('정말 이 일정을 삭제하시겠습니까?')) {
+                                      deleteEventMutation.mutate(event.id);
+                                    }
+                                  }}
+                                  size="sm"
+                                  variant="ghost"
+                                  className="h-7 w-7 p-0 text-red-500 hover:text-red-700"
+                                >
+                                  <X className="h-3 w-3" />
+                                </Button>
+                              </div>
                             </div>
-                            <div className="flex items-center space-x-1">
-                              <Button
-                                onClick={() => handleEventClick(event)}
-                                size="sm"
-                                variant="ghost"
-                                className="h-7 w-7 p-0"
-                              >
-                                <Edit className="h-3 w-3" />
-                              </Button>
-                              <Button
-                                onClick={() => {
-                                  if (window.confirm('정말 이 일정을 삭제하시겠습니까?')) {
-                                    deleteEventMutation.mutate(event.id);
-                                  }
-                                }}
-                                size="sm"
-                                variant="ghost"
-                                className="h-7 w-7 p-0 text-red-500 hover:text-red-700"
-                              >
-                                <X className="h-3 w-3" />
-                              </Button>
-                            </div>
-                          </div>
-                        ))
-                      )}
+                          ))
+                        );
+                      })()}
                     </div>
                   </div>
 
