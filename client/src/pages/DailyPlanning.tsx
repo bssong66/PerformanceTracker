@@ -1293,8 +1293,8 @@ export default function DailyPlanning() {
                           <SelectValue placeholder="우선순위" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="high">높음</SelectItem>
-                          <SelectItem value="medium">중간</SelectItem>
+                          <SelectItem value="high">중요</SelectItem>
+                          <SelectItem value="medium">보통</SelectItem>
                           <SelectItem value="low">낮음</SelectItem>
                         </SelectContent>
                       </Select>
@@ -1396,8 +1396,8 @@ export default function DailyPlanning() {
                                       {event.priority === 'A' ? '중요&긴급' : 
                                        event.priority === 'B' ? '중요' : 
                                        event.priority === 'C' ? '낮음' :
-                                       event.priority === 'high' ? '높음' :
-                                       event.priority === 'medium' ? '중간' :
+                                       event.priority === 'high' ? '중요' :
+                                       event.priority === 'medium' ? '보통' :
                                        event.priority === 'low' ? '낮음' : '우선순위 없음'}
                                     </span>
                                   )}
