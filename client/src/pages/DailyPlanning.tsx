@@ -101,9 +101,6 @@ export default function DailyPlanning() {
 
   // 완료된 일정 보기/감추기 상태
   const [showCompletedEvents, setShowCompletedEvents] = useState(true);
-  
-  // 완료된 할일 보기/감추기 상태
-  const [showCompletedTasks, setShowCompletedTasks] = useState(true);
 
 
   const timer = useTimer(0); // 테스트용 10초
@@ -1658,22 +1655,12 @@ export default function DailyPlanning() {
 
                   {/* Tasks by Priority */}
                   <div className="mb-2">
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="flex items-center space-x-2">
-                        <div className="w-1 h-4 bg-gradient-to-b from-blue-500 to-blue-600 rounded-full"></div>
-                        <h4 className="text-sm font-semibold text-gray-800">오늘의 할일</h4>
-                        <span className="text-xs text-gray-500">
-                          ({tasks.length}개)
-                        </span>
-                      </div>
-                      <Button
-                        onClick={() => setShowCompletedTasks(!showCompletedTasks)}
-                        size="sm"
-                        variant="ghost"
-                        className="h-6 text-xs px-2 py-1"
-                      >
-                        {showCompletedTasks ? '완료된 할일 숨기기' : '완료된 할일 보기'}
-                      </Button>
+                    <div className="flex items-center space-x-2 mb-2">
+                      <div className="w-1 h-4 bg-gradient-to-b from-blue-500 to-blue-600 rounded-full"></div>
+                      <h4 className="text-sm font-semibold text-gray-800">오늘의 할일</h4>
+                      <span className="text-xs text-gray-500">
+                        ({tasks.length}개)
+                      </span>
                     </div>
                   </div>
                   {(['A', 'B', 'C'] as const).map((priority) => (
@@ -1688,33 +1675,25 @@ export default function DailyPlanning() {
                         </span>
                       </div>
                       <div className="space-y-1 mb-4">
-                        {(() => {
-                          const filteredTasks = showCompletedTasks 
-                            ? tasksByPriority[priority] 
-                            : tasksByPriority[priority].filter((task: any) => !task.completed);
-                          
-                          return filteredTasks.length === 0 ? (
-                            <p className="text-xs text-gray-400 italic">
-                              {tasksByPriority[priority].length === 0 ? '할일이 없습니다.' : '표시할 할일이 없습니다.'}
-                            </p>
-                          ) : (
-                            filteredTasks.map((task: any) => {
-                              const project = (projects as any[]).find(p => p.id === task.projectId);
-                              return (
-                                <TaskItem
-                                  key={task.id}
-                                  task={task}
-                                  onToggleComplete={handleToggleTask}
-                                  onEdit={handleEditTask}
-                                  onDelete={handleDeleteTask}
-                                  showPriority={false}
-                                  showTime={false}
-                                  project={project}
-                                />
-                              );
-                            })
-                          );
-                        })()}
+                        {tasksByPriority[priority].length === 0 ? (
+                          <p className="text-xs text-gray-400 italic">할일이 없습니다.</p>
+                        ) : (
+                          tasksByPriority[priority].map((task: any) => {
+                            const project = (projects as any[]).find(p => p.id === task.projectId);
+                            return (
+                              <TaskItem
+                                key={task.id}
+                                task={task}
+                                onToggleComplete={handleToggleTask}
+                                onEdit={handleEditTask}
+                                onDelete={handleDeleteTask}
+                                showPriority={false}
+                                showTime={false}
+                                project={project}
+                              />
+                            );
+                          })
+                        )}
                       </div>
                     </div>
                   ))}
