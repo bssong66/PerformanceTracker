@@ -554,11 +554,11 @@ export default function DailyPlanning() {
   // 오늘 날짜의 할일만 필터링
   const todayTasks = allTasks.filter((task: any) => {
     if (task.dueDate) {
-      // 오늘 날짜이거나 지연된 할일(완료되지 않은 과거 할일)도 포함
-      return task.dueDate <= today && !task.completed;
+      // 오늘 날짜이거나 지연된 할일 포함 (완료된 할일도 표시)
+      return task.dueDate <= today;
     }
-    // dueDate가 없는 경우 완료되지 않은 모든 할일 포함
-    return !task.completed;
+    // dueDate가 없는 경우 모든 할일 포함 (완료된 할일도 표시)
+    return true;
   });
 
   // Use filtered tasks for both tabs to ensure data consistency
@@ -574,10 +574,10 @@ export default function DailyPlanning() {
 
   // Focus Mode functions
   const filteredTasks = showATasksOnly 
-    ? focusTasks.filter((task: any) => task.priority === 'A' && !task.completed)
-    : focusTasks.filter((task: any) => !task.completed);
+    ? focusTasks.filter((task: any) => task.priority === 'A')
+    : focusTasks;
 
-  const aTasks = focusTasks.filter((task: any) => task.priority === 'A' && !task.completed);
+  const aTasks = focusTasks.filter((task: any) => task.priority === 'A');
 
   // Set default selected task to first A priority task
   useEffect(() => {
