@@ -1696,22 +1696,7 @@ export default function DailyPlanning() {
                     </div>
                   )}
 
-                  {/* 할일 선택 */}
-                  <div>
-                    <Label htmlFor="task-select" className="text-sm font-medium">집중할 할일</Label>
-                    <Select value={selectedTask?.id?.toString() || ""} onValueChange={handleTaskSelect}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="할일을 선택하세요" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {filteredTasks.map((task: any) => (
-                          <SelectItem key={task.id} value={task.id.toString()}>
-                            [{task.priority}] {task.title}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
+                  
                 </CardContent>
               </Card>
 
