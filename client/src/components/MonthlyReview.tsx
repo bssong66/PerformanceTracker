@@ -630,7 +630,7 @@ export default function MonthlyReview() {
                     <h4 className="text-sm font-semibold text-gray-900">습관 실행률</h4>
                   </div>
                   <div className="space-y-3">
-                    {(habits as any[]).slice(0, 3).map((habit: any, index: number) => (
+                    {(habits as any[]).map((habit: any, index: number) => (
                       <div key={habit.id} className="flex items-center justify-between p-1 bg-gradient-to-r from-gray-50 to-gray-100 rounded-lg border border-gray-200 hover:shadow-sm transition-shadow">
                         <div className="flex items-center space-x-3">
                           {getHabitIcon(habit.name)}
