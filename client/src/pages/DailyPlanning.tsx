@@ -33,7 +33,7 @@ export default function DailyPlanning() {
   const [selectedAnnualGoal, setSelectedAnnualGoal] = useState<string>('none');
   const [selectedProject, setSelectedProject] = useState<number | null>(null);
   const [reflection, setReflection] = useState("");
-  
+
   // Quick Event Input states
   const [newEvent, setNewEvent] = useState("");
   const [startHour, setStartHour] = useState("9");
@@ -124,7 +124,7 @@ export default function DailyPlanning() {
 
   // 오늘의 습관 로그 가져오기
   const { data: habitLogs = [] } = useQuery({
-    queryKey: ['habit-logs', user?.id, today],
+    queryKey: ['habit-logs', user!.id, today],
     queryFn: () => fetch(`/api/habit-logs/${user!.id}/${today}`).then(res => res.json()),
     enabled: !!user?.id,
   });
@@ -580,7 +580,7 @@ export default function DailyPlanning() {
       const hour24 = parseInt(hour);
       let hour12 = hour24;
       let period: 'AM' | 'PM' = 'AM';
-      
+
       if (hour24 === 0) {
         hour12 = 12;
         period = 'AM';
@@ -591,7 +591,7 @@ export default function DailyPlanning() {
         hour12 = hour24 - 12;
         period = 'PM';
       }
-      
+
       return { hour: hour12.toString(), minute, period };
     };
 
@@ -688,7 +688,7 @@ export default function DailyPlanning() {
         annualGoal: editingTask.editAnnualGoal,
       }
     });
-    
+
     setShowTaskEditDialog(false);
     setEditingTask(null);
   };
@@ -1279,7 +1279,7 @@ export default function DailyPlanning() {
                         <Plus className="h-4 w-4" />
                       </Button>
                     </div>
-                    
+
                     {/* Time Selection */}
                     <div className="grid grid-cols-2 gap-3">
                       {/* Start Time */}
@@ -1326,7 +1326,7 @@ export default function DailyPlanning() {
                           </Select>
                         </div>
                       </div>
-                      
+
                       {/* End Time */}
                       <div className="space-y-1">
                         <Label className="text-xs text-gray-600">종료 시간</Label>
@@ -1786,7 +1786,7 @@ export default function DailyPlanning() {
                   <div className="text-lg font-medium text-gray-600">
                     {isBreak ? '휴식 시간' : '집중 시간'}
                   </div>
-                  
+
                   {/* Selected Time Block Info */}
                   {selectedTimeBlock && (
                     <div className="bg-blue-50 p-3 rounded-lg space-y-2">
@@ -1842,7 +1842,7 @@ export default function DailyPlanning() {
                   {/* Quick Actions */}
                   <div className="space-y-2">
                     <Button
-                      onClick={handleCompleteSession}
+                      onClick={handleCompleteTaskAndEndSession}
                       disabled={!selectedTask}
                       className="w-full"
                     >
@@ -2542,7 +2542,7 @@ export default function DailyPlanning() {
                       </Select>
                     </div>
                   </div>
-                  
+
                   {/* End Time */}
                   <div className="space-y-1">
                     <Label className="text-xs text-gray-600">종료 시간</Label>
