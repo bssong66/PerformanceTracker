@@ -1976,37 +1976,43 @@ export default function DailyPlanning() {
                   </div>
 
                   {/* 2. Time Setting - 시간 선택 드롭다운(시간:분) */}
-                  {!isCustomTimerRunning && (
-                    <div className="space-y-3">
-                      <div className="text-sm font-medium text-gray-700">시간 설정</div>
-                      <div className="flex items-center justify-center space-x-2">
-                        <Select value={customTimerHours} onValueChange={setCustomTimerHours}>
-                          <SelectTrigger className="w-20">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {Array.from({ length: 24 }, (_, i) => (
-                              <SelectItem key={i} value={i.toString()}>
-                                {i}시간
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <Select value={customTimerMinutes} onValueChange={setCustomTimerMinutes}>
-                          <SelectTrigger className="w-20">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {Array.from({ length: 60 }, (_, i) => (
-                              <SelectItem key={i} value={i.toString()}>
-                                {i}분
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
+                  <div className="space-y-3">
+                    <div className="text-sm font-medium text-gray-700">시간 설정</div>
+                    <div className="flex items-center justify-center space-x-2">
+                      <Select 
+                        value={customTimerHours} 
+                        onValueChange={setCustomTimerHours}
+                        disabled={isCustomTimerRunning}
+                      >
+                        <SelectTrigger className="w-20">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {Array.from({ length: 24 }, (_, i) => (
+                            <SelectItem key={i} value={i.toString()}>
+                              {i}시간
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <Select 
+                        value={customTimerMinutes} 
+                        onValueChange={setCustomTimerMinutes}
+                        disabled={isCustomTimerRunning}
+                      >
+                        <SelectTrigger className="w-20">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {Array.from({ length: 60 }, (_, i) => (
+                            <SelectItem key={i} value={i.toString()}>
+                              {i}분
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
-                  )}
+                  </div>
 
                   {/* 3. Selected Task Display - 할일 제목 */}
                   {selectedFocusTask && (
