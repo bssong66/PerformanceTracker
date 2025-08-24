@@ -130,7 +130,7 @@ export default function DailyPlanning() {
   useEffect(() => {
     let interval: NodeJS.Timeout;
     
-    if (isCustomTimerRunning && customTimerSeconds > 0) {
+    if (isCustomTimerRunning) {
       interval = setInterval(() => {
         setCustomTimerSeconds(prev => {
           if (prev <= 1) {
@@ -146,7 +146,7 @@ export default function DailyPlanning() {
     }
 
     return () => clearInterval(interval);
-  }, [isCustomTimerRunning, customTimerSeconds]);
+  }, [isCustomTimerRunning]);
 
   // 알림음 재생 함수
   const playCompletionSound = () => {
