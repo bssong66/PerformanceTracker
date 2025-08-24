@@ -1953,22 +1953,12 @@ export default function DailyPlanning() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="text-center space-y-6">
-                  {/* Selected Task Display */}
-                  {selectedFocusTask && (
-                    <div className="bg-blue-50 p-3 rounded-lg space-y-2">
-                      <div className="text-sm font-medium text-gray-900">선택된 할일</div>
-                      <div className="text-lg font-bold text-blue-800">
-                        {selectedFocusTask.title}
-                      </div>
-                      {selectedFocusTask.coreValue && selectedFocusTask.coreValue !== 'none' && (
-                        <div className="text-xs text-gray-600">
-                          🎯 {selectedFocusTask.coreValue}
-                        </div>
-                      )}
-                    </div>
-                  )}
+                  {/* 1. Timer Display - 시간타이머(시간:분:초) */}
+                  <div className="text-6xl font-mono font-bold text-gray-900">
+                    {formatTime(customTimerSeconds)}
+                  </div>
 
-                  {/* Time Setting */}
+                  {/* 2. Time Setting - 시간 선택 드롭다운(시간:분) */}
                   {!isCustomTimerRunning && (
                     <div className="space-y-3">
                       <div className="text-sm font-medium text-gray-700">시간 설정</div>
@@ -2001,17 +1991,22 @@ export default function DailyPlanning() {
                     </div>
                   )}
 
-                  {/* Timer Display */}
-                  <div className="text-6xl font-mono font-bold text-gray-900">
-                    {formatTime(customTimerSeconds)}
-                  </div>
+                  {/* 3. Selected Task Display - 할일 제목 */}
+                  {selectedFocusTask && (
+                    <div className="bg-blue-50 p-3 rounded-lg space-y-2">
+                      <div className="text-sm font-medium text-gray-900">선택된 할일</div>
+                      <div className="text-lg font-bold text-blue-800">
+                        {selectedFocusTask.title}
+                      </div>
+                      {selectedFocusTask.coreValue && selectedFocusTask.coreValue !== 'none' && (
+                        <div className="text-xs text-gray-600">
+                          🎯 {selectedFocusTask.coreValue}
+                        </div>
+                      )}
+                    </div>
+                  )}
 
-                  {/* Timer Status */}
-                  <div className="text-lg font-medium text-gray-600">
-                    {isCustomTimerRunning ? '집중 시간' : '준비 중'}
-                  </div>
-
-                  {/* Controls */}
+                  {/* 4. Controls - 스타트 버튼 */}
                   <div className="flex justify-center space-x-4">
                     {!isCustomTimerRunning && customTimerSeconds === (parseInt(customTimerHours) * 3600 + parseInt(customTimerMinutes) * 60) ? (
                       <Button
