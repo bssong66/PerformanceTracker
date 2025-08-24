@@ -36,8 +36,12 @@ export default function DailyPlanning() {
   
   // Quick Event Input states
   const [newEvent, setNewEvent] = useState("");
-  const [selectedEventStartTime, setSelectedEventStartTime] = useState("");
-  const [selectedEventEndTime, setSelectedEventEndTime] = useState("");
+  const [startHour, setStartHour] = useState("9");
+  const [startMinute, setStartMinute] = useState("00");
+  const [startPeriod, setStartPeriod] = useState<'AM' | 'PM'>('AM');
+  const [endHour, setEndHour] = useState("10");
+  const [endMinute, setEndMinute] = useState("00");
+  const [endPeriod, setEndPeriod] = useState<'AM' | 'PM'>('AM');
   const [selectedEventPriority, setSelectedEventPriority] = useState<'high' | 'medium' | 'low'>('medium');
   const [selectedEventCoreValue, setSelectedEventCoreValue] = useState<string>('none');
   const [selectedEventAnnualGoal, setSelectedEventAnnualGoal] = useState<string>('none');
@@ -218,8 +222,12 @@ export default function DailyPlanning() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['events', user!.id, today] });
       setNewEvent("");
-      setSelectedEventStartTime("");
-      setSelectedEventEndTime("");
+      setStartHour("9");
+      setStartMinute("00");
+      setStartPeriod('AM');
+      setEndHour("10");
+      setEndMinute("00");
+      setEndPeriod('AM');
       setSelectedEventPriority('medium');
       setSelectedEventCoreValue('none');
       setSelectedEventAnnualGoal('none');
@@ -442,22 +450,27 @@ export default function DailyPlanning() {
       return;
     }
 
-    if (!selectedEventStartTime || !selectedEventEndTime) {
-      toast({
-        title: "입력 오류",
-        description: "시작 시간과 종료 시간을 선택해주세요.",
-        variant: "destructive",
-      });
-      return;
-    }
+    // Convert 12-hour format to 24-hour format
+    const convertTo24Hour = (hour: string, minute: string, period: 'AM' | 'PM') => {
+      let hour24 = parseInt(hour);
+      if (period === 'PM' && hour24 !== 12) {
+        hour24 += 12;
+      } else if (period === 'AM' && hour24 === 12) {
+        hour24 = 0;
+      }
+      return `${hour24.toString().padStart(2, '0')}:${minute}`;
+    };
+
+    const startTime = convertTo24Hour(startHour, startMinute, startPeriod);
+    const endTime = convertTo24Hour(endHour, endMinute, endPeriod);
 
     addEventMutation.mutate({
       userId: user!.id,
       title: newEvent.trim(),
       startDate: today,
       endDate: today,
-      startTime: selectedEventStartTime,
-      endTime: selectedEventEndTime,
+      startTime: startTime,
+      endTime: endTime,
       priority: selectedEventPriority,
       coreValue: selectedEventCoreValue === 'none' ? null : selectedEventCoreValue,
       annualGoal: selectedEventAnnualGoal === 'none' ? null : selectedEventAnnualGoal,
@@ -1061,23 +1074,93 @@ export default function DailyPlanning() {
                         onKeyPress={(e) => e.key === 'Enter' && handleAddEvent()}
                         className="flex-1"
                       />
-                      <Input
-                        type="time"
-                        value={selectedEventStartTime}
-                        onChange={(e) => setSelectedEventStartTime(e.target.value)}
-                        className="w-24"
-                        placeholder="시작"
-                      />
-                      <Input
-                        type="time"
-                        value={selectedEventEndTime}
-                        onChange={(e) => setSelectedEventEndTime(e.target.value)}
-                        className="w-24"
-                        placeholder="종료"
-                      />
+                      <Button onClick={handleAddEvent} disabled={!newEvent.trim() || addEventMutation.isPending} size="sm">
+                        <Plus className="h-4 w-4" />
+                      </Button>
+                    </div>
+                    
+                    {/* Time Selection */}
+                    <div className="grid grid-cols-2 gap-3">
+                      {/* Start Time */}
+                      <div className="space-y-1">
+                        <Label className="text-xs text-gray-600">시작 시간</Label>
+                        <div className="flex space-x-1">
+                          <Select value={startHour} onValueChange={setStartHour}>
+                            <SelectTrigger className="w-16 h-8 text-xs">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {Array.from({length: 12}, (_, i) => i + 1).map(hour => (
+                                <SelectItem key={hour} value={hour.toString()}>{hour}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <Select value={startMinute} onValueChange={setStartMinute}>
+                            <SelectTrigger className="w-16 h-8 text-xs">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="00">00</SelectItem>
+                              <SelectItem value="15">15</SelectItem>
+                              <SelectItem value="30">30</SelectItem>
+                              <SelectItem value="45">45</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <Select value={startPeriod} onValueChange={(value: 'AM' | 'PM') => setStartPeriod(value)}>
+                            <SelectTrigger className="w-16 h-8 text-xs">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="AM">AM</SelectItem>
+                              <SelectItem value="PM">PM</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+                      
+                      {/* End Time */}
+                      <div className="space-y-1">
+                        <Label className="text-xs text-gray-600">종료 시간</Label>
+                        <div className="flex space-x-1">
+                          <Select value={endHour} onValueChange={setEndHour}>
+                            <SelectTrigger className="w-16 h-8 text-xs">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {Array.from({length: 12}, (_, i) => i + 1).map(hour => (
+                                <SelectItem key={hour} value={hour.toString()}>{hour}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <Select value={endMinute} onValueChange={setEndMinute}>
+                            <SelectTrigger className="w-16 h-8 text-xs">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="00">00</SelectItem>
+                              <SelectItem value="15">15</SelectItem>
+                              <SelectItem value="30">30</SelectItem>
+                              <SelectItem value="45">45</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <Select value={endPeriod} onValueChange={(value: 'AM' | 'PM') => setEndPeriod(value)}>
+                            <SelectTrigger className="w-16 h-8 text-xs">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="AM">AM</SelectItem>
+                              <SelectItem value="PM">PM</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {/* Priority Selection */}
+                    <div className="flex space-x-2">
                       <Select value={selectedEventPriority} onValueChange={(value: 'high' | 'medium' | 'low') => setSelectedEventPriority(value)}>
-                        <SelectTrigger className="w-16">
-                          <SelectValue />
+                        <SelectTrigger className="h-8 text-xs">
+                          <SelectValue placeholder="우선순위" />
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="high">높음</SelectItem>
@@ -1085,9 +1168,6 @@ export default function DailyPlanning() {
                           <SelectItem value="low">낮음</SelectItem>
                         </SelectContent>
                       </Select>
-                      <Button onClick={handleAddEvent} disabled={!newEvent.trim() || addEventMutation.isPending} size="sm">
-                        <Plus className="h-4 w-4" />
-                      </Button>
                     </div>
 
                     {/* Event Value Selection */}
