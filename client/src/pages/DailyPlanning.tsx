@@ -1595,14 +1595,6 @@ export default function DailyPlanning() {
                           휴식 제안
                         </Button>
                       )}
-                      <Button
-                        onClick={() => openTimeBlockDialog()}
-                        size="sm"
-                        className="h-7 text-xs"
-                      >
-                        <Plus className="h-3 w-3 mr-1" />
-                        추가
-                      </Button>
                     </div>
                   </div>
 
