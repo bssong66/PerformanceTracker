@@ -567,11 +567,18 @@ export default function DailyPlanning() {
   const tasks = todayTasks;
   const focusTasks = todayTasks;
 
-  // Group tasks by priority - 완료된 할일도 항상 표시, 토글로만 제어
+  // Group tasks by priority - 완료된 할일도 항상 표시
+  const allTasksByPriority = {
+    A: (tasks as any[]).filter((t: any) => t.priority === 'A'),
+    B: (tasks as any[]).filter((t: any) => t.priority === 'B'),
+    C: (tasks as any[]).filter((t: any) => t.priority === 'C'),
+  };
+
+  // 토글 상태에 따라 필터링
   const tasksByPriority = {
-    A: (tasks as any[]).filter((t: any) => t.priority === 'A').filter((t: any) => showCompletedTasks || !t.completed),
-    B: (tasks as any[]).filter((t: any) => t.priority === 'B').filter((t: any) => showCompletedTasks || !t.completed),
-    C: (tasks as any[]).filter((t: any) => t.priority === 'C').filter((t: any) => showCompletedTasks || !t.completed),
+    A: showCompletedTasks ? allTasksByPriority.A : allTasksByPriority.A.filter((t: any) => !t.completed),
+    B: showCompletedTasks ? allTasksByPriority.B : allTasksByPriority.B.filter((t: any) => !t.completed),
+    C: showCompletedTasks ? allTasksByPriority.C : allTasksByPriority.C.filter((t: any) => !t.completed),
   };
 
   // Focus Mode functions
@@ -1728,9 +1735,10 @@ export default function DailyPlanning() {
                       <div className="space-y-1">
                         {(() => {
                           const today = format(new Date(), 'yyyy-MM-dd');
-                          const todayTasks = allTasks.filter((task: any) => 
+                          const allTodayTasks = allTasks.filter((task: any) => 
                             task.startDate === today || task.endDate === today
-                          ).filter((task: any) => showCompletedTasks || !task.completed);
+                          );
+                          const todayTasks = showCompletedTasks ? allTodayTasks : allTodayTasks.filter((task: any) => !task.completed);
                           
                           return todayTasks.length === 0 ? (
                             <p className="text-xs text-gray-400 italic">오늘 일정이 잡힌 할일이 없습니다.</p>
