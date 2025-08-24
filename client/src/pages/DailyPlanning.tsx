@@ -101,6 +101,8 @@ export default function DailyPlanning() {
 
   // 완료된 일정 보기/감추기 상태
   const [showCompletedEvents, setShowCompletedEvents] = useState(true);
+  // 완료된 할일 보기/감추기 상태
+  const [showCompletedTasks, setShowCompletedTasks] = useState(true);
 
 
   const timer = useTimer(0); // 테스트용 10초
@@ -567,9 +569,9 @@ export default function DailyPlanning() {
 
   // Group tasks by priority
   const tasksByPriority = {
-    A: (tasks as any[]).filter((t: any) => t.priority === 'A'),
-    B: (tasks as any[]).filter((t: any) => t.priority === 'B'),
-    C: (tasks as any[]).filter((t: any) => t.priority === 'C'),
+    A: (tasks as any[]).filter((t: any) => t.priority === 'A' && (showCompletedTasks || !t.completed)),
+    B: (tasks as any[]).filter((t: any) => t.priority === 'B' && (showCompletedTasks || !t.completed)),
+    C: (tasks as any[]).filter((t: any) => t.priority === 'C' && (showCompletedTasks || !t.completed)),
   };
 
   // Focus Mode functions
@@ -1652,12 +1654,22 @@ export default function DailyPlanning() {
 
                   {/* Tasks by Priority */}
                   <div className="mb-2">
-                    <div className="flex items-center space-x-2 mb-2">
-                      <div className="w-1 h-4 bg-gradient-to-b from-blue-500 to-blue-600 rounded-full"></div>
-                      <h4 className="text-sm font-semibold text-gray-800">오늘의 할일</h4>
-                      <span className="text-xs text-gray-500">
-                        ({tasks.length}개)
-                      </span>
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center space-x-2">
+                        <div className="w-1 h-4 bg-gradient-to-b from-blue-500 to-blue-600 rounded-full"></div>
+                        <h4 className="text-sm font-semibold text-gray-800">오늘의 할일</h4>
+                        <span className="text-xs text-gray-500">
+                          ({tasks.length}개)
+                        </span>
+                      </div>
+                      <Button
+                        onClick={() => setShowCompletedTasks(!showCompletedTasks)}
+                        size="sm"
+                        variant="ghost"
+                        className="h-6 text-xs px-2 py-1"
+                      >
+                        {showCompletedTasks ? '완료된 할일 숨기기' : '완료된 할일 보기'}
+                      </Button>
                     </div>
                   </div>
                   {(['A', 'B', 'C'] as const).map((priority) => (
@@ -1717,7 +1729,8 @@ export default function DailyPlanning() {
                         {(() => {
                           const today = format(new Date(), 'yyyy-MM-dd');
                           const todayTasks = allTasks.filter((task: any) => 
-                            task.startDate === today || task.endDate === today
+                            (task.startDate === today || task.endDate === today) && 
+                            (showCompletedTasks || !task.completed)
                           );
                           
                           return todayTasks.length === 0 ? (
