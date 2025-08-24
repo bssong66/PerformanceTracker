@@ -1377,6 +1377,20 @@ export default function DailyPlanning() {
                                   종일
                                 </div>
                               )}
+                              {(event.coreValue || event.annualGoal) && (
+                                <div className="flex items-center space-x-2 mt-1">
+                                  {event.coreValue && (
+                                    <span className="text-xs px-2 py-1 bg-blue-100 text-blue-800 rounded-full">
+                                      {event.coreValue}
+                                    </span>
+                                  )}
+                                  {event.annualGoal && (
+                                    <span className="text-xs px-2 py-1 bg-purple-100 text-purple-800 rounded-full">
+                                      {event.annualGoal}
+                                    </span>
+                                  )}
+                                </div>
+                              )}
                             </div>
                             <div className="flex items-center space-x-1">
                               <Button
