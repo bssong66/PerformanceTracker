@@ -1690,7 +1690,7 @@ export default function DailyPlanning() {
                   {/* Today's High Priority Tasks Summary */}
                   <div className="pt-4 border-t">
                     <div>
-                      <div className="space-y-1 max-h-32 overflow-y-auto">
+                      <div className="space-y-1">
                         {tasksByPriority['A'].length === 0 ? (
                           <p className="text-xs text-gray-400 italic">중요한 할일이 없습니다.</p>
                         ) : (
@@ -1808,7 +1808,7 @@ export default function DailyPlanning() {
                   </div>
 
                   {/* Time Block List */}
-                  <div className="space-y-2 max-h-96 overflow-y-auto">
+                  <div className="space-y-2">
                     {(timeBlocks || []).sort((a: any, b: any) => {
                       const timeA = convertToComparableTime(a.startTime);
                       const timeB = convertToComparableTime(b.startTime);
