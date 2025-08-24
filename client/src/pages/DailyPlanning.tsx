@@ -1580,7 +1580,7 @@ export default function DailyPlanning() {
                     <span>시간 블록</span>
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="p-6 pt-[10px] space-y-4">
+                <CardContent className="p-6 pt-0 space-y-4">
                   {/* Today's High Priority Tasks Summary */}
                   <div className="border-t">
                     <div>
