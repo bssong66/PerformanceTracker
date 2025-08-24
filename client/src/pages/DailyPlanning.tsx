@@ -1695,7 +1695,7 @@ export default function DailyPlanning() {
                             <Button
                               onClick={(e) => {
                                 e.stopPropagation();
-                                if (window.confirm('정말 이 시간 블록을 삭제하시겠습니까?')) {
+                                if (window.confirm('\uc815\ub9d0 \uc774 \uc2dc\uac04 \ube14\ub85d\uc744 \uc0ad\uc81c\ud558\uc2dc\uaca0\uc2b5\ub2c8\uae4c?')) {
                                   deleteTimeBlockMutation.mutate(block.id);
                                 }
                               }}
