@@ -98,13 +98,13 @@ export default function WeeklyReview() {
     retry: false,
   });
 
-  // Get time blocks for the past week to calculate work-life balance
+  // Get time blocks for the current week to calculate work-life balance
   const { data: weekTimeBlocks = [] } = useQuery({
     queryKey: ['timeBlocks', 'week', weekStartDate],
     queryFn: async () => {
       const days = [];
       for (let i = 0; i < 7; i++) {
-        const date = format(subDays(weekStart, 7 - i), 'yyyy-MM-dd');
+        const date = format(addDays(weekStart, i), 'yyyy-MM-dd');
         const dayBlocks = await fetch(`/api/time-blocks/auth/${date}`).then(res => res.json());
         days.push(...dayBlocks);
       }
@@ -113,11 +113,11 @@ export default function WeeklyReview() {
     retry: false,
   });
 
-  // Get events for the past week
+  // Get events for the current week
   const { data: weekEvents = [] } = useQuery({
     queryKey: ['events', 'week', weekStartDate],
     queryFn: async () => {
-      const startDate = format(subDays(weekStart, 7), 'yyyy-MM-dd');
+      const startDate = format(weekStart, 'yyyy-MM-dd');
       const endDate = format(weekEnd, 'yyyy-MM-dd');
       const response = await fetch(`/api/events/auth?startDate=${startDate}&endDate=${endDate}`);
       if (!response.ok) return [];
@@ -126,13 +126,13 @@ export default function WeeklyReview() {
     retry: false,
   });
 
-  // Get habit logs for the past week to calculate completion rates
+  // Get habit logs for the current week to calculate completion rates
   const { data: weekHabitLogs = [] } = useQuery({
     queryKey: ['habitLogs', 'week', weekStartDate],
     queryFn: async () => {
       const logs = [];
       for (let i = 0; i < 7; i++) {
-        const date = format(subDays(weekStart, 7 - i), 'yyyy-MM-dd');
+        const date = format(addDays(weekStart, i), 'yyyy-MM-dd');
         const dayLogs = await fetch(`/api/habit-logs?date=${date}`).then(res => res.json());
         logs.push(...dayLogs);
       }
