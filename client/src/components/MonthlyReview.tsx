@@ -9,7 +9,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { ProgressBar } from "@/components/ProgressBar";
 import { PriorityBadge } from "@/components/PriorityBadge";
-import { Save, TrendingUp, BarChart3, Target, Plus, X, ChevronLeft, ChevronRight, Siren, Calendar as CalendarIcon, Activity, Heart, Dumbbell, Coffee, Book, Moon, Sunrise, Timer, Zap } from "lucide-react";
+import { Save, TrendingUp, BarChart3, Target, Plus, X, ChevronLeft, ChevronRight, Siren, Calendar as CalendarIcon, Activity, Heart, Dumbbell, Coffee, Book, Moon, Sunrise, Timer, Zap, Type, Hash, List, Clock, Minus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { api, saveMonthlyReview } from "@/lib/api";
 import { queryClient } from "@/lib/queryClient";
@@ -258,6 +258,117 @@ export default function MonthlyReview() {
     textarea.style.height = 'auto';
     // Set height to scrollHeight
     textarea.style.height = `${Math.max(120, textarea.scrollHeight)}px`;
+  };
+
+  // 텍스트 포맷팅 함수들
+  const insertTextAtCursor = (textToInsert: string) => {
+    const textarea = document.getElementById('monthly-reflection') as HTMLTextAreaElement;
+    if (!textarea) return;
+
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const text = reflection;
+    
+    const newText = text.substring(0, start) + textToInsert + text.substring(end);
+    setReflection(newText);
+    
+    // 커서 위치 조정
+    setTimeout(() => {
+      textarea.focus();
+      textarea.setSelectionRange(start + textToInsert.length, start + textToInsert.length);
+    }, 0);
+  };
+
+  const insertHeading = (level: number) => {
+    const headingText = '#'.repeat(level) + ' 제목\n';
+    insertTextAtCursor(headingText);
+  };
+
+  const insertBulletList = () => {
+    insertTextAtCursor('• 목록 항목\n');
+  };
+
+  const insertNumberedList = () => {
+    insertTextAtCursor('1. 번호 목록\n');
+  };
+
+  const insertCurrentTime = () => {
+    const now = new Date();
+    const timeText = `${format(now, 'HH:mm')} `;
+    insertTextAtCursor(timeText);
+  };
+
+  const insertDivider = () => {
+    insertTextAtCursor('\n---\n');
+  };
+
+  // 엔터 키 처리 - 자동 목록 생성
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Enter') {
+      const textarea = e.target as HTMLTextAreaElement;
+      const start = textarea.selectionStart;
+      const text = reflection;
+      
+      // 현재 줄의 시작점 찾기
+      const lineStart = text.lastIndexOf('\n', start - 1) + 1;
+      const currentLine = text.substring(lineStart, start);
+      
+      // 번호 목록 패턴 확인 (1. 2. 3. 등)
+      const numberedListMatch = currentLine.match(/^(\d+)\.\s/);
+      if (numberedListMatch) {
+        e.preventDefault();
+        const currentNumber = parseInt(numberedListMatch[1]);
+        const nextNumber = currentNumber + 1;
+        
+        // 현재 줄이 비어있으면 목록 종료
+        if (currentLine.trim() === `${currentNumber}.`) {
+          // 현재 줄의 번호 목록 마커 제거
+          const newText = text.substring(0, lineStart) + text.substring(start);
+          setReflection(newText);
+          setTimeout(() => {
+            textarea.focus();
+            textarea.setSelectionRange(lineStart, lineStart);
+          }, 0);
+        } else {
+          // 다음 번호 목록 추가
+          const nextListItem = `\n${nextNumber}. `;
+          const newText = text.substring(0, start) + nextListItem + text.substring(start);
+          setReflection(newText);
+          setTimeout(() => {
+            textarea.focus();
+            textarea.setSelectionRange(start + nextListItem.length, start + nextListItem.length);
+          }, 0);
+        }
+        return;
+      }
+      
+      // 불릿 목록 패턴 확인
+      const bulletListMatch = currentLine.match(/^•\s/);
+      if (bulletListMatch) {
+        e.preventDefault();
+        
+        // 현재 줄이 비어있으면 목록 종료
+        if (currentLine.trim() === '•') {
+          // 현재 줄의 불릿 마커 제거
+          const newText = text.substring(0, lineStart) + text.substring(start);
+          setReflection(newText);
+          setTimeout(() => {
+            textarea.focus();
+            textarea.setSelectionRange(lineStart, lineStart);
+          }, 0);
+        } else {
+          // 다음 불릿 목록 추가
+          const nextListItem = '\n• ';
+          const newText = text.substring(0, start) + nextListItem + text.substring(start);
+          setReflection(newText);
+          setTimeout(() => {
+            textarea.focus();
+            textarea.setSelectionRange(start + nextListItem.length, start + nextListItem.length);
+          }, 0);
+        }
+        return;
+      }
+    }
   };
 
   // Set initial values when monthly review data loads
@@ -563,11 +674,76 @@ export default function MonthlyReview() {
                   <Label htmlFor="reflection" className="text-sm font-semibold text-gray-900 mb-3 block">
                     월간 성찰
                   </Label>
+                  {/* Text Formatting Toolbar */}
+                  <div className="flex flex-wrap items-center gap-2 mb-3 p-2 bg-gray-50 rounded-lg border">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => insertHeading(1)}
+                      className="h-8 px-2 text-xs"
+                      title="제목 추가"
+                    >
+                      <Type className="h-3 w-3 mr-1" />
+                      제목
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => insertHeading(2)}
+                      className="h-8 px-2 text-xs"
+                      title="부제목 추가"
+                    >
+                      <Hash className="h-3 w-3 mr-1" />
+                      부제목
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={insertNumberedList}
+                      className="h-8 px-2 text-xs"
+                      title="번호 목록 추가"
+                    >
+                      <Hash className="h-3 w-3 mr-1" />
+                      번호
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={insertBulletList}
+                      className="h-8 px-2 text-xs"
+                      title="목록 추가"
+                    >
+                      <List className="h-3 w-3 mr-1" />
+                      목록
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={insertCurrentTime}
+                      className="h-8 px-2 text-xs"
+                      title="현재 시간 추가"
+                    >
+                      <Clock className="h-3 w-3 mr-1" />
+                      시간
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={insertDivider}
+                      className="h-8 px-2 text-xs"
+                      title="구분선 추가"
+                    >
+                      <Minus className="h-3 w-3 mr-1" />
+                      구분선
+                    </Button>
+                  </div>
+                  
                   <Textarea
-                    id="reflection"
+                    id="monthly-reflection"
                     placeholder="이번 달을 돌아보며 배운 점, 개선할 점을 기록하세요..."
                     value={reflection}
                     onChange={handleReflectionChange}
+                    onKeyDown={handleKeyDown}
                     className="resize-none min-h-[120px]"
                     style={{ height: 'auto' }}
                   />
