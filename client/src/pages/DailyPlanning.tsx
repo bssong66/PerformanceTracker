@@ -1584,6 +1584,7 @@ export default function DailyPlanning() {
                   {/* Today's High Priority Tasks Summary */}
                   <div className="pt-4 border-t">
                     <div>
+                      <h4 className="text-sm font-medium text-gray-900 mb-2">오늘의 중요 할일</h4>
                       <div className="space-y-1 max-h-32 overflow-y-auto">
                         {tasksByPriority['A'].length === 0 ? (
                           <p className="text-xs text-gray-400 italic">중요한 할일이 없습니다.</p>
