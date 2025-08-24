@@ -9,7 +9,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { ProgressBar } from "@/components/ProgressBar";
 import { PriorityBadge } from "@/components/PriorityBadge";
-import { Save, TrendingUp, BarChart3, Target, Plus, X, ChevronLeft, ChevronRight, Siren, Calendar as CalendarIcon, Activity, Heart, Dumbbell, Coffee, Book, Moon, Sunrise, Timer, Zap } from "lucide-react";
+import { Save, TrendingUp, BarChart3, Target, Plus, X, ChevronLeft, ChevronRight, Siren, Calendar as CalendarIcon, Activity, Heart, Dumbbell, Coffee, Book, Moon, Sunrise, Timer, Zap, Type, Hash, List, Clock, Minus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { api, saveWeeklyReview } from "@/lib/api";
 import { queryClient } from "@/lib/queryClient";
@@ -284,6 +284,48 @@ export default function WeeklyReview() {
     textarea.style.height = 'auto';
     // Set height to scrollHeight
     textarea.style.height = `${Math.max(120, textarea.scrollHeight)}px`;
+  };
+
+  // 텍스트 포맷팅 함수들
+  const insertTextAtCursor = (textToInsert: string) => {
+    const textarea = document.getElementById('reflection') as HTMLTextAreaElement;
+    if (!textarea) return;
+
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const text = reflection;
+    
+    const newText = text.substring(0, start) + textToInsert + text.substring(end);
+    setReflection(newText);
+    
+    // 커서 위치 조정
+    setTimeout(() => {
+      textarea.focus();
+      textarea.setSelectionRange(start + textToInsert.length, start + textToInsert.length);
+    }, 0);
+  };
+
+  const insertHeading = (level: number) => {
+    const headingText = '#'.repeat(level) + ' 제목\n';
+    insertTextAtCursor(headingText);
+  };
+
+  const insertBulletList = () => {
+    insertTextAtCursor('• 목록 항목\n');
+  };
+
+  const insertNumberedList = () => {
+    insertTextAtCursor('1. 번호 목록\n');
+  };
+
+  const insertCurrentTime = () => {
+    const now = new Date();
+    const timeText = `${format(now, 'HH:mm')} `;
+    insertTextAtCursor(timeText);
+  };
+
+  const insertDivider = () => {
+    insertTextAtCursor('\n---\n');
   };
 
   // Set initial values when weekly review data loads
@@ -590,6 +632,72 @@ export default function WeeklyReview() {
                   <Label htmlFor="reflection" className="text-sm font-semibold text-gray-900 mb-3 block">
                     주간 성찰
                   </Label>
+                  
+                  {/* 텍스트 포맷팅 도구모음 */}
+                  <div className="flex flex-wrap gap-1 mb-3 p-2 bg-gray-50 rounded-lg border">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => insertHeading(1)}
+                      className="h-8 px-2 text-xs"
+                      title="제목 추가"
+                    >
+                      <Type className="h-3 w-3 mr-1" />
+                      제목
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => insertHeading(2)}
+                      className="h-8 px-2 text-xs"
+                      title="부제목 추가"
+                    >
+                      <Hash className="h-3 w-3 mr-1" />
+                      부제목
+                    </Button>
+                    <div className="w-px h-6 bg-gray-300 mx-1"></div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={insertNumberedList}
+                      className="h-8 px-2 text-xs"
+                      title="번호 목록 추가"
+                    >
+                      1.
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={insertBulletList}
+                      className="h-8 px-2 text-xs"
+                      title="목록 추가"
+                    >
+                      <List className="h-3 w-3 mr-1" />
+                      목록
+                    </Button>
+                    <div className="w-px h-6 bg-gray-300 mx-1"></div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={insertCurrentTime}
+                      className="h-8 px-2 text-xs"
+                      title="현재 시간 추가"
+                    >
+                      <Clock className="h-3 w-3 mr-1" />
+                      시간
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={insertDivider}
+                      className="h-8 px-2 text-xs"
+                      title="구분선 추가"
+                    >
+                      <Minus className="h-3 w-3 mr-1" />
+                      구분선
+                    </Button>
+                  </div>
+                  
                   <Textarea
                     id="reflection"
                     placeholder="이번 주를 돌아보며 배운 점, 개선할 점을 기록하세요..."
