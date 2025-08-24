@@ -2035,11 +2035,16 @@ export default function DailyPlanning() {
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          {Array.from({ length: 60 }, (_, i) => (
-                            <SelectItem key={i} value={i.toString()}>
-                              {i}분
-                            </SelectItem>
-                          ))}
+                          <SelectItem key={0} value="0">0분</SelectItem>
+                          <SelectItem key={1} value="1">1분</SelectItem>
+                          {Array.from({ length: 12 }, (_, i) => {
+                            const minute = (i + 1) * 5;
+                            return (
+                              <SelectItem key={minute} value={minute.toString()}>
+                                {minute}분
+                              </SelectItem>
+                            );
+                          })}
                         </SelectContent>
                       </Select>
                     </div>
