@@ -1759,6 +1759,7 @@ export default function DailyPlanning() {
                                       }}
                                       onClick={(e) => e.stopPropagation()}
                                       className="h-4 w-4"
+                                      disabled={true}
                                     />
                                     
                                     {/* 중요도 표시 */}
@@ -1915,6 +1916,7 @@ export default function DailyPlanning() {
                                         }
                                       }}
                                       className="h-3 w-3"
+                                      disabled={true}
                                     />
                                     <span>✓ {getTaskName(block.taskId)}</span>
                                   </div>
