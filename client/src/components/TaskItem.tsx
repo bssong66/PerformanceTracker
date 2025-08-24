@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { PriorityBadge } from "./PriorityBadge";
-import { Trash2, Clock, AlertTriangle, Edit } from "lucide-react";
+import { Trash2, Clock, AlertTriangle, Edit, X } from "lucide-react";
 import { type Task } from "@shared/schema";
 import { type Priority } from "@/lib/types";
 
@@ -95,9 +95,9 @@ export function TaskItem({
             variant="ghost"
             size="sm"
             onClick={handleEdit}
-            className="h-4 w-4 p-0"
+            className="h-7 w-7 p-0"
           >
-            <Edit className="h-2 w-2 text-gray-400" />
+            <Edit className="h-3 w-3" />
           </Button>
         )}
         {onDelete && (
@@ -105,9 +105,9 @@ export function TaskItem({
             variant="ghost"
             size="sm"
             onClick={handleDelete}
-            className="h-4 w-4 p-0"
+            className="h-7 w-7 p-0 text-red-500 hover:text-red-700"
           >
-            <Trash2 className="h-2 w-2 text-gray-400" />
+            <X className="h-3 w-3" />
           </Button>
         )}
       </div>
