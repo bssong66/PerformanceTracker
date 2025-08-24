@@ -236,6 +236,27 @@ export default function DailyPlanning() {
     },
   });
 
+  const deleteEventMutation = useMutation({
+    mutationFn: (id: number) =>
+      fetch(`/api/events/${id}`, {
+        method: 'DELETE'
+      }).then(res => res.json()),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['events', user!.id, today] });
+      toast({
+        title: "일정 삭제",
+        description: "일정이 삭제되었습니다.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "오류",
+        description: "일정 삭제에 실패했습니다.",
+        variant: "destructive",
+      });
+    },
+  });
+
   const addEventMutation = useMutation({
     mutationFn: async (eventData: any) => {
       const response = await fetch('/api/events', {
@@ -1324,18 +1345,16 @@ export default function DailyPlanning() {
                         todayEvents.map((event: any) => (
                           <div 
                             key={event.id} 
-                            className={`flex items-center space-x-2 p-2 rounded border cursor-pointer hover:shadow-sm transition-shadow ${
+                            className={`flex items-center space-x-2 p-2 rounded border ${
                               event.completed 
                                 ? 'bg-gray-50 border-gray-200 opacity-75' 
                                 : 'bg-green-50 border-green-200'
                             }`}
-                            onClick={() => handleEventClick(event)}
                           >
                             <Checkbox
                               id={`event-${event.id}`}
                               checked={event.completed || false}
                               onCheckedChange={(checked) => handleToggleEvent(event.id, checked === true)}
-                              onClick={(e) => e.stopPropagation()}
                               className="w-4 h-4"
                             />
                             <div className="flex-1">
@@ -1358,6 +1377,24 @@ export default function DailyPlanning() {
                                   종일
                                 </div>
                               )}
+                            </div>
+                            <div className="flex items-center space-x-1">
+                              <Button
+                                onClick={() => handleEventClick(event)}
+                                size="sm"
+                                variant="ghost"
+                                className="h-7 w-7 p-0"
+                              >
+                                <Edit className="h-3 w-3" />
+                              </Button>
+                              <Button
+                                onClick={() => deleteEventMutation.mutate(event.id)}
+                                size="sm"
+                                variant="ghost"
+                                className="h-7 w-7 p-0 text-red-500 hover:text-red-700"
+                              >
+                                <X className="h-3 w-3" />
+                              </Button>
                             </div>
                           </div>
                         ))
@@ -2333,10 +2370,28 @@ export default function DailyPlanning() {
         <Dialog open={showEventEditDialog} onOpenChange={setShowEventEditDialog}>
           <DialogContent className="sm:max-w-lg">
             <DialogHeader>
-              <DialogTitle>일정 수정</DialogTitle>
-              <DialogDescription>
-                일정 정보를 수정할 수 있습니다.
-              </DialogDescription>
+              <div className="flex items-center justify-between">
+                <div>
+                  <DialogTitle>일정 수정</DialogTitle>
+                  <DialogDescription>
+                    일정 정보를 수정할 수 있습니다.
+                  </DialogDescription>
+                </div>
+                <Button
+                  onClick={() => {
+                    if (editingEvent) {
+                      deleteEventMutation.mutate(editingEvent.id);
+                      setShowEventEditDialog(false);
+                      setEditingEvent(null);
+                    }
+                  }}
+                  size="sm"
+                  variant="ghost"
+                  className="h-8 w-8 p-0 text-red-500 hover:text-red-700"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
             </DialogHeader>
 
             {editingEvent && (
