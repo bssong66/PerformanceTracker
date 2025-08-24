@@ -1574,7 +1574,7 @@ export default function DailyPlanning() {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
               {/* 시간 블록 관리 */}
               <Card>
-                <CardHeader>
+                <CardHeader className="py-3">
                   <CardTitle className="flex items-center space-x-2">
                     <Calendar className="h-5 w-5" />
                     <span>시간 블록</span>
@@ -1774,7 +1774,7 @@ export default function DailyPlanning() {
 
               {/* 포모도로 타이머 */}
               <Card>
-                <CardHeader>
+                <CardHeader className="py-3">
                   <CardTitle className="flex items-center space-x-2">
                     <Clock className="h-5 w-5" />
                     <span>포모도로 타이머</span>
@@ -1863,7 +1863,7 @@ export default function DailyPlanning() {
 
             {/* 오늘의 기록 */}
             <Card>
-              <CardHeader>
+              <CardHeader className="py-3">
                 <CardTitle className="flex items-center space-x-2">
                   <FileText className="h-5 w-5" />
                   <span>오늘의 기록</span>
