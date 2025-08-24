@@ -1581,6 +1581,29 @@ export default function DailyPlanning() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
+                  {/* Today's High Priority Tasks Summary */}
+                  <div className="pt-4 border-t">
+                    <div>
+                      <div className="space-y-1 max-h-32 overflow-y-auto">
+                        {tasksByPriority['A'].length === 0 ? (
+                          <p className="text-xs text-gray-400 italic">중요한 할일이 없습니다.</p>
+                        ) : (
+                          tasksByPriority['A'].slice(0, 3).map((task: any) => (
+                            <div key={task.id} className="flex items-center space-x-2 text-xs">
+                              <div className="w-2 h-2 rounded-full bg-red-400" />
+                              <span className={`flex-1 truncate ${task.completed ? 'line-through text-gray-500' : ''}`}>
+                                {task.title}
+                              </span>
+                            </div>
+                          ))
+                        )}
+                        {tasksByPriority['A'].length > 3 && (
+                          <p className="text-xs text-gray-500">+{tasksByPriority['A'].length - 3}개 더</p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
                   <div className="flex items-center justify-end mb-3">
                     <div className="flex items-center space-x-2">
                       {yesterdayTimeBlocks?.length > 0 && (timeBlocks?.length || 0) === 0 && (
@@ -1710,29 +1733,6 @@ export default function DailyPlanning() {
                         </div>
                       </div>
                     ))}
-                  </div>
-
-                  {/* Today's High Priority Tasks Summary */}
-                  <div className="-mt-[30px] pt-4 border-t">
-                    <div>
-                      <div className="space-y-1 max-h-32 overflow-y-auto">
-                        {tasksByPriority['A'].length === 0 ? (
-                          <p className="text-xs text-gray-400 italic">중요한 할일이 없습니다.</p>
-                        ) : (
-                          tasksByPriority['A'].slice(0, 3).map((task: any) => (
-                            <div key={task.id} className="flex items-center space-x-2 text-xs">
-                              <div className="w-2 h-2 rounded-full bg-red-400" />
-                              <span className={`flex-1 truncate ${task.completed ? 'line-through text-gray-500' : ''}`}>
-                                {task.title}
-                              </span>
-                            </div>
-                          ))
-                        )}
-                        {tasksByPriority['A'].length > 3 && (
-                          <p className="text-xs text-gray-500">+{tasksByPriority['A'].length - 3}개 더</p>
-                        )}
-                      </div>
-                    </div>
                   </div>
 
                   {/* Break Suggestions Dialog */}
