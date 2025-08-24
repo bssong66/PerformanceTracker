@@ -393,32 +393,7 @@ export default function Calendar() {
     const safeProjects = Array.isArray(projects) ? projects : [];
     
     // Debug: Log data and loading states
-      console.log('Calendar Debug:', {
-      user: (user as any)?.id,
-      eventsCount: safeEvents.length,
-      tasksCount: safeTasks.length,
-      projectsCount: safeProjects.length,
-      currentDate: date,
-      view: view,
-      showEventDialog: showEventDialog,
-      annualGoalsCount: (annualGoals as any[])?.length || 0,
-      annualGoals: annualGoals,
-      loading: {
-        events: eventsLoading,
-        tasks: tasksLoading,
-        projects: projectsLoading,
-        foundation: foundationLoading,
-        goals: goalsLoading
-      },
-      errors: {
-        events: eventsError?.message,
-        tasks: tasksError?.message,
-        projects: projectsError?.message,
-        foundation: foundationError?.message,
-        goals: goalsError?.message
-      }
-    });
-    
+      
     // Get current week boundaries for filtering
     const weekStart = startOfWeek(date, { locale: ko });
     const weekEnd = endOfWeek(date, { locale: ko });
@@ -943,7 +918,6 @@ export default function Calendar() {
 
         {/* Event Dialog */}
         <Dialog open={showEventDialog} onOpenChange={(open) => {
-          console.log('Dialog onOpenChange called:', open);
           setShowEventDialog(open);
           if (!open) resetEventForm();
         }}>

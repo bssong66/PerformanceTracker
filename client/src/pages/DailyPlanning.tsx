@@ -385,6 +385,8 @@ export default function DailyPlanning() {
       annualGoal: selectedAnnualGoal === 'none' ? null : selectedAnnualGoal,
       projectId: selectedProject,
       dueDate: today,
+      startDate: today,
+      endDate: today,
     });
   };
 
