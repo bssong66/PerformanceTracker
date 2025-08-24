@@ -1588,14 +1588,94 @@ export default function DailyPlanning() {
                         {tasksByPriority['A'].length === 0 ? (
                           <p className="text-xs text-gray-400 italic">중요한 할일이 없습니다.</p>
                         ) : (
-                          tasksByPriority['A'].slice(0, 3).map((task: any) => (
-                            <div key={task.id} className="flex items-center space-x-2 text-xs">
-                              <div className="w-2 h-2 rounded-full bg-red-400" />
-                              <span className={`flex-1 truncate ${task.completed ? 'line-through text-gray-500' : ''}`}>
-                                {task.title}
-                              </span>
-                            </div>
-                          ))
+                          tasksByPriority['A'].slice(0, 3).map((task: any) => {
+                            const taskProject = projects?.find((p: any) => p.id === task.projectId);
+                            return (
+                              <div key={task.id} className="flex items-center space-x-2 text-xs bg-gray-50 rounded p-2 border">
+                                <Checkbox
+                                  checked={task.completed}
+                                  onCheckedChange={(checked) => {
+                                    handleToggleTask(task.id, checked as boolean);
+                                  }}
+                                  className="h-3 w-3"
+                                />
+                                
+                                <div className="flex items-center space-x-1 flex-1">
+                                  {/* 중요도 표시 */}
+                                  <span className="px-1 py-0 bg-red-100 text-red-700 rounded text-xs font-semibold">
+                                    A
+                                  </span>
+                                  
+                                  {/* 이월 표시 */}
+                                  {task.isCarriedOver && (
+                                    <AlertTriangle className="h-3 w-3 text-orange-500" />
+                                  )}
+                                  
+                                  {/* 프로젝트 색상 점 */}
+                                  {taskProject && (
+                                    <div 
+                                      className="w-2 h-2 rounded-full" 
+                                      style={{ backgroundColor: taskProject.color }}
+                                    />
+                                  )}
+                                  
+                                  {/* 할일 제목 */}
+                                  <span className={`truncate ${task.completed ? 'line-through text-gray-500' : 'text-gray-900'}`}>
+                                    {task.title}
+                                  </span>
+                                  
+                                  {/* 핵심가치 */}
+                                  {task.coreValue && task.coreValue !== 'none' && (
+                                    <span className="px-1 py-0 bg-blue-100 text-blue-600 rounded text-xs">
+                                      🎯 {task.coreValue}
+                                    </span>
+                                  )}
+                                  
+                                  {/* 연간목표 */}
+                                  {task.annualGoal && task.annualGoal !== 'none' && (
+                                    <span className="px-1 py-0 bg-purple-100 text-purple-600 rounded text-xs">
+                                      📅 {task.annualGoal}
+                                    </span>
+                                  )}
+                                  
+                                  {/* 이월 상태 */}
+                                  {task.isCarriedOver && (
+                                    <span className="px-1 py-0 bg-orange-100 text-orange-600 rounded text-xs flex items-center space-x-1">
+                                      <AlertTriangle className="h-2 w-2" />
+                                      <span>이월</span>
+                                    </span>
+                                  )}
+                                  
+                                  {/* 프로젝트 명 */}
+                                  {taskProject && (
+                                    <span className="px-1 py-0 bg-purple-100 text-purple-700 rounded text-xs">
+                                      📁 {taskProject.title}
+                                    </span>
+                                  )}
+                                </div>
+                                
+                                {/* 편집/삭제 버튼 */}
+                                <div className="flex items-center space-x-1">
+                                  <Button
+                                    onClick={() => handleEditTask(task.id)}
+                                    size="sm"
+                                    variant="ghost"
+                                    className="h-6 w-6 p-0"
+                                  >
+                                    <Edit className="h-3 w-3" />
+                                  </Button>
+                                  <Button
+                                    onClick={() => handleDeleteTask(task.id)}
+                                    size="sm"
+                                    variant="ghost"
+                                    className="h-6 w-6 p-0 text-red-500 hover:text-red-700"
+                                  >
+                                    <X className="h-3 w-3" />
+                                  </Button>
+                                </div>
+                              </div>
+                            );
+                          })
                         )}
                         {tasksByPriority['A'].length > 3 && (
                           <p className="text-xs text-gray-500">+{tasksByPriority['A'].length - 3}개 더</p>
