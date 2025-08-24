@@ -1688,35 +1688,11 @@ export default function DailyPlanning() {
                           <p className="text-xs text-gray-400 italic">중요한 할일이 없습니다.</p>
                         ) : (
                           tasksByPriority['A'].slice(0, 3).map((task: any) => (
-                            <div key={task.id} className="flex items-center space-x-2 text-xs group hover:bg-gray-100 rounded-sm px-2 py-2 transition-colors">
-                              <div className="w-2 h-2 rounded-full bg-red-400 flex-shrink-0" />
+                            <div key={task.id} className="flex items-center space-x-2 text-xs">
+                              <div className="w-2 h-2 rounded-full bg-red-400" />
                               <span className={`flex-1 truncate ${task.completed ? 'line-through text-gray-500' : ''}`}>
                                 {task.title}
                               </span>
-                              <div className="flex items-center space-x-1 ml-2">
-                                <Button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleTaskEdit(task);
-                                  }}
-                                  size="sm"
-                                  variant="ghost"
-                                  className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-gray-200"
-                                >
-                                  <Edit className="h-3 w-3 text-gray-600" />
-                                </Button>
-                                <Button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    deleteTaskMutation.mutate(task.id);
-                                  }}
-                                  size="sm"
-                                  variant="ghost"
-                                  className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity text-red-500 hover:text-red-700 hover:bg-red-50"
-                                >
-                                  <X className="h-3 w-3" />
-                                </Button>
-                              </div>
                             </div>
                           ))
                         )}
