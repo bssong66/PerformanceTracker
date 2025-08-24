@@ -1166,8 +1166,8 @@ export default function DailyPlanning() {
               className="flex flex-col items-center justify-center space-y-1 h-full rounded-lg text-xs font-medium transition-all duration-200 data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-gray-700"
             >
               <Clock className="h-4 w-4 transition-transform data-[state=active]:scale-110" />
-              <span className="hidden sm:block">시간블록</span>
-              <span className="block sm:hidden">시간</span>
+              <span className="hidden sm:block">포커스 모드</span>
+              <span className="block sm:hidden">포커스</span>
             </TabsTrigger>
             <TabsTrigger 
               value="records" 
