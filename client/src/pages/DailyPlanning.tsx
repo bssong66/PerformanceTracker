@@ -1377,8 +1377,18 @@ export default function DailyPlanning() {
                                   종일
                                 </div>
                               )}
-                              {(event.coreValue || event.annualGoal) && (
+                              {(event.priority || event.coreValue || event.annualGoal) && (
                                 <div className="flex items-center space-x-2 mt-1">
+                                  {event.priority && (
+                                    <span className={`text-xs px-2 py-1 rounded-full ${
+                                      event.priority === 'A' ? 'bg-red-100 text-red-800' :
+                                      event.priority === 'B' ? 'bg-yellow-100 text-yellow-800' :
+                                      'bg-gray-100 text-gray-800'
+                                    }`}>
+                                      {event.priority === 'A' ? '중요&긴급' : 
+                                       event.priority === 'B' ? '중요' : '기타'}
+                                    </span>
+                                  )}
                                   {event.coreValue && (
                                     <span className="text-xs px-2 py-1 bg-blue-100 text-blue-800 rounded-full">
                                       {event.coreValue}
