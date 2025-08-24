@@ -1998,11 +1998,7 @@ export default function DailyPlanning() {
                       <div className="text-lg font-bold text-blue-800">
                         {selectedFocusTask.title}
                       </div>
-                      {selectedFocusTask.coreValue && selectedFocusTask.coreValue !== 'none' && (
-                        <div className="text-xs text-gray-600">
-                          🎯 {selectedFocusTask.coreValue}
-                        </div>
-                      )}
+                      
                     </div>
                   )}
 
