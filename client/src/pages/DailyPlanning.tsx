@@ -1204,6 +1204,16 @@ export default function DailyPlanning() {
                         onKeyPress={(e) => e.key === 'Enter' && handleAddEvent()}
                         className="flex-1"
                       />
+                      <Select value={selectedEventPriority} onValueChange={(value: 'high' | 'medium' | 'low') => setSelectedEventPriority(value)}>
+                        <SelectTrigger className="w-20 h-8 text-xs">
+                          <SelectValue placeholder="우선순위" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="high">중요</SelectItem>
+                          <SelectItem value="medium">보통</SelectItem>
+                          <SelectItem value="low">낮음</SelectItem>
+                        </SelectContent>
+                      </Select>
                       <Button onClick={handleAddEvent} disabled={!newEvent.trim() || addEventMutation.isPending} size="sm">
                         <Plus className="h-4 w-4" />
                       </Button>
@@ -1284,20 +1294,6 @@ export default function DailyPlanning() {
                           </Select>
                         </div>
                       </div>
-                    </div>
-                    
-                    {/* Priority Selection */}
-                    <div className="flex space-x-2">
-                      <Select value={selectedEventPriority} onValueChange={(value: 'high' | 'medium' | 'low') => setSelectedEventPriority(value)}>
-                        <SelectTrigger className="h-8 text-xs">
-                          <SelectValue placeholder="우선순위" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="high">중요</SelectItem>
-                          <SelectItem value="medium">보통</SelectItem>
-                          <SelectItem value="low">낮음</SelectItem>
-                        </SelectContent>
-                      </Select>
                     </div>
 
                     {/* Event Value Selection */}
