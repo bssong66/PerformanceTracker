@@ -1545,122 +1545,105 @@ export default function DailyPlanning() {
 
                   {/* Time Block List */}
                   <div className="space-y-2 max-h-96 overflow-y-auto">
-                    {(timeBlocks?.length || 0) === 0 ? (
-                      <div className="text-center py-4 text-gray-500 bg-gray-50 rounded-lg">
-                        <Clock className="h-8 w-8 mx-auto mb-2 text-gray-400" />
-                        <p className="text-sm mb-2">등록된 시간 블록이 없습니다</p>
-                        {(yesterdayTimeBlocks?.length || 0) > 0 && (
-                          <Button
-                            onClick={() => copyTimeBlocksMutation.mutate()}
-                            size="sm"
-                            variant="outline"
-                            disabled={copyTimeBlocksMutation.isPending}
-                          >
-                            어제 일정 복사하기
-                          </Button>
-                        )}
-                      </div>
-                    ) : (
-                      (timeBlocks || []).sort((a: any, b: any) => {
-                        const timeA = convertToComparableTime(a.startTime);
-                        const timeB = convertToComparableTime(b.startTime);
-                        return timeA - timeB;
-                      }).map((block: any) => (
-                        <div 
-                          key={block.id} 
-                          className={`bg-white border rounded-lg p-3 hover:shadow-sm transition-shadow cursor-pointer ${
-                            selectedTimeBlock?.id === block.id ? 'ring-2 ring-blue-500 bg-blue-50' : ''
-                          }`}
-                          onClick={() => handleSelectTimeBlock(block)}
-                        >
-                          <div className="flex items-start justify-between">
-                            <div className="flex-1">
-                              <div className="flex items-center space-x-2 mb-1">
-                                <span 
-                                  className="text-sm font-medium text-gray-900"
-                                >
-                                  {block.startTime} - {block.endTime}
-                                </span>
-                                <span className={`text-xs px-2 py-1 rounded-full ${
-                                  block.type === 'focus' ? 'bg-blue-100 text-blue-700' :
-                                  block.type === 'meeting' ? 'bg-green-100 text-green-700' :
-                                  'bg-orange-100 text-orange-700'
-                                }`}>
-                                  {block.type === 'focus' ? '집중' : 
-                                   block.type === 'meeting' ? '회의' : '휴식'}
-                                </span>
+                    {(timeBlocks || []).sort((a: any, b: any) => {
+                      const timeA = convertToComparableTime(a.startTime);
+                      const timeB = convertToComparableTime(b.startTime);
+                      return timeA - timeB;
+                    }).map((block: any) => (
+                      <div 
+                        key={block.id} 
+                        className={`bg-white border rounded-lg p-3 hover:shadow-sm transition-shadow cursor-pointer ${
+                          selectedTimeBlock?.id === block.id ? 'ring-2 ring-blue-500 bg-blue-50' : ''
+                        }`}
+                        onClick={() => handleSelectTimeBlock(block)}
+                      >
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <div className="flex items-center space-x-2 mb-1">
+                              <span 
+                                className="text-sm font-medium text-gray-900"
+                              >
+                                {block.startTime} - {block.endTime}
+                              </span>
+                              <span className={`text-xs px-2 py-1 rounded-full ${
+                                block.type === 'focus' ? 'bg-blue-100 text-blue-700' :
+                                block.type === 'meeting' ? 'bg-green-100 text-green-700' :
+                                'bg-orange-100 text-orange-700'
+                              }`}>
+                                {block.type === 'focus' ? '집중' : 
+                                 block.type === 'meeting' ? '회의' : '휴식'}
+                              </span>
+                            </div>
+                            <p 
+                              className="text-sm text-gray-900 font-medium mb-1"
+                            >
+                              {block.title}
+                            </p>
+                            {(getProjectName(block.projectId) || getTaskName(block.taskId)) && (
+                              <div className="flex items-center space-x-2 text-xs text-gray-600">
+                                {getProjectName(block.projectId) && (
+                                  <span className="bg-purple-100 text-purple-700 px-2 py-1 rounded">
+                                    📁 {getProjectName(block.projectId)}
+                                  </span>
+                                )}
+                                {getTaskName(block.taskId) && (
+                                  <div 
+                                    className="bg-green-100 text-green-700 px-2 py-1 rounded flex items-center space-x-1"
+                                    onClick={(e) => e.stopPropagation()}
+                                  >
+                                    <Checkbox
+                                      checked={allTasks.find((t: any) => t.id === block.taskId)?.completed || false}
+                                      onCheckedChange={(checked) => {
+                                        if (block.taskId && !updateTaskMutation.isPending) {
+                                          // Optimistic update: UI 즉시 업데이트
+                                          queryClient.setQueryData(['tasks', user!.id], (oldTasks: any) => {
+                                            return oldTasks?.map((task: any) => 
+                                              task.id === block.taskId 
+                                                ? { ...task, completed: checked } 
+                                                : task
+                                            ) || [];
+                                          });
+                                          handleToggleTask(block.taskId, checked as boolean);
+                                        }
+                                      }}
+                                      className="h-3 w-3"
+                                    />
+                                    <span>✓ {getTaskName(block.taskId)}</span>
+                                  </div>
+                                )}
                               </div>
-                              <p 
-                                className="text-sm text-gray-900 font-medium mb-1"
-                              >
-                                {block.title}
-                              </p>
-                              {(getProjectName(block.projectId) || getTaskName(block.taskId)) && (
-                                <div className="flex items-center space-x-2 text-xs text-gray-600">
-                                  {getProjectName(block.projectId) && (
-                                    <span className="bg-purple-100 text-purple-700 px-2 py-1 rounded">
-                                      📁 {getProjectName(block.projectId)}
-                                    </span>
-                                  )}
-                                  {getTaskName(block.taskId) && (
-                                    <div 
-                                      className="bg-green-100 text-green-700 px-2 py-1 rounded flex items-center space-x-1"
-                                      onClick={(e) => e.stopPropagation()}
-                                    >
-                                      <Checkbox
-                                        checked={allTasks.find((t: any) => t.id === block.taskId)?.completed || false}
-                                        onCheckedChange={(checked) => {
-                                          if (block.taskId && !updateTaskMutation.isPending) {
-                                            // Optimistic update: UI 즉시 업데이트
-                                            queryClient.setQueryData(['tasks', user!.id], (oldTasks: any) => {
-                                              return oldTasks?.map((task: any) => 
-                                                task.id === block.taskId 
-                                                  ? { ...task, completed: checked } 
-                                                  : task
-                                              ) || [];
-                                            });
-                                            handleToggleTask(block.taskId, checked as boolean);
-                                          }
-                                        }}
-                                        className="h-3 w-3"
-                                      />
-                                      <span>✓ {getTaskName(block.taskId)}</span>
-                                    </div>
-                                  )}
-                                </div>
-                              )}
-                              {block.description && (
-                                <p className="text-xs text-gray-600 mt-1">{block.description}</p>
-                              )}
-                            </div>
-                            <div className="flex items-center space-x-1 ml-2">
-                              <Button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  openTimeBlockDialog(block);
-                                }}
-                                size="sm"
-                                variant="ghost"
-                                className="h-7 w-7 p-0"
-                              >
-                                <Edit className="h-3 w-3" />
-                              </Button>
-                              <Button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  deleteTimeBlockMutation.mutate(block.id);
-                                }}
-                                size="sm"
-                                variant="ghost"
-                                className="h-7 w-7 p-0 text-red-500 hover:text-red-700"
-                              >
-                                <X className="h-3 w-3" />
-                              </Button>
-                            </div>
+                            )}
+                            {block.description && (
+                              <p className="text-xs text-gray-600 mt-1">{block.description}</p>
+                            )}
+                          </div>
+                          <div className="flex items-center space-x-1 ml-2">
+                            <Button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                openTimeBlockDialog(block);
+                              }}
+                              size="sm"
+                              variant="ghost"
+                              className="h-7 w-7 p-0"
+                            >
+                              <Edit className="h-3 w-3" />
+                            </Button>
+                            <Button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                deleteTimeBlockMutation.mutate(block.id);
+                              }}
+                              size="sm"
+                              variant="ghost"
+                              className="h-7 w-7 p-0 text-red-500 hover:text-red-700"
+                            >
+                              <X className="h-3 w-3" />
+                            </Button>
                           </div>
                         </div>
-                      ))
-                    )}
+                      </div>
+                    ))}
                   </div>
 
                   {/* Break Suggestions Dialog */}
