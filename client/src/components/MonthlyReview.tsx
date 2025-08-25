@@ -584,7 +584,7 @@ export default function MonthlyReview() {
                 {/* Incomplete Tasks */}
                 <div className="flex-1 flex flex-col">
                   <div className="flex items-center justify-between mb-2">
-                    <h4 className="text-sm font-semibold text-gray-900">이번달 미완료된 할일</h4>
+                    <h4 className="text-sm font-semibold text-gray-900">이번달 할일</h4>
                   </div>
                   
                   <div className="h-[35rem] overflow-y-auto space-y-3 pr-2">
