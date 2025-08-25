@@ -792,6 +792,27 @@ export default function WeeklyReview() {
                             isDelayed = true;
                           }
                         }
+
+                        // 카테고리별 마크 결정
+                        let categoryMark = '⚪'; // 기본값: 일정이 지정되지 않은 할일
+                        
+                        if (task.is_carried_over || isDelayed) {
+                          categoryMark = '🔴'; // 이월된 할일
+                        } else if (task.scheduled_date || task.end_date) {
+                          const startOfWeek = new Date(weekStartDate);
+                          const endOfWeek = new Date(startOfWeek);
+                          endOfWeek.setDate(startOfWeek.getDate() + 6);
+                          endOfWeek.setHours(23, 59, 59, 999);
+
+                          const isInThisWeek = (
+                            (task.scheduled_date && new Date(task.scheduled_date) >= startOfWeek && new Date(task.scheduled_date) <= endOfWeek) ||
+                            (task.end_date && new Date(task.end_date) >= startOfWeek && new Date(task.end_date) <= endOfWeek)
+                          );
+                          
+                          if (isInThisWeek) {
+                            categoryMark = '🔵'; // 금주에 계획된 할일
+                          }
+                        }
                         
                         return (
                           <div key={task.id} className={`flex items-center justify-between p-1.5 rounded-lg border ${
@@ -800,6 +821,7 @@ export default function WeeklyReview() {
                               : `bg-red-50 border-red-100 ${isDelayed ? 'animate-pulse' : ''}`
                           }`}>
                             <div className="flex items-center space-x-3 flex-1">
+                              <span className="text-sm">{categoryMark}</span>
                               <PriorityBadge priority={task.priority || 'C'} size="sm" />
                               <div className="flex-1">
                                 <div className={`text-sm font-medium ${
