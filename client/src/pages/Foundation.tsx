@@ -935,7 +935,8 @@ export default function Foundation() {
               <Button
                 onClick={editingGoals ? handleSaveGoals : handleSaveFoundation}
                 disabled={editingGoals ? savingGoals : saveFoundationMutation.isPending}
-                className="bg-blue-600 hover:bg-blue-700 text-white shadow-sm border-0 px-4 py-2 h-auto font-medium"
+                className="fixed right-6 bg-blue-600 hover:bg-blue-700 text-white shadow-lg border-0 px-4 py-2 h-auto font-medium z-50 rounded-lg"
+                style={{ top: '50%', transform: 'translateY(-50%)' }}
               >
                 {(editingGoals ? savingGoals : saveFoundationMutation.isPending) ? (
                   <>
