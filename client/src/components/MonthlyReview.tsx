@@ -21,7 +21,7 @@ import { ko } from "date-fns/locale";
 // Function to get appropriate icon for habit based on name
 const getHabitIcon = (habitName: string) => {
   const name = habitName.toLowerCase();
-  
+
   if (name.includes('운동') || name.includes('헬스') || name.includes('체육')) {
     return <Dumbbell className="h-4 w-4 text-blue-500" />;
   } else if (name.includes('독서') || name.includes('책') || name.includes('공부')) {
@@ -43,7 +43,7 @@ const getHabitIcon = (habitName: string) => {
 
 export default function MonthlyReview() {
   const { toast } = useToast();
-  
+
   // Get current month dates
   const today = new Date();
   const monthStart = startOfMonth(today);
@@ -58,10 +58,10 @@ export default function MonthlyReview() {
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [showImageViewer, setShowImageViewer] = useState(false);
-  
+
   // 완료된 할일 표시 여부 상태
   const [showCompletedTasks, setShowCompletedTasks] = useState(true);
-  
+
   // 파일 업로드 관련 상태
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [fileUrls, setFileUrls] = useState<string[]>([]);
@@ -170,7 +170,7 @@ export default function MonthlyReview() {
         (foundation as any)?.coreValue2,
         (foundation as any)?.coreValue3
       ].filter(Boolean);
-      
+
       if (coreValues.length > 0) {
         const alignmentScores = coreValues.map((value: string) => {
           let totalActivities = 0;
@@ -182,7 +182,7 @@ export default function MonthlyReview() {
             if (task.coreValue === value) {
               alignedActivities++;
             }
-            
+
             // Also check task title/description for value keywords
             const taskText = `${task.title || ''} ${task.description || ''}`.toLowerCase();
             const valueKeywords = getValueKeywords(value);
@@ -197,7 +197,7 @@ export default function MonthlyReview() {
             // Simple keyword matching for value alignment
             const blockText = `${block.title || ''} ${block.description || ''}`.toLowerCase();
             const valueKeywords = getValueKeywords(value);
-            
+
             if (valueKeywords.some(keyword => blockText.includes(keyword.toLowerCase()))) {
               alignedActivities++;
             }
@@ -208,7 +208,7 @@ export default function MonthlyReview() {
             totalActivities++;
             const eventText = `${event.title || ''} ${event.description || ''}`.toLowerCase();
             const valueKeywords = getValueKeywords(value);
-            
+
             if (valueKeywords.some(keyword => eventText.includes(keyword.toLowerCase()))) {
               alignedActivities++;
             }
@@ -243,7 +243,7 @@ export default function MonthlyReview() {
       '도전': ['도전', '새로운', '시도', '모험', '변화', '혁신', '개선'],
       '안정': ['계획', '정리', '관리', '체계', '안정', '질서', '루틴']
     };
-    
+
     return keywordMap[value] || [value];
   };
 
@@ -252,7 +252,7 @@ export default function MonthlyReview() {
     const files = Array.from(e.target.files || []);
     if (files.length > 0) {
       setSelectedImages(prev => [...prev, ...files]);
-      
+
       // Create previews for new images
       files.forEach(file => {
         const reader = new FileReader();
@@ -279,7 +279,7 @@ export default function MonthlyReview() {
     const files = Array.from(e.target.files || []);
     if (files.length > 0) {
       setSelectedFiles(prev => [...prev, ...files]);
-      
+
       // 파일 URL 생성 (다운로드용)
       files.forEach(file => {
         const fileUrl = URL.createObjectURL(file);
@@ -307,7 +307,7 @@ export default function MonthlyReview() {
   const handleReflectionChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const textarea = e.target;
     setReflection(textarea.value);
-    
+
     // Reset height to auto to get the correct scrollHeight
     textarea.style.height = 'auto';
     // Set height to scrollHeight
@@ -322,10 +322,10 @@ export default function MonthlyReview() {
     const start = textarea.selectionStart;
     const end = textarea.selectionEnd;
     const text = reflection;
-    
+
     const newText = text.substring(0, start) + textToInsert + text.substring(end);
     setReflection(newText);
-    
+
     // 커서 위치 조정
     setTimeout(() => {
       textarea.focus();
@@ -362,18 +362,18 @@ export default function MonthlyReview() {
       const textarea = e.target as HTMLTextAreaElement;
       const start = textarea.selectionStart;
       const text = reflection;
-      
+
       // 현재 줄의 시작점 찾기
       const lineStart = text.lastIndexOf('\n', start - 1) + 1;
       const currentLine = text.substring(lineStart, start);
-      
+
       // 번호 목록 패턴 확인 (1. 2. 3. 등)
       const numberedListMatch = currentLine.match(/^(\d+)\.\s/);
       if (numberedListMatch) {
         e.preventDefault();
         const currentNumber = parseInt(numberedListMatch[1]);
         const nextNumber = currentNumber + 1;
-        
+
         // 현재 줄이 비어있으면 목록 종료
         if (currentLine.trim() === `${currentNumber}.`) {
           // 현재 줄의 번호 목록 마커 제거
@@ -395,12 +395,12 @@ export default function MonthlyReview() {
         }
         return;
       }
-      
+
       // 불릿 목록 패턴 확인
       const bulletListMatch = currentLine.match(/^•\s/);
       if (bulletListMatch) {
         e.preventDefault();
-        
+
         // 현재 줄이 비어있으면 목록 종료
         if (currentLine.trim() === '•') {
           // 현재 줄의 불릿 마커 제거
@@ -437,12 +437,12 @@ export default function MonthlyReview() {
       if ((monthlyReview as any).imageUrls) {
         setImagePreviews((monthlyReview as any).imageUrls);
       }
-      
+
       const savedFileUrls = (monthlyReview as any).fileUrls;
       const savedFileNames = (monthlyReview as any).fileNames;
       if (savedFileUrls && savedFileNames && savedFileNames.length > 0) {
         setFileUrls(savedFileUrls);
-        
+
         // 저장된 파일을 표시하기 위한 Mock File 객체 생성
         const mockFiles = savedFileNames.map((name: string) => {
           const file = new File([], name, { type: 'application/octet-stream' });
@@ -548,7 +548,7 @@ export default function MonthlyReview() {
                 {/* Task Completion Summary */}
                 <div>
                   <h4 className="text-sm font-semibold text-gray-900 mb-4">완료된 할일</h4>
-                  
+
                   <div className="space-y-4">
                     <div>
                       <div className="flex items-center justify-between mb-2">
@@ -627,14 +627,14 @@ export default function MonthlyReview() {
                       )}
                     </Button>
                   </div>
-                  
+
                   <div className={`space-y-3 pr-2 ${(monthTasks as any[]).length > 10 ? 'max-h-[35rem] overflow-y-auto' : ''}`}>
                     {(() => {
                       // Filter tasks based on completion status toggle
                       const filteredTasks = showCompletedTasks 
                         ? (monthTasks as any[])
                         : (monthTasks as any[]).filter((task: any) => !task.completed);
-                      
+
                       // Sort by completion status first, then by priority
                       const sortedTasks = filteredTasks.sort((a: any, b: any) => {
                         // Completed tasks go to bottom within each category
@@ -652,11 +652,11 @@ export default function MonthlyReview() {
                       const carriedOverTasks: any[] = [];
                       const thisMonthTasks: any[] = [];
                       const unscheduledTasks: any[] = [];
-                      
+
                       sortedTasks.forEach((task: any) => {
                         const startOfCurrentMonth = new Date(monthStart);
                         const endOfCurrentMonth = new Date(monthEnd);
-                        
+
                         // 1. 이월된 할일 확인 (빨간색)
                         if (task.isCarriedOver || task.is_carried_over) {
                           carriedOverTasks.push(task);
@@ -700,9 +700,9 @@ export default function MonthlyReview() {
                       const renderTaskItem = (task: any) => {
                         const startOfCurrentMonth = new Date(monthStart);
                         const endOfCurrentMonth = new Date(monthEnd);
-                        
+
                         let isDelayed = false;
-                        
+
                         // 지연 여부 판단
                         if (task.isCarriedOver || task.is_carried_over) {
                           isDelayed = true;
@@ -721,10 +721,10 @@ export default function MonthlyReview() {
                             isDelayed = true;
                           }
                         }
-                        
+
                         // 카테고리별 마크와 색상 결정
                         let categoryBgColor = 'bg-gray-50 border-gray-200'; // 기본: 회색
-                        
+
                         // 1. 이월된 할일 또는 지연된 할일인지 확인 (빨간색)
                         if (task.isCarriedOver || task.is_carried_over) {
                           categoryBgColor = 'bg-red-50 border-red-200';
@@ -753,7 +753,7 @@ export default function MonthlyReview() {
                             categoryBgColor = 'bg-blue-50 border-blue-200';
                           }
                         }
-                        
+
                         return (
                           <div key={task.id} className={`flex items-center justify-between p-1.5 rounded-lg border ${
                             task.completed 
@@ -793,7 +793,7 @@ export default function MonthlyReview() {
 
                       const renderTaskGroup = (title: string, tasks: any[], bgColor: string) => {
                         if (tasks.length === 0) return null;
-                        
+
                         return (
                           <div key={title} className="space-y-2">
                             <div className={`px-2 py-1 rounded text-xs font-medium ${bgColor}`}>
@@ -811,7 +811,7 @@ export default function MonthlyReview() {
                           {renderTaskGroup("이월된 할일", carriedOverTasks, "bg-red-100 text-red-700")}
                           {renderTaskGroup("이번달에 계획된 할일", thisMonthTasks, "bg-blue-100 text-blue-700")}
                           {renderTaskGroup("일정이 지정되지 않은 할일", unscheduledTasks, "bg-gray-100 text-gray-700")}
-                          
+
                           {filteredTasks.length === 0 && (
                             <div className="text-center p-4 bg-gray-50 rounded-lg">
                               <div className="text-sm text-gray-600 font-medium">
@@ -826,7 +826,7 @@ export default function MonthlyReview() {
                       );
                     })()}
                   </div>
-                  
+
                   {(monthTasks as any[]).length > 0 && (
                     <div className="mt-3 text-center">
                       <div className="text-xs text-gray-500 bg-gray-50 px-2 py-1 rounded">
@@ -853,13 +853,13 @@ export default function MonthlyReview() {
                       <Zap className="h-4 w-4 text-amber-500" />
                       <h4 className="text-sm font-semibold text-gray-900">습관 실행률</h4>
                     </div>
-                    
+
                     {/* Overall Habit Completion Rate */}
                     {(habits as any[]).length > 0 && (() => {
                       const totalDaysInMonth = new Date(currentYear, currentMonth, 0).getDate();
                       let totalCompletionRate = 0;
                       let habitCount = 0;
-                      
+
                       (habits as any[]).forEach((habit: any) => {
                         const completedLogsForHabit = (monthHabitLogs as any[]).filter((log: any) => log.habitId === habit.id && log.completed);
                         const completedDays = completedLogsForHabit.length;
@@ -867,13 +867,13 @@ export default function MonthlyReview() {
                         totalCompletionRate += completionRate;
                         habitCount++;
                       });
-                      
+
                       const overallRate = habitCount > 0 ? Math.round(totalCompletionRate / habitCount) : 0;
-                      
+
                       return (
                         <div className="flex items-center space-x-2">
                           <span className="text-xs text-gray-600 font-medium">{overallRate}%</span>
-                          <div className="w-16 h-2 bg-gray-200 rounded-full overflow-hidden">
+                          <div className="w-32 h-2 bg-gray-200 rounded-full overflow-hidden">
                             <div 
                               className={`h-full transition-all duration-300 ${
                                 overallRate >= 80 ? 'bg-emerald-500' :
@@ -900,13 +900,13 @@ export default function MonthlyReview() {
                               // Get completed logs for this habit
                               const completedLogsForHabit = (monthHabitLogs as any[]).filter((log: any) => log.habitId === habit.id && log.completed);
                               const completedDays = completedLogsForHabit.length;
-                              
+
                               // Total days in current month
                               const totalDaysInMonth = new Date(currentYear, currentMonth, 0).getDate();
-                              
+
                               // Calculate completion rate based on total days in month
                               const completionRate = Math.round((completedDays / totalDaysInMonth) * 100);
-                              
+
                               return (
                                 <>
                                   <div className="text-sm font-bold text-emerald-600">
@@ -1043,7 +1043,7 @@ export default function MonthlyReview() {
                       구분선
                     </Button>
                   </div>
-                  
+
                   <Textarea
                     id="monthly-reflection"
                     placeholder="이번 달을 돌아보며 배운 점, 개선할 점을 기록하세요..."
@@ -1053,7 +1053,7 @@ export default function MonthlyReview() {
                     className="resize-vertical min-h-[120px]"
                     style={{ height: 'auto' }}
                   />
-                  
+
                   {/* Image Upload */}
                   <div className="mt-4">
                     <div className="mb-2">
@@ -1074,7 +1074,7 @@ export default function MonthlyReview() {
                         <Plus className="h-4 w-4 mr-1" />
                         이미지 추가
                       </Button>
-                      
+
                       {/* File Upload Button */}
                       <input
                         type="file"
@@ -1093,7 +1093,7 @@ export default function MonthlyReview() {
                         파일 추가
                       </Button>
                     </div>
-                    
+
                     {/* Image Previews */}
                     {imagePreviews.length > 0 && (
                       <div className="space-y-2">
@@ -1120,7 +1120,7 @@ export default function MonthlyReview() {
                         </div>
                       </div>
                     )}
-                    
+
                     {/* File List */}
                     {selectedFiles.length > 0 && (
                       <div className="mt-4 space-y-2">
@@ -1158,7 +1158,7 @@ export default function MonthlyReview() {
                       </div>
                     )}
                   </div>
-                  
+
                   {/* Save Button */}
                   <div className="mt-4">
                     <Button
@@ -1188,7 +1188,7 @@ export default function MonthlyReview() {
             >
               <X className="h-5 w-5" />
             </button>
-            
+
             {/* Navigation Buttons */}
             {imagePreviews.length > 1 && (
               <>
@@ -1206,14 +1206,14 @@ export default function MonthlyReview() {
                 </button>
               </>
             )}
-            
+
             {/* Current Image */}
             <img
               src={imagePreviews[currentImageIndex]}
               alt={`Image ${currentImageIndex + 1}`}
               className="max-w-full max-h-full object-contain"
             />
-            
+
             {/* Image Counter */}
             {imagePreviews.length > 1 && (
               <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 text-white bg-black bg-opacity-50 px-3 py-1 rounded">
