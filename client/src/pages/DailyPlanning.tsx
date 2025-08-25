@@ -1338,71 +1338,6 @@ export default function DailyPlanning() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
-                  {/* Quick Add Task */}
-                  <div className="space-y-2">
-                    <div className="flex items-center space-x-2 mb-3">
-                      <div className="flex items-center space-x-2">
-                        <div className="w-1 h-4 bg-gradient-to-b from-blue-500 to-blue-600 rounded-full"></div>
-                        <h4 className="text-sm font-semibold text-gray-800">빠른 할일 입력</h4>
-                      </div>
-                      <div className="flex-1 h-px bg-gradient-to-r from-gray-200 to-transparent"></div>
-                    </div>
-                    <div className="flex space-x-2">
-                      <Input
-                        placeholder="할일을 입력하세요..."
-                        value={newTask}
-                        onChange={(e) => setNewTask(e.target.value)}
-                        onKeyPress={(e) => e.key === 'Enter' && handleAddTask()}
-                        className="flex-1"
-                      />
-                      <Select value={selectedPriority} onValueChange={(value: 'A' | 'B' | 'C') => setSelectedPriority(value)}>
-                        <SelectTrigger className="w-16">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="A">A</SelectItem>
-                          <SelectItem value="B">B</SelectItem>
-                          <SelectItem value="C">C</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <Button onClick={handleAddTask} disabled={!newTask.trim() || addTaskMutation.isPending} size="sm">
-                        <Plus className="h-4 w-4" />
-                      </Button>
-                    </div>
-
-                    {/* Value Selection */}
-                    <div className="flex space-x-2">
-                      <Select value={selectedCoreValue} onValueChange={setSelectedCoreValue}>
-                        <SelectTrigger className="h-8 text-xs">
-                          <SelectValue placeholder="핵심가치" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="none">선택 안함</SelectItem>
-                          {foundation?.coreValue1 && (
-                            <SelectItem value={foundation.coreValue1}>{foundation.coreValue1}</SelectItem>
-                          )}
-                          {foundation?.coreValue2 && (
-                            <SelectItem value={foundation.coreValue2}>{foundation.coreValue2}</SelectItem>
-                          )}
-                          {foundation?.coreValue3 && (
-                            <SelectItem value={foundation.coreValue3}>{foundation.coreValue3}</SelectItem>
-                          )}
-                        </SelectContent>
-                      </Select>
-                      <Select value={selectedAnnualGoal} onValueChange={setSelectedAnnualGoal}>
-                        <SelectTrigger className="h-8 text-xs">
-                          <SelectValue placeholder="연간목표" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="none">선택 안함</SelectItem>
-                          {annualGoals.map((goal: any) => (
-                            <SelectItem key={goal.id} value={goal.title}>{goal.title}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-
                   {/* Quick Add Event */}
                   <div className="space-y-2">
                     <div className="flex items-center space-x-2 mb-3">
@@ -1700,6 +1635,71 @@ export default function DailyPlanning() {
                           ))
                         );
                       })()}
+                    </div>
+                  </div>
+
+                  {/* Quick Add Task */}
+                  <div className="space-y-2">
+                    <div className="flex items-center space-x-2 mb-3">
+                      <div className="flex items-center space-x-2">
+                        <div className="w-1 h-4 bg-gradient-to-b from-blue-500 to-blue-600 rounded-full"></div>
+                        <h4 className="text-sm font-semibold text-gray-800">빠른 할일 입력</h4>
+                      </div>
+                      <div className="flex-1 h-px bg-gradient-to-r from-gray-200 to-transparent"></div>
+                    </div>
+                    <div className="flex space-x-2">
+                      <Input
+                        placeholder="할일을 입력하세요..."
+                        value={newTask}
+                        onChange={(e) => setNewTask(e.target.value)}
+                        onKeyPress={(e) => e.key === 'Enter' && handleAddTask()}
+                        className="flex-1"
+                      />
+                      <Select value={selectedPriority} onValueChange={(value: 'A' | 'B' | 'C') => setSelectedPriority(value)}>
+                        <SelectTrigger className="w-16">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="A">A</SelectItem>
+                          <SelectItem value="B">B</SelectItem>
+                          <SelectItem value="C">C</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <Button onClick={handleAddTask} disabled={!newTask.trim() || addTaskMutation.isPending} size="sm">
+                        <Plus className="h-4 w-4" />
+                      </Button>
+                    </div>
+
+                    {/* Value Selection */}
+                    <div className="flex space-x-2">
+                      <Select value={selectedCoreValue} onValueChange={setSelectedCoreValue}>
+                        <SelectTrigger className="h-8 text-xs">
+                          <SelectValue placeholder="핵심가치" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="none">선택 안함</SelectItem>
+                          {foundation?.coreValue1 && (
+                            <SelectItem value={foundation.coreValue1}>{foundation.coreValue1}</SelectItem>
+                          )}
+                          {foundation?.coreValue2 && (
+                            <SelectItem value={foundation.coreValue2}>{foundation.coreValue2}</SelectItem>
+                          )}
+                          {foundation?.coreValue3 && (
+                            <SelectItem value={foundation.coreValue3}>{foundation.coreValue3}</SelectItem>
+                          )}
+                        </SelectContent>
+                      </Select>
+                      <Select value={selectedAnnualGoal} onValueChange={setSelectedAnnualGoal}>
+                        <SelectTrigger className="h-8 text-xs">
+                          <SelectValue placeholder="연간목표" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="none">선택 안함</SelectItem>
+                          {annualGoals.map((goal: any) => (
+                            <SelectItem key={goal.id} value={goal.title}>{goal.title}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
                   </div>
 
