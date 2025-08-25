@@ -2840,31 +2840,79 @@ export default function DailyPlanning() {
                 </div>
 
                 {/* All Day Event Checkbox */}
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center space-x-2">
-                    <Checkbox
-                      id="edit-all-day-event"
-                      checked={editingEvent.editIsAllDay || false}
-                      onCheckedChange={(checked) => setEditingEvent(prev => ({ ...prev, editIsAllDay: checked as boolean }))}
-                      className="h-4 w-4"
-                    />
-                    <Label htmlFor="edit-all-day-event" className="text-sm text-gray-700 cursor-pointer">
-                      종일 일정
-                    </Label>
+                <div className="flex items-center space-x-2 mb-3">
+                  <Checkbox
+                    id="edit-all-day-event"
+                    checked={editingEvent.editIsAllDay || false}
+                    onCheckedChange={(checked) => setEditingEvent(prev => ({ ...prev, editIsAllDay: checked as boolean }))}
+                    className="h-4 w-4"
+                  />
+                  <Label htmlFor="edit-all-day-event" className="text-sm text-gray-700 cursor-pointer">
+                    종일 일정
+                  </Label>
+                </div>
+
+                {/* Event Date Selection */}
+                <div className="grid grid-cols-2 gap-3 mb-3">
+                  <div>
+                    <Label className="text-sm font-medium">시작일</Label>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          className={`w-full justify-start text-left font-normal ${
+                            !editingEvent.startDate && "text-muted-foreground"
+                          }`}
+                        >
+                          <Calendar className="mr-2 h-4 w-4" />
+                          {editingEvent.startDate 
+                            ? format(new Date(editingEvent.startDate), 'yyyy-MM-dd')
+                            : "시작일을 선택하세요"
+                          }
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0">
+                        <CalendarComponent
+                          mode="single"
+                          selected={editingEvent.startDate ? new Date(editingEvent.startDate) : undefined}
+                          onSelect={(date) => setEditingEvent(prev => ({ 
+                            ...prev, 
+                            startDate: date ? format(date, 'yyyy-MM-dd') : null 
+                          }))}
+                          initialFocus
+                        />
+                      </PopoverContent>
+                    </Popover>
                   </div>
-                  
-                  {/* 일정 날짜/기간 표시 */}
-                  <div className="text-xs text-gray-600 bg-gray-50 px-2 py-1 rounded">
-                    {editingEvent.startDate && editingEvent.endDate && editingEvent.startDate !== editingEvent.endDate ? (
-                      // 기간이 있는 경우
-                      <span>{format(new Date(editingEvent.startDate), 'M월 d일', { locale: ko })} ~ {format(new Date(editingEvent.endDate), 'M월 d일', { locale: ko })}</span>
-                    ) : editingEvent.startDate ? (
-                      // 단일 날짜인 경우
-                      <span>{format(new Date(editingEvent.startDate), 'M월 d일', { locale: ko })}</span>
-                    ) : (
-                      // 날짜가 없는 경우
-                      <span>날짜 미지정</span>
-                    )}
+                  <div>
+                    <Label className="text-sm font-medium">종료일</Label>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          className={`w-full justify-start text-left font-normal ${
+                            !editingEvent.endDate && "text-muted-foreground"
+                          }`}
+                        >
+                          <Calendar className="mr-2 h-4 w-4" />
+                          {editingEvent.endDate 
+                            ? format(new Date(editingEvent.endDate), 'yyyy-MM-dd')
+                            : "종료일을 선택하세요"
+                          }
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0">
+                        <CalendarComponent
+                          mode="single"
+                          selected={editingEvent.endDate ? new Date(editingEvent.endDate) : undefined}
+                          onSelect={(date) => setEditingEvent(prev => ({ 
+                            ...prev, 
+                            endDate: date ? format(date, 'yyyy-MM-dd') : null 
+                          }))}
+                          initialFocus
+                        />
+                      </PopoverContent>
+                    </Popover>
                   </div>
                 </div>
 
