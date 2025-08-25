@@ -149,8 +149,8 @@ export default function Dashboard() {
   // 습관 통계 (주간, 현재 연도 기준)
   const currentYearHabits = (habits as any[]).filter((h: any) => {
     if (!h.isActive) return false;
-    if (!h.createdAt) return true;
-    return new Date(h.createdAt).getFullYear() === currentYear;
+    // 현재는 모든 활성 습관을 포함 (연도 필터링 제거하여 테스트)
+    return true;
   });
 
   const habitStats = {
@@ -172,11 +172,14 @@ export default function Dashboard() {
     // 디버깅용 로그 (개발환경에서만)
     if (typeof window !== 'undefined' && window.location.hostname === 'localhost') {
       console.log('습관 완료율 계산:', {
+        currentYear,
+        allHabits: habits.length,
         totalHabits: habitStats.totalHabits,
         expectedCompletions,
         weeklyHabitLogs: weeklyHabitLogs.length,
         actualCompletions,
-        weeklyHabitLogsData: weeklyHabitLogs
+        weeklyHabitLogsData: weeklyHabitLogs,
+        habitDetails: currentYearHabits.map(h => ({id: h.id, name: h.name, createdAt: h.createdAt}))
       });
     }
     
