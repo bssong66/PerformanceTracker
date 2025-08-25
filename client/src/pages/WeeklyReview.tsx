@@ -9,7 +9,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { ProgressBar } from "@/components/ProgressBar";
 import { PriorityBadge } from "@/components/PriorityBadge";
-import { Save, TrendingUp, BarChart3, Target, Plus, X, ChevronLeft, ChevronRight, Siren, Calendar as CalendarIcon, Activity, Heart, Dumbbell, Coffee, Book, Moon, Sunrise, Timer, Zap, Type, Hash, List, Clock, Minus, FileText, Download } from "lucide-react";
+import { Save, TrendingUp, BarChart3, Target, Plus, X, ChevronLeft, ChevronRight, Siren, Calendar as CalendarIcon, Activity, Heart, Dumbbell, Coffee, Book, Moon, Sunrise, Timer, Zap, Type, Hash, List, Clock, Minus, FileText, Download, Eye, EyeOff } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { api, saveWeeklyReview } from "@/lib/api";
 import { queryClient } from "@/lib/queryClient";
@@ -61,6 +61,9 @@ export default function WeeklyReview() {
   // 파일 업로드 관련 상태
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [fileUrls, setFileUrls] = useState<string[]>([]);
+  
+  // 완료된 할일 보기 토글 상태
+  const [showCompletedTasks, setShowCompletedTasks] = useState(false);
 
   const { data: weeklyReview } = useQuery({
     queryKey: ['/api/weekly-reviews', weekStartDate],
@@ -625,11 +628,20 @@ export default function WeeklyReview() {
                 <div className="flex-1 flex flex-col">
                   <div className="flex items-center justify-between mb-2">
                     <h4 className="text-sm font-semibold text-gray-900">금주의 할일</h4>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setShowCompletedTasks(!showCompletedTasks)}
+                      className="h-7 px-2 text-xs"
+                    >
+                      {showCompletedTasks ? <EyeOff className="h-3 w-3 mr-1" /> : <Eye className="h-3 w-3 mr-1" />}
+                      {showCompletedTasks ? '미완료 할일' : '완료된 할일'}
+                    </Button>
                   </div>
                   
                   <div className="h-[35rem] overflow-y-auto space-y-3 pr-2">
                     {(weekTasks as any[])
-                      .filter((task: any) => !task.completed)
+                      .filter((task: any) => showCompletedTasks ? task.completed : !task.completed)
                       .sort((a: any, b: any) => {
                         // Priority order: A > B > C (or null/undefined)
                         const priorityOrder = { 'A': 1, 'B': 2, 'C': 3 };
@@ -674,19 +686,34 @@ export default function WeeklyReview() {
                         }
                         
                         return (
-                          <div key={task.id} className={`flex items-center justify-between p-1.5 bg-red-50 rounded-lg border border-red-100 ${
-                            isDelayed ? 'animate-pulse' : ''
+                          <div key={task.id} className={`flex items-center justify-between p-1.5 rounded-lg border ${
+                            task.completed 
+                              ? 'bg-green-50 border-green-100' 
+                              : `bg-red-50 border-red-100 ${isDelayed ? 'animate-pulse' : ''}`
                           }`}>
                             <div className="flex items-center space-x-3 flex-1">
                               <PriorityBadge priority={task.priority || 'C'} size="sm" />
                               <div className="flex-1">
-                                <div className="text-sm font-medium text-gray-900">{getTaskDisplayName(task)}</div>
+                                <div className={`text-sm font-medium ${
+                                  task.completed ? 'text-green-700 line-through' : 'text-gray-900'
+                                }`}>
+                                  {getTaskDisplayName(task)}
+                                </div>
                                 {task.description && (
-                                  <div className="text-xs text-gray-500 mt-1">{task.description}</div>
+                                  <div className={`text-xs mt-1 ${
+                                    task.completed ? 'text-green-600 line-through' : 'text-gray-500'
+                                  }`}>
+                                    {task.description}
+                                  </div>
                                 )}
                               </div>
                             </div>
-                            {isDelayed && (
+                            {task.completed && (
+                              <div className="text-xs text-green-600 font-medium">
+                                완료
+                              </div>
+                            )}
+                            {!task.completed && isDelayed && (
                               <div className="text-xs text-red-600 font-medium">
                                 지연
                               </div>
@@ -695,18 +722,22 @@ export default function WeeklyReview() {
                         );
                       })}
                     
-                    {(weekTasks as any[]).filter((task: any) => !task.completed).length === 0 && (
-                      <div className="text-center p-4 bg-green-50 rounded-lg">
-                        <div className="text-sm text-green-600 font-medium">모든 할일이 완료되었습니다!</div>
-                        <div className="text-xs text-gray-500 mt-1">이번 주 정말 수고하셨습니다.</div>
+                    {(weekTasks as any[]).filter((task: any) => showCompletedTasks ? task.completed : !task.completed).length === 0 && (
+                      <div className="text-center p-4 bg-gray-50 rounded-lg">
+                        <div className="text-sm text-gray-600 font-medium">
+                          {showCompletedTasks ? '완료된 할일이 없습니다.' : '모든 할일이 완료되었습니다!'}
+                        </div>
+                        <div className="text-xs text-gray-500 mt-1">
+                          {showCompletedTasks ? '아직 완료한 할일이 없어요.' : '이번 주 정말 수고하셨습니다.'}
+                        </div>
                       </div>
                     )}
                   </div>
                   
-                  {(weekTasks as any[]).filter((task: any) => !task.completed).length > 0 && (
+                  {(weekTasks as any[]).filter((task: any) => showCompletedTasks ? task.completed : !task.completed).length > 0 && (
                     <div className="mt-3 text-center">
                       <div className="text-xs text-gray-500 bg-gray-50 px-2 py-1 rounded">
-                        총 {(weekTasks as any[]).filter((task: any) => !task.completed).length}개의 미완료 할일
+                        총 {(weekTasks as any[]).filter((task: any) => showCompletedTasks ? task.completed : !task.completed).length}개의 {showCompletedTasks ? '완료된' : '미완료'} 할일
                       </div>
                     </div>
                   )}
