@@ -634,7 +634,7 @@ export default function WeeklyReview() {
                       const totalCompleted = taskStats.aCompleted + taskStats.bCompleted + taskStats.cCompleted;
                       const totalTasks = taskStats.aTotal + taskStats.bTotal + taskStats.cTotal;
                       const completionRate = totalTasks > 0 ? Math.round((totalCompleted / totalTasks) * 100) : 0;
-                      
+
                       return (
                         <div className="flex items-center space-x-2">
                           <span className="text-sm font-semibold text-gray-900">
@@ -948,7 +948,7 @@ export default function WeeklyReview() {
                       return (
                         <div className="flex items-center space-x-2">
                           <span className="text-xs text-gray-600 font-medium">{overallRate}%</span>
-                          <div className="w-16 h-2 bg-gray-200 rounded-full overflow-hidden">
+                          <div className="w-32 h-2 bg-gray-200 rounded-full overflow-hidden">
                             <div 
                               className={`h-full transition-all duration-300 ${
                                 overallRate >= 80 ? 'bg-emerald-500' :
