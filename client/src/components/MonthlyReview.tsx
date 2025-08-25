@@ -598,12 +598,12 @@ export default function MonthlyReview() {
                       {showCompletedTasks ? (
                         <>
                           <EyeOff className="h-3 w-3 mr-1" />
-                          완료된 일정 감추기
+                          완료된 할일 감추기
                         </>
                       ) : (
                         <>
                           <Eye className="h-3 w-3 mr-1" />
-                          완료된 일정 보기
+                          완료된 할일 보기
                         </>
                       )}
                     </Button>
