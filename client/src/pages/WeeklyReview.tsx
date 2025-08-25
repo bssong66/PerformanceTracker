@@ -95,8 +95,8 @@ export default function WeeklyReview() {
     retry: false,
   });
 
-  // Get tasks for the past week to calculate completion stats
-  const { data: weekTasks = [] } = useQuery({
+  // Get all tasks to filter for the current week
+  const { data: tasks = [] } = useQuery({
     queryKey: ['/api/tasks/auth'],
     retry: false,
   });
@@ -106,6 +106,48 @@ export default function WeeklyReview() {
     queryKey: ['/api/projects/auth'],
     retry: false,
   });
+
+  // Calculate week tasks - only include tasks relevant to current week
+  const weekTasks = useMemo(() => {
+    if (!tasks) return [];
+    
+    const startOfWeek = new Date(weekStartDate);
+    const endOfWeek = new Date(startOfWeek);
+    endOfWeek.setDate(startOfWeek.getDate() + 6);
+    endOfWeek.setHours(23, 59, 59, 999);
+
+    return (tasks as any[]).filter((task: any) => {
+      // 1. 이월된 할일 (롤오버된 할일) - 전주 이전에 완료되지 않아 이번 주로 이월된 할일
+      if (task.isCarriedOver) {
+        return true;
+      }
+
+      // 2. 이번 주에 계획된 할일 
+      if (task.scheduledDate) {
+        const taskDate = new Date(task.scheduledDate);
+        const isInThisWeek = taskDate >= startOfWeek && taskDate <= endOfWeek;
+        
+        // 이번 주에 계획된 할일만 포함 (이전 주에 완료된 할일 제외)
+        if (isInThisWeek) {
+          return true;
+        }
+        
+        // 이전 주에 계획되었지만 완료되지 않아 지연된 할일
+        if (taskDate < startOfWeek && !task.completed) {
+          return true;
+        }
+        
+        return false;
+      }
+
+      // 3. 일정이 없는 할일 (scheduledDate와 endDate가 모두 없는 할일)
+      if (!task.scheduledDate && !task.endDate) {
+        return true;
+      }
+
+      return false;
+    });
+  }, [tasks, weekStartDate]);
 
   // Get time blocks for the current week to calculate work-life balance
   const { data: weekTimeBlocks = [] } = useQuery({
