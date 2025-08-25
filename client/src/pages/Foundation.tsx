@@ -936,7 +936,7 @@ export default function Foundation() {
                 onClick={editingGoals ? handleSaveGoals : handleSaveFoundation}
                 disabled={editingGoals ? savingGoals : saveFoundationMutation.isPending}
                 className="fixed top-32 bg-blue-600 hover:bg-blue-700 text-white shadow-lg border-0 px-4 py-2 h-auto font-medium z-50 rounded-lg"
-                style={{ right: '74px' }}
+                style={{ right: '174px' }}
               >
                 {(editingGoals ? savingGoals : saveFoundationMutation.isPending) ? (
                   <>
