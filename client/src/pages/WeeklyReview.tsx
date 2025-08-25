@@ -526,6 +526,8 @@ export default function WeeklyReview() {
     aCompleted: (weekTasks as any[]).filter((t: any) => t.priority === 'A' && t.completed).length,
     bTotal: (weekTasks as any[]).filter((t: any) => t.priority === 'B').length,
     bCompleted: (weekTasks as any[]).filter((t: any) => t.priority === 'B' && t.completed).length,
+    cTotal: (weekTasks as any[]).filter((t: any) => t.priority === 'C' || !t.priority).length,
+    cCompleted: (weekTasks as any[]).filter((t: any) => (t.priority === 'C' || !t.priority) && t.completed).length,
   };
 
   const coreValues = foundation ? [
@@ -597,6 +599,23 @@ export default function WeeklyReview() {
                         value={taskStats.bCompleted} 
                         max={taskStats.bTotal || 1} 
                         color="warning"
+                      />
+                    </div>
+
+                    <div>
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center space-x-2">
+                          <PriorityBadge priority="C" size="sm" />
+                          <span className="text-sm text-gray-600">C급 할일</span>
+                        </div>
+                        <span className="text-sm font-semibold text-gray-900">
+                          {taskStats.cCompleted}/{taskStats.cTotal}
+                        </span>
+                      </div>
+                      <ProgressBar 
+                        value={taskStats.cCompleted} 
+                        max={taskStats.cTotal || 1} 
+                        color="info"
                       />
                     </div>
                   </div>
