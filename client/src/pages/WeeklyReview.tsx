@@ -642,7 +642,7 @@ export default function WeeklyReview() {
                           </span>
                           <div className="flex items-center space-x-1">
                             <span className="text-xs font-medium text-gray-600">{completionRate}%</span>
-                            <div className="w-16 h-2 bg-gray-200 rounded-full overflow-hidden">
+                            <div className="w-32 h-2 bg-gray-200 rounded-full overflow-hidden">
                               <div 
                                 className={`h-full transition-all duration-300 ${
                                   completionRate >= 80 ? 'bg-emerald-500' :
