@@ -1450,7 +1450,7 @@ export default function DailyPlanning() {
                             <Label className="text-xs text-gray-600">시작 시간</Label>
                             <div className="flex space-x-1">
                               <Select value={startHour} onValueChange={setStartHour}>
-                                <SelectTrigger className="w-16 h-8 text-xs">
+                                <SelectTrigger className="w-8 h-8 text-xs">
                                   <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -1460,7 +1460,7 @@ export default function DailyPlanning() {
                                 </SelectContent>
                               </Select>
                               <Select value={startMinute} onValueChange={setStartMinute}>
-                                <SelectTrigger className="w-16 h-8 text-xs">
+                                <SelectTrigger className="w-8 h-8 text-xs">
                                   <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -1479,7 +1479,7 @@ export default function DailyPlanning() {
                                 </SelectContent>
                               </Select>
                               <Select value={startPeriod} onValueChange={(value: 'AM' | 'PM') => setStartPeriod(value)}>
-                                <SelectTrigger className="w-16 h-8 text-xs">
+                                <SelectTrigger className="w-8 h-8 text-xs">
                                   <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -1495,7 +1495,7 @@ export default function DailyPlanning() {
                             <Label className="text-xs text-gray-600">종료 시간</Label>
                             <div className="flex space-x-1">
                               <Select value={endHour} onValueChange={setEndHour}>
-                                <SelectTrigger className="w-16 h-8 text-xs">
+                                <SelectTrigger className="w-8 h-8 text-xs">
                                   <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -1505,7 +1505,7 @@ export default function DailyPlanning() {
                                 </SelectContent>
                               </Select>
                               <Select value={endMinute} onValueChange={setEndMinute}>
-                                <SelectTrigger className="w-16 h-8 text-xs">
+                                <SelectTrigger className="w-8 h-8 text-xs">
                                   <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -1524,7 +1524,7 @@ export default function DailyPlanning() {
                                 </SelectContent>
                               </Select>
                               <Select value={endPeriod} onValueChange={(value: 'AM' | 'PM') => setEndPeriod(value)}>
-                                <SelectTrigger className="w-16 h-8 text-xs">
+                                <SelectTrigger className="w-8 h-8 text-xs">
                                   <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent>
