@@ -763,10 +763,10 @@ export default function WeeklyReview() {
                         return aPriority - bPriority;
                       });
 
-                      // 완료 상태와 관계없이 필터링 (완료된 할일 숨기기 토글에만 의존)
-                      const displayedCarriedOverTasks = carriedOverTasks.filter((task: any) => !hideCompletedTasks || !task.completed);
-                      const displayedThisWeekTasks = thisWeekTasks.filter((task: any) => !hideCompletedTasks || !task.completed);
-                      const displayedUnscheduledTasks = unscheduledTasks.filter((task: any) => !hideCompletedTasks || !task.completed);
+                      // 완료된 할일 토글에 따른 필터링
+                      const displayedCarriedOverTasks = hideCompletedTasks ? carriedOverTasks.filter((task: any) => !task.completed) : carriedOverTasks;
+                      const displayedThisWeekTasks = hideCompletedTasks ? thisWeekTasks.filter((task: any) => !task.completed) : thisWeekTasks;
+                      const displayedUnscheduledTasks = hideCompletedTasks ? unscheduledTasks.filter((task: any) => !task.completed) : unscheduledTasks;
 
                       const renderTaskItem = (task: any) => {
                         // 지연 여부 판단
