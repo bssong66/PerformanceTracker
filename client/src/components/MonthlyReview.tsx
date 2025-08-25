@@ -592,11 +592,16 @@ export default function MonthlyReview() {
                   
                   <div className="h-[35rem] overflow-y-auto space-y-3 pr-2">
                     {(() => {
-                      // Filter out completed tasks
-                      const filteredTasks = (monthTasks as any[]).filter((task: any) => !task.completed);
+                      // Include ALL tasks (both completed and incomplete)
+                      const allTasks = (monthTasks as any[]);
                       
-                      // Sort by priority
-                      const sortedTasks = filteredTasks.sort((a: any, b: any) => {
+                      // Sort by completion status first, then by priority
+                      const sortedTasks = allTasks.sort((a: any, b: any) => {
+                        // Completed tasks go to bottom within each category
+                        if (a.completed !== b.completed) {
+                          return a.completed ? 1 : -1;
+                        }
+                        // Priority order: A > B > C
                         const priorityOrder = { 'A': 1, 'B': 2, 'C': 3 };
                         const aPriority = priorityOrder[a.priority as keyof typeof priorityOrder] || 4;
                         const bPriority = priorityOrder[b.priority as keyof typeof priorityOrder] || 4;
@@ -612,13 +617,13 @@ export default function MonthlyReview() {
                         const startOfCurrentMonth = new Date(monthStart);
                         const endOfCurrentMonth = new Date(monthEnd);
                         
-                        // 1. 이월된 할일 또는 지연된 할일인지 확인 (빨간색)
-                        if (task.is_carried_over) {
+                        // 1. 이월된 할일 확인 (빨간색)
+                        if (task.isCarriedOver || task.is_carried_over) {
                           carriedOverTasks.push(task);
                         }
-                        // 2. end_date가 이번 달 이전이면서 완료되지 않았다면 지연된 할일 (빨간색)
-                        else if (task.end_date) {
-                          const taskEndDate = new Date(task.end_date);
+                        // 2. endDate 또는 end_date 기준 분류
+                        else if (task.endDate || task.end_date) {
+                          const taskEndDate = new Date(task.endDate || task.end_date);
                           taskEndDate.setHours(23, 59, 59, 999);
                           if (taskEndDate < startOfCurrentMonth) {
                             carriedOverTasks.push(task);
@@ -631,9 +636,9 @@ export default function MonthlyReview() {
                             unscheduledTasks.push(task);
                           }
                         }
-                        // 3. scheduled_date가 이번 달 이전이면서 완료되지 않았다면 지연된 할일 (빨간색)
-                        else if (task.scheduled_date) {
-                          const taskStartDate = new Date(task.scheduled_date);
+                        // 3. scheduledDate 또는 scheduled_date 기준 분류
+                        else if (task.scheduledDate || task.scheduled_date) {
+                          const taskStartDate = new Date(task.scheduledDate || task.scheduled_date);
                           taskStartDate.setHours(0, 0, 0, 0);
                           if (taskStartDate < startOfCurrentMonth) {
                             carriedOverTasks.push(task);
@@ -659,18 +664,18 @@ export default function MonthlyReview() {
                         let isDelayed = false;
                         
                         // 지연 여부 판단
-                        if (task.is_carried_over) {
+                        if (task.isCarriedOver || task.is_carried_over) {
                           isDelayed = true;
                         }
-                        else if (task.end_date) {
-                          const taskEndDate = new Date(task.end_date);
+                        else if (task.endDate || task.end_date) {
+                          const taskEndDate = new Date(task.endDate || task.end_date);
                           taskEndDate.setHours(23, 59, 59, 999);
                           if (taskEndDate < startOfCurrentMonth) {
                             isDelayed = true;
                           }
                         }
-                        else if (task.scheduled_date) {
-                          const taskStartDate = new Date(task.scheduled_date);
+                        else if (task.scheduledDate || task.scheduled_date) {
+                          const taskStartDate = new Date(task.scheduledDate || task.scheduled_date);
                           taskStartDate.setHours(0, 0, 0, 0);
                           if (taskStartDate < startOfCurrentMonth) {
                             isDelayed = true;
@@ -681,12 +686,12 @@ export default function MonthlyReview() {
                         let categoryBgColor = 'bg-gray-50 border-gray-200'; // 기본: 회색
                         
                         // 1. 이월된 할일 또는 지연된 할일인지 확인 (빨간색)
-                        if (task.is_carried_over) {
+                        if (task.isCarriedOver || task.is_carried_over) {
                           categoryBgColor = 'bg-red-50 border-red-200';
                         }
-                        // 2. end_date가 이번 달 이전이면서 완료되지 않았다면 지연된 할일 (빨간색)
-                        else if (task.end_date && !task.completed) {
-                          const taskEndDate = new Date(task.end_date);
+                        // 2. endDate 또는 end_date가 이번 달 이전이면 지연된 할일 (빨간색)
+                        else if ((task.endDate || task.end_date)) {
+                          const taskEndDate = new Date(task.endDate || task.end_date);
                           taskEndDate.setHours(23, 59, 59, 999);
                           if (taskEndDate < startOfCurrentMonth) {
                             categoryBgColor = 'bg-red-50 border-red-200';
@@ -696,9 +701,9 @@ export default function MonthlyReview() {
                             categoryBgColor = 'bg-blue-50 border-blue-200';
                           }
                         }
-                        // 3. scheduled_date가 이번 달 이전이면서 완료되지 않았다면 지연된 할일 (빨간색)
-                        else if (task.scheduled_date && !task.completed) {
-                          const taskStartDate = new Date(task.scheduled_date);
+                        // 3. scheduledDate 또는 scheduled_date가 이번 달 이전이면 지연된 할일 (빨간색)
+                        else if ((task.scheduledDate || task.scheduled_date)) {
+                          const taskStartDate = new Date(task.scheduledDate || task.scheduled_date);
                           taskStartDate.setHours(0, 0, 0, 0);
                           if (taskStartDate < startOfCurrentMonth) {
                             categoryBgColor = 'bg-red-50 border-red-200';
@@ -767,13 +772,13 @@ export default function MonthlyReview() {
                           {renderTaskGroup("이번달에 계획된 할일", thisMonthTasks, "bg-blue-100 text-blue-700")}
                           {renderTaskGroup("일정이 지정되지 않은 할일", unscheduledTasks, "bg-gray-100 text-gray-700")}
                           
-                          {filteredTasks.length === 0 && (
+                          {allTasks.length === 0 && (
                             <div className="text-center p-4 bg-gray-50 rounded-lg">
                               <div className="text-sm text-gray-600 font-medium">
-                                미완료된 할일이 없습니다.
+                                등록된 할일이 없습니다.
                               </div>
                               <div className="text-xs text-gray-500 mt-1">
-                                모든 할일이 완료되었습니다!
+                                할일을 추가해보세요!
                               </div>
                             </div>
                           )}
@@ -782,10 +787,12 @@ export default function MonthlyReview() {
                     })()}
                   </div>
                   
-                  {(monthTasks as any[]).filter((task: any) => !task.completed).length > 0 && (
+                  {(monthTasks as any[]).length > 0 && (
                     <div className="mt-3 text-center">
                       <div className="text-xs text-gray-500 bg-gray-50 px-2 py-1 rounded">
-                        총 {(monthTasks as any[]).filter((task: any) => !task.completed).length}개의 미완료 할일
+                        총 {(monthTasks as any[]).length}개의 할일 
+                        (완료: {(monthTasks as any[]).filter((task: any) => task.completed).length}개, 
+                        미완료: {(monthTasks as any[]).filter((task: any) => !task.completed).length}개)
                       </div>
                     </div>
                   )}
