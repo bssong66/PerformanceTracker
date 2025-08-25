@@ -1023,7 +1023,7 @@ export default function WeeklyReview() {
                   </Label>
                   
                   {/* 텍스트 포맷팅 도구모음 */}
-                  <div className="flex flex-wrap gap-1 mb-3 p-2 bg-gray-50 rounded-lg border">
+                  <div className="flex flex-wrap gap-1 mb-3 p-2 bg-gray-50 rounded-lg border transform scale-[0.8] origin-top-left">
                     <Button
                       variant="ghost"
                       size="sm"
