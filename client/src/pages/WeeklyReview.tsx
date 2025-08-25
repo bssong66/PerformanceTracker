@@ -618,22 +618,36 @@ export default function WeeklyReview() {
                         const bPriority = priorityOrder[b.priority as keyof typeof priorityOrder] || 4;
                         return aPriority - bPriority;
                       })
-                      .map((task: any, index: number) => (
-                        <div key={task.id} className="flex items-center justify-between p-1.5 bg-red-50 rounded-lg border border-red-100">
-                          <div className="flex items-center space-x-3 flex-1">
-                            <PriorityBadge priority={task.priority || 'C'} size="sm" />
-                            <div className="flex-1">
-                              <div className="text-sm font-medium text-gray-900">{getTaskDisplayName(task)}</div>
-                              {task.description && (
-                                <div className="text-xs text-gray-500 mt-1">{task.description}</div>
-                              )}
+                      .map((task: any, index: number) => {
+                        // 지연 여부 판단
+                        const today = new Date();
+                        const scheduledDate = task.scheduledDate ? new Date(task.scheduledDate) : null;
+                        const originalScheduledDate = task.originalScheduledDate ? new Date(task.originalScheduledDate) : null;
+                        const isDelayed = task.isCarriedOver || 
+                                         (scheduledDate && scheduledDate < today) || 
+                                         (originalScheduledDate && originalScheduledDate < today);
+                        
+                        return (
+                          <div key={task.id} className={`flex items-center justify-between p-1.5 bg-red-50 rounded-lg border border-red-100 ${
+                            isDelayed ? 'animate-pulse' : ''
+                          }`}>
+                            <div className="flex items-center space-x-3 flex-1">
+                              <PriorityBadge priority={task.priority || 'C'} size="sm" />
+                              <div className="flex-1">
+                                <div className="text-sm font-medium text-gray-900">{getTaskDisplayName(task)}</div>
+                                {task.description && (
+                                  <div className="text-xs text-gray-500 mt-1">{task.description}</div>
+                                )}
+                              </div>
                             </div>
+                            {isDelayed && (
+                              <div className="text-xs text-red-600 font-medium">
+                                지연
+                              </div>
+                            )}
                           </div>
-                          <div className="text-xs text-red-600 font-medium">
-                            미완료
-                          </div>
-                        </div>
-                      ))}
+                        );
+                      })}
                     
                     {(weekTasks as any[]).filter((task: any) => !task.completed).length === 0 && (
                       <div className="text-center p-4 bg-green-50 rounded-lg">
