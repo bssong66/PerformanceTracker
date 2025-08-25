@@ -934,7 +934,7 @@ export default function WeeklyReview() {
                       );
                     })()}
                   </div>
-                  <div className={`space-y-1 overflow-y-auto ${(habits as any[]).length > 4 ? 'max-h-32' : ''}`}>
+                  <div className={`space-y-1 overflow-y-auto ${(habits as any[]).length > 5 ? 'max-h-40' : ''}`}>
                     {(habits as any[]).map((habit: any, index: number) => (
                       <div key={habit.id} className="flex items-center justify-between py-0 px-1 bg-gradient-to-r from-gray-50 to-gray-100 rounded border border-gray-200 hover:shadow-sm transition-shadow">
                         <div className="flex items-center space-x-2">
