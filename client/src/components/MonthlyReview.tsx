@@ -585,9 +585,6 @@ export default function MonthlyReview() {
                 <div className="flex-1 flex flex-col">
                   <div className="flex items-center justify-between mb-2">
                     <h4 className="text-sm font-semibold text-gray-900">이번달 할일</h4>
-                    <div className="text-xs text-gray-500">
-                      {format(monthStart, 'M월', { locale: ko })} 할일 현황
-                    </div>
                   </div>
                   
                   <div className="h-[35rem] overflow-y-auto space-y-3 pr-2">
