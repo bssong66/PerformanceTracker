@@ -593,7 +593,7 @@ export default function MonthlyReview() {
                       size="sm"
                       onClick={() => setShowCompletedTasks(!showCompletedTasks)}
                       className="h-7 px-2 text-xs"
-                      title={showCompletedTasks ? "완료된 일정 감추기" : "완료된 일정 보기"}
+                      title={showCompletedTasks ? "완료된 할일 감추기" : "완료된 일정 보기"}
                     >
                       {showCompletedTasks ? (
                         <>
@@ -736,7 +736,7 @@ export default function MonthlyReview() {
                         }
                         
                         return (
-                          <div key={task.id} className={`flex items-center justify-between p-1.5 rounded-lg border ${
+                          <div key={task.id} className={`flex items-center justify-between p-1.5 rounded-lg border ml-2.5 ${
                             task.completed 
                               ? 'bg-green-50 border-green-200' 
                               : categoryBgColor
