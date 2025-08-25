@@ -822,6 +822,8 @@ export default function DailyPlanning() {
       id: editingEvent.id,
       updates: {
         title: editingEvent.title.trim(),
+        startDate: editingEvent.startDate,
+        endDate: editingEvent.endDate,
         startTime: startTime,
         endTime: endTime,
         priority: editingEvent.priority,
