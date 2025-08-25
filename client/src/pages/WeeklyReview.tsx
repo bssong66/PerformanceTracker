@@ -21,7 +21,7 @@ import { ko } from "date-fns/locale";
 // Function to get appropriate icon for habit based on name
 const getHabitIcon = (habitName: string) => {
   const name = habitName.toLowerCase();
-  
+
   if (name.includes('운동') || name.includes('헬스') || name.includes('체육')) {
     return <Dumbbell className="h-4 w-4 text-blue-500" />;
   } else if (name.includes('독서') || name.includes('책') || name.includes('공부')) {
@@ -43,7 +43,7 @@ const getHabitIcon = (habitName: string) => {
 
 export default function WeeklyReview() {
   const { toast } = useToast();
-  
+
   // Get current week start date (Monday)
   const today = new Date();
   const weekStart = startOfWeek(today, { weekStartsOn: 1 });
@@ -57,11 +57,11 @@ export default function WeeklyReview() {
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [showImageViewer, setShowImageViewer] = useState(false);
-  
+
   // 파일 업로드 관련 상태
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [fileUrls, setFileUrls] = useState<string[]>([]);
-  
+
   // 완료된 할일 숨기기 상태
   const [hideCompletedTasks, setHideCompletedTasks] = useState(false);
 
@@ -110,7 +110,7 @@ export default function WeeklyReview() {
   // Calculate week tasks - only include tasks relevant to current week
   const weekTasks = useMemo(() => {
     if (!tasks) return [];
-    
+
     const startOfWeek = new Date(weekStartDate);
     const endOfWeek = new Date(startOfWeek);
     endOfWeek.setDate(startOfWeek.getDate() + 6);
@@ -126,17 +126,17 @@ export default function WeeklyReview() {
       if (task.scheduled_date) {
         const taskDate = new Date(task.scheduled_date);
         const isInThisWeek = taskDate >= startOfWeek && taskDate <= endOfWeek;
-        
+
         // 이번 주에 계획된 할일만 포함 (이전 주에 완료된 할일 제외)
         if (isInThisWeek) {
           return true;
         }
-        
+
         // 이전 주에 계획되었지만 완료되지 않아 지연된 할일
         if (taskDate < startOfWeek && !task.completed) {
           return true;
         }
-        
+
         return false;
       }
 
@@ -144,17 +144,17 @@ export default function WeeklyReview() {
       if (task.end_date) {
         const taskDate = new Date(task.end_date);
         const isInThisWeek = taskDate >= startOfWeek && taskDate <= endOfWeek;
-        
+
         // 이번 주에 계획된 할일만 포함
         if (isInThisWeek) {
           return true;
         }
-        
+
         // 이전 주에 계획되었지만 완료되지 않아 지연된 할일
         if (taskDate < startOfWeek && !task.completed) {
           return true;
         }
-        
+
         return false;
       }
 
@@ -227,7 +227,7 @@ export default function WeeklyReview() {
         // Parse time and calculate duration
         const [startHour, startMinute] = block.startTime.split(':').map(Number);
         const [endHour, endMinute] = block.endTime.split(':').map(Number);
-        
+
         const startTotalMinutes = startHour * 60 + startMinute;
         const endTotalMinutes = endHour * 60 + endMinute;
         const durationMinutes = endTotalMinutes - startTotalMinutes;
@@ -260,7 +260,7 @@ export default function WeeklyReview() {
   useEffect(() => {
     if (foundation && ((weekTasks as any[]).length > 0 || weekEvents.length > 0 || weekTimeBlocks.length > 0)) {
       const coreValues = (foundation as any).coreValues ? (foundation as any).coreValues.split(',').map((v: string) => v.trim()) : [];
-      
+
       if (coreValues.length > 0) {
         const alignmentScores = coreValues.map((value: string) => {
           let totalActivities = 0;
@@ -282,7 +282,7 @@ export default function WeeklyReview() {
             // Simple keyword matching for value alignment
             const blockText = `${block.title || ''} ${block.activity || ''}`.toLowerCase();
             const valueKeywords = getValueKeywords(value);
-            
+
             if (valueKeywords.some(keyword => blockText.includes(keyword.toLowerCase()))) {
               alignedActivities++;
             }
@@ -293,7 +293,7 @@ export default function WeeklyReview() {
             totalActivities++;
             const eventText = `${event.title || ''} ${event.description || ''}`.toLowerCase();
             const valueKeywords = getValueKeywords(value);
-            
+
             if (valueKeywords.some(keyword => eventText.includes(keyword.toLowerCase()))) {
               alignedActivities++;
             }
@@ -324,7 +324,7 @@ export default function WeeklyReview() {
       '도전': ['도전', '새로운', '시도', '모험', '변화', '혁신', '개선'],
       '안정': ['계획', '정리', '관리', '체계', '안정', '질서', '루틴']
     };
-    
+
     return keywordMap[value] || [value];
   };
 
@@ -333,7 +333,7 @@ export default function WeeklyReview() {
     const files = Array.from(e.target.files || []);
     if (files.length > 0) {
       setSelectedImages(prev => [...prev, ...files]);
-      
+
       // Create previews for new images
       files.forEach(file => {
         const reader = new FileReader();
@@ -360,7 +360,7 @@ export default function WeeklyReview() {
     const files = Array.from(e.target.files || []);
     if (files.length > 0) {
       setSelectedFiles(prev => [...prev, ...files]);
-      
+
       // 파일 URL 생성 (다운로드용)
       files.forEach(file => {
         const fileUrl = URL.createObjectURL(file);
@@ -388,7 +388,7 @@ export default function WeeklyReview() {
   const handleReflectionChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const textarea = e.target;
     setReflection(textarea.value);
-    
+
     // Reset height to auto to get the correct scrollHeight
     textarea.style.height = 'auto';
     // Set height to scrollHeight
@@ -403,10 +403,10 @@ export default function WeeklyReview() {
     const start = textarea.selectionStart;
     const end = textarea.selectionEnd;
     const text = reflection;
-    
+
     const newText = text.substring(0, start) + textToInsert + text.substring(end);
     setReflection(newText);
-    
+
     // 커서 위치 조정
     setTimeout(() => {
       textarea.focus();
@@ -443,18 +443,18 @@ export default function WeeklyReview() {
       const textarea = e.target as HTMLTextAreaElement;
       const start = textarea.selectionStart;
       const text = reflection;
-      
+
       // 현재 줄의 시작점 찾기
       const lineStart = text.lastIndexOf('\n', start - 1) + 1;
       const currentLine = text.substring(lineStart, start);
-      
+
       // 번호 목록 패턴 확인 (1. 2. 3. 등)
       const numberedListMatch = currentLine.match(/^(\d+)\.\s/);
       if (numberedListMatch) {
         e.preventDefault();
         const currentNumber = parseInt(numberedListMatch[1]);
         const nextNumber = currentNumber + 1;
-        
+
         // 현재 줄이 비어있으면 목록 종료
         if (currentLine.trim() === `${currentNumber}.`) {
           // 현재 줄의 번호 목록 마커 제거
@@ -476,12 +476,12 @@ export default function WeeklyReview() {
         }
         return;
       }
-      
+
       // 불릿 목록 패턴 확인
       const bulletListMatch = currentLine.match(/^•\s/);
       if (bulletListMatch) {
         e.preventDefault();
-        
+
         // 현재 줄이 비어있으면 목록 종료
         if (currentLine.trim() === '•') {
           // 현재 줄의 불릿 마커 제거
@@ -515,17 +515,17 @@ export default function WeeklyReview() {
         (weeklyReview as any).valueAlignment2 || 0,
         (weeklyReview as any).valueAlignment3 || 0,
       ]);
-      
+
       const savedImageUrls = (weeklyReview as any).imageUrls;
       if (savedImageUrls && savedImageUrls.length > 0) {
         setImagePreviews(savedImageUrls);
       }
-      
+
       const savedFileUrls = (weeklyReview as any).fileUrls;
       const savedFileNames = (weeklyReview as any).fileNames;
       if (savedFileUrls && savedFileNames && savedFileNames.length > 0) {
         setFileUrls(savedFileUrls);
-        
+
         // 저장된 파일을 표시하기 위한 Mock File 객체 생성
         const mockFiles = savedFileNames.map((name: string) => {
           const file = new File([], name, { type: 'application/octet-stream' });
@@ -629,7 +629,7 @@ export default function WeeklyReview() {
                 {/* Task Completion Summary */}
                 <div>
                   <h4 className="text-sm font-semibold text-gray-900 mb-4">완료된 할일</h4>
-                  
+
                   <div className="space-y-4">
                     <div>
                       <div className="flex items-center justify-between mb-2">
@@ -707,7 +707,7 @@ export default function WeeklyReview() {
                       )}
                     </Button>
                   </div>
-                  
+
                   <div className="h-[35rem] overflow-y-auto space-y-4 pr-2">
                     {(() => {
                       const startOfWeek = new Date(weekStartDate);
@@ -719,7 +719,7 @@ export default function WeeklyReview() {
                       const filteredTasks = hideCompletedTasks 
                         ? (weekTasks as any[]).filter((task: any) => !task.completed)
                         : (weekTasks as any[]);
-                      
+
                       // 완료 상태별 정렬 (미완료 > 완료), 그 다음 우선순위별 정렬
                       const sortedTasks = filteredTasks.sort((a: any, b: any) => {
                         // Completed tasks go to bottom within each category
@@ -732,12 +732,12 @@ export default function WeeklyReview() {
                         const bPriority = priorityOrder[b.priority as keyof typeof priorityOrder] || 4;
                         return aPriority - bPriority;
                       });
-                      
+
                       // 카테고리별로 그룹화
                       const carriedOverTasks: any[] = [];
                       const thisWeekTasks: any[] = [];
                       const unscheduledTasks: any[] = [];
-                      
+
                       sortedTasks.forEach((task: any) => {
                         // 1. 이월된 할일 확인
                         if (task.is_carried_over || task.isCarriedOver) {
@@ -783,10 +783,10 @@ export default function WeeklyReview() {
                         // 지연 여부 판단
                         const today = new Date();
                         today.setHours(0, 0, 0, 0);
-                        
+
                         let isDelayed = false;
                         let categoryBgColor = 'bg-gray-50 border-gray-200';
-                        
+
                         // 이월된 할일인지 확인
                         if (task.is_carried_over || task.isCarriedOver || 
                             ((task.scheduled_date || task.scheduledDate) && new Date(task.scheduled_date || task.scheduledDate) < startOfWeek && !task.completed) || 
@@ -801,7 +801,7 @@ export default function WeeklyReview() {
                             categoryBgColor = 'bg-blue-50 border-blue-200';
                           }
                         }
-                        
+
                         return (
                           <div key={task.id} className={`flex items-center justify-between p-1.5 rounded-lg border ml-2.5 ${
                             task.completed 
@@ -841,7 +841,7 @@ export default function WeeklyReview() {
 
                       const renderTaskGroup = (title: string, tasks: any[], bgColor: string) => {
                         if (tasks.length === 0) return null;
-                        
+
                         return (
                           <div key={title} className="space-y-2">
                             <div className={`px-2 py-1 rounded text-xs font-medium ${bgColor}`}>
@@ -859,7 +859,7 @@ export default function WeeklyReview() {
                           {renderTaskGroup("이월된 할일", carriedOverTasks, "bg-red-100 text-red-700")}
                           {renderTaskGroup("금주에 계획된 할일", thisWeekTasks, "bg-blue-100 text-blue-700")}
                           {renderTaskGroup("일정이 지정되지 않은 할일", unscheduledTasks, "bg-gray-100 text-gray-700")}
-                          
+
                           {filteredTasks.length === 0 && (
                             <div className="text-center p-4 bg-gray-50 rounded-lg">
                               <div className="text-sm text-gray-600 font-medium">
@@ -874,7 +874,7 @@ export default function WeeklyReview() {
                       );
                     })()}
                   </div>
-                  
+
                   {(weekTasks as any[]).filter((task: any) => !hideCompletedTasks || !task.completed).length > 0 && (
                     <div className="mt-3 text-center">
                       <div className="text-xs text-gray-500 bg-gray-50 px-2 py-1 rounded">
@@ -901,12 +901,12 @@ export default function WeeklyReview() {
                       <Zap className="h-4 w-4 text-amber-500" />
                       <h4 className="text-sm font-semibold text-gray-900">습관 실행률</h4>
                     </div>
-                    
+
                     {/* Overall Habit Completion Rate */}
                     {(habits as any[]).length > 0 && (() => {
                       let totalCompletionRate = 0;
                       let habitCount = 0;
-                      
+
                       (habits as any[]).forEach((habit: any) => {
                         const habitLogsForHabit = (weekHabitLogs as any[]).filter((log: any) => log.habitId === habit.id && log.completed);
                         const completedDays = habitLogsForHabit.length;
@@ -914,9 +914,9 @@ export default function WeeklyReview() {
                         totalCompletionRate += completionRate;
                         habitCount++;
                       });
-                      
+
                       const overallRate = habitCount > 0 ? Math.round(totalCompletionRate / habitCount) : 0;
-                      
+
                       return (
                         <div className="flex items-center space-x-2">
                           <span className="text-xs text-gray-600 font-medium">{overallRate}%</span>
@@ -947,7 +947,7 @@ export default function WeeklyReview() {
                               const habitLogsForHabit = (weekHabitLogs as any[]).filter((log: any) => log.habitId === habit.id && log.completed);
                               const completedDays = habitLogsForHabit.length;
                               const completionRate = Math.round((completedDays / 7) * 100);
-                              
+
                               return (
                                 <>
                                   <div className="text-sm font-bold text-emerald-600">
@@ -1021,72 +1021,72 @@ export default function WeeklyReview() {
                   <Label htmlFor="reflection" className="text-sm font-semibold text-gray-900 mb-3 block">
                     주간 성찰
                   </Label>
-                  
+
                   {/* 텍스트 포맷팅 도구모음 */}
-                  <div className="flex flex-nowrap gap-1 mb-3 p-2 bg-gray-50 rounded-lg border overflow-x-auto">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => insertHeading(1)}
-                      className="h-8 px-2 text-xs"
-                      title="제목 추가"
-                    >
-                      <Type className="h-3 w-3 mr-1" />
-                      제목
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => insertHeading(2)}
-                      className="h-8 px-2 text-xs"
-                      title="부제목 추가"
-                    >
-                      <Hash className="h-3 w-3 mr-1" />
-                      부제목
-                    </Button>
-                    <div className="w-px h-6 bg-gray-300 mx-1"></div>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={insertNumberedList}
-                      className="h-8 px-2 text-xs"
-                      title="번호 목록 추가"
-                    >
-                      1. 번호
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={insertBulletList}
-                      className="h-8 px-2 text-xs"
-                      title="목록 추가"
-                    >
-                      <List className="h-3 w-3 mr-1" />
-                      목록
-                    </Button>
-                    <div className="w-px h-6 bg-gray-300 mx-1"></div>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={insertCurrentTime}
-                      className="h-8 px-2 text-xs"
-                      title="현재 시간 추가"
-                    >
-                      <Clock className="h-3 w-3 mr-1" />
-                      시간
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={insertDivider}
-                      className="h-8 px-2 text-xs"
-                      title="구분선 추가"
-                    >
-                      <Minus className="h-3 w-3 mr-1" />
-                      구분선
-                    </Button>
+                  <div className="flex gap-1 mb-3 p-2 bg-gray-50 rounded-lg border transform scale-[0.8] origin-top-left max-w-full overflow-x-auto">
+                    <div className="flex gap-1 min-w-0">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => insertHeading(1)}
+                        className="h-8 px-2 text-xs flex-shrink-0"
+                        title="제목 추가"
+                      >
+                        <Type className="h-3 w-3 mr-1" />
+                        제목
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => insertHeading(2)}
+                        className="h-8 px-2 text-xs flex-shrink-0"
+                        title="부제목 추가"
+                      >
+                        <Hash className="h-3 w-3 mr-1" />
+                        부제목
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={insertNumberedList}
+                        className="h-8 px-2 text-xs flex-shrink-0"
+                        title="번호 목록 추가"
+                      >
+                        1. 번호
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={insertBulletList}
+                        className="h-8 px-2 text-xs flex-shrink-0"
+                        title="목록 추가"
+                      >
+                        <List className="h-3 w-3 mr-1" />
+                        목록
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={insertCurrentTime}
+                        className="h-8 px-2 text-xs flex-shrink-0"
+                        title="현재 시간 추가"
+                      >
+                        <Clock className="h-3 w-3 mr-1" />
+                        시간
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={insertDivider}
+                        className="h-8 px-2 text-xs flex-shrink-0"
+                        title="구분선 추가"
+                      >
+                        <Minus className="h-3 w-3 mr-1" />
+                        구분선
+                      </Button>
+                    </div>
                   </div>
-                  
+
                   <Textarea
                     id="reflection"
                     placeholder="이번 주를 돌아보며 배운 점, 개선할 점을 기록하세요..."
@@ -1096,7 +1096,7 @@ export default function WeeklyReview() {
                     className="resize-none min-h-[120px]"
                     style={{ height: 'auto' }}
                   />
-                  
+
                   {/* File Upload */}
                   <div className="mt-4">
                     <div className="mb-2 flex gap-2">
@@ -1118,7 +1118,7 @@ export default function WeeklyReview() {
                         <Plus className="h-4 w-4 mr-1" />
                         이미지 추가
                       </Button>
-                      
+
                       {/* 파일 업로드 */}
                       <input
                         type="file"
@@ -1137,7 +1137,7 @@ export default function WeeklyReview() {
                         파일 추가
                       </Button>
                     </div>
-                    
+
                     {/* Image Previews */}
                     {imagePreviews.length > 0 && (
                       <div className="space-y-2 mb-4">
@@ -1165,7 +1165,7 @@ export default function WeeklyReview() {
                         </div>
                       </div>
                     )}
-                    
+
                     {/* File List */}
                     {selectedFiles.length > 0 && (
                       <div className="space-y-2">
@@ -1216,7 +1216,7 @@ export default function WeeklyReview() {
                       </div>
                     )}
                   </div>
-                  
+
                   {/* Save Button */}
                   <div className="mt-4">
                     <Button
@@ -1246,7 +1246,7 @@ export default function WeeklyReview() {
             >
               <X className="h-5 w-5" />
             </button>
-            
+
             {/* Navigation Buttons */}
             {imagePreviews.length > 1 && (
               <>
@@ -1264,14 +1264,14 @@ export default function WeeklyReview() {
                 </button>
               </>
             )}
-            
+
             {/* Current Image */}
             <img
               src={imagePreviews[currentImageIndex]}
               alt={`Image ${currentImageIndex + 1}`}
               className="max-w-full max-h-full object-contain"
             />
-            
+
             {/* Image Counter */}
             {imagePreviews.length > 1 && (
               <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 text-white bg-black bg-opacity-50 px-3 py-1 rounded">
