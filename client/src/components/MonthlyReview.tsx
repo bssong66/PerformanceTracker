@@ -9,7 +9,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { ProgressBar } from "@/components/ProgressBar";
 import { PriorityBadge } from "@/components/PriorityBadge";
-import { Save, TrendingUp, BarChart3, Target, Plus, X, ChevronLeft, ChevronRight, Siren, Calendar as CalendarIcon, Activity, Heart, Dumbbell, Coffee, Book, Moon, Sunrise, Timer, Zap, Type, Hash, List, Clock, Minus, FileText, Download } from "lucide-react";
+import { Save, TrendingUp, BarChart3, Target, Plus, X, ChevronLeft, ChevronRight, Siren, Calendar as CalendarIcon, Activity, Heart, Dumbbell, Coffee, Book, Moon, Sunrise, Timer, Zap, Type, Hash, List, Clock, Minus, FileText, Download, Eye, EyeOff } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { api, saveMonthlyReview } from "@/lib/api";
 import { queryClient } from "@/lib/queryClient";
@@ -58,6 +58,9 @@ export default function MonthlyReview() {
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [showImageViewer, setShowImageViewer] = useState(false);
+  
+  // 완료된 할일 표시 여부 상태
+  const [showCompletedTasks, setShowCompletedTasks] = useState(true);
   
   // 파일 업로드 관련 상태
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
@@ -585,15 +588,36 @@ export default function MonthlyReview() {
                 <div className="flex-1 flex flex-col">
                   <div className="flex items-center justify-between mb-2">
                     <h4 className="text-sm font-semibold text-gray-900">이번달 할일</h4>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setShowCompletedTasks(!showCompletedTasks)}
+                      className="h-7 px-2 text-xs"
+                      title={showCompletedTasks ? "완료된 일정 감추기" : "완료된 일정 보기"}
+                    >
+                      {showCompletedTasks ? (
+                        <>
+                          <EyeOff className="h-3 w-3 mr-1" />
+                          완료된 일정 감추기
+                        </>
+                      ) : (
+                        <>
+                          <Eye className="h-3 w-3 mr-1" />
+                          완료된 일정 보기
+                        </>
+                      )}
+                    </Button>
                   </div>
                   
                   <div className="h-[35rem] overflow-y-auto space-y-3 pr-2">
                     {(() => {
-                      // Include ALL tasks (both completed and incomplete)
-                      const allTasks = (monthTasks as any[]);
+                      // Filter tasks based on completion status toggle
+                      const filteredTasks = showCompletedTasks 
+                        ? (monthTasks as any[])
+                        : (monthTasks as any[]).filter((task: any) => !task.completed);
                       
                       // Sort by completion status first, then by priority
-                      const sortedTasks = allTasks.sort((a: any, b: any) => {
+                      const sortedTasks = filteredTasks.sort((a: any, b: any) => {
                         // Completed tasks go to bottom within each category
                         if (a.completed !== b.completed) {
                           return a.completed ? 1 : -1;
@@ -769,13 +793,13 @@ export default function MonthlyReview() {
                           {renderTaskGroup("이번달에 계획된 할일", thisMonthTasks, "bg-blue-100 text-blue-700")}
                           {renderTaskGroup("일정이 지정되지 않은 할일", unscheduledTasks, "bg-gray-100 text-gray-700")}
                           
-                          {allTasks.length === 0 && (
+                          {filteredTasks.length === 0 && (
                             <div className="text-center p-4 bg-gray-50 rounded-lg">
                               <div className="text-sm text-gray-600 font-medium">
-                                등록된 할일이 없습니다.
+                                {showCompletedTasks ? "등록된 할일이 없습니다." : "미완료된 할일이 없습니다."}
                               </div>
                               <div className="text-xs text-gray-500 mt-1">
-                                할일을 추가해보세요!
+                                {showCompletedTasks ? "할일을 추가해보세요!" : "모든 할일이 완료되었습니다!"}
                               </div>
                             </div>
                           )}
