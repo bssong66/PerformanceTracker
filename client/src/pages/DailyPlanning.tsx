@@ -1374,113 +1374,116 @@ export default function DailyPlanning() {
                       </Button>
                     </div>
 
-                    {/* All Day Event Checkbox */}
-                    <div className="flex items-center space-x-2 mb-3">
-                      <Checkbox
-                        id="all-day-event"
-                        checked={isAllDay}
-                        onCheckedChange={(checked) => setIsAllDay(checked as boolean)}
-                        className="h-4 w-4"
-                      />
-                      <Label htmlFor="all-day-event" className="text-sm text-gray-700 cursor-pointer">
-                        종일 일정
-                      </Label>
-                    </div>
-
-                    {/* Time Selection */}
-                    {!isAllDay && (
-                    <div className="grid grid-cols-2 gap-3">
-                      {/* Start Time */}
-                      <div className="space-y-1">
-                        <Label className="text-xs text-gray-600">시작 시간</Label>
-                        <div className="flex space-x-1">
-                          <Select value={startHour} onValueChange={setStartHour}>
-                            <SelectTrigger className="w-16 h-8 text-xs">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {Array.from({length: 12}, (_, i) => i + 1).map(hour => (
-                                <SelectItem key={hour} value={hour.toString()}>{hour}</SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          <Select value={startMinute} onValueChange={setStartMinute}>
-                            <SelectTrigger className="w-16 h-8 text-xs">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="00">00</SelectItem>
-                              <SelectItem value="05">05</SelectItem>
-                              <SelectItem value="10">10</SelectItem>
-                              <SelectItem value="15">15</SelectItem>
-                              <SelectItem value="20">20</SelectItem>
-                              <SelectItem value="25">25</SelectItem>
-                              <SelectItem value="30">30</SelectItem>
-                              <SelectItem value="35">35</SelectItem>
-                              <SelectItem value="40">40</SelectItem>
-                              <SelectItem value="45">45</SelectItem>
-                              <SelectItem value="50">50</SelectItem>
-                              <SelectItem value="55">55</SelectItem>
-                            </SelectContent>
-                          </Select>
-                          <Select value={startPeriod} onValueChange={(value: 'AM' | 'PM') => setStartPeriod(value)}>
-                            <SelectTrigger className="w-16 h-8 text-xs">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="AM">AM</SelectItem>
-                              <SelectItem value="PM">PM</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
+                    {/* All Day Event Checkbox and Time Selection */}
+                    <div className="flex items-start space-x-4 mb-3">
+                      {/* All Day Event Checkbox */}
+                      <div className="flex items-center space-x-2 mt-1">
+                        <Checkbox
+                          id="all-day-event"
+                          checked={isAllDay}
+                          onCheckedChange={(checked) => setIsAllDay(checked as boolean)}
+                          className="h-4 w-4"
+                        />
+                        <Label htmlFor="all-day-event" className="text-sm text-gray-700 cursor-pointer">
+                          종일 일정
+                        </Label>
                       </div>
 
-                      {/* End Time */}
-                      <div className="space-y-1">
-                        <Label className="text-xs text-gray-600">종료 시간</Label>
-                        <div className="flex space-x-1">
-                          <Select value={endHour} onValueChange={setEndHour}>
-                            <SelectTrigger className="w-16 h-8 text-xs">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {Array.from({length: 12}, (_, i) => i + 1).map(hour => (
-                                <SelectItem key={hour} value={hour.toString()}>{hour}</SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          <Select value={endMinute} onValueChange={setEndMinute}>
-                            <SelectTrigger className="w-16 h-8 text-xs">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="00">00</SelectItem>
-                              <SelectItem value="05">05</SelectItem>
-                              <SelectItem value="10">10</SelectItem>
-                              <SelectItem value="15">15</SelectItem>
-                              <SelectItem value="20">20</SelectItem>
-                              <SelectItem value="25">25</SelectItem>
-                              <SelectItem value="30">30</SelectItem>
-                              <SelectItem value="35">35</SelectItem>
-                              <SelectItem value="40">40</SelectItem>
-                              <SelectItem value="45">45</SelectItem>
-                              <SelectItem value="50">50</SelectItem>
-                              <SelectItem value="55">55</SelectItem>
-                            </SelectContent>
-                          </Select>
-                          <Select value={endPeriod} onValueChange={(value: 'AM' | 'PM') => setEndPeriod(value)}>
-                            <SelectTrigger className="w-16 h-8 text-xs">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="AM">AM</SelectItem>
-                              <SelectItem value="PM">PM</SelectItem>
-                            </SelectContent>
-                          </Select>
+                      {/* Time Selection */}
+                      {!isAllDay && (
+                        <div className="flex-1 grid grid-cols-2 gap-3">
+                          {/* Start Time */}
+                          <div className="space-y-1">
+                            <Label className="text-xs text-gray-600">시작 시간</Label>
+                            <div className="flex space-x-1">
+                              <Select value={startHour} onValueChange={setStartHour}>
+                                <SelectTrigger className="w-16 h-8 text-xs">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {Array.from({length: 12}, (_, i) => i + 1).map(hour => (
+                                    <SelectItem key={hour} value={hour.toString()}>{hour}</SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                              <Select value={startMinute} onValueChange={setStartMinute}>
+                                <SelectTrigger className="w-16 h-8 text-xs">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="00">00</SelectItem>
+                                  <SelectItem value="05">05</SelectItem>
+                                  <SelectItem value="10">10</SelectItem>
+                                  <SelectItem value="15">15</SelectItem>
+                                  <SelectItem value="20">20</SelectItem>
+                                  <SelectItem value="25">25</SelectItem>
+                                  <SelectItem value="30">30</SelectItem>
+                                  <SelectItem value="35">35</SelectItem>
+                                  <SelectItem value="40">40</SelectItem>
+                                  <SelectItem value="45">45</SelectItem>
+                                  <SelectItem value="50">50</SelectItem>
+                                  <SelectItem value="55">55</SelectItem>
+                                </SelectContent>
+                              </Select>
+                              <Select value={startPeriod} onValueChange={(value: 'AM' | 'PM') => setStartPeriod(value)}>
+                                <SelectTrigger className="w-16 h-8 text-xs">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="AM">AM</SelectItem>
+                                  <SelectItem value="PM">PM</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                          </div>
+
+                          {/* End Time */}
+                          <div className="space-y-1">
+                            <Label className="text-xs text-gray-600">종료 시간</Label>
+                            <div className="flex space-x-1">
+                              <Select value={endHour} onValueChange={setEndHour}>
+                                <SelectTrigger className="w-16 h-8 text-xs">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {Array.from({length: 12}, (_, i) => i + 1).map(hour => (
+                                    <SelectItem key={hour} value={hour.toString()}>{hour}</SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                              <Select value={endMinute} onValueChange={setEndMinute}>
+                                <SelectTrigger className="w-16 h-8 text-xs">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="00">00</SelectItem>
+                                  <SelectItem value="05">05</SelectItem>
+                                  <SelectItem value="10">10</SelectItem>
+                                  <SelectItem value="15">15</SelectItem>
+                                  <SelectItem value="20">20</SelectItem>
+                                  <SelectItem value="25">25</SelectItem>
+                                  <SelectItem value="30">30</SelectItem>
+                                  <SelectItem value="35">35</SelectItem>
+                                  <SelectItem value="40">40</SelectItem>
+                                  <SelectItem value="45">45</SelectItem>
+                                  <SelectItem value="50">50</SelectItem>
+                                  <SelectItem value="55">55</SelectItem>
+                                </SelectContent>
+                              </Select>
+                              <Select value={endPeriod} onValueChange={(value: 'AM' | 'PM') => setEndPeriod(value)}>
+                                <SelectTrigger className="w-16 h-8 text-xs">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="AM">AM</SelectItem>
+                                  <SelectItem value="PM">PM</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                          </div>
                         </div>
-                      </div>
+                      )}
                     </div>
-                    )}
 
                     {/* Event Value Selection */}
                     <div className="flex space-x-2">

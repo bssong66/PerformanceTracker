@@ -256,69 +256,8 @@ export default function WeeklyReview() {
     }
   }, [weekTimeBlocks]);
 
-  // Calculate value alignment based on tasks, events, and time blocks
-  useEffect(() => {
-    if (foundation && ((weekTasks as any[]).length > 0 || weekEvents.length > 0 || weekTimeBlocks.length > 0)) {
-      // Get core values from foundation (using the correct database structure)
-      const coreValues = [
-        (foundation as any)?.coreValue1,
-        (foundation as any)?.coreValue2,
-        (foundation as any)?.coreValue3
-      ].filter(Boolean);
-
-      if (coreValues.length > 0) {
-        const alignmentScores = coreValues.map((value: string) => {
-          let totalActivities = 0;
-          let alignedActivities = 0;
-
-          // Check tasks
-          (weekTasks as any[]).forEach((task: any) => {
-            if (task.coreValue === value) {
-              totalActivities++;
-              alignedActivities++;
-            } else if (task.coreValue && task.coreValue !== 'none') {
-              totalActivities++;
-            }
-          });
-
-          // Check time blocks
-          weekTimeBlocks.forEach((block: any) => {
-            totalActivities++;
-            // Simple keyword matching for value alignment
-            const blockText = `${block.title || ''} ${block.activity || ''}`.toLowerCase();
-            const valueKeywords = getValueKeywords(value);
-
-            if (valueKeywords.some(keyword => blockText.includes(keyword.toLowerCase()))) {
-              alignedActivities++;
-            }
-          });
-
-          // Check events
-          weekEvents.forEach((event: any) => {
-            totalActivities++;
-            const eventText = `${event.title || ''} ${event.description || ''}`.toLowerCase();
-            const valueKeywords = getValueKeywords(value);
-
-            if (valueKeywords.some(keyword => eventText.includes(keyword.toLowerCase()))) {
-              alignedActivities++;
-            }
-          });
-
-          // Calculate percentage with minimum baseline
-          const percentage = totalActivities > 0 
-            ? Math.max(30, Math.min(100, Math.round((alignedActivities / totalActivities) * 100)))
-            : 50; // Default if no activities
-
-          return percentage;
-        });
-
-        setValueAlignments(alignmentScores);
-      }
-    }
-  }, [foundation, weekTasks, weekEvents, weekTimeBlocks]);
-
   // Helper function to get keywords for each core value
-  const getValueKeywords = (value: string): string[] => {
+  const getValueKeywords = useCallback((value: string): string[] => {
     const keywordMap: { [key: string]: string[] } = {
       '건강': ['운동', '체력', '건강', '피트니스', '요가', '헬스', '조깅', '산책'],
       '성장': ['학습', '공부', '교육', '독서', '성장', '발전', '스킬', '역량'],
@@ -331,7 +270,73 @@ export default function WeeklyReview() {
     };
 
     return keywordMap[value] || [value];
-  };
+  }, []);
+
+  // Calculate value alignment based on tasks, events, and time blocks using useMemo
+  const calculatedValueAlignments = useMemo(() => {
+    if (!foundation) return [85, 90, 65]; // Default values
+
+    // Get core values from foundation (using the correct database structure)
+    const coreValues = [
+      (foundation as any)?.coreValue1,
+      (foundation as any)?.coreValue2,
+      (foundation as any)?.coreValue3
+    ].filter(Boolean);
+
+    if (coreValues.length === 0) return [85, 90, 65]; // Default values
+
+    const alignmentScores = coreValues.map((value: string) => {
+      let totalActivities = 0;
+      let alignedActivities = 0;
+
+      // Check tasks
+      (weekTasks as any[]).forEach((task: any) => {
+        if (task.coreValue === value) {
+          totalActivities++;
+          alignedActivities++;
+        } else if (task.coreValue && task.coreValue !== 'none') {
+          totalActivities++;
+        }
+      });
+
+      // Check time blocks
+      weekTimeBlocks.forEach((block: any) => {
+        totalActivities++;
+        // Simple keyword matching for value alignment
+        const blockText = `${block.title || ''} ${block.activity || ''}`.toLowerCase();
+        const valueKeywords = getValueKeywords(value);
+
+        if (valueKeywords.some(keyword => blockText.includes(keyword.toLowerCase()))) {
+          alignedActivities++;
+        }
+      });
+
+      // Check events
+      weekEvents.forEach((event: any) => {
+        totalActivities++;
+        const eventText = `${event.title || ''} ${event.description || ''}`.toLowerCase();
+        const valueKeywords = getValueKeywords(value);
+
+        if (valueKeywords.some(keyword => eventText.includes(keyword.toLowerCase()))) {
+          alignedActivities++;
+        }
+      });
+
+      // Calculate percentage with minimum baseline
+      const percentage = totalActivities > 0 
+        ? Math.max(30, Math.min(100, Math.round((alignedActivities / totalActivities) * 100)))
+        : 50; // Default if no activities
+
+      return percentage;
+    });
+
+    return alignmentScores.length > 0 ? alignmentScores : [85, 90, 65];
+  }, [foundation, weekTasks, weekEvents, weekTimeBlocks, getValueKeywords]);
+
+  // Update state when calculated values change
+  useEffect(() => {
+    setValueAlignments(calculatedValueAlignments);
+  }, [calculatedValueAlignments]);
 
   // Image handling functions
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
