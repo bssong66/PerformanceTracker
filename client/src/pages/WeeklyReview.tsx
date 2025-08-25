@@ -619,13 +619,31 @@ export default function WeeklyReview() {
                         return aPriority - bPriority;
                       })
                       .map((task: any, index: number) => {
-                        // 지연 여부 판단
+                        // 지연 여부 판단 - 날짜만 비교하고, 날짜가 설정된 할일만 지연 판단
                         const today = new Date();
-                        const scheduledDate = task.scheduledDate ? new Date(task.scheduledDate) : null;
-                        const originalScheduledDate = task.originalScheduledDate ? new Date(task.originalScheduledDate) : null;
-                        const isDelayed = task.isCarriedOver || 
-                                         (scheduledDate && scheduledDate < today) || 
-                                         (originalScheduledDate && originalScheduledDate < today);
+                        today.setHours(0, 0, 0, 0); // 시간을 00:00:00으로 설정
+                        
+                        let isDelayed = false;
+                        
+                        // 이월된 할일은 지연으로 표시
+                        if (task.isCarriedOver) {
+                          isDelayed = true;
+                        }
+                        
+                        // scheduledDate나 originalScheduledDate가 있고, 오늘 이전이면 지연
+                        if (task.scheduledDate) {
+                          const scheduledDate = new Date(task.scheduledDate);
+                          scheduledDate.setHours(0, 0, 0, 0);
+                          if (scheduledDate < today) {
+                            isDelayed = true;
+                          }
+                        } else if (task.originalScheduledDate) {
+                          const originalScheduledDate = new Date(task.originalScheduledDate);
+                          originalScheduledDate.setHours(0, 0, 0, 0);
+                          if (originalScheduledDate < today) {
+                            isDelayed = true;
+                          }
+                        }
                         
                         return (
                           <div key={task.id} className={`flex items-center justify-between p-1.5 bg-red-50 rounded-lg border border-red-100 ${
