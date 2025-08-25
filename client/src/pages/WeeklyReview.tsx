@@ -118,13 +118,13 @@ export default function WeeklyReview() {
 
     return (tasks as any[]).filter((task: any) => {
       // 1. 이월된 할일 (롤오버된 할일) - 전주 이전에 완료되지 않아 이번 주로 이월된 할일
-      if (task.isCarriedOver) {
+      if (task.is_carried_over) {
         return true;
       }
 
       // 2. 이번 주에 계획된 할일 
-      if (task.scheduledDate) {
-        const taskDate = new Date(task.scheduledDate);
+      if (task.scheduled_date) {
+        const taskDate = new Date(task.scheduled_date);
         const isInThisWeek = taskDate >= startOfWeek && taskDate <= endOfWeek;
         
         // 이번 주에 계획된 할일만 포함 (이전 주에 완료된 할일 제외)
@@ -140,8 +140,26 @@ export default function WeeklyReview() {
         return false;
       }
 
-      // 3. 일정이 없는 할일 (scheduledDate와 endDate가 모두 없는 할일)
-      if (!task.scheduledDate && !task.endDate) {
+      // end_date가 있는 경우 처리
+      if (task.end_date) {
+        const taskDate = new Date(task.end_date);
+        const isInThisWeek = taskDate >= startOfWeek && taskDate <= endOfWeek;
+        
+        // 이번 주에 계획된 할일만 포함
+        if (isInThisWeek) {
+          return true;
+        }
+        
+        // 이전 주에 계획되었지만 완료되지 않아 지연된 할일
+        if (taskDate < startOfWeek && !task.completed) {
+          return true;
+        }
+        
+        return false;
+      }
+
+      // 3. 일정이 없는 할일 (scheduled_date와 end_date가 모두 없는 할일)
+      if (!task.scheduled_date && !task.end_date) {
         return true;
       }
 
