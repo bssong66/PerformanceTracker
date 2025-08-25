@@ -966,9 +966,31 @@ export default function MonthlyReview() {
 
                 {/* Value Alignment Check */}
                 <div>
-                  <Label className="text-sm font-semibold text-gray-900 mb-3 block">
-                    가치 점검
-                  </Label>
+                  <div className="flex items-center justify-between mb-3">
+                    <Label className="text-sm font-semibold text-gray-900">
+                      가치 점검
+                    </Label>
+                    {foundation && coreValues.length > 0 && (() => {
+                      const totalValueAlignment = valueAlignments.reduce((sum, alignment) => sum + (alignment || 0), 0);
+                      const averageAlignment = coreValues.length > 0 ? Math.round(totalValueAlignment / coreValues.length) : 0;
+                      
+                      return (
+                        <div className="flex items-center space-x-2">
+                          <span className="text-xs font-medium text-gray-600">{averageAlignment}%</span>
+                          <div className="w-32 h-2 bg-gray-200 rounded-full overflow-hidden">
+                            <div 
+                              className={`h-full transition-all duration-300 ${
+                                averageAlignment >= 80 ? 'bg-emerald-500' :
+                                averageAlignment >= 60 ? 'bg-yellow-500' :
+                                averageAlignment >= 40 ? 'bg-orange-500' : 'bg-red-500'
+                              }`}
+                              style={{ width: `${averageAlignment}%` }}
+                            />
+                          </div>
+                        </div>
+                      );
+                    })()}
+                  </div>
                   <p className="text-xs text-gray-600 mb-4">
                     일정, 할일, 시간블록 데이터를 분석하여 자동으로 계산된 가치 정렬도입니다
                   </p>
