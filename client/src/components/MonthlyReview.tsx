@@ -965,7 +965,7 @@ export default function MonthlyReview() {
                     월간 성찰
                   </Label>
                   {/* Text Formatting Toolbar */}
-                  <div className="flex flex-wrap items-center gap-2 mb-3 p-2 bg-gray-50 rounded-lg border">
+                  <div className="flex flex-nowrap items-center gap-2 mb-3 p-2 bg-gray-50 rounded-lg border overflow-x-auto">
                     <Button
                       variant="ghost"
                       size="sm"
