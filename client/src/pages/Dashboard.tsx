@@ -146,11 +146,17 @@ export default function Dashboard() {
     },
   };
 
-  // 습관 통계 (주간)
+  // 습관 통계 (주간, 현재 연도 기준)
+  const currentYearHabits = (habits as any[]).filter((h: any) => {
+    if (!h.isActive) return false;
+    if (!h.createdAt) return true;
+    return new Date(h.createdAt).getFullYear() === currentYear;
+  });
+
   const habitStats = {
-    totalHabits: (habits as any[]).filter((h: any) => h.isActive).length,
+    totalHabits: currentYearHabits.length,
     weeklyCompletions: 0,
-    streakData: (habits as any[]).map((habit: any) => ({
+    streakData: currentYearHabits.map((habit: any) => ({
       name: habit.name,
       currentStreak: habit.currentStreak,
       longestStreak: habit.longestStreak,
@@ -162,6 +168,18 @@ export default function Dashboard() {
   if (habitStats.totalHabits > 0) {
     const expectedCompletions = habitStats.totalHabits * 7; // 7일
     const actualCompletions = (weeklyHabitLogs as any[]).filter((log: any) => log.completed).length;
+    
+    // 디버깅용 로그 (개발환경에서만)
+    if (typeof window !== 'undefined' && window.location.hostname === 'localhost') {
+      console.log('습관 완료율 계산:', {
+        totalHabits: habitStats.totalHabits,
+        expectedCompletions,
+        weeklyHabitLogs: weeklyHabitLogs.length,
+        actualCompletions,
+        weeklyHabitLogsData: weeklyHabitLogs
+      });
+    }
+    
     habitStats.weeklyCompletions = expectedCompletions > 0 
       ? Math.round((actualCompletions / expectedCompletions) * 100) 
       : 0;
