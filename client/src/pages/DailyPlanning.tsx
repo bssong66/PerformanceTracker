@@ -1446,7 +1446,7 @@ export default function DailyPlanning() {
                       {!isAllDay && (
                         <div className="flex-1 grid grid-cols-2 gap-3">
                           {/* Start Time */}
-                          <div className="space-y-1">
+                          <div className="space-y-1 -mr-1">
                             <Label className="text-xs text-gray-600">시작 시간</Label>
                             <div className="flex space-x-1">
                               <Select value={startHour} onValueChange={setStartHour}>
