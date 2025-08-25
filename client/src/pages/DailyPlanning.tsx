@@ -814,6 +814,8 @@ export default function DailyPlanning() {
         editPriority: taskToEdit.priority,
         editCoreValue: taskToEdit.coreValue || 'none',
         editAnnualGoal: taskToEdit.annualGoal || 'none',
+        startDate: taskToEdit.startDate || null,
+        endDate: taskToEdit.endDate || null,
       });
       setShowTaskEditDialog(true);
     }
@@ -835,6 +837,8 @@ export default function DailyPlanning() {
         priority: editingTask.editPriority,
         coreValue: editingTask.editCoreValue,
         annualGoal: editingTask.editAnnualGoal,
+        startDate: editingTask.startDate,
+        endDate: editingTask.endDate,
       }
     });
 
@@ -3026,6 +3030,70 @@ export default function DailyPlanning() {
                       <SelectItem value="C">낮음</SelectItem>
                     </SelectContent>
                   </Select>
+                </div>
+
+                {/* Date Selection */}
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label className="text-sm font-medium">시작일</Label>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          className={`w-full justify-start text-left font-normal ${
+                            !editingTask.startDate && "text-muted-foreground"
+                          }`}
+                        >
+                          <Calendar className="mr-2 h-4 w-4" />
+                          {editingTask.startDate 
+                            ? format(new Date(editingTask.startDate), 'yyyy-MM-dd')
+                            : "시작일을 선택하세요"
+                          }
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0">
+                        <CalendarComponent
+                          mode="single"
+                          selected={editingTask.startDate ? new Date(editingTask.startDate) : undefined}
+                          onSelect={(date) => setEditingTask(prev => ({ 
+                            ...prev, 
+                            startDate: date ? format(date, 'yyyy-MM-dd') : null 
+                          }))}
+                          initialFocus
+                        />
+                      </PopoverContent>
+                    </Popover>
+                  </div>
+                  <div>
+                    <Label className="text-sm font-medium">종료일</Label>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          className={`w-full justify-start text-left font-normal ${
+                            !editingTask.endDate && "text-muted-foreground"
+                          }`}
+                        >
+                          <Calendar className="mr-2 h-4 w-4" />
+                          {editingTask.endDate 
+                            ? format(new Date(editingTask.endDate), 'yyyy-MM-dd')
+                            : "종료일을 선택하세요"
+                          }
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0">
+                        <CalendarComponent
+                          mode="single"
+                          selected={editingTask.endDate ? new Date(editingTask.endDate) : undefined}
+                          onSelect={(date) => setEditingTask(prev => ({ 
+                            ...prev, 
+                            endDate: date ? format(date, 'yyyy-MM-dd') : null 
+                          }))}
+                          initialFocus
+                        />
+                      </PopoverContent>
+                    </Popover>
+                  </div>
                 </div>
 
                 {/* Core Value and Annual Goal */}
