@@ -628,7 +628,35 @@ export default function WeeklyReview() {
               <CardContent className="space-y-6 pt-6 pb-8 flex flex-col">
                 {/* Task Completion Summary */}
                 <div>
-                  <h4 className="text-sm font-semibold text-gray-900 mb-4">완료된 할일</h4>
+                  <div className="flex items-center justify-between mb-4">
+                    <h4 className="text-sm font-semibold text-gray-900">완료된 할일</h4>
+                    {(() => {
+                      const totalCompleted = taskStats.aCompleted + taskStats.bCompleted + taskStats.cCompleted;
+                      const totalTasks = taskStats.aTotal + taskStats.bTotal + taskStats.cTotal;
+                      const completionRate = totalTasks > 0 ? Math.round((totalCompleted / totalTasks) * 100) : 0;
+                      
+                      return (
+                        <div className="flex items-center space-x-2">
+                          <span className="text-sm font-semibold text-gray-900">
+                            {totalCompleted}/{totalTasks}
+                          </span>
+                          <div className="flex items-center space-x-1">
+                            <span className="text-xs font-medium text-gray-600">{completionRate}%</span>
+                            <div className="w-16 h-2 bg-gray-200 rounded-full overflow-hidden">
+                              <div 
+                                className={`h-full transition-all duration-300 ${
+                                  completionRate >= 80 ? 'bg-emerald-500' :
+                                  completionRate >= 60 ? 'bg-yellow-500' :
+                                  completionRate >= 40 ? 'bg-orange-500' : 'bg-red-500'
+                                }`}
+                                style={{ width: `${completionRate}%` }}
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })()}
+                  </div>
 
                   <div className="space-y-4">
                     <div>
