@@ -593,22 +593,61 @@ export default function MonthlyReview() {
                         const bPriority = priorityOrder[b.priority as keyof typeof priorityOrder] || 4;
                         return aPriority - bPriority;
                       })
-                      .map((task: any, index: number) => (
-                        <div key={task.id} className="flex items-center justify-between p-1.5 bg-red-50 rounded-lg border border-red-100">
-                          <div className="flex items-center space-x-3 flex-1">
-                            <PriorityBadge priority={task.priority || 'C'} size="sm" />
-                            <div className="flex-1">
-                              <div className="text-sm font-medium text-gray-900">{getTaskDisplayName(task)}</div>
-                              {task.description && (
-                                <div className="text-xs text-gray-500 mt-1">{task.description}</div>
-                              )}
+                      .map((task: any, index: number) => {
+                        // 지연 여부 판단 - 날짜만 비교하고, 날짜가 설정된 할일만 지연 판단
+                        const today = new Date();
+                        today.setHours(0, 0, 0, 0); // 시간을 00:00:00으로 설정
+                        
+                        let isDelayed = false;
+                        
+                        // 이월된 할일은 지연으로 표시
+                        if (task.isCarriedOver) {
+                          isDelayed = true;
+                        }
+                        
+                        // scheduledDate나 originalScheduledDate가 있고, 오늘 이전이면 지연
+                        if (task.scheduledDate) {
+                          const scheduledDate = new Date(task.scheduledDate);
+                          scheduledDate.setHours(0, 0, 0, 0);
+                          if (scheduledDate < today) {
+                            isDelayed = true;
+                          }
+                        } else if (task.originalScheduledDate) {
+                          const originalScheduledDate = new Date(task.originalScheduledDate);
+                          originalScheduledDate.setHours(0, 0, 0, 0);
+                          if (originalScheduledDate < today) {
+                            isDelayed = true;
+                          }
+                        }
+                        
+                        // endDate 기준으로도 지연 판단 추가
+                        if (!isDelayed && task.endDate) {
+                          const endDate = new Date(task.endDate);
+                          endDate.setHours(0, 0, 0, 0);
+                          if (endDate < today) {
+                            isDelayed = true;
+                          }
+                        }
+                        
+                        return (
+                          <div key={task.id} className={`flex items-center justify-between p-1.5 bg-red-50 rounded-lg border border-red-100 ${
+                            isDelayed ? 'animate-pulse' : ''
+                          }`}>
+                            <div className="flex items-center space-x-3 flex-1">
+                              <PriorityBadge priority={task.priority || 'C'} size="sm" />
+                              <div className="flex-1">
+                                <div className="text-sm font-medium text-gray-900">{getTaskDisplayName(task)}</div>
+                                {task.description && (
+                                  <div className="text-xs text-gray-500 mt-1">{task.description}</div>
+                                )}
+                              </div>
+                            </div>
+                            <div className="text-xs text-red-600 font-medium">
+                              {isDelayed ? '지연' : '미완료'}
                             </div>
                           </div>
-                          <div className="text-xs text-red-600 font-medium">
-                            미완료
-                          </div>
-                        </div>
-                      ))}
+                        );
+                      })}
                     
                     {(monthTasks as any[]).filter((task: any) => !task.completed).length === 0 && (
                       <div className="text-center p-4 bg-green-50 rounded-lg">

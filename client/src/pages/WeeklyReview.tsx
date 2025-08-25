@@ -625,16 +625,6 @@ export default function WeeklyReview() {
                         
                         let isDelayed = false;
                         
-                        // 디버깅을 위한 로그
-                        console.log('Task:', task.title, {
-                          scheduledDate: task.scheduledDate,
-                          originalScheduledDate: task.originalScheduledDate,
-                          isCarriedOver: task.isCarriedOver,
-                          startDate: task.startDate,
-                          endDate: task.endDate,
-                          today: today.toISOString().split('T')[0]
-                        });
-                        
                         // 이월된 할일은 지연으로 표시
                         if (task.isCarriedOver) {
                           isDelayed = true;
@@ -646,14 +636,12 @@ export default function WeeklyReview() {
                           scheduledDate.setHours(0, 0, 0, 0);
                           if (scheduledDate < today) {
                             isDelayed = true;
-                            console.log('Task delayed by scheduledDate:', task.title);
                           }
                         } else if (task.originalScheduledDate) {
                           const originalScheduledDate = new Date(task.originalScheduledDate);
                           originalScheduledDate.setHours(0, 0, 0, 0);
                           if (originalScheduledDate < today) {
                             isDelayed = true;
-                            console.log('Task delayed by originalScheduledDate:', task.title);
                           }
                         }
                         
@@ -663,11 +651,8 @@ export default function WeeklyReview() {
                           endDate.setHours(0, 0, 0, 0);
                           if (endDate < today) {
                             isDelayed = true;
-                            console.log('Task delayed by endDate:', task.title);
                           }
                         }
-                        
-                        console.log('Final isDelayed:', isDelayed, 'for task:', task.title);
                         
                         return (
                           <div key={task.id} className={`flex items-center justify-between p-1.5 bg-red-50 rounded-lg border border-red-100 ${
