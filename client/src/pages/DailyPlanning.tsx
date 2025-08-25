@@ -1308,7 +1308,7 @@ export default function DailyPlanning() {
         <div className="mb-6">
           <div className="flex items-center">
             <h1 className="text-2xl font-bold text-gray-900">일일 관리</h1>
-            <div style={{ marginLeft: '30px' }}>
+            <div style={{ marginLeft: '30px' }} className="flex items-center space-x-5">
               <Popover>
                 <PopoverTrigger asChild>
                   <Button variant="outline">
@@ -1334,6 +1334,21 @@ export default function DailyPlanning() {
                   />
                 </PopoverContent>
               </Popover>
+              <Button 
+                variant="ghost" 
+                size="sm"
+                onClick={() => {
+                  const today = new Date();
+                  setSelectedDate(today);
+                  const todayStr = format(today, 'yyyy-MM-dd');
+                  queryClient.invalidateQueries({ queryKey: ['habitLogs', user!.id, todayStr] });
+                  queryClient.invalidateQueries({ queryKey: ['timeBlocks', user!.id, todayStr] });
+                  queryClient.invalidateQueries({ queryKey: ['dailyReflection', user!.id, todayStr] });
+                }}
+                className="text-sm text-gray-600 hover:text-gray-900"
+              >
+                오늘
+              </Button>
             </div>
           </div>
           <p className="text-sm text-gray-600">
