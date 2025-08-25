@@ -717,15 +717,15 @@ export default function WeeklyReview() {
 
                       const filteredTasks = (weekTasks as any[]).filter((task: any) => !hideCompletedTasks || !task.completed);
                       
-                      // 카테고리별로 그룹화 (데이터베이스 필드명 사용: snake_case)
+                      // 카테고리별로 그룹화 (camelCase와 snake_case 모두 지원)
                       const carriedOverTasks = (weekTasks as any[]).filter((task: any) => {
-                        if (task.is_carried_over) return true;
-                        if (task.scheduled_date) {
-                          const taskDate = new Date(task.scheduled_date);
+                        if (task.is_carried_over || task.isCarriedOver) return true;
+                        if (task.scheduled_date || task.scheduledDate) {
+                          const taskDate = new Date(task.scheduled_date || task.scheduledDate);
                           return taskDate < startOfWeek && !task.completed;
                         }
-                        if (task.end_date) {
-                          const taskDate = new Date(task.end_date);
+                        if (task.end_date || task.endDate) {
+                          const taskDate = new Date(task.end_date || task.endDate);
                           return taskDate < startOfWeek && !task.completed;
                         }
                         return false;
@@ -737,13 +737,13 @@ export default function WeeklyReview() {
                       });
 
                       const thisWeekTasks = (weekTasks as any[]).filter((task: any) => {
-                        if (task.is_carried_over) return false;
-                        if (task.scheduled_date) {
-                          const taskDate = new Date(task.scheduled_date);
+                        if (task.is_carried_over || task.isCarriedOver) return false;
+                        if (task.scheduled_date || task.scheduledDate) {
+                          const taskDate = new Date(task.scheduled_date || task.scheduledDate);
                           return taskDate >= startOfWeek && taskDate <= endOfWeek;
                         }
-                        if (task.end_date) {
-                          const taskDate = new Date(task.end_date);
+                        if (task.end_date || task.endDate) {
+                          const taskDate = new Date(task.end_date || task.endDate);
                           return taskDate >= startOfWeek && taskDate <= endOfWeek;
                         }
                         return false;
@@ -755,7 +755,7 @@ export default function WeeklyReview() {
                       });
 
                       const unscheduledTasks = (weekTasks as any[]).filter((task: any) => {
-                        return !task.scheduled_date && !task.end_date && !task.is_carried_over;
+                        return !(task.scheduled_date || task.scheduledDate) && !(task.end_date || task.endDate) && !(task.is_carried_over || task.isCarriedOver);
                       }).sort((a: any, b: any) => {
                         const priorityOrder = { 'A': 1, 'B': 2, 'C': 3 };
                         const aPriority = priorityOrder[a.priority as keyof typeof priorityOrder] || 4;
@@ -777,12 +777,14 @@ export default function WeeklyReview() {
                         let categoryBgColor = 'bg-gray-50 border-gray-200';
                         
                         // 이월된 할일인지 확인
-                        if (task.is_carried_over || (task.scheduled_date && new Date(task.scheduled_date) < startOfWeek && !task.completed) || (task.end_date && new Date(task.end_date) < startOfWeek && !task.completed)) {
+                        if (task.is_carried_over || task.isCarriedOver || 
+                            ((task.scheduled_date || task.scheduledDate) && new Date(task.scheduled_date || task.scheduledDate) < startOfWeek && !task.completed) || 
+                            ((task.end_date || task.endDate) && new Date(task.end_date || task.endDate) < startOfWeek && !task.completed)) {
                           isDelayed = true;
                           if (!task.completed) {
                             categoryBgColor = 'bg-red-50 border-red-200';
                           }
-                        } else if (task.scheduled_date || task.end_date) {
+                        } else if (task.scheduled_date || task.scheduledDate || task.end_date || task.endDate) {
                           // 금주에 계획된 할일
                           if (!task.completed) {
                             categoryBgColor = 'bg-blue-50 border-blue-200';
