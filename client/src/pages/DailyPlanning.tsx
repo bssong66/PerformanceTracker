@@ -36,6 +36,7 @@ export default function DailyPlanning() {
 
   // Quick Event Input states
   const [newEvent, setNewEvent] = useState("");
+  const [isAllDay, setIsAllDay] = useState(false);
   const [startHour, setStartHour] = useState("9");
   const [startMinute, setStartMinute] = useState("00");
   const [startPeriod, setStartPeriod] = useState<'AM' | 'PM'>('AM');
@@ -442,6 +443,7 @@ export default function DailyPlanning() {
       queryClient.invalidateQueries({ queryKey: ['events', user!.id, today] });
       queryClient.invalidateQueries({ queryKey: ['/api/events'] });
       setNewEvent("");
+      setIsAllDay(false);
       setStartHour("9");
       setStartMinute("00");
       setStartPeriod('AM');
@@ -696,12 +698,12 @@ export default function DailyPlanning() {
       title: newEvent.trim(),
       startDate: today,
       endDate: today,
-      startTime: startTime,
-      endTime: endTime,
+      startTime: isAllDay ? null : startTime,
+      endTime: isAllDay ? null : endTime,
       priority: selectedEventPriority,
       coreValue: selectedEventCoreValue === 'none' ? null : selectedEventCoreValue,
       annualGoal: selectedEventAnnualGoal === 'none' ? null : selectedEventAnnualGoal,
-      isAllDay: false,
+      isAllDay: isAllDay,
       color: selectedEventPriority === 'high' ? '#ef4444' : selectedEventPriority === 'low' ? '#64748B' : '#16a34a',
     });
   };
@@ -751,6 +753,7 @@ export default function DailyPlanning() {
       editEndHour: endTime.hour,
       editEndMinute: endTime.minute,
       editEndPeriod: endTime.period,
+      editIsAllDay: event.isAllDay || false,
     });
     setShowEventEditDialog(true);
   };
@@ -776,8 +779,8 @@ export default function DailyPlanning() {
       return `${hour24.toString().padStart(2, '0')}:${minute}`;
     };
 
-    const startTime = convertTo24Hour(editingEvent.editStartHour, editingEvent.editStartMinute, editingEvent.editStartPeriod);
-    const endTime = convertTo24Hour(editingEvent.editEndHour, editingEvent.editEndMinute, editingEvent.editEndPeriod);
+    const startTime = editingEvent.editIsAllDay ? null : convertTo24Hour(editingEvent.editStartHour, editingEvent.editStartMinute, editingEvent.editStartPeriod);
+    const endTime = editingEvent.editIsAllDay ? null : convertTo24Hour(editingEvent.editEndHour, editingEvent.editEndMinute, editingEvent.editEndPeriod);
 
     editEventMutation.mutate({
       id: editingEvent.id,
@@ -788,6 +791,7 @@ export default function DailyPlanning() {
         priority: editingEvent.priority,
         coreValue: editingEvent.coreValue,
         annualGoal: editingEvent.annualGoal,
+        isAllDay: editingEvent.editIsAllDay,
         color: editingEvent.priority === 'high' ? '#ef4444' : editingEvent.priority === 'low' ? '#64748B' : '#16a34a',
       }
     });
@@ -1431,7 +1435,21 @@ export default function DailyPlanning() {
                       </Button>
                     </div>
 
+                    {/* All Day Event Checkbox */}
+                    <div className="flex items-center space-x-2 mb-3">
+                      <Checkbox
+                        id="all-day-event"
+                        checked={isAllDay}
+                        onCheckedChange={(checked) => setIsAllDay(checked as boolean)}
+                        className="h-4 w-4"
+                      />
+                      <Label htmlFor="all-day-event" className="text-sm text-gray-700 cursor-pointer">
+                        종일 일정
+                      </Label>
+                    </div>
+
                     {/* Time Selection */}
+                    {!isAllDay && (
                     <div className="grid grid-cols-2 gap-3">
                       {/* Start Time */}
                       <div className="space-y-1">
@@ -1523,6 +1541,7 @@ export default function DailyPlanning() {
                         </div>
                       </div>
                     </div>
+                    )}
 
                     {/* Event Value Selection */}
                     <div className="flex space-x-2">
@@ -2777,7 +2796,21 @@ export default function DailyPlanning() {
                   />
                 </div>
 
+                {/* All Day Event Checkbox */}
+                <div className="flex items-center space-x-2 mb-3">
+                  <Checkbox
+                    id="edit-all-day-event"
+                    checked={editingEvent.editIsAllDay || false}
+                    onCheckedChange={(checked) => setEditingEvent(prev => ({ ...prev, editIsAllDay: checked as boolean }))}
+                    className="h-4 w-4"
+                  />
+                  <Label htmlFor="edit-all-day-event" className="text-sm text-gray-700 cursor-pointer">
+                    종일 일정
+                  </Label>
+                </div>
+
                 {/* Time Selection */}
+                {!editingEvent.editIsAllDay && (
                 <div className="grid grid-cols-2 gap-3">
                   {/* Start Time */}
                   <div className="space-y-1">
@@ -2871,6 +2904,7 @@ export default function DailyPlanning() {
                     </div>
                   </div>
                 </div>
+                )}
 
                 {/* Priority Selection */}
                 <div>
