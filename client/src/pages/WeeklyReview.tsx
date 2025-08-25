@@ -718,7 +718,7 @@ export default function WeeklyReview() {
                       const filteredTasks = (weekTasks as any[]).filter((task: any) => !hideCompletedTasks || !task.completed);
                       
                       // 카테고리별로 그룹화 (데이터베이스 필드명 사용: snake_case)
-                      const carriedOverTasks = filteredTasks.filter((task: any) => {
+                      const carriedOverTasks = (weekTasks as any[]).filter((task: any) => {
                         if (task.is_carried_over) return true;
                         if (task.scheduled_date) {
                           const taskDate = new Date(task.scheduled_date);
@@ -736,7 +736,7 @@ export default function WeeklyReview() {
                         return aPriority - bPriority;
                       });
 
-                      const thisWeekTasks = filteredTasks.filter((task: any) => {
+                      const thisWeekTasks = (weekTasks as any[]).filter((task: any) => {
                         if (task.is_carried_over) return false;
                         if (task.scheduled_date) {
                           const taskDate = new Date(task.scheduled_date);
@@ -754,7 +754,7 @@ export default function WeeklyReview() {
                         return aPriority - bPriority;
                       });
 
-                      const unscheduledTasks = filteredTasks.filter((task: any) => {
+                      const unscheduledTasks = (weekTasks as any[]).filter((task: any) => {
                         return !task.scheduled_date && !task.end_date && !task.is_carried_over;
                       }).sort((a: any, b: any) => {
                         const priorityOrder = { 'A': 1, 'B': 2, 'C': 3 };
@@ -763,81 +763,34 @@ export default function WeeklyReview() {
                         return aPriority - bPriority;
                       });
 
-                      const renderTaskItem = (task: any, index: number) => {
+                      // 완료 상태와 관계없이 필터링 (완료된 할일 숨기기 토글에만 의존)
+                      const displayedCarriedOverTasks = carriedOverTasks.filter((task: any) => !hideCompletedTasks || !task.completed);
+                      const displayedThisWeekTasks = thisWeekTasks.filter((task: any) => !hideCompletedTasks || !task.completed);
+                      const displayedUnscheduledTasks = unscheduledTasks.filter((task: any) => !hideCompletedTasks || !task.completed);
+
+                      const renderTaskItem = (task: any) => {
                         // 지연 여부 판단
                         const today = new Date();
                         today.setHours(0, 0, 0, 0);
                         
                         let isDelayed = false;
+                        let categoryBgColor = 'bg-gray-50 border-gray-200';
                         
-                        // 이월된 할일은 지연으로 표시
-                        if (task.is_carried_over) {
+                        // 이월된 할일인지 확인
+                        if (task.is_carried_over || (task.scheduled_date && new Date(task.scheduled_date) < startOfWeek && !task.completed) || (task.end_date && new Date(task.end_date) < startOfWeek && !task.completed)) {
                           isDelayed = true;
-                        }
-                        
-                        // scheduled_date가 있고, 오늘 이전이면 지연
-                        if (task.scheduled_date) {
-                          const scheduledDate = new Date(task.scheduled_date);
-                          scheduledDate.setHours(0, 0, 0, 0);
-                          if (scheduledDate < today) {
-                            isDelayed = true;
-                          }
-                        }
-                        
-                        // end_date 기준으로도 지연 판단 추가
-                        if (!isDelayed && task.end_date) {
-                          const endDate = new Date(task.end_date);
-                          endDate.setHours(0, 0, 0, 0);
-                          if (endDate < today) {
-                            isDelayed = true;
-                          }
-                        }
-
-                        // 카테고리별 마크와 색상 결정
-                        let categoryMark = '⚪'; // 기본값: 일정이 지정되지 않은 할일
-                        let categoryBgColor = 'bg-gray-50 border-gray-200'; // 기본: 회색
-                        
-                        const startOfWeek = new Date(weekStartDate);
-                        const endOfWeek = new Date(startOfWeek);
-                        endOfWeek.setDate(startOfWeek.getDate() + 6);
-                        endOfWeek.setHours(23, 59, 59, 999);
-                        
-                        // 1. 이월된 할일 또는 지연된 할일인지 확인 (빨간색)
-                        if (task.is_carried_over) {
-                          categoryMark = '🔴';
-                          categoryBgColor = 'bg-red-50 border-red-200';
-                        }
-                        // 2. end_date가 이번 주 이전이면서 완료되지 않았다면 지연된 할일 (빨간색)
-                        else if (task.end_date && !task.completed) {
-                          const taskEndDate = new Date(task.end_date);
-                          taskEndDate.setHours(23, 59, 59, 999);
-                          if (taskEndDate < startOfWeek) {
-                            categoryMark = '🔴';
+                          if (!task.completed) {
                             categoryBgColor = 'bg-red-50 border-red-200';
                           }
-                          // end_date가 이번 주 범위 안에 있다면 이번 주 할일 (파란색)
-                          else if (taskEndDate >= startOfWeek && taskEndDate <= endOfWeek) {
-                            categoryMark = '🔵';
-                            categoryBgColor = 'bg-blue-50 border-blue-200';
-                          }
-                        }
-                        // 3. scheduled_date가 이번 주 이전이면서 완료되지 않았다면 지연된 할일 (빨간색)
-                        else if (task.scheduled_date && !task.completed) {
-                          const taskStartDate = new Date(task.scheduled_date);
-                          taskStartDate.setHours(0, 0, 0, 0);
-                          if (taskStartDate < startOfWeek) {
-                            categoryMark = '🔴';
-                            categoryBgColor = 'bg-red-50 border-red-200';
-                          }
-                          // scheduled_date가 이번 주 범위 안에 있다면 이번 주 할일 (파란색)
-                          else if (taskStartDate >= startOfWeek && taskStartDate <= endOfWeek) {
-                            categoryMark = '🔵';
+                        } else if (task.scheduled_date || task.end_date) {
+                          // 금주에 계획된 할일
+                          if (!task.completed) {
                             categoryBgColor = 'bg-blue-50 border-blue-200';
                           }
                         }
                         
                         return (
-                          <div key={task.id} className={`flex items-center justify-between p-1.5 rounded-lg border ${
+                          <div key={task.id} className={`flex items-center justify-between p-1.5 rounded-lg border ml-2.5 ${
                             task.completed 
                               ? 'bg-green-50 border-green-200' 
                               : categoryBgColor
@@ -890,17 +843,17 @@ export default function WeeklyReview() {
 
                       return (
                         <div className="space-y-4">
-                          {renderTaskGroup("이월된 할일", carriedOverTasks, "bg-red-100 text-red-700")}
-                          {renderTaskGroup("금주에 계획된 할일", thisWeekTasks, "bg-blue-100 text-blue-700")}
-                          {renderTaskGroup("일정이 지정되지 않은 할일", unscheduledTasks, "bg-gray-100 text-gray-700")}
+                          {renderTaskGroup("이월된 할일", displayedCarriedOverTasks, "bg-red-100 text-red-700")}
+                          {renderTaskGroup("금주에 계획된 할일", displayedThisWeekTasks, "bg-blue-100 text-blue-700")}
+                          {renderTaskGroup("일정이 지정되지 않은 할일", displayedUnscheduledTasks, "bg-gray-100 text-gray-700")}
                           
                           {filteredTasks.length === 0 && (
                             <div className="text-center p-4 bg-gray-50 rounded-lg">
                               <div className="text-sm text-gray-600 font-medium">
-                                {hideCompletedTasks ? '미완료된 할일이 없습니다.' : '등록된 할일이 없습니다.'}
+                                {hideCompletedTasks ? "미완료된 할일이 없습니다." : "등록된 할일이 없습니다."}
                               </div>
                               <div className="text-xs text-gray-500 mt-1">
-                                {hideCompletedTasks ? '모든 할일이 완료되었습니다!' : '할일을 추가해보세요.'}
+                                {hideCompletedTasks ? "모든 할일이 완료되었습니다!" : "할일을 추가해보세요!"}
                               </div>
                             </div>
                           )}
@@ -912,7 +865,9 @@ export default function WeeklyReview() {
                   {(weekTasks as any[]).filter((task: any) => !hideCompletedTasks || !task.completed).length > 0 && (
                     <div className="mt-3 text-center">
                       <div className="text-xs text-gray-500 bg-gray-50 px-2 py-1 rounded">
-                        총 {(weekTasks as any[]).filter((task: any) => !hideCompletedTasks || !task.completed).length}개의 {hideCompletedTasks ? '미완료' : '전체'} 할일
+                        총 {(weekTasks as any[]).filter((task: any) => !hideCompletedTasks || !task.completed).length}개의 할일 
+                        (완료: {(weekTasks as any[]).filter((task: any) => task.completed).length}개, 
+                        미완료: {(weekTasks as any[]).filter((task: any) => !task.completed).length}개)
                       </div>
                     </div>
                   )}
