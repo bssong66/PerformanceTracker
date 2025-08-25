@@ -582,21 +582,49 @@ export default function DailyPlanning() {
 
   // 선택된 날짜의 할일 필터링
   const todayTasks = allTasks.filter((task: any) => {
-    if (task.dueDate) {
-      // 선택된 날짜와 정확히 일치하는 할일만 포함
-      return task.dueDate === today;
+    // 1. scheduledDate가 선택된 날짜와 일치
+    if (task.scheduledDate === today) return true;
+    
+    // 2. startDate가 선택된 날짜와 일치
+    if (task.startDate === today) return true;
+    
+    // 3. endDate가 선택된 날짜와 일치
+    if (task.endDate === today) return true;
+    
+    // 4. 선택된 날짜가 startDate와 endDate 사이에 있는 경우
+    if (task.startDate && task.endDate) {
+      return task.startDate <= today && today <= task.endDate;
     }
-    // dueDate가 없는 경우는 오늘 날짜로 간주
-    return today === format(new Date(), 'yyyy-MM-dd');
+    
+    // 5. 날짜가 지정되지 않은 할일은 오늘 날짜일 때만 표시
+    if (!task.scheduledDate && !task.startDate && !task.endDate) {
+      return today === format(new Date(), 'yyyy-MM-dd');
+    }
+    
+    return false;
   });
 
   // 이월된 할일 (선택된 날짜 이전의 미완료 할일)
   const overdueTasks = selectedDate ? allTasks.filter((task: any) => {
-    return task.dueDate && task.dueDate < today && !task.completed;
+    if (task.completed) return false; // 완료된 할일 제외
+    
+    // scheduledDate, startDate, endDate 중 하나라도 선택된 날짜보다 이전이면 이월
+    const isOverdue = 
+      (task.scheduledDate && task.scheduledDate < today) ||
+      (task.endDate && task.endDate < today) ||
+      (task.startDate && !task.endDate && task.startDate < today);
+    
+    return isOverdue;
   }) : [];
 
-  // 전체 표시할 할일 (선택된 날짜 + 이월된 할일)
-  const displayTasks = [...todayTasks, ...overdueTasks];
+  // 중복 제거를 위해 Set 사용
+  const allDisplayTaskIds = new Set([
+    ...todayTasks.map((t: any) => t.id),
+    ...overdueTasks.map((t: any) => t.id)
+  ]);
+  
+  // 전체 표시할 할일 (중복 제거된 할일들)
+  const displayTasks = allTasks.filter((task: any) => allDisplayTaskIds.has(task.id));
 
   // Use filtered tasks for both tabs to ensure data consistency
   const tasks = displayTasks;
