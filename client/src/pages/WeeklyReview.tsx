@@ -793,11 +793,13 @@ export default function WeeklyReview() {
                           }
                         }
 
-                        // 카테고리별 마크 결정
+                        // 카테고리별 마크와 색상 결정
                         let categoryMark = '⚪'; // 기본값: 일정이 지정되지 않은 할일
+                        let categoryBgColor = 'bg-gray-50 border-gray-200'; // 기본: 회색
                         
                         if (task.is_carried_over || isDelayed) {
                           categoryMark = '🔴'; // 이월된 할일
+                          categoryBgColor = 'bg-red-50 border-red-200';
                         } else if (task.scheduled_date || task.end_date) {
                           const startOfWeek = new Date(weekStartDate);
                           const endOfWeek = new Date(startOfWeek);
@@ -811,14 +813,15 @@ export default function WeeklyReview() {
                           
                           if (isInThisWeek) {
                             categoryMark = '🔵'; // 금주에 계획된 할일
+                            categoryBgColor = 'bg-blue-50 border-blue-200';
                           }
                         }
                         
                         return (
                           <div key={task.id} className={`flex items-center justify-between p-1.5 rounded-lg border ${
                             task.completed 
-                              ? 'bg-green-50 border-green-100' 
-                              : `bg-red-50 border-red-100 ${isDelayed ? 'animate-pulse' : ''}`
+                              ? 'bg-green-50 border-green-200' 
+                              : categoryBgColor
                           }`}>
                             <div className="flex items-center space-x-3 flex-1">
                               <span className="text-sm">{categoryMark}</span>
