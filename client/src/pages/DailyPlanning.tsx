@@ -1375,9 +1375,9 @@ export default function DailyPlanning() {
                     </div>
 
                     {/* All Day Event Checkbox and Time Selection */}
-                    <div className="flex items-start space-x-4 mb-3">
+                    <div className="flex items-end space-x-4 mb-3">
                       {/* All Day Event Checkbox */}
-                      <div className="flex items-center space-x-2 mt-1">
+                      <div className="flex items-center space-x-2">
                         <Checkbox
                           id="all-day-event"
                           checked={isAllDay}
