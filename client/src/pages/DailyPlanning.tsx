@@ -2840,16 +2840,32 @@ export default function DailyPlanning() {
                 </div>
 
                 {/* All Day Event Checkbox */}
-                <div className="flex items-center space-x-2 mb-3">
-                  <Checkbox
-                    id="edit-all-day-event"
-                    checked={editingEvent.editIsAllDay || false}
-                    onCheckedChange={(checked) => setEditingEvent(prev => ({ ...prev, editIsAllDay: checked as boolean }))}
-                    className="h-4 w-4"
-                  />
-                  <Label htmlFor="edit-all-day-event" className="text-sm text-gray-700 cursor-pointer">
-                    종일 일정
-                  </Label>
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="edit-all-day-event"
+                      checked={editingEvent.editIsAllDay || false}
+                      onCheckedChange={(checked) => setEditingEvent(prev => ({ ...prev, editIsAllDay: checked as boolean }))}
+                      className="h-4 w-4"
+                    />
+                    <Label htmlFor="edit-all-day-event" className="text-sm text-gray-700 cursor-pointer">
+                      종일 일정
+                    </Label>
+                  </div>
+                  
+                  {/* 일정 날짜/기간 표시 */}
+                  <div className="text-xs text-gray-600 bg-gray-50 px-2 py-1 rounded">
+                    {editingEvent.startDate && editingEvent.endDate && editingEvent.startDate !== editingEvent.endDate ? (
+                      // 기간이 있는 경우
+                      <span>{format(new Date(editingEvent.startDate), 'M월 d일', { locale: ko })} ~ {format(new Date(editingEvent.endDate), 'M월 d일', { locale: ko })}</span>
+                    ) : editingEvent.startDate ? (
+                      // 단일 날짜인 경우
+                      <span>{format(new Date(editingEvent.startDate), 'M월 d일', { locale: ko })}</span>
+                    ) : (
+                      // 날짜가 없는 경우
+                      <span>날짜 미지정</span>
+                    )}
+                  </div>
                 </div>
 
                 {/* Time Selection */}
