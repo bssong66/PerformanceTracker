@@ -508,6 +508,8 @@ export default function MonthlyReview() {
     aCompleted: (monthTasks as any[]).filter((t: any) => t.priority === 'A' && t.completed).length,
     bTotal: (monthTasks as any[]).filter((t: any) => t.priority === 'B').length,
     bCompleted: (monthTasks as any[]).filter((t: any) => t.priority === 'B' && t.completed).length,
+    cTotal: (monthTasks as any[]).filter((t: any) => t.priority === 'C' || !t.priority).length,
+    cCompleted: (monthTasks as any[]).filter((t: any) => (t.priority === 'C' || !t.priority) && t.completed).length,
   };
 
   const coreValues = foundation ? [
