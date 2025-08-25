@@ -827,9 +827,6 @@ export default function WeeklyReview() {
                               (valueAlignments[index] || 0) >= 60 ? 'warning' : 'danger'
                             }
                           />
-                          <div className="text-xs text-gray-500 mt-1">
-                            키워드 매칭 및 연결된 가치 기반 자동 계산
-                          </div>
                         </div>
                       ))}
                     </div>
