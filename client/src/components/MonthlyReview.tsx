@@ -628,7 +628,7 @@ export default function MonthlyReview() {
                     </Button>
                   </div>
                   
-                  <div className="h-[35rem] overflow-y-auto space-y-3 pr-2">
+                  <div className={`space-y-3 pr-2 ${(monthTasks as any[]).length > 10 ? 'max-h-[35rem] overflow-y-auto' : ''}`}>
                     {(() => {
                       // Filter tasks based on completion status toggle
                       const filteredTasks = showCompletedTasks 
