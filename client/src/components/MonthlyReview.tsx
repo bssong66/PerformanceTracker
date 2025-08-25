@@ -581,86 +581,205 @@ export default function MonthlyReview() {
                   </div>
                 </div>
 
-                {/* Incomplete Tasks */}
+                {/* Month Tasks */}
                 <div className="flex-1 flex flex-col">
                   <div className="flex items-center justify-between mb-2">
                     <h4 className="text-sm font-semibold text-gray-900">이번달 할일</h4>
+                    <div className="text-xs text-gray-500">
+                      {format(monthStart, 'M월', { locale: ko })} 할일 현황
+                    </div>
                   </div>
                   
                   <div className="h-[35rem] overflow-y-auto space-y-3 pr-2">
-                    {(monthTasks as any[])
-                      .filter((task: any) => !task.completed)
-                      .sort((a: any, b: any) => {
-                        // Priority order: A > B > C (or null/undefined)
+                    {(() => {
+                      // Filter out completed tasks
+                      const filteredTasks = (monthTasks as any[]).filter((task: any) => !task.completed);
+                      
+                      // Sort by priority
+                      const sortedTasks = filteredTasks.sort((a: any, b: any) => {
                         const priorityOrder = { 'A': 1, 'B': 2, 'C': 3 };
                         const aPriority = priorityOrder[a.priority as keyof typeof priorityOrder] || 4;
                         const bPriority = priorityOrder[b.priority as keyof typeof priorityOrder] || 4;
                         return aPriority - bPriority;
-                      })
-                      .map((task: any, index: number) => {
-                        // 지연 여부 판단 - 날짜만 비교하고, 날짜가 설정된 할일만 지연 판단
-                        const today = new Date();
-                        today.setHours(0, 0, 0, 0); // 시간을 00:00:00으로 설정
+                      });
+
+                      // Categorize tasks
+                      const carriedOverTasks: any[] = [];
+                      const thisMonthTasks: any[] = [];
+                      const unscheduledTasks: any[] = [];
+                      
+                      sortedTasks.forEach((task: any) => {
+                        const startOfCurrentMonth = new Date(monthStart);
+                        const endOfCurrentMonth = new Date(monthEnd);
+                        
+                        // 1. 이월된 할일 또는 지연된 할일인지 확인 (빨간색)
+                        if (task.is_carried_over) {
+                          carriedOverTasks.push(task);
+                        }
+                        // 2. end_date가 이번 달 이전이면서 완료되지 않았다면 지연된 할일 (빨간색)
+                        else if (task.end_date) {
+                          const taskEndDate = new Date(task.end_date);
+                          taskEndDate.setHours(23, 59, 59, 999);
+                          if (taskEndDate < startOfCurrentMonth) {
+                            carriedOverTasks.push(task);
+                          }
+                          // end_date가 이번 달 범위 안에 있다면 이번 달 할일 (파란색)
+                          else if (taskEndDate >= startOfCurrentMonth && taskEndDate <= endOfCurrentMonth) {
+                            thisMonthTasks.push(task);
+                          }
+                          else {
+                            unscheduledTasks.push(task);
+                          }
+                        }
+                        // 3. scheduled_date가 이번 달 이전이면서 완료되지 않았다면 지연된 할일 (빨간색)
+                        else if (task.scheduled_date) {
+                          const taskStartDate = new Date(task.scheduled_date);
+                          taskStartDate.setHours(0, 0, 0, 0);
+                          if (taskStartDate < startOfCurrentMonth) {
+                            carriedOverTasks.push(task);
+                          }
+                          // scheduled_date가 이번 달 범위 안에 있다면 이번 달 할일 (파란색)
+                          else if (taskStartDate >= startOfCurrentMonth && taskStartDate <= endOfCurrentMonth) {
+                            thisMonthTasks.push(task);
+                          }
+                          else {
+                            unscheduledTasks.push(task);
+                          }
+                        }
+                        else {
+                          // scheduled_date와 end_date가 모두 없는 할일 (회색)
+                          unscheduledTasks.push(task);
+                        }
+                      });
+
+                      const renderTaskItem = (task: any) => {
+                        const startOfCurrentMonth = new Date(monthStart);
+                        const endOfCurrentMonth = new Date(monthEnd);
                         
                         let isDelayed = false;
                         
-                        // 이월된 할일은 지연으로 표시
-                        if (task.isCarriedOver) {
+                        // 지연 여부 판단
+                        if (task.is_carried_over) {
                           isDelayed = true;
                         }
-                        
-                        // scheduledDate나 originalScheduledDate가 있고, 오늘 이전이면 지연
-                        if (task.scheduledDate) {
-                          const scheduledDate = new Date(task.scheduledDate);
-                          scheduledDate.setHours(0, 0, 0, 0);
-                          if (scheduledDate < today) {
+                        else if (task.end_date) {
+                          const taskEndDate = new Date(task.end_date);
+                          taskEndDate.setHours(23, 59, 59, 999);
+                          if (taskEndDate < startOfCurrentMonth) {
                             isDelayed = true;
                           }
-                        } else if (task.originalScheduledDate) {
-                          const originalScheduledDate = new Date(task.originalScheduledDate);
-                          originalScheduledDate.setHours(0, 0, 0, 0);
-                          if (originalScheduledDate < today) {
+                        }
+                        else if (task.scheduled_date) {
+                          const taskStartDate = new Date(task.scheduled_date);
+                          taskStartDate.setHours(0, 0, 0, 0);
+                          if (taskStartDate < startOfCurrentMonth) {
                             isDelayed = true;
                           }
                         }
                         
-                        // endDate 기준으로도 지연 판단 추가
-                        if (!isDelayed && task.endDate) {
-                          const endDate = new Date(task.endDate);
-                          endDate.setHours(0, 0, 0, 0);
-                          if (endDate < today) {
-                            isDelayed = true;
+                        // 카테고리별 마크와 색상 결정
+                        let categoryBgColor = 'bg-gray-50 border-gray-200'; // 기본: 회색
+                        
+                        // 1. 이월된 할일 또는 지연된 할일인지 확인 (빨간색)
+                        if (task.is_carried_over) {
+                          categoryBgColor = 'bg-red-50 border-red-200';
+                        }
+                        // 2. end_date가 이번 달 이전이면서 완료되지 않았다면 지연된 할일 (빨간색)
+                        else if (task.end_date && !task.completed) {
+                          const taskEndDate = new Date(task.end_date);
+                          taskEndDate.setHours(23, 59, 59, 999);
+                          if (taskEndDate < startOfCurrentMonth) {
+                            categoryBgColor = 'bg-red-50 border-red-200';
+                          }
+                          // end_date가 이번 달 범위 안에 있다면 이번 달 할일 (파란색)
+                          else if (taskEndDate >= startOfCurrentMonth && taskEndDate <= endOfCurrentMonth) {
+                            categoryBgColor = 'bg-blue-50 border-blue-200';
+                          }
+                        }
+                        // 3. scheduled_date가 이번 달 이전이면서 완료되지 않았다면 지연된 할일 (빨간색)
+                        else if (task.scheduled_date && !task.completed) {
+                          const taskStartDate = new Date(task.scheduled_date);
+                          taskStartDate.setHours(0, 0, 0, 0);
+                          if (taskStartDate < startOfCurrentMonth) {
+                            categoryBgColor = 'bg-red-50 border-red-200';
+                          }
+                          // scheduled_date가 이번 달 범위 안에 있다면 이번 달 할일 (파란색)
+                          else if (taskStartDate >= startOfCurrentMonth && taskStartDate <= endOfCurrentMonth) {
+                            categoryBgColor = 'bg-blue-50 border-blue-200';
                           }
                         }
                         
                         return (
-                          <div key={task.id} className={`flex items-center justify-between p-1.5 bg-red-50 rounded-lg border border-red-100 ${
-                            isDelayed ? 'animate-pulse' : ''
+                          <div key={task.id} className={`flex items-center justify-between p-1.5 rounded-lg border ${
+                            task.completed 
+                              ? 'bg-green-50 border-green-200' 
+                              : categoryBgColor
                           }`}>
                             <div className="flex items-center space-x-3 flex-1">
                               <PriorityBadge priority={task.priority || 'C'} size="sm" />
                               <div className="flex-1">
-                                <div className="text-sm font-medium text-gray-900">{getTaskDisplayName(task)}</div>
+                                <div className={`text-sm font-medium ${
+                                  task.completed ? 'text-green-700 line-through' : 'text-gray-900'
+                                }`}>
+                                  {getTaskDisplayName(task)}
+                                </div>
                                 {task.description && (
-                                  <div className="text-xs text-gray-500 mt-1">{task.description}</div>
+                                  <div className={`text-xs mt-1 ${
+                                    task.completed ? 'text-green-600 line-through' : 'text-gray-500'
+                                  }`}>
+                                    {task.description}
+                                  </div>
                                 )}
                               </div>
                             </div>
-                            {isDelayed && (
+                            {task.completed && (
+                              <div className="text-xs text-green-600 font-medium">
+                                완료
+                              </div>
+                            )}
+                            {!task.completed && isDelayed && (
                               <div className="text-xs text-red-600 font-medium">
                                 지연
                               </div>
                             )}
                           </div>
                         );
-                      })}
-                    
-                    {(monthTasks as any[]).filter((task: any) => !task.completed).length === 0 && (
-                      <div className="text-center p-4 bg-green-50 rounded-lg">
-                        <div className="text-sm text-green-600 font-medium">모든 할일이 완료되었습니다!</div>
-                        <div className="text-xs text-gray-500 mt-1">이번 달 정말 수고하셨습니다.</div>
-                      </div>
-                    )}
+                      };
+
+                      const renderTaskGroup = (title: string, tasks: any[], bgColor: string) => {
+                        if (tasks.length === 0) return null;
+                        
+                        return (
+                          <div key={title} className="space-y-2">
+                            <div className={`px-2 py-1 rounded text-xs font-medium ${bgColor}`}>
+                              {title} ({tasks.length}개)
+                            </div>
+                            <div className="space-y-2">
+                              {tasks.map(renderTaskItem)}
+                            </div>
+                          </div>
+                        );
+                      };
+
+                      return (
+                        <div className="space-y-4">
+                          {renderTaskGroup("이월된 할일", carriedOverTasks, "bg-red-100 text-red-700")}
+                          {renderTaskGroup("이번달에 계획된 할일", thisMonthTasks, "bg-blue-100 text-blue-700")}
+                          {renderTaskGroup("일정이 지정되지 않은 할일", unscheduledTasks, "bg-gray-100 text-gray-700")}
+                          
+                          {filteredTasks.length === 0 && (
+                            <div className="text-center p-4 bg-gray-50 rounded-lg">
+                              <div className="text-sm text-gray-600 font-medium">
+                                미완료된 할일이 없습니다.
+                              </div>
+                              <div className="text-xs text-gray-500 mt-1">
+                                모든 할일이 완료되었습니다!
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })()}
                   </div>
                   
                   {(monthTasks as any[]).filter((task: any) => !task.completed).length > 0 && (
