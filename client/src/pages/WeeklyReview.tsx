@@ -699,15 +699,15 @@ export default function WeeklyReview() {
 
                       const filteredTasks = (weekTasks as any[]).filter((task: any) => !hideCompletedTasks || !task.completed);
                       
-                      // 카테고리별로 그룹화
+                      // 카테고리별로 그룹화 (데이터베이스 필드명 사용: snake_case)
                       const carriedOverTasks = filteredTasks.filter((task: any) => {
-                        if (task.isCarriedOver) return true;
-                        if (task.scheduledDate) {
-                          const taskDate = new Date(task.scheduledDate);
+                        if (task.is_carried_over) return true;
+                        if (task.scheduled_date) {
+                          const taskDate = new Date(task.scheduled_date);
                           return taskDate < startOfWeek && !task.completed;
                         }
-                        if (task.endDate) {
-                          const taskDate = new Date(task.endDate);
+                        if (task.end_date) {
+                          const taskDate = new Date(task.end_date);
                           return taskDate < startOfWeek && !task.completed;
                         }
                         return false;
@@ -719,13 +719,13 @@ export default function WeeklyReview() {
                       });
 
                       const thisWeekTasks = filteredTasks.filter((task: any) => {
-                        if (task.isCarriedOver) return false;
-                        if (task.scheduledDate) {
-                          const taskDate = new Date(task.scheduledDate);
+                        if (task.is_carried_over) return false;
+                        if (task.scheduled_date) {
+                          const taskDate = new Date(task.scheduled_date);
                           return taskDate >= startOfWeek && taskDate <= endOfWeek;
                         }
-                        if (task.endDate) {
-                          const taskDate = new Date(task.endDate);
+                        if (task.end_date) {
+                          const taskDate = new Date(task.end_date);
                           return taskDate >= startOfWeek && taskDate <= endOfWeek;
                         }
                         return false;
@@ -737,7 +737,7 @@ export default function WeeklyReview() {
                       });
 
                       const unscheduledTasks = filteredTasks.filter((task: any) => {
-                        return !task.scheduledDate && !task.endDate && !task.isCarriedOver;
+                        return !task.scheduled_date && !task.end_date && !task.is_carried_over;
                       }).sort((a: any, b: any) => {
                         const priorityOrder = { 'A': 1, 'B': 2, 'C': 3 };
                         const aPriority = priorityOrder[a.priority as keyof typeof priorityOrder] || 4;
@@ -753,28 +753,22 @@ export default function WeeklyReview() {
                         let isDelayed = false;
                         
                         // 이월된 할일은 지연으로 표시
-                        if (task.isCarriedOver) {
+                        if (task.is_carried_over) {
                           isDelayed = true;
                         }
                         
-                        // scheduledDate나 originalScheduledDate가 있고, 오늘 이전이면 지연
-                        if (task.scheduledDate) {
-                          const scheduledDate = new Date(task.scheduledDate);
+                        // scheduled_date가 있고, 오늘 이전이면 지연
+                        if (task.scheduled_date) {
+                          const scheduledDate = new Date(task.scheduled_date);
                           scheduledDate.setHours(0, 0, 0, 0);
                           if (scheduledDate < today) {
                             isDelayed = true;
                           }
-                        } else if (task.originalScheduledDate) {
-                          const originalScheduledDate = new Date(task.originalScheduledDate);
-                          originalScheduledDate.setHours(0, 0, 0, 0);
-                          if (originalScheduledDate < today) {
-                            isDelayed = true;
-                          }
                         }
                         
-                        // endDate 기준으로도 지연 판단 추가
-                        if (!isDelayed && task.endDate) {
-                          const endDate = new Date(task.endDate);
+                        // end_date 기준으로도 지연 판단 추가
+                        if (!isDelayed && task.end_date) {
+                          const endDate = new Date(task.end_date);
                           endDate.setHours(0, 0, 0, 0);
                           if (endDate < today) {
                             isDelayed = true;
