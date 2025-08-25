@@ -62,8 +62,8 @@ export default function WeeklyReview() {
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [fileUrls, setFileUrls] = useState<string[]>([]);
   
-  // 할일 필터 상태: 'all' | 'completed' | 'incomplete'
-  const [taskFilter, setTaskFilter] = useState<'all' | 'completed' | 'incomplete'>('all');
+  // 완료된 할일 숨기기 상태
+  const [hideCompletedTasks, setHideCompletedTasks] = useState(false);
 
   const { data: weeklyReview } = useQuery({
     queryKey: ['/api/weekly-reviews', weekStartDate],
@@ -631,26 +631,18 @@ export default function WeeklyReview() {
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => {
-                        const nextFilter = taskFilter === 'all' ? 'incomplete' : taskFilter === 'incomplete' ? 'completed' : 'all';
-                        setTaskFilter(nextFilter);
-                      }}
+                      onClick={() => setHideCompletedTasks(!hideCompletedTasks)}
                       className="h-7 px-2 text-xs"
                     >
-                      {taskFilter === 'all' ? (
+                      {hideCompletedTasks ? (
                         <>
                           <Eye className="h-3 w-3 mr-1" />
-                          미완료만
-                        </>
-                      ) : taskFilter === 'incomplete' ? (
-                        <>
-                          <Eye className="h-3 w-3 mr-1" />
-                          완료된것만
+                          완료된 할일 보기
                         </>
                       ) : (
                         <>
                           <EyeOff className="h-3 w-3 mr-1" />
-                          전체보기
+                          완료된 할일 감추기
                         </>
                       )}
                     </Button>
@@ -658,11 +650,7 @@ export default function WeeklyReview() {
                   
                   <div className="h-[35rem] overflow-y-auto space-y-3 pr-2">
                     {(weekTasks as any[])
-                      .filter((task: any) => 
-                        taskFilter === 'all' ? true : 
-                        taskFilter === 'completed' ? task.completed : 
-                        !task.completed
-                      )
+                      .filter((task: any) => !hideCompletedTasks || !task.completed)
                       .sort((a: any, b: any) => {
                         // Priority order: A > B > C (or null/undefined)
                         const priorityOrder = { 'A': 1, 'B': 2, 'C': 3 };
@@ -743,42 +731,22 @@ export default function WeeklyReview() {
                         );
                       })}
                     
-                    {(weekTasks as any[]).filter((task: any) => 
-                      taskFilter === 'all' ? true : 
-                      taskFilter === 'completed' ? task.completed : 
-                      !task.completed
-                    ).length === 0 && (
+                    {(weekTasks as any[]).filter((task: any) => !hideCompletedTasks || !task.completed).length === 0 && (
                       <div className="text-center p-4 bg-gray-50 rounded-lg">
                         <div className="text-sm text-gray-600 font-medium">
-                          {taskFilter === 'completed' ? '완료된 할일이 없습니다.' : 
-                           taskFilter === 'incomplete' ? '미완료된 할일이 없습니다.' : 
-                           '등록된 할일이 없습니다.'}
+                          {hideCompletedTasks ? '미완료된 할일이 없습니다.' : '등록된 할일이 없습니다.'}
                         </div>
                         <div className="text-xs text-gray-500 mt-1">
-                          {taskFilter === 'completed' ? '아직 완료한 할일이 없어요.' : 
-                           taskFilter === 'incomplete' ? '모든 할일이 완료되었습니다!' : 
-                           '할일을 추가해보세요.'}
+                          {hideCompletedTasks ? '모든 할일이 완료되었습니다!' : '할일을 추가해보세요.'}
                         </div>
                       </div>
                     )}
                   </div>
                   
-                  {(weekTasks as any[]).filter((task: any) => 
-                    taskFilter === 'all' ? true : 
-                    taskFilter === 'completed' ? task.completed : 
-                    !task.completed
-                  ).length > 0 && (
+                  {(weekTasks as any[]).filter((task: any) => !hideCompletedTasks || !task.completed).length > 0 && (
                     <div className="mt-3 text-center">
                       <div className="text-xs text-gray-500 bg-gray-50 px-2 py-1 rounded">
-                        총 {(weekTasks as any[]).filter((task: any) => 
-                          taskFilter === 'all' ? true : 
-                          taskFilter === 'completed' ? task.completed : 
-                          !task.completed
-                        ).length}개의 {
-                          taskFilter === 'completed' ? '완료된' : 
-                          taskFilter === 'incomplete' ? '미완료' : 
-                          '전체'
-                        } 할일
+                        총 {(weekTasks as any[]).filter((task: any) => !hideCompletedTasks || !task.completed).length}개의 {hideCompletedTasks ? '미완료' : '전체'} 할일
                       </div>
                     </div>
                   )}
