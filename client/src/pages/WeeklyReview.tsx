@@ -797,22 +797,36 @@ export default function WeeklyReview() {
                         let categoryMark = '⚪'; // 기본값: 일정이 지정되지 않은 할일
                         let categoryBgColor = 'bg-gray-50 border-gray-200'; // 기본: 회색
                         
+                        const startOfWeek = new Date(weekStartDate);
+                        const endOfWeek = new Date(startOfWeek);
+                        endOfWeek.setDate(startOfWeek.getDate() + 6);
+                        endOfWeek.setHours(23, 59, 59, 999);
+                        
+                        // 1. 이월된 할일 또는 지연된 할일인지 확인
                         if (task.is_carried_over || isDelayed) {
-                          categoryMark = '🔴'; // 이월된 할일
+                          categoryMark = '🔴';
                           categoryBgColor = 'bg-red-50 border-red-200';
-                        } else if (task.scheduled_date || task.end_date) {
-                          const startOfWeek = new Date(weekStartDate);
-                          const endOfWeek = new Date(startOfWeek);
-                          endOfWeek.setDate(startOfWeek.getDate() + 6);
-                          endOfWeek.setHours(23, 59, 59, 999);
-
-                          const isInThisWeek = (
-                            (task.scheduled_date && new Date(task.scheduled_date) >= startOfWeek && new Date(task.scheduled_date) <= endOfWeek) ||
-                            (task.end_date && new Date(task.end_date) >= startOfWeek && new Date(task.end_date) <= endOfWeek)
-                          );
+                        }
+                        // 2. 이번 주에 계획된 할일인지 확인
+                        else if (task.scheduled_date || task.end_date) {
+                          let isThisWeekTask = false;
                           
-                          if (isInThisWeek) {
-                            categoryMark = '🔵'; // 금주에 계획된 할일
+                          if (task.scheduled_date) {
+                            const taskDate = new Date(task.scheduled_date);
+                            if (taskDate >= startOfWeek && taskDate <= endOfWeek) {
+                              isThisWeekTask = true;
+                            }
+                          }
+                          
+                          if (task.end_date && !isThisWeekTask) {
+                            const taskDate = new Date(task.end_date);
+                            if (taskDate >= startOfWeek && taskDate <= endOfWeek) {
+                              isThisWeekTask = true;
+                            }
+                          }
+                          
+                          if (isThisWeekTask) {
+                            categoryMark = '🔵';
                             categoryBgColor = 'bg-blue-50 border-blue-200';
                           }
                         }
