@@ -522,62 +522,44 @@ export default function WeeklyReview() {
   // 금주 할일 총 개수: 지연된 할일 + 금주에 일정 계획된 할일 + 일정이 계획되지 않은 할일
   // 금주 완료된 할일 개수: 금주에 완료가 체크된 할일 갯수
   const taskStats = (() => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    const weekStartDate = new Date(weekStart);
+    weekStartDate.setHours(0, 0, 0, 0);
+    const weekEndDate = new Date(weekEnd);
+    weekEndDate.setHours(0, 0, 0, 0);
     
-    // 금주에 포함될 할일들: 지연된 할일 + 금주 계획된 할일 + 날짜 미지정 할일
+    // 금주에 포함될 할일들 분류
     const thisWeekTasks = (weekTasks as any[]).filter((task: any) => {
-      // 이월된 할일은 포함
+      // 1. 지연된 할일 (이월된 할일 또는 이전 주에 계획되었지만 미완료인 할일)
       if (task.isCarriedOver) return true;
       
-      // 날짜가 지정되지 않은 할일은 포함
+      // 2. 일정이 계획되지 않은 할일 (모든 날짜 필드가 비어있음)
       if (!task.scheduledDate && !task.originalScheduledDate && !task.endDate) return true;
       
-      // 금주에 일정이 계획된 할일 포함
+      // 3. 금주에 일정 계획된 할일 (scheduledDate가 금주 범위 내)
       if (task.scheduledDate) {
         const scheduledDate = new Date(task.scheduledDate);
         scheduledDate.setHours(0, 0, 0, 0);
-        const weekStartDate = new Date(weekStart);
-        weekStartDate.setHours(0, 0, 0, 0);
-        const weekEndDate = new Date(weekEnd);
-        weekEndDate.setHours(0, 0, 0, 0);
-        
         if (scheduledDate >= weekStartDate && scheduledDate <= weekEndDate) return true;
       }
       
-      // 지연된 할일 포함 (이전 주에서 완료되지 않은 것들)
-      if (task.originalScheduledDate || task.endDate) {
-        const checkDate = task.originalScheduledDate ? 
-          new Date(task.originalScheduledDate) : new Date(task.endDate);
-        checkDate.setHours(0, 0, 0, 0);
-        const weekStartDate = new Date(weekStart);
-        weekStartDate.setHours(0, 0, 0, 0);
-        
-        if (checkDate < weekStartDate && !task.completed) return true;
+      // 4. 지연된 할일 추가 확인 (originalScheduledDate나 endDate가 금주 이전)
+      if (task.originalScheduledDate) {
+        const originalDate = new Date(task.originalScheduledDate);
+        originalDate.setHours(0, 0, 0, 0);
+        if (originalDate < weekStartDate && !task.completed) return true;
+      }
+      
+      if (task.endDate) {
+        const endDate = new Date(task.endDate);
+        endDate.setHours(0, 0, 0, 0);
+        if (endDate < weekStartDate && !task.completed) return true;
       }
       
       return false;
     });
     
-    // 금주에 완료된 할일들 (완료된 날짜가 금주 내에 있는 할일들)
-    const thisWeekCompletedTasks = thisWeekTasks.filter((task: any) => {
-      if (!task.completed) return false;
-      
-      // 완료된 날짜가 금주 내에 있는지 확인
-      if (task.completedAt) {
-        const completedDate = new Date(task.completedAt);
-        completedDate.setHours(0, 0, 0, 0);
-        const weekStartDate = new Date(weekStart);
-        weekStartDate.setHours(0, 0, 0, 0);
-        const weekEndDate = new Date(weekEnd);
-        weekEndDate.setHours(0, 0, 0, 0);
-        
-        return completedDate >= weekStartDate && completedDate <= weekEndDate;
-      }
-      
-      // completedAt이 없는 경우 completed가 true인 것으로 간주 (기존 데이터 호환)
-      return true;
-    });
+    // 금주에 완료된 할일들 (완료 체크된 할일들)
+    const thisWeekCompletedTasks = thisWeekTasks.filter((task: any) => task.completed);
 
     return {
       total: thisWeekTasks.length,
