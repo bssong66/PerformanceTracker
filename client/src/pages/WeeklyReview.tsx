@@ -259,7 +259,12 @@ export default function WeeklyReview() {
   // Calculate value alignment based on tasks, events, and time blocks
   useEffect(() => {
     if (foundation && ((weekTasks as any[]).length > 0 || weekEvents.length > 0 || weekTimeBlocks.length > 0)) {
-      const coreValues = (foundation as any).coreValues ? (foundation as any).coreValues.split(',').map((v: string) => v.trim()) : [];
+      // Get core values from foundation (using the correct database structure)
+      const coreValues = [
+        (foundation as any)?.coreValue1,
+        (foundation as any)?.coreValue2,
+        (foundation as any)?.coreValue3
+      ].filter(Boolean);
 
       if (coreValues.length > 0) {
         const alignmentScores = coreValues.map((value: string) => {

@@ -903,9 +903,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Monthly review routes
-  app.get("/api/monthly-review/:userId/:year/:month", async (req, res) => {
+  app.get("/api/monthly-review/:userId/:year/:month", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.params.userId;
+      const userId = req.user.claims.sub; // Use authenticated user ID instead of param
       const year = parseInt(req.params.year);
       const month = parseInt(req.params.month);
       const review = await storage.getMonthlyReview(userId, year, month);
@@ -920,9 +920,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/monthly-review", async (req, res) => {
+  app.post("/api/monthly-review", isAuthenticated, async (req: any, res) => {
     try {
-      const reviewData = insertMonthlyReviewSchema.parse(req.body);
+      const reviewData = insertMonthlyReviewSchema.parse({
+        ...req.body,
+        userId: req.user.claims.sub
+      });
       const review = await storage.upsertMonthlyReview(reviewData);
       res.json(review);
     } catch (error) {
