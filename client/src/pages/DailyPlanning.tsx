@@ -580,19 +580,27 @@ export default function DailyPlanning() {
     },
   });
 
-  // 오늘 날짜의 할일만 필터링
+  // 선택된 날짜의 할일 필터링
   const todayTasks = allTasks.filter((task: any) => {
     if (task.dueDate) {
-      // 오늘 날짜이거나 지연된 할일 포함 (완료된 할일도 표시)
-      return task.dueDate <= today;
+      // 선택된 날짜와 정확히 일치하는 할일만 포함
+      return task.dueDate === today;
     }
-    // dueDate가 없는 경우 모든 할일 포함 (완료된 할일도 표시)
-    return true;
+    // dueDate가 없는 경우는 오늘 날짜로 간주
+    return today === format(new Date(), 'yyyy-MM-dd');
   });
 
+  // 이월된 할일 (선택된 날짜 이전의 미완료 할일)
+  const overdueTasks = selectedDate ? allTasks.filter((task: any) => {
+    return task.dueDate && task.dueDate < today && !task.completed;
+  }) : [];
+
+  // 전체 표시할 할일 (선택된 날짜 + 이월된 할일)
+  const displayTasks = [...todayTasks, ...overdueTasks];
+
   // Use filtered tasks for both tabs to ensure data consistency
-  const tasks = todayTasks;
-  const focusTasks = todayTasks;
+  const tasks = displayTasks;
+  const focusTasks = displayTasks;
 
   // Group tasks by priority - 완료된 할일도 항상 표시
   const allTasksByPriority = {
