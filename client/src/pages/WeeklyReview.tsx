@@ -75,7 +75,7 @@ export default function WeeklyReview() {
   const { data: user } = useQuery({
     queryKey: ['/api/auth/user'],
     retry: false,
-  });
+  }) as { data?: { id?: string, claims?: { sub: string } } };
 
   const { data: foundation } = useQuery({
     queryKey: ['foundation', 'auth', new Date().getFullYear()],
@@ -137,12 +137,14 @@ export default function WeeklyReview() {
 
   // Get habit logs for the current week to calculate completion rates
   const { data: weekHabitLogs = [] } = useQuery({
-    queryKey: ['habitLogs', 'week', weekStartDate],
+    queryKey: ['habitLogs', 'week', weekStartDate, user?.id],
     queryFn: async () => {
+      const userId = user?.id || user?.claims?.sub;
+      if (!userId) return [];
       const logs = [];
       for (let i = 0; i < 7; i++) {
         const date = format(addDays(weekStart, i), 'yyyy-MM-dd');
-        const response = await fetch(`/api/habit-logs/auth/${date}`);
+        const response = await fetch(`/api/habit-logs/${userId}/${date}`);
         if (response.ok) {
           const dayLogs = await response.json();
           logs.push(...dayLogs);
@@ -150,6 +152,7 @@ export default function WeeklyReview() {
       }
       return logs;
     },
+    enabled: !!(user?.id || user?.claims?.sub),
     retry: false,
   });
 
