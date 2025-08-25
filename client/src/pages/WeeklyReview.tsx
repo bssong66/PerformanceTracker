@@ -802,30 +802,35 @@ export default function WeeklyReview() {
                         endOfWeek.setDate(startOfWeek.getDate() + 6);
                         endOfWeek.setHours(23, 59, 59, 999);
                         
-                        // 1. 이월된 할일 또는 지연된 할일인지 확인
-                        if (task.is_carried_over || isDelayed) {
+                        // 1. 이월된 할일 또는 지연된 할일인지 확인 (빨간색)
+                        if (task.is_carried_over) {
                           categoryMark = '🔴';
                           categoryBgColor = 'bg-red-50 border-red-200';
                         }
-                        // 2. 이번 주에 계획된 할일인지 확인
-                        else if (task.scheduled_date || task.end_date) {
-                          let isThisWeekTask = false;
-                          
-                          if (task.scheduled_date) {
-                            const taskDate = new Date(task.scheduled_date);
-                            if (taskDate >= startOfWeek && taskDate <= endOfWeek) {
-                              isThisWeekTask = true;
-                            }
+                        // 2. end_date가 이번 주 이전이면서 완료되지 않았다면 지연된 할일 (빨간색)
+                        else if (task.end_date && !task.completed) {
+                          const taskEndDate = new Date(task.end_date);
+                          taskEndDate.setHours(23, 59, 59, 999);
+                          if (taskEndDate < startOfWeek) {
+                            categoryMark = '🔴';
+                            categoryBgColor = 'bg-red-50 border-red-200';
                           }
-                          
-                          if (task.end_date && !isThisWeekTask) {
-                            const taskDate = new Date(task.end_date);
-                            if (taskDate >= startOfWeek && taskDate <= endOfWeek) {
-                              isThisWeekTask = true;
-                            }
+                          // end_date가 이번 주 범위 안에 있다면 이번 주 할일 (파란색)
+                          else if (taskEndDate >= startOfWeek && taskEndDate <= endOfWeek) {
+                            categoryMark = '🔵';
+                            categoryBgColor = 'bg-blue-50 border-blue-200';
                           }
-                          
-                          if (isThisWeekTask) {
+                        }
+                        // 3. scheduled_date가 이번 주 이전이면서 완료되지 않았다면 지연된 할일 (빨간색)
+                        else if (task.scheduled_date && !task.completed) {
+                          const taskStartDate = new Date(task.scheduled_date);
+                          taskStartDate.setHours(0, 0, 0, 0);
+                          if (taskStartDate < startOfWeek) {
+                            categoryMark = '🔴';
+                            categoryBgColor = 'bg-red-50 border-red-200';
+                          }
+                          // scheduled_date가 이번 주 범위 안에 있다면 이번 주 할일 (파란색)
+                          else if (taskStartDate >= startOfWeek && taskStartDate <= endOfWeek) {
                             categoryMark = '🔵';
                             categoryBgColor = 'bg-blue-50 border-blue-200';
                           }
