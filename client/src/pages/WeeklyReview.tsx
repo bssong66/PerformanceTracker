@@ -690,20 +690,65 @@ export default function WeeklyReview() {
                     </Button>
                   </div>
                   
-                  <div className="h-[35rem] overflow-y-auto space-y-3 pr-2">
-                    {(weekTasks as any[])
-                      .filter((task: any) => !hideCompletedTasks || !task.completed)
-                      .sort((a: any, b: any) => {
-                        // Priority order: A > B > C (or null/undefined)
+                  <div className="h-[35rem] overflow-y-auto space-y-4 pr-2">
+                    {(() => {
+                      const startOfWeek = new Date(weekStartDate);
+                      const endOfWeek = new Date(startOfWeek);
+                      endOfWeek.setDate(startOfWeek.getDate() + 6);
+                      endOfWeek.setHours(23, 59, 59, 999);
+
+                      const filteredTasks = (weekTasks as any[]).filter((task: any) => !hideCompletedTasks || !task.completed);
+                      
+                      // 카테고리별로 그룹화
+                      const carriedOverTasks = filteredTasks.filter((task: any) => {
+                        if (task.isCarriedOver) return true;
+                        if (task.scheduledDate) {
+                          const taskDate = new Date(task.scheduledDate);
+                          return taskDate < startOfWeek && !task.completed;
+                        }
+                        if (task.endDate) {
+                          const taskDate = new Date(task.endDate);
+                          return taskDate < startOfWeek && !task.completed;
+                        }
+                        return false;
+                      }).sort((a: any, b: any) => {
                         const priorityOrder = { 'A': 1, 'B': 2, 'C': 3 };
                         const aPriority = priorityOrder[a.priority as keyof typeof priorityOrder] || 4;
                         const bPriority = priorityOrder[b.priority as keyof typeof priorityOrder] || 4;
                         return aPriority - bPriority;
-                      })
-                      .map((task: any, index: number) => {
-                        // 지연 여부 판단 - 날짜만 비교하고, 날짜가 설정된 할일만 지연 판단
+                      });
+
+                      const thisWeekTasks = filteredTasks.filter((task: any) => {
+                        if (task.isCarriedOver) return false;
+                        if (task.scheduledDate) {
+                          const taskDate = new Date(task.scheduledDate);
+                          return taskDate >= startOfWeek && taskDate <= endOfWeek;
+                        }
+                        if (task.endDate) {
+                          const taskDate = new Date(task.endDate);
+                          return taskDate >= startOfWeek && taskDate <= endOfWeek;
+                        }
+                        return false;
+                      }).sort((a: any, b: any) => {
+                        const priorityOrder = { 'A': 1, 'B': 2, 'C': 3 };
+                        const aPriority = priorityOrder[a.priority as keyof typeof priorityOrder] || 4;
+                        const bPriority = priorityOrder[b.priority as keyof typeof priorityOrder] || 4;
+                        return aPriority - bPriority;
+                      });
+
+                      const unscheduledTasks = filteredTasks.filter((task: any) => {
+                        return !task.scheduledDate && !task.endDate && !task.isCarriedOver;
+                      }).sort((a: any, b: any) => {
+                        const priorityOrder = { 'A': 1, 'B': 2, 'C': 3 };
+                        const aPriority = priorityOrder[a.priority as keyof typeof priorityOrder] || 4;
+                        const bPriority = priorityOrder[b.priority as keyof typeof priorityOrder] || 4;
+                        return aPriority - bPriority;
+                      });
+
+                      const renderTaskItem = (task: any, index: number) => {
+                        // 지연 여부 판단
                         const today = new Date();
-                        today.setHours(0, 0, 0, 0); // 시간을 00:00:00으로 설정
+                        today.setHours(0, 0, 0, 0);
                         
                         let isDelayed = false;
                         
@@ -771,18 +816,42 @@ export default function WeeklyReview() {
                             )}
                           </div>
                         );
-                      })}
-                    
-                    {(weekTasks as any[]).filter((task: any) => !hideCompletedTasks || !task.completed).length === 0 && (
-                      <div className="text-center p-4 bg-gray-50 rounded-lg">
-                        <div className="text-sm text-gray-600 font-medium">
-                          {hideCompletedTasks ? '미완료된 할일이 없습니다.' : '등록된 할일이 없습니다.'}
+                      };
+
+                      const renderTaskGroup = (title: string, tasks: any[], bgColor: string) => {
+                        if (tasks.length === 0) return null;
+                        
+                        return (
+                          <div key={title} className="space-y-2">
+                            <div className={`px-2 py-1 rounded text-xs font-medium ${bgColor}`}>
+                              {title} ({tasks.length}개)
+                            </div>
+                            <div className="space-y-2">
+                              {tasks.map(renderTaskItem)}
+                            </div>
+                          </div>
+                        );
+                      };
+
+                      return (
+                        <div className="space-y-4">
+                          {renderTaskGroup("이월된 할일", carriedOverTasks, "bg-red-100 text-red-700")}
+                          {renderTaskGroup("금주에 계획된 할일", thisWeekTasks, "bg-blue-100 text-blue-700")}
+                          {renderTaskGroup("일정이 지정되지 않은 할일", unscheduledTasks, "bg-gray-100 text-gray-700")}
+                          
+                          {filteredTasks.length === 0 && (
+                            <div className="text-center p-4 bg-gray-50 rounded-lg">
+                              <div className="text-sm text-gray-600 font-medium">
+                                {hideCompletedTasks ? '미완료된 할일이 없습니다.' : '등록된 할일이 없습니다.'}
+                              </div>
+                              <div className="text-xs text-gray-500 mt-1">
+                                {hideCompletedTasks ? '모든 할일이 완료되었습니다!' : '할일을 추가해보세요.'}
+                              </div>
+                            </div>
+                          )}
                         </div>
-                        <div className="text-xs text-gray-500 mt-1">
-                          {hideCompletedTasks ? '모든 할일이 완료되었습니다!' : '할일을 추가해보세요.'}
-                        </div>
-                      </div>
-                    )}
+                      );
+                    })()}
                   </div>
                   
                   {(weekTasks as any[]).filter((task: any) => !hideCompletedTasks || !task.completed).length > 0 && (
