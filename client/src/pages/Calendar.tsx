@@ -105,6 +105,10 @@ export default function Calendar() {
   // Fetch events
   const { data: events = [], isLoading: eventsLoading, error: eventsError } = useQuery({
     queryKey: ['/api/events', (user as any)?.id || '1'],
+    queryFn: () => {
+      const currentYear = new Date().getFullYear();
+      return fetch(`/api/events/${(user as any)?.id}?startDate=${currentYear}-01-01&endDate=${currentYear}-12-31`).then(res => res.json());
+    },
     enabled: !!(user as any)?.id,
     retry: false,
   });

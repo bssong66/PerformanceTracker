@@ -78,34 +78,71 @@ export default function Dashboard() {
     (foundation as any).coreValue3,
   ].filter(Boolean) : [];
 
-  // 전체 성과 통계
+  // 전체 성과 통계 (현재 연도 기준으로 필터링)
   const overallStats = {
-    totalTasks: (tasks as any[]).length,
-    completedTasks: (tasks as any[]).filter((t: any) => t.completed).length,
-    totalProjects: (projects as any[]).length,
-    // Projects table doesn't have status column - calculate completion based on end_date
+    totalTasks: (tasks as any[]).filter((t: any) => {
+      if (!t.createdAt) return true; // createdAt이 없으면 포함
+      return new Date(t.createdAt).getFullYear() === currentYear;
+    }).length,
+    completedTasks: (tasks as any[]).filter((t: any) => {
+      if (!t.createdAt) return t.completed; // createdAt이 없으면 완료 여부만 확인
+      return t.completed && new Date(t.createdAt).getFullYear() === currentYear;
+    }).length,
+    totalProjects: (projects as any[]).filter((p: any) => {
+      if (!p.createdAt) return true; // createdAt이 없으면 포함
+      return new Date(p.createdAt).getFullYear() === currentYear;
+    }).length,
+    // Projects 완료 계산: completed 필드 사용
     completedProjects: (projects as any[]).filter((p: any) => {
-      if (!p.endDate) return false;
-      const endDate = new Date(p.endDate);
-      return endDate <= today;
+      if (!p.createdAt) return p.completed || false;
+      const isCurrentYear = new Date(p.createdAt).getFullYear() === currentYear;
+      return isCurrentYear && (p.completed || false);
     }).length,
     totalGoals: (goals as any[]).length,
-    activeHabits: (habits as any[]).filter((h: any) => h.isActive).length,
+    activeHabits: (habits as any[]).filter((h: any) => {
+      if (!h.isActive) return false;
+      if (!h.createdAt) return true; // createdAt이 없으면 포함
+      return new Date(h.createdAt).getFullYear() === currentYear;
+    }).length,
   };
 
-  // 우선순위별 할일 통계
+  // 우선순위별 할일 통계 (현재 연도 기준)
   const priorityStats = {
     A: {
-      total: (tasks as any[]).filter((t: any) => t.priority === 'A').length,
-      completed: (tasks as any[]).filter((t: any) => t.priority === 'A' && t.completed).length,
+      total: (tasks as any[]).filter((t: any) => {
+        if (t.priority !== 'A') return false;
+        if (!t.createdAt) return true;
+        return new Date(t.createdAt).getFullYear() === currentYear;
+      }).length,
+      completed: (tasks as any[]).filter((t: any) => {
+        if (t.priority !== 'A' || !t.completed) return false;
+        if (!t.createdAt) return true;
+        return new Date(t.createdAt).getFullYear() === currentYear;
+      }).length,
     },
     B: {
-      total: (tasks as any[]).filter((t: any) => t.priority === 'B').length,
-      completed: (tasks as any[]).filter((t: any) => t.priority === 'B' && t.completed).length,
+      total: (tasks as any[]).filter((t: any) => {
+        if (t.priority !== 'B') return false;
+        if (!t.createdAt) return true;
+        return new Date(t.createdAt).getFullYear() === currentYear;
+      }).length,
+      completed: (tasks as any[]).filter((t: any) => {
+        if (t.priority !== 'B' || !t.completed) return false;
+        if (!t.createdAt) return true;
+        return new Date(t.createdAt).getFullYear() === currentYear;
+      }).length,
     },
     C: {
-      total: (tasks as any[]).filter((t: any) => t.priority === 'C').length,
-      completed: (tasks as any[]).filter((t: any) => t.priority === 'C' && t.completed).length,
+      total: (tasks as any[]).filter((t: any) => {
+        if (t.priority !== 'C') return false;
+        if (!t.createdAt) return true;
+        return new Date(t.createdAt).getFullYear() === currentYear;
+      }).length,
+      completed: (tasks as any[]).filter((t: any) => {
+        if (t.priority !== 'C' || !t.completed) return false;
+        if (!t.createdAt) return true;
+        return new Date(t.createdAt).getFullYear() === currentYear;
+      }).length,
     },
   };
 
@@ -130,21 +167,33 @@ export default function Dashboard() {
       : 0;
   }
 
-  // 핵심가치별 진행률 계산
+  // 핵심가치별 진행률 계산 (현재 연도 기준)
   const coreValueProgress = coreValues.map(value => {
-    const relatedTasks = (tasks as any[]).filter((t: any) => t.coreValue === value);
-    const relatedProjects = (projects as any[]).filter((p: any) => p.coreValue === value);
-    const relatedHabits = (habits as any[]).filter((h: any) => h.coreValue === value && h.isActive);
-    const relatedEvents = Array.isArray(events) ? (events as any[]).filter((e: any) => e.coreValue === value) : [];
+    const relatedTasks = (tasks as any[]).filter((t: any) => {
+      if (t.coreValue !== value) return false;
+      if (!t.createdAt) return true;
+      return new Date(t.createdAt).getFullYear() === currentYear;
+    });
+    const relatedProjects = (projects as any[]).filter((p: any) => {
+      if (p.coreValue !== value) return false;
+      if (!p.createdAt) return true;
+      return new Date(p.createdAt).getFullYear() === currentYear;
+    });
+    const relatedHabits = (habits as any[]).filter((h: any) => {
+      if (h.coreValue !== value || !h.isActive) return false;
+      if (!h.createdAt) return true;
+      return new Date(h.createdAt).getFullYear() === currentYear;
+    });
+    const relatedEvents = Array.isArray(events) ? (events as any[]).filter((e: any) => {
+      if (e.coreValue !== value) return false;
+      if (!e.createdAt) return true;
+      return new Date(e.createdAt).getFullYear() === currentYear;
+    }) : [];
 
     const totalItems = relatedTasks.length + relatedProjects.length + relatedHabits.length + relatedEvents.length;
     const completedItems = 
       relatedTasks.filter((t: any) => t.completed).length +
-      relatedProjects.filter((p: any) => {
-        if (!p.endDate) return false;
-        const endDate = new Date(p.endDate);
-        return endDate <= today;
-      }).length +
+      relatedProjects.filter((p: any) => p.completed || false).length +
       relatedEvents.filter((e: any) => e.completed).length;
 
     return {
@@ -153,11 +202,7 @@ export default function Dashboard() {
       completedItems,
       percentage: totalItems > 0 ? Math.round((completedItems / totalItems) * 100) : 0,
       tasks: { total: relatedTasks.length, completed: relatedTasks.filter((t: any) => t.completed).length },
-      projects: { total: relatedProjects.length, completed: relatedProjects.filter((p: any) => {
-        if (!p.endDate) return false;
-        const endDate = new Date(p.endDate);
-        return endDate <= today;
-      }).length },
+      projects: { total: relatedProjects.length, completed: relatedProjects.filter((p: any) => p.completed || false).length },
       habits: { total: relatedHabits.length },
       events: { total: relatedEvents.length, completed: relatedEvents.filter((e: any) => e.completed).length },
     };
@@ -213,11 +258,23 @@ export default function Dashboard() {
     completedActivities: 0
   };
 
-  // 각 연간 목표별로 관련된 활동들을 계산
+  // 각 연간 목표별로 관련된 활동들을 계산 (현재 연도 기준)
   goals.forEach((goal: any) => {
-    const relatedTasks = (tasks as any[]).filter((t: any) => t.annualGoal === goal.title);
-    const relatedEvents = Array.isArray(events) ? (events as any[]).filter((e: any) => e.annualGoal === goal.title) : [];
-    const relatedHabits = (habits as any[]).filter((h: any) => h.annualGoal === goal.title && h.isActive);
+    const relatedTasks = (tasks as any[]).filter((t: any) => {
+      if (t.annualGoal !== goal.title) return false;
+      if (!t.createdAt) return true;
+      return new Date(t.createdAt).getFullYear() === currentYear;
+    });
+    const relatedEvents = Array.isArray(events) ? (events as any[]).filter((e: any) => {
+      if (e.annualGoal !== goal.title) return false;
+      if (!e.createdAt) return true;
+      return new Date(e.createdAt).getFullYear() === currentYear;
+    }) : [];
+    const relatedHabits = (habits as any[]).filter((h: any) => {
+      if (h.annualGoal !== goal.title || !h.isActive) return false;
+      if (!h.createdAt) return true;
+      return new Date(h.createdAt).getFullYear() === currentYear;
+    });
     
     // 할일과 일정은 개별 완료 여부로 계산
     goalRelatedStats.totalActivities += relatedTasks.length + relatedEvents.length;

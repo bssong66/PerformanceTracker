@@ -80,9 +80,10 @@ export default function HabitManagement() {
 
   // Fetch annual goals
   const { data: annualGoals = [] } = useQuery({
-    queryKey: ['goals', user?.id],
+    queryKey: ['goals', user?.id, new Date().getFullYear()],
     queryFn: async () => {
-      const response = await fetch(`/api/goals/${user?.id}`);
+      const currentYear = new Date().getFullYear();
+      const response = await fetch(`/api/goals/${user?.id}?year=${currentYear}`);
       if (!response.ok) {
         return [];
       }
