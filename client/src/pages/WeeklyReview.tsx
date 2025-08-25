@@ -9,7 +9,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { ProgressBar } from "@/components/ProgressBar";
 import { PriorityBadge } from "@/components/PriorityBadge";
-import { Save, TrendingUp, BarChart3, Target, Plus, X, ChevronLeft, ChevronRight, Siren, Calendar as CalendarIcon, Activity, Heart, Dumbbell, Coffee, Book, Moon, Sunrise, Timer, Zap, Type, Hash, List, Clock, Minus, FileText, Download, Eye, EyeOff } from "lucide-react";
+import { Save, TrendingUp, BarChart3, Target, Plus, X, ChevronLeft, ChevronRight, Siren, Calendar as CalendarIcon, Activity, Heart, Dumbbell, Coffee, Book, Moon, Sunrise, Timer, Zap, Type, Hash, List, Clock, Minus, FileText, Download } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { api, saveWeeklyReview } from "@/lib/api";
 import { queryClient } from "@/lib/queryClient";
@@ -57,9 +57,6 @@ export default function WeeklyReview() {
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [showImageViewer, setShowImageViewer] = useState(false);
-  const [showCompletedTasks, setShowCompletedTasks] = useState(false);
-  const [workHours, setWorkHours] = useState(0);
-  const [personalHours, setPersonalHours] = useState(0);
   
   // 파일 업로드 관련 상태
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
@@ -75,7 +72,7 @@ export default function WeeklyReview() {
   const { data: user } = useQuery({
     queryKey: ['/api/auth/user'],
     retry: false,
-  }) as { data?: { id?: string, claims?: { sub: string } } };
+  });
 
   const { data: foundation } = useQuery({
     queryKey: ['foundation', 'auth', new Date().getFullYear()],
@@ -139,12 +136,11 @@ export default function WeeklyReview() {
   const { data: weekHabitLogs = [] } = useQuery({
     queryKey: ['habitLogs', 'week', weekStartDate, user?.id],
     queryFn: async () => {
-      const userId = user?.id || user?.claims?.sub;
-      if (!userId) return [];
+      if (!user?.id) return [];
       const logs = [];
       for (let i = 0; i < 7; i++) {
         const date = format(addDays(weekStart, i), 'yyyy-MM-dd');
-        const response = await fetch(`/api/habit-logs/${userId}/${date}`);
+        const response = await fetch(`/api/habit-logs/${user.id}/${date}`);
         if (response.ok) {
           const dayLogs = await response.json();
           logs.push(...dayLogs);
@@ -152,7 +148,7 @@ export default function WeeklyReview() {
       }
       return logs;
     },
-    enabled: !!(user?.id || user?.claims?.sub),
+    enabled: !!user?.id,
     retry: false,
   });
 
@@ -476,7 +472,7 @@ export default function WeeklyReview() {
         setSelectedFiles(mockFiles);
       }
     }
-  }, [weeklyReview]); // weeklyReview만 의존성으로 사용하여 무한 루프 방지
+  }, [weeklyReview?.id]); // weeklyReview.id만 의존성으로 사용하여 무한 루프 방지
 
   const saveReviewMutation = useMutation({
     mutationFn: saveWeeklyReview,
@@ -619,7 +615,7 @@ export default function WeeklyReview() {
                       <ProgressBar 
                         value={taskStats.cCompleted} 
                         max={taskStats.cTotal || 1} 
-                        color="success"
+                        color="info"
                       />
                     </div>
                   </div>
@@ -629,29 +625,11 @@ export default function WeeklyReview() {
                 <div className="flex-1 flex flex-col">
                   <div className="flex items-center justify-between mb-2">
                     <h4 className="text-sm font-semibold text-gray-900">금주의 할일</h4>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setShowCompletedTasks(!showCompletedTasks)}
-                      className="h-7 px-2 text-xs"
-                    >
-                      {showCompletedTasks ? (
-                        <>
-                          <EyeOff className="h-3 w-3 mr-1" />
-                          미완료 할일
-                        </>
-                      ) : (
-                        <>
-                          <Eye className="h-3 w-3 mr-1" />
-                          완료된 할일
-                        </>
-                      )}
-                    </Button>
                   </div>
                   
                   <div className="h-[35rem] overflow-y-auto space-y-3 pr-2">
                     {(weekTasks as any[])
-                      .filter((task: any) => showCompletedTasks ? task.completed : !task.completed)
+                      .filter((task: any) => !task.completed)
                       .sort((a: any, b: any) => {
                         // Priority order: A > B > C (or null/undefined)
                         const priorityOrder = { 'A': 1, 'B': 2, 'C': 3 };
@@ -717,32 +695,21 @@ export default function WeeklyReview() {
                         );
                       })}
                     
-                    {showCompletedTasks ? (
-                      (weekTasks as any[]).filter((task: any) => task.completed).length === 0 && (
-                        <div className="text-center p-4 bg-gray-50 rounded-lg">
-                          <div className="text-sm text-gray-600 font-medium">완료된 할일이 없습니다</div>
-                          <div className="text-xs text-gray-500 mt-1">할일을 완료해보세요.</div>
-                        </div>
-                      )
-                    ) : (
-                      (weekTasks as any[]).filter((task: any) => !task.completed).length === 0 && (
-                        <div className="text-center p-4 bg-green-50 rounded-lg">
-                          <div className="text-sm text-green-600 font-medium">모든 할일이 완료되었습니다!</div>
-                          <div className="text-xs text-gray-500 mt-1">이번 주 정말 수고하셨습니다.</div>
-                        </div>
-                      )
+                    {(weekTasks as any[]).filter((task: any) => !task.completed).length === 0 && (
+                      <div className="text-center p-4 bg-green-50 rounded-lg">
+                        <div className="text-sm text-green-600 font-medium">모든 할일이 완료되었습니다!</div>
+                        <div className="text-xs text-gray-500 mt-1">이번 주 정말 수고하셨습니다.</div>
+                      </div>
                     )}
                   </div>
                   
-                  <div className="mt-3 text-center">
-                    <div className="text-xs text-gray-500 bg-gray-50 px-2 py-1 rounded">
-                      {showCompletedTasks ? (
-                        <>총 {(weekTasks as any[]).filter((task: any) => task.completed).length}개의 완료된 할일</>
-                      ) : (
-                        <>총 {(weekTasks as any[]).filter((task: any) => !task.completed).length}개의 미완료 할일</>
-                      )}
+                  {(weekTasks as any[]).filter((task: any) => !task.completed).length > 0 && (
+                    <div className="mt-3 text-center">
+                      <div className="text-xs text-gray-500 bg-gray-50 px-2 py-1 rounded">
+                        총 {(weekTasks as any[]).filter((task: any) => !task.completed).length}개의 미완료 할일
+                      </div>
                     </div>
-                  </div>
+                  )}
                 </div>
 
               </CardContent>
