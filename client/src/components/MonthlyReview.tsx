@@ -219,7 +219,11 @@ export default function MonthlyReview() {
           return percentage;
         });
 
-        setValueAlignments(alignmentScores);
+        // Only update if values actually changed to prevent infinite loop
+        const hasChanged = alignmentScores.some((score, index) => score !== valueAlignments[index]);
+        if (hasChanged) {
+          setValueAlignments(alignmentScores);
+        }
       }
     }
   }, [foundation, monthTasks, monthEvents, monthTimeBlocks]);
@@ -642,9 +646,11 @@ export default function MonthlyReview() {
                                 )}
                               </div>
                             </div>
-                            <div className="text-xs text-red-600 font-medium">
-                              {isDelayed ? '지연' : '미완료'}
-                            </div>
+                            {isDelayed && (
+                              <div className="text-xs text-red-600 font-medium">
+                                지연
+                              </div>
+                            )}
                           </div>
                         );
                       })}
