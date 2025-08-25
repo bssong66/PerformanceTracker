@@ -1052,7 +1052,7 @@ export default function WeeklyReview() {
                       className="h-8 px-2 text-xs"
                       title="번호 목록 추가"
                     >
-                      1.
+                      1. 번호
                     </Button>
                     <Button
                       variant="ghost"
