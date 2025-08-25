@@ -1760,9 +1760,15 @@ export default function DailyPlanning() {
                       <div className="space-y-1">
                         {(() => {
                           const today = format(new Date(), 'yyyy-MM-dd');
-                          const allTodayTasks = allTasks.filter((task: any) => 
-                            task.startDate === today || task.endDate === today
-                          );
+                          // 오늘 할일 + 과거에 지연된 미완료 할일
+                          const allTodayTasks = allTasks.filter((task: any) => {
+                            const isToday = task.startDate === today || task.endDate === today;
+                            const isOverdue = !task.completed && (
+                              (task.endDate && task.endDate < today) || 
+                              (task.startDate && task.startDate < today && !task.endDate)
+                            );
+                            return isToday || isOverdue;
+                          });
                           const todayTasks = showCompletedTasks ? allTodayTasks : allTodayTasks.filter((task: any) => !task.completed);
                           
                           return todayTasks.length === 0 ? (
@@ -1773,6 +1779,12 @@ export default function DailyPlanning() {
                               const priorityColor = task.priority === 'A' ? 'bg-red-100 text-red-700' :
                                                    task.priority === 'B' ? 'bg-yellow-100 text-yellow-700' :
                                                    'bg-gray-100 text-gray-700';
+                              
+                              // 지연된 할일인지 확인
+                              const isOverdue = !task.completed && (
+                                (task.endDate && task.endDate < today) || 
+                                (task.startDate && task.startDate < today && !task.endDate)
+                              );
                               
                               return (
                                 <div 
@@ -1816,6 +1828,13 @@ export default function DailyPlanning() {
                                     <span className={`flex-1 text-sm font-medium ${task.completed ? 'line-through text-gray-500' : 'text-gray-900'}`}>
                                       {task.title}
                                     </span>
+                                    
+                                    {/* 지연 표시 */}
+                                    {isOverdue && (
+                                      <span className="px-2 py-1 bg-red-100 text-red-600 rounded text-xs font-bold animate-pulse">
+                                        지연
+                                      </span>
+                                    )}
                                   </div>
                                   
                                   {/* 아랫줄: 핵심가치, 연간목표 */}
