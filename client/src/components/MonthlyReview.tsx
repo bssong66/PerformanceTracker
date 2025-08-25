@@ -581,6 +581,23 @@ export default function MonthlyReview() {
                         color="warning"
                       />
                     </div>
+
+                    <div>
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center space-x-2">
+                          <PriorityBadge priority="C" size="sm" />
+                          <span className="text-sm text-gray-600">C급 할일</span>
+                        </div>
+                        <span className="text-sm font-semibold text-gray-900">
+                          {taskStats.cCompleted}/{taskStats.cTotal}
+                        </span>
+                      </div>
+                      <ProgressBar 
+                        value={taskStats.cCompleted} 
+                        max={taskStats.cTotal || 1} 
+                        color="info"
+                      />
+                    </div>
                   </div>
                 </div>
 
