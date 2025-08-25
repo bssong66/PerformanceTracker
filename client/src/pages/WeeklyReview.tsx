@@ -715,58 +715,69 @@ export default function WeeklyReview() {
                       endOfWeek.setDate(startOfWeek.getDate() + 6);
                       endOfWeek.setHours(23, 59, 59, 999);
 
-                      const filteredTasks = (weekTasks as any[]).filter((task: any) => !hideCompletedTasks || !task.completed);
+                      // 완료된 할일 토글에 따른 전체 필터링 (월간 리뷰와 동일한 방식)
+                      const filteredTasks = hideCompletedTasks 
+                        ? (weekTasks as any[]).filter((task: any) => !task.completed)
+                        : (weekTasks as any[]);
                       
-                      // 카테고리별로 그룹화 (camelCase와 snake_case 모두 지원)
-                      const carriedOverTasks = (weekTasks as any[]).filter((task: any) => {
-                        if (task.is_carried_over || task.isCarriedOver) return true;
-                        if (task.scheduled_date || task.scheduledDate) {
-                          const taskDate = new Date(task.scheduled_date || task.scheduledDate);
-                          return taskDate < startOfWeek && !task.completed;
+                      // 완료 상태별 정렬 (미완료 > 완료), 그 다음 우선순위별 정렬
+                      const sortedTasks = filteredTasks.sort((a: any, b: any) => {
+                        // Completed tasks go to bottom within each category
+                        if (a.completed !== b.completed) {
+                          return a.completed ? 1 : -1;
                         }
-                        if (task.end_date || task.endDate) {
-                          const taskDate = new Date(task.end_date || task.endDate);
-                          return taskDate < startOfWeek && !task.completed;
-                        }
-                        return false;
-                      }).sort((a: any, b: any) => {
+                        // Priority order: A > B > C
                         const priorityOrder = { 'A': 1, 'B': 2, 'C': 3 };
                         const aPriority = priorityOrder[a.priority as keyof typeof priorityOrder] || 4;
                         const bPriority = priorityOrder[b.priority as keyof typeof priorityOrder] || 4;
                         return aPriority - bPriority;
                       });
-
-                      const thisWeekTasks = (weekTasks as any[]).filter((task: any) => {
-                        if (task.is_carried_over || task.isCarriedOver) return false;
-                        if (task.scheduled_date || task.scheduledDate) {
-                          const taskDate = new Date(task.scheduled_date || task.scheduledDate);
-                          return taskDate >= startOfWeek && taskDate <= endOfWeek;
+                      
+                      // 카테고리별로 그룹화
+                      const carriedOverTasks: any[] = [];
+                      const thisWeekTasks: any[] = [];
+                      const unscheduledTasks: any[] = [];
+                      
+                      sortedTasks.forEach((task: any) => {
+                        // 1. 이월된 할일 확인
+                        if (task.is_carried_over || task.isCarriedOver) {
+                          carriedOverTasks.push(task);
                         }
-                        if (task.end_date || task.endDate) {
-                          const taskDate = new Date(task.end_date || task.endDate);
-                          return taskDate >= startOfWeek && taskDate <= endOfWeek;
+                        // 2. endDate 또는 end_date 기준 분류
+                        else if (task.endDate || task.end_date) {
+                          const taskEndDate = new Date(task.endDate || task.end_date);
+                          taskEndDate.setHours(23, 59, 59, 999);
+                          if (taskEndDate < startOfWeek) {
+                            carriedOverTasks.push(task);
+                          }
+                          // end_date가 이번 주 범위 안에 있다면 금주 할일
+                          else if (taskEndDate >= startOfWeek && taskEndDate <= endOfWeek) {
+                            thisWeekTasks.push(task);
+                          }
+                          else {
+                            unscheduledTasks.push(task);
+                          }
                         }
-                        return false;
-                      }).sort((a: any, b: any) => {
-                        const priorityOrder = { 'A': 1, 'B': 2, 'C': 3 };
-                        const aPriority = priorityOrder[a.priority as keyof typeof priorityOrder] || 4;
-                        const bPriority = priorityOrder[b.priority as keyof typeof priorityOrder] || 4;
-                        return aPriority - bPriority;
+                        // 3. scheduledDate 또는 scheduled_date 기준 분류
+                        else if (task.scheduledDate || task.scheduled_date) {
+                          const taskStartDate = new Date(task.scheduledDate || task.scheduled_date);
+                          taskStartDate.setHours(0, 0, 0, 0);
+                          if (taskStartDate < startOfWeek) {
+                            carriedOverTasks.push(task);
+                          }
+                          // scheduled_date가 이번 주 범위 안에 있다면 금주 할일
+                          else if (taskStartDate >= startOfWeek && taskStartDate <= endOfWeek) {
+                            thisWeekTasks.push(task);
+                          }
+                          else {
+                            unscheduledTasks.push(task);
+                          }
+                        }
+                        else {
+                          // scheduled_date와 end_date가 모두 없는 할일
+                          unscheduledTasks.push(task);
+                        }
                       });
-
-                      const unscheduledTasks = (weekTasks as any[]).filter((task: any) => {
-                        return !(task.scheduled_date || task.scheduledDate) && !(task.end_date || task.endDate) && !(task.is_carried_over || task.isCarriedOver);
-                      }).sort((a: any, b: any) => {
-                        const priorityOrder = { 'A': 1, 'B': 2, 'C': 3 };
-                        const aPriority = priorityOrder[a.priority as keyof typeof priorityOrder] || 4;
-                        const bPriority = priorityOrder[b.priority as keyof typeof priorityOrder] || 4;
-                        return aPriority - bPriority;
-                      });
-
-                      // 완료된 할일 토글에 따른 필터링
-                      const displayedCarriedOverTasks = hideCompletedTasks ? carriedOverTasks.filter((task: any) => !task.completed) : carriedOverTasks;
-                      const displayedThisWeekTasks = hideCompletedTasks ? thisWeekTasks.filter((task: any) => !task.completed) : thisWeekTasks;
-                      const displayedUnscheduledTasks = hideCompletedTasks ? unscheduledTasks.filter((task: any) => !task.completed) : unscheduledTasks;
 
                       const renderTaskItem = (task: any) => {
                         // 지연 여부 판단
@@ -845,9 +856,9 @@ export default function WeeklyReview() {
 
                       return (
                         <div className="space-y-4">
-                          {renderTaskGroup("이월된 할일", displayedCarriedOverTasks, "bg-red-100 text-red-700")}
-                          {renderTaskGroup("금주에 계획된 할일", displayedThisWeekTasks, "bg-blue-100 text-blue-700")}
-                          {renderTaskGroup("일정이 지정되지 않은 할일", displayedUnscheduledTasks, "bg-gray-100 text-gray-700")}
+                          {renderTaskGroup("이월된 할일", carriedOverTasks, "bg-red-100 text-red-700")}
+                          {renderTaskGroup("금주에 계획된 할일", thisWeekTasks, "bg-blue-100 text-blue-700")}
+                          {renderTaskGroup("일정이 지정되지 않은 할일", unscheduledTasks, "bg-gray-100 text-gray-700")}
                           
                           {filteredTasks.length === 0 && (
                             <div className="text-center p-4 bg-gray-50 rounded-lg">

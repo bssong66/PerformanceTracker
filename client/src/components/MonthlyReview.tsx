@@ -736,7 +736,7 @@ export default function MonthlyReview() {
                         }
                         
                         return (
-                          <div key={task.id} className={`flex items-center justify-between p-1.5 rounded-lg border ml-2.5 ${
+                          <div key={task.id} className={`flex items-center justify-between p-1.5 rounded-lg border ${
                             task.completed 
                               ? 'bg-green-50 border-green-200' 
                               : categoryBgColor
