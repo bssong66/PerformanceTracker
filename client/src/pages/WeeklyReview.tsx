@@ -58,6 +58,8 @@ export default function WeeklyReview() {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [showImageViewer, setShowImageViewer] = useState(false);
   const [showCompletedTasks, setShowCompletedTasks] = useState(false);
+  const [workHours, setWorkHours] = useState(0);
+  const [personalHours, setPersonalHours] = useState(0);
   
   // 파일 업로드 관련 상태
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
@@ -135,13 +137,12 @@ export default function WeeklyReview() {
 
   // Get habit logs for the current week to calculate completion rates
   const { data: weekHabitLogs = [] } = useQuery({
-    queryKey: ['habitLogs', 'week', weekStartDate, user?.id],
+    queryKey: ['habitLogs', 'week', weekStartDate],
     queryFn: async () => {
-      if (!user?.id) return [];
       const logs = [];
       for (let i = 0; i < 7; i++) {
         const date = format(addDays(weekStart, i), 'yyyy-MM-dd');
-        const response = await fetch(`/api/habit-logs/${user.id}/${date}`);
+        const response = await fetch(`/api/habit-logs/auth/${date}`);
         if (response.ok) {
           const dayLogs = await response.json();
           logs.push(...dayLogs);
@@ -149,7 +150,6 @@ export default function WeeklyReview() {
       }
       return logs;
     },
-    enabled: !!user?.id,
     retry: false,
   });
 
@@ -473,7 +473,7 @@ export default function WeeklyReview() {
         setSelectedFiles(mockFiles);
       }
     }
-  }, [weeklyReview?.id]); // weeklyReview.id만 의존성으로 사용하여 무한 루프 방지
+  }, [weeklyReview]); // weeklyReview만 의존성으로 사용하여 무한 루프 방지
 
   const saveReviewMutation = useMutation({
     mutationFn: saveWeeklyReview,
@@ -616,7 +616,7 @@ export default function WeeklyReview() {
                       <ProgressBar 
                         value={taskStats.cCompleted} 
                         max={taskStats.cTotal || 1} 
-                        color="info"
+                        color="success"
                       />
                     </div>
                   </div>
