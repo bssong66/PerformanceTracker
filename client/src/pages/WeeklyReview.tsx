@@ -1093,7 +1093,7 @@ export default function WeeklyReview() {
                     value={reflection}
                     onChange={handleReflectionChange}
                     onKeyDown={handleKeyDown}
-                    className="resize-none min-h-[120px]"
+                    className="resize-vertical min-h-[120px]"
                     style={{ height: 'auto' }}
                   />
 
