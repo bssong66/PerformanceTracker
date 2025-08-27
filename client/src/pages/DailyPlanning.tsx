@@ -467,13 +467,20 @@ export default function DailyPlanning() {
     },
   });
 
-  const saveReflectionMutation = useMutation({
+  const saveDailyReflectionMutation = useMutation({
     mutationFn: saveDailyReflection,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['dailyReflection', user!.id, today] });
       toast({
         title: "성공",
         description: "오늘의 기록이 저장되었습니다.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "오류",
+        description: "기록 저장에 실패했습니다.",
+        variant: "destructive",
       });
     },
   });
@@ -863,6 +870,36 @@ export default function DailyPlanning() {
     if (window.confirm('이 할일을 삭제하시겠습니까?')) {
       deleteTaskMutation.mutate(id);
     }
+  };
+
+  const handleSaveReflection = () => {
+    if (!reflection.trim() && selectedFiles.length === 0) {
+      toast({
+        title: "저장할 내용이 없습니다",
+        description: "일기를 작성하거나 파일을 추가한 후 저장하세요.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // FormData 생성하여 텍스트와 파일 모두 전송
+    const formData = new FormData();
+    formData.append('userId', user!.id);
+    formData.append('date', today);
+    formData.append('content', reflection.trim());
+
+    // 새로운 파일들 추가
+    selectedFiles.forEach((file, index) => {
+      formData.append(`files`, file);
+    });
+
+    // API 호출
+    saveDailyReflectionMutation.mutate({
+      userId: user!.id,
+      date: today,
+      content: reflection.trim(),
+      files: selectedFiles
+    });
   };
 
   const handleSaveEditedTask = () => {
