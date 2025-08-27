@@ -228,34 +228,34 @@ export default function DailyPlanning() {
   // 오늘 날짜의 모든 할일 가져오기 (날짜 필터 제거)
   const { data: allTasks = [], isLoading: tasksLoading } = useQuery({
     queryKey: ['tasks', user?.id],
-    queryFn: () => fetch(`/api/tasks/${user!.id}`).then(res => res.json()),
+    queryFn: () => user?.id ? fetch(`/api/tasks/${user.id}`).then(res => res.json()) : Promise.resolve([]),
     enabled: !!user?.id,
   });
 
   // 습관 데이터 가져오기
   const { data: habits = [] } = useQuery({
     queryKey: ['habits', user?.id],
-    queryFn: () => fetch(`/api/habits/${user!.id}`).then(res => res.json()),
+    queryFn: () => user?.id ? fetch(`/api/habits/${user.id}`).then(res => res.json()) : Promise.resolve([]),
     enabled: !!user?.id,
   });
 
   // 오늘의 습관 로그 가져오기
   const { data: habitLogs = [] } = useQuery({
-    queryKey: ['habit-logs', user!.id, today],
-    queryFn: () => fetch(`/api/habit-logs/${user!.id}/${today}`).then(res => res.json()),
+    queryKey: ['habit-logs', user?.id, today],
+    queryFn: () => user?.id ? fetch(`/api/habit-logs/${user.id}/${today}`).then(res => res.json()) : Promise.resolve([]),
     enabled: !!user?.id,
   });
 
   // 오늘 날짜의 일정 가져오기
   const { data: todayEvents = [] } = useQuery({
     queryKey: ['events', user?.id, today],
-    queryFn: () => fetch(`/api/events/${user!.id}?startDate=${today}&endDate=${today}`).then(res => res.json()),
+    queryFn: () => user?.id ? fetch(`/api/events/${user.id}?startDate=${today}&endDate=${today}`).then(res => res.json()) : Promise.resolve([]),
     enabled: !!user?.id,
   });
 
   const { data: projects = [] } = useQuery({
     queryKey: ['projects', user?.id],
-    queryFn: () => fetch(`/api/projects/${user!.id}`).then(res => res.json()),
+    queryFn: () => user?.id ? fetch(`/api/projects/${user.id}`).then(res => res.json()) : Promise.resolve([]),
     enabled: !!user?.id,
   });
 
@@ -263,19 +263,19 @@ export default function DailyPlanning() {
 
   const { data: foundation } = useQuery({
     queryKey: ['foundation', user?.id, currentYear],
-    queryFn: () => fetch(`/api/foundation/${user!.id}?year=${currentYear}`).then(res => res.json()),
+    queryFn: () => user?.id ? fetch(`/api/foundation/${user.id}?year=${currentYear}`).then(res => res.json()) : Promise.resolve(null),
     enabled: !!user?.id,
   });
 
   const { data: annualGoals = [] } = useQuery({
     queryKey: ['goals', user?.id, currentYear],
-    queryFn: () => fetch(`/api/goals/${user!.id}?year=${currentYear}`).then(res => res.json()),
+    queryFn: () => user?.id ? fetch(`/api/goals/${user.id}?year=${currentYear}`).then(res => res.json()) : Promise.resolve([]),
     enabled: !!user?.id,
   });
 
   const { data: timeBlocks, refetch: refetchTimeBlocks } = useQuery({
     queryKey: ['timeBlocks', user?.id, today],
-    queryFn: () => fetch(api.timeBlocks.list(user!.id, today)).then(res => res.json()),
+    queryFn: () => user?.id ? fetch(api.timeBlocks.list(user.id, today)).then(res => res.json()) : Promise.resolve([]),
     enabled: !!user?.id,
   });
 
@@ -284,7 +284,7 @@ export default function DailyPlanning() {
 
   const { data: yesterdayTimeBlocks = [] } = useQuery({
     queryKey: ['timeBlocks', user?.id, yesterday],
-    queryFn: () => fetch(api.timeBlocks.list(user!.id, yesterday)).then(res => res.json()),
+    queryFn: () => user?.id ? fetch(api.timeBlocks.list(user.id, yesterday)).then(res => res.json()) : Promise.resolve([]),
     enabled: !!user?.id,
   });
 
@@ -292,7 +292,7 @@ export default function DailyPlanning() {
 
   const { data: dailyReflection } = useQuery({
     queryKey: ['dailyReflection', user?.id, today],
-    queryFn: () => fetch(`/api/daily-reflection/${user!.id}/${today}`).then(res => res.json()).catch(() => null),
+    queryFn: () => user?.id ? fetch(`/api/daily-reflection/${user.id}/${today}`).then(res => res.json()).catch(() => null) : Promise.resolve(null),
     enabled: !!user?.id,
   });
 
@@ -308,7 +308,7 @@ export default function DailyPlanning() {
   const addTaskMutation = useMutation({
     mutationFn: createTask,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['tasks', user!.id] });
+      if (user?.id) queryClient.invalidateQueries({ queryKey: ['tasks', user.id] });
       setNewTask("");
     },
   });
@@ -317,13 +317,13 @@ export default function DailyPlanning() {
     mutationFn: ({ id, updates }: { id: number; updates: any }) => updateTask(id, updates),
     onMutate: async ({ id, updates }) => {
       // 진행 중인 쿼리 취소
-      await queryClient.cancelQueries({ queryKey: ['tasks', user!.id] });
+      if (user?.id) await queryClient.cancelQueries({ queryKey: ['tasks', user.id] });
       
       // 이전 데이터 백업
-      const previousTasks = queryClient.getQueryData(['tasks', user!.id]);
+      const previousTasks = user?.id ? queryClient.getQueryData(['tasks', user.id]) : null;
       
       // Optimistic update: 즉시 캐시 업데이트
-      queryClient.setQueryData(['tasks', user!.id], (oldTasks: any) => {
+      if (user?.id) queryClient.setQueryData(['tasks', user.id], (oldTasks: any) => {
         return oldTasks?.map((task: any) => 
           task.id === id 
             ? { ...task, ...updates } 
@@ -336,12 +336,12 @@ export default function DailyPlanning() {
     onError: (err, variables, context) => {
       // 에러 발생 시 이전 데이터로 롤백
       if (context?.previousTasks) {
-        queryClient.setQueryData(['tasks', user!.id], context.previousTasks);
+        if (user?.id && context.previousTasks) queryClient.setQueryData(['tasks', user.id], context.previousTasks);
       }
     },
     onSuccess: () => {
       // 최종 데이터 동기화
-      queryClient.invalidateQueries({ queryKey: ['tasks', user!.id] });
+      if (user?.id) queryClient.invalidateQueries({ queryKey: ['tasks', user.id] });
     },
   });
 
@@ -353,7 +353,7 @@ export default function DailyPlanning() {
         body: JSON.stringify({ completed })
       }).then(res => res.json()),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['events', user!.id, today] });
+      if (user?.id) queryClient.invalidateQueries({ queryKey: ['events', user.id, today] });
       queryClient.invalidateQueries({ queryKey: ['/api/events'] });
     },
   });
@@ -366,7 +366,7 @@ export default function DailyPlanning() {
         body: JSON.stringify(updates)
       }).then(res => res.json()),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['events', user!.id, today] });
+      if (user?.id) queryClient.invalidateQueries({ queryKey: ['events', user.id, today] });
       queryClient.invalidateQueries({ queryKey: ['/api/events'] });
       setShowEventEditDialog(false);
       setEditingEvent(null);
@@ -390,7 +390,7 @@ export default function DailyPlanning() {
         method: 'DELETE'
       }).then(res => res.json()),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['events', user!.id, today] });
+      if (user?.id) queryClient.invalidateQueries({ queryKey: ['events', user.id, today] });
       queryClient.invalidateQueries({ queryKey: ['/api/events'] });
       toast({
         title: "일정 삭제",
@@ -412,7 +412,7 @@ export default function DailyPlanning() {
         method: 'DELETE'
       }).then(res => res.json()),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['tasks', user!.id] });
+      if (user?.id) queryClient.invalidateQueries({ queryKey: ['tasks', user.id] });
       toast({
         title: "할일 삭제",
         description: "할일이 삭제되었습니다.",
@@ -440,7 +440,7 @@ export default function DailyPlanning() {
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['events', user!.id, today] });
+      if (user?.id) queryClient.invalidateQueries({ queryKey: ['events', user.id, today] });
       queryClient.invalidateQueries({ queryKey: ['/api/events'] });
       setNewEvent("");
       setIsAllDay(false);
@@ -470,7 +470,7 @@ export default function DailyPlanning() {
   const saveDailyReflectionMutation = useMutation({
     mutationFn: saveDailyReflection,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['dailyReflection', user!.id, today] });
+      if (user?.id) queryClient.invalidateQueries({ queryKey: ['dailyReflection', user.id, today] });
       toast({
         title: "성공",
         description: "오늘의 기록이 저장되었습니다.",
@@ -488,7 +488,7 @@ export default function DailyPlanning() {
   const addTimeBlockMutation = useMutation({
     mutationFn: createTimeBlock,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['timeBlocks', user!.id, today] });
+      if (user?.id) queryClient.invalidateQueries({ queryKey: ['timeBlocks', user.id, today] });
       setNewTimeBlock({
         startTime: "",
         endTime: "",
@@ -550,9 +550,9 @@ export default function DailyPlanning() {
 
   const copyTimeBlocksMutation = useMutation({
     mutationFn: () => 
-      fetch(`/api/time-blocks/copy/${user!.id}/${yesterday}/${today}`, {
+      user?.id ? fetch(`/api/time-blocks/copy/${user.id}/${yesterday}/${today}`, {
         method: 'POST',
-      }).then(res => res.json()),
+      }).then(res => res.json()) : Promise.resolve(null),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['timeBlocks', user?.id, today] });
       toast({ title: "어제 시간 블록이 복사되었습니다." });
@@ -574,7 +574,7 @@ export default function DailyPlanning() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          userId: user!.id,
+          userId: user?.id || '',
           habitId,
           date: today,
           completed
@@ -583,7 +583,7 @@ export default function DailyPlanning() {
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['habit-logs', user!.id, today] });
+      if (user?.id) queryClient.invalidateQueries({ queryKey: ['habit-logs', user.id, today] });
     },
   });
 
@@ -700,7 +700,7 @@ export default function DailyPlanning() {
     }
 
     addTaskMutation.mutate({
-      userId: user!.id,
+      userId: user?.id || '',
       title: newTask.trim(),
       priority: selectedPriority,
       coreValue: selectedCoreValue === 'none' ? null : selectedCoreValue,
@@ -737,7 +737,7 @@ export default function DailyPlanning() {
     const endTime = convertTo24Hour(endHour, endMinute, endPeriod);
 
     addEventMutation.mutate({
-      userId: user!.id,
+      userId: user?.id || '',
       title: newEvent.trim(),
       startDate: today,
       endDate: today,
@@ -872,7 +872,7 @@ export default function DailyPlanning() {
     }
   };
 
-  const handleSaveReflection = () => {
+  const handleSaveReflection = async () => {
     if (!reflection.trim() && selectedFiles.length === 0) {
       toast({
         title: "저장할 내용이 없습니다",
@@ -882,24 +882,50 @@ export default function DailyPlanning() {
       return;
     }
 
-    // FormData 생성하여 텍스트와 파일 모두 전송
+    if (!user?.id) {
+      toast({
+        title: "오류",
+        description: "사용자 정보를 확인할 수 없습니다.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     const formData = new FormData();
-    formData.append('userId', user!.id);
+    formData.append('userId', user.id);
     formData.append('date', today);
     formData.append('content', reflection.trim());
 
-    // 새로운 파일들 추가
+    // Add all selected files to FormData
     selectedFiles.forEach((file, index) => {
       formData.append(`files`, file);
     });
 
-    // API 호출
-    saveDailyReflectionMutation.mutate({
-      userId: user!.id,
-      date: today,
-      content: reflection.trim(),
-      files: selectedFiles
-    });
+    try {
+      const response = await fetch(`/api/daily-reflection/${user.id}/${today}`, {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        setSavedFiles(result.files || []);
+        setSelectedFiles([]);
+        queryClient.invalidateQueries({ queryKey: ['dailyReflection', user.id, today] });
+        toast({
+          title: "성공",
+          description: "오늘의 기록이 저장되었습니다.",
+        });
+      } else {
+        throw new Error('Save failed');
+      }
+    } catch (error) {
+      toast({
+        title: "오류",
+        description: "저장 중 오류가 발생했습니다.",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleSaveEditedTask = () => {
@@ -921,41 +947,6 @@ export default function DailyPlanning() {
     setEditingTask(null);
   };
 
-  const handleSaveReflection = async () => {
-    const formData = new FormData();
-    formData.append('userId', user!.id);
-    formData.append('date', today);
-    formData.append('content', reflection);
-
-    // Add all selected files to FormData
-    selectedFiles.forEach((file, index) => {
-      formData.append(`files`, file);
-    });
-
-    try {
-      const response = await fetch(`/api/daily-reflection/${user!.id}/${today}`, {
-        method: 'POST',
-        body: formData,
-      });
-
-      if (response.ok) {
-        const result = await response.json();
-        setSavedFiles(result.files || []);
-        setSelectedFiles([]);
-        queryClient.invalidateQueries({ queryKey: ['dailyReflection', user!.id, today] });
-        toast({
-          title: "성공",
-          description: "오늘의 기록이 저장되었습니다.",
-        });
-      }
-    } catch (error) {
-      toast({
-        title: "오류",
-        description: "저장 중 오류가 발생했습니다.",
-        variant: "destructive",
-      });
-    }
-  };
 
   const handleDeleteFile = async (fileIndex: number) => {
     if (!window.confirm('정말 이 파일을 삭제하시겠습니까?')) {
@@ -965,7 +956,7 @@ export default function DailyPlanning() {
     try {
       const fileToDelete = savedFiles[fileIndex];
 
-      const response = await fetch(`/api/daily-reflection/${user!.id}/${today}/file`, {
+      const response = await fetch(`/api/daily-reflection/${user?.id}/${today}/file`, {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ fileUrl: fileToDelete.url })
@@ -974,7 +965,7 @@ export default function DailyPlanning() {
       if (response.ok) {
         const updatedFiles = savedFiles.filter((_, index) => index !== fileIndex);
         setSavedFiles(updatedFiles);
-        queryClient.invalidateQueries({ queryKey: ['dailyReflection', user!.id, today] });
+        if (user?.id) queryClient.invalidateQueries({ queryKey: ['dailyReflection', user.id, today] });
         toast({
           title: "성공",
           description: "파일이 삭제되었습니다.",
@@ -1073,7 +1064,7 @@ export default function DailyPlanning() {
       });
     } else {
       addTimeBlockMutation.mutate({
-        userId: user!.id,
+        userId: user?.id || '',
         date: today,
         ...newTimeBlock,
       });
@@ -1206,7 +1197,7 @@ export default function DailyPlanning() {
 
   const getSuggestedBreaks = async () => {
     try {
-      const response = await fetch(`/api/time-blocks/suggest-breaks/${user!.id}/${today}`, {
+      const response = await fetch(`/api/time-blocks/suggest-breaks/${user?.id}/${today}`, {
         method: 'POST',
       });
       const breaks = await response.json();
@@ -1223,7 +1214,7 @@ export default function DailyPlanning() {
 
   const addSuggestedBreak = (breakBlock: any) => {
     addTimeBlockMutation.mutate({
-      userId: user!.id,
+      userId: user?.id || '',
       date: today,
       ...breakBlock,
     });
@@ -1362,9 +1353,9 @@ export default function DailyPlanning() {
                         setSelectedDate(date);
                         // 선택된 날짜에 따라 관련 쿼리들을 refetch
                         const selectedDateStr = format(date, 'yyyy-MM-dd');
-                        queryClient.invalidateQueries({ queryKey: ['habitLogs', user!.id, selectedDateStr] });
-                        queryClient.invalidateQueries({ queryKey: ['timeBlocks', user!.id, selectedDateStr] });
-                        queryClient.invalidateQueries({ queryKey: ['dailyReflection', user!.id, selectedDateStr] });
+                        if (user?.id) queryClient.invalidateQueries({ queryKey: ['habitLogs', user.id, selectedDateStr] });
+                        if (user?.id) queryClient.invalidateQueries({ queryKey: ['timeBlocks', user.id, selectedDateStr] });
+                        if (user?.id) queryClient.invalidateQueries({ queryKey: ['dailyReflection', user.id, selectedDateStr] });
                       }
                     }}
                     initialFocus
@@ -1378,9 +1369,9 @@ export default function DailyPlanning() {
                   const today = new Date();
                   setSelectedDate(today);
                   const todayStr = format(today, 'yyyy-MM-dd');
-                  queryClient.invalidateQueries({ queryKey: ['habitLogs', user!.id, todayStr] });
-                  queryClient.invalidateQueries({ queryKey: ['timeBlocks', user!.id, todayStr] });
-                  queryClient.invalidateQueries({ queryKey: ['dailyReflection', user!.id, todayStr] });
+                  if (user?.id) queryClient.invalidateQueries({ queryKey: ['habitLogs', user.id, todayStr] });
+                  if (user?.id) queryClient.invalidateQueries({ queryKey: ['timeBlocks', user.id, todayStr] });
+                  if (user?.id) queryClient.invalidateQueries({ queryKey: ['dailyReflection', user.id, todayStr] });
                 }}
                 className="text-sm text-gray-600 hover:text-gray-900"
               >
@@ -2072,7 +2063,7 @@ export default function DailyPlanning() {
                                       onCheckedChange={(checked) => {
                                         if (block.taskId && !updateTaskMutation.isPending) {
                                           // Optimistic update: UI 즉시 업데이트
-                                          queryClient.setQueryData(['tasks', user!.id], (oldTasks: any) => {
+                                          if (user?.id) queryClient.setQueryData(['tasks', user.id], (oldTasks: any) => {
                                             return oldTasks?.map((task: any) => 
                                               task.id === block.taskId 
                                                 ? { ...task, completed: checked } 
@@ -2900,7 +2891,7 @@ export default function DailyPlanning() {
                   <Label className="text-sm font-medium">일정 제목</Label>
                   <Input
                     value={editingEvent.title || ""}
-                    onChange={(e) => setEditingEvent(prev => ({ ...prev, title: e.target.value }))}
+                    onChange={(e) => setEditingEvent((prev: any) => ({ ...prev, title: e.target.value }))}
                     placeholder="일정 제목을 입력하세요"
                   />
                 </div>
@@ -2910,7 +2901,7 @@ export default function DailyPlanning() {
                   <Checkbox
                     id="edit-all-day-event"
                     checked={editingEvent.editIsAllDay || false}
-                    onCheckedChange={(checked) => setEditingEvent(prev => ({ ...prev, editIsAllDay: checked as boolean }))}
+                    onCheckedChange={(checked) => setEditingEvent((prev: any) => ({ ...prev, editIsAllDay: checked as boolean }))}
                     className="h-4 w-4"
                   />
                   <Label htmlFor="edit-all-day-event" className="text-sm text-gray-700 cursor-pointer">
@@ -2941,7 +2932,7 @@ export default function DailyPlanning() {
                         <CalendarComponent
                           mode="single"
                           selected={editingEvent.startDate ? new Date(editingEvent.startDate) : undefined}
-                          onSelect={(date) => setEditingEvent(prev => ({ 
+                          onSelect={(date) => setEditingEvent((prev: any) => ({ 
                             ...prev, 
                             startDate: date ? format(date, 'yyyy-MM-dd') : null 
                           }))}
@@ -2971,7 +2962,7 @@ export default function DailyPlanning() {
                         <CalendarComponent
                           mode="single"
                           selected={editingEvent.endDate ? new Date(editingEvent.endDate) : undefined}
-                          onSelect={(date) => setEditingEvent(prev => ({ 
+                          onSelect={(date) => setEditingEvent((prev: any) => ({ 
                             ...prev, 
                             endDate: date ? format(date, 'yyyy-MM-dd') : null 
                           }))}
@@ -2991,7 +2982,7 @@ export default function DailyPlanning() {
                     <div className="flex space-x-1">
                       <Select 
                         value={editingEvent.editStartHour} 
-                        onValueChange={(value) => setEditingEvent(prev => ({ ...prev, editStartHour: value }))}
+                        onValueChange={(value) => setEditingEvent((prev: any) => ({ ...prev, editStartHour: value }))}
                       >
                         <SelectTrigger className="w-16 h-8 text-xs">
                           <SelectValue />
@@ -3004,7 +2995,7 @@ export default function DailyPlanning() {
                       </Select>
                       <Select 
                         value={editingEvent.editStartMinute} 
-                        onValueChange={(value) => setEditingEvent(prev => ({ ...prev, editStartMinute: value }))}
+                        onValueChange={(value) => setEditingEvent((prev: any) => ({ ...prev, editStartMinute: value }))}
                       >
                         <SelectTrigger className="w-16 h-8 text-xs">
                           <SelectValue />
@@ -3018,7 +3009,7 @@ export default function DailyPlanning() {
                       </Select>
                       <Select 
                         value={editingEvent.editStartPeriod} 
-                        onValueChange={(value: 'AM' | 'PM') => setEditingEvent(prev => ({ ...prev, editStartPeriod: value }))}
+                        onValueChange={(value: 'AM' | 'PM') => setEditingEvent((prev: any) => ({ ...prev, editStartPeriod: value }))}
                       >
                         <SelectTrigger className="w-16 h-8 text-xs">
                           <SelectValue />
@@ -3037,7 +3028,7 @@ export default function DailyPlanning() {
                     <div className="flex space-x-1">
                       <Select 
                         value={editingEvent.editEndHour} 
-                        onValueChange={(value) => setEditingEvent(prev => ({ ...prev, editEndHour: value }))}
+                        onValueChange={(value) => setEditingEvent((prev: any) => ({ ...prev, editEndHour: value }))}
                       >
                         <SelectTrigger className="w-16 h-8 text-xs">
                           <SelectValue />
@@ -3050,7 +3041,7 @@ export default function DailyPlanning() {
                       </Select>
                       <Select 
                         value={editingEvent.editEndMinute} 
-                        onValueChange={(value) => setEditingEvent(prev => ({ ...prev, editEndMinute: value }))}
+                        onValueChange={(value) => setEditingEvent((prev: any) => ({ ...prev, editEndMinute: value }))}
                       >
                         <SelectTrigger className="w-16 h-8 text-xs">
                           <SelectValue />
@@ -3064,7 +3055,7 @@ export default function DailyPlanning() {
                       </Select>
                       <Select 
                         value={editingEvent.editEndPeriod} 
-                        onValueChange={(value: 'AM' | 'PM') => setEditingEvent(prev => ({ ...prev, editEndPeriod: value }))}
+                        onValueChange={(value: 'AM' | 'PM') => setEditingEvent((prev: any) => ({ ...prev, editEndPeriod: value }))}
                       >
                         <SelectTrigger className="w-16 h-8 text-xs">
                           <SelectValue />
@@ -3084,7 +3075,7 @@ export default function DailyPlanning() {
                   <Label className="text-sm font-medium">우선순위</Label>
                   <Select 
                     value={editingEvent.priority} 
-                    onValueChange={(value: 'high' | 'medium' | 'low') => setEditingEvent(prev => ({ ...prev, priority: value }))}
+                    onValueChange={(value: 'high' | 'medium' | 'low') => setEditingEvent((prev: any) => ({ ...prev, priority: value }))}
                   >
                     <SelectTrigger>
                       <SelectValue />
@@ -3103,7 +3094,7 @@ export default function DailyPlanning() {
                     <Label className="text-sm font-medium">핵심가치</Label>
                     <Select 
                       value={editingEvent.coreValue || 'none'} 
-                      onValueChange={(value) => setEditingEvent(prev => ({ ...prev, coreValue: value === 'none' ? null : value }))}
+                      onValueChange={(value) => setEditingEvent((prev: any) => ({ ...prev, coreValue: value === 'none' ? null : value }))}
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="핵심가치" />
@@ -3126,7 +3117,7 @@ export default function DailyPlanning() {
                     <Label className="text-sm font-medium">연간목표</Label>
                     <Select 
                       value={editingEvent.annualGoal || 'none'} 
-                      onValueChange={(value) => setEditingEvent(prev => ({ ...prev, annualGoal: value === 'none' ? null : value }))}
+                      onValueChange={(value) => setEditingEvent((prev: any) => ({ ...prev, annualGoal: value === 'none' ? null : value }))}
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="연간목표" />
@@ -3178,7 +3169,7 @@ export default function DailyPlanning() {
                   <Label className="text-sm font-medium">할일 제목</Label>
                   <Input
                     value={editingTask.title || ""}
-                    onChange={(e) => setEditingTask(prev => ({ ...prev, title: e.target.value }))}
+                    onChange={(e) => setEditingTask((prev: any) => ({ ...prev, title: e.target.value }))}
                     placeholder="할일 제목을 입력하세요"
                   />
                 </div>
@@ -3188,7 +3179,7 @@ export default function DailyPlanning() {
                   <Label className="text-sm font-medium">우선순위</Label>
                   <Select 
                     value={editingTask.editPriority} 
-                    onValueChange={(value: 'A' | 'B' | 'C') => setEditingTask(prev => ({ ...prev, editPriority: value }))}
+                    onValueChange={(value: 'A' | 'B' | 'C') => setEditingTask((prev: any) => ({ ...prev, editPriority: value }))}
                   >
                     <SelectTrigger>
                       <SelectValue />
@@ -3224,7 +3215,7 @@ export default function DailyPlanning() {
                         <CalendarComponent
                           mode="single"
                           selected={editingTask.startDate ? new Date(editingTask.startDate) : undefined}
-                          onSelect={(date) => setEditingTask(prev => ({ 
+                          onSelect={(date) => setEditingTask((prev: any) => ({ 
                             ...prev, 
                             startDate: date ? format(date, 'yyyy-MM-dd') : null 
                           }))}
@@ -3254,7 +3245,7 @@ export default function DailyPlanning() {
                         <CalendarComponent
                           mode="single"
                           selected={editingTask.endDate ? new Date(editingTask.endDate) : undefined}
-                          onSelect={(date) => setEditingTask(prev => ({ 
+                          onSelect={(date) => setEditingTask((prev: any) => ({ 
                             ...prev, 
                             endDate: date ? format(date, 'yyyy-MM-dd') : null 
                           }))}
@@ -3271,7 +3262,7 @@ export default function DailyPlanning() {
                     <Label className="text-sm font-medium">핵심가치</Label>
                     <Select 
                       value={editingTask.editCoreValue || 'none'} 
-                      onValueChange={(value) => setEditingTask(prev => ({ ...prev, editCoreValue: value === 'none' ? null : value }))}
+                      onValueChange={(value) => setEditingTask((prev: any) => ({ ...prev, editCoreValue: value === 'none' ? null : value }))}
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="핵심가치" />
@@ -3294,7 +3285,7 @@ export default function DailyPlanning() {
                     <Label className="text-sm font-medium">연간목표</Label>
                     <Select 
                       value={editingTask.editAnnualGoal || 'none'} 
-                      onValueChange={(value) => setEditingTask(prev => ({ ...prev, editAnnualGoal: value === 'none' ? null : value }))}
+                      onValueChange={(value) => setEditingTask((prev: any) => ({ ...prev, editAnnualGoal: value === 'none' ? null : value }))}
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="연간목표" />
