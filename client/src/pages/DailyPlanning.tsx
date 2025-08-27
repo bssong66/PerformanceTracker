@@ -2520,6 +2520,18 @@ export default function DailyPlanning() {
                     </div>
                   )}
                 </div>
+                
+                {/* 저장 버튼 */}
+                <div className="flex justify-end pt-4 border-t border-gray-200">
+                  <Button
+                    onClick={handleSaveReflection}
+                    disabled={saveDailyReflectionMutation.isPending}
+                    className="flex items-center space-x-2"
+                  >
+                    <Save className="h-4 w-4" />
+                    <span>{saveDailyReflectionMutation.isPending ? '저장 중...' : '저장'}</span>
+                  </Button>
+                </div>
               </CardContent>
             </Card>
 
