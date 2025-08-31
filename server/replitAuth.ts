@@ -1,8 +1,4 @@
-import * as client from "openid-client";
-import { Strategy, type VerifyFunction } from "openid-client/passport";
 import { Strategy as LocalStrategy } from "passport-local";
-import { Strategy as GoogleStrategy } from "passport-google-oauth20";
-import { Strategy as KakaoStrategy } from "passport-kakao";
 import bcrypt from "bcryptjs";
 
 import passport from "passport";
@@ -12,19 +8,7 @@ import memoize from "memoizee";
 import connectPg from "connect-pg-simple";
 import { storage } from "./storage";
 
-if (!process.env.REPLIT_DOMAINS) {
-  throw new Error("Environment variable REPLIT_DOMAINS not provided");
-}
 
-const getOidcConfig = memoize(
-  async () => {
-    return await client.discovery(
-      new URL(process.env.ISSUER_URL ?? "https://replit.com/oidc"),
-      process.env.REPL_ID!
-    );
-  },
-  { maxAge: 3600 * 1000 }
-);
 
 export function getSession() {
   const sessionTtl = 7 * 24 * 60 * 60 * 1000; // 1 week
@@ -48,27 +32,7 @@ export function getSession() {
   });
 }
 
-function updateUserSession(
-  user: any,
-  tokens: client.TokenEndpointResponse & client.TokenEndpointResponseHelpers
-) {
-  user.claims = tokens.claims();
-  user.access_token = tokens.access_token;
-  user.refresh_token = tokens.refresh_token;
-  user.expires_at = user.claims?.exp;
-}
 
-async function upsertUser(
-  claims: any,
-) {
-  await storage.upsertUser({
-    id: claims["sub"],
-    email: claims["email"],
-    firstName: claims["first_name"],
-    lastName: claims["last_name"],
-    profileImageUrl: claims["profile_image_url"],
-  });
-}
 
 export async function setupAuth(app: Express) {
   app.set("trust proxy", 1);
@@ -110,162 +74,12 @@ export async function setupAuth(app: Express) {
     }
   }));
 
-  // Google OAuth Strategy
-  if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
-    const baseUrl = process.env.REPLIT_DEV_DOMAIN 
-      ? `https://${process.env.REPLIT_DEV_DOMAIN}` 
-      : 'http://localhost:5000';
-    
-    passport.use(new GoogleStrategy({
-      clientID: process.env.GOOGLE_CLIENT_ID,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-      callbackURL: `${baseUrl}/api/auth/google/callback`
-    }, async (accessToken, refreshToken, profile, done) => {
-      try {
-        const email = profile.emails?.[0]?.value;
-        if (!email) {
-          return done(new Error('이메일 정보를 가져올 수 없습니다.'));
-        }
 
-        // Check if user exists
-        let user = await storage.getUserByEmail(email);
-        
-        if (user) {
-          // Update existing user
-          await storage.upsertUser({
-            id: user.id,
-            email: email,
-            firstName: profile.name?.givenName || '',
-            lastName: profile.name?.familyName || '',
-            profileImageUrl: profile.photos?.[0]?.value || null,
-            authType: 'google'
-          });
-        } else {
-          // Create new user
-          user = await storage.createLocalUser({
-            email: email,
-            firstName: profile.name?.givenName || '',
-            lastName: profile.name?.familyName || '',
-            profileImageUrl: profile.photos?.[0]?.value || null,
-            authType: 'google'
-          });
-        }
 
-        return done(null, {
-          claims: {
-            sub: user.id,
-            email: user.email,
-            first_name: user.firstName,
-            last_name: user.lastName,
-            profile_image_url: user.profileImageUrl
-          }
-        });
-      } catch (error) {
-        return done(error);
-      }
-    }));
-  }
-
-  // Kakao OAuth Strategy
-  if (process.env.KAKAO_CLIENT_ID && process.env.KAKAO_CLIENT_SECRET) {
-    const baseUrl = process.env.REPLIT_DEV_DOMAIN 
-      ? `https://${process.env.REPLIT_DEV_DOMAIN}` 
-      : 'http://localhost:5000';
-    
-    passport.use(new KakaoStrategy({
-      clientID: process.env.KAKAO_CLIENT_ID,
-      clientSecret: process.env.KAKAO_CLIENT_SECRET,
-      callbackURL: `${baseUrl}/api/auth/kakao/callback`
-    }, async (accessToken: string, refreshToken: string, profile: any, done: any) => {
-      try {
-        const email = profile._json?.kakao_account?.email;
-        const nickname = profile.displayName || profile._json?.properties?.nickname;
-        
-        if (!email) {
-          return done(new Error('이메일 정보를 가져올 수 없습니다.'));
-        }
-
-        // Check if user exists
-        let user = await storage.getUserByEmail(email);
-        
-        if (user) {
-          // Update existing user
-          await storage.upsertUser({
-            id: user.id,
-            email: email,
-            firstName: nickname || '',
-            lastName: '',
-            profileImageUrl: profile._json?.properties?.profile_image || null,
-            authType: 'kakao'
-          });
-        } else {
-          // Create new user
-          user = await storage.createLocalUser({
-            email: email,
-            firstName: nickname || '',
-            lastName: '',
-            profileImageUrl: profile._json?.properties?.profile_image || null,
-            authType: 'kakao'
-          });
-        }
-
-        return done(null, {
-          claims: {
-            sub: user.id,
-            email: user.email,
-            first_name: user.firstName,
-            last_name: user.lastName,
-            profile_image_url: user.profileImageUrl
-          }
-        });
-      } catch (error) {
-        return done(error);
-      }
-    }));
-  }
-
-  const config = await getOidcConfig();
-
-  const verify: VerifyFunction = async (
-    tokens: client.TokenEndpointResponse & client.TokenEndpointResponseHelpers,
-    verified: passport.AuthenticateCallback
-  ) => {
-    const user = {};
-    updateUserSession(user, tokens);
-    await upsertUser(tokens.claims());
-    verified(null, user);
-  };
-
-  for (const domain of process.env
-    .REPLIT_DOMAINS!.split(",")) {
-    const strategy = new Strategy(
-      {
-        name: `replitauth:${domain}`,
-        config,
-        scope: "openid email profile offline_access",
-        callbackURL: `https://${domain}/api/callback`,
-      },
-      verify,
-    );
-    passport.use(strategy);
-  }
 
   passport.serializeUser((user: Express.User, cb) => cb(null, user));
   passport.deserializeUser((user: Express.User, cb) => cb(null, user));
 
-  app.get("/api/login", (req, res, next) => {
-    passport.authenticate(`replitauth:${req.hostname}`, {
-      prompt: "login consent",
-      scope: ["openid", "email", "profile", "offline_access"],
-    })(req, res, next);
-  });
-
-  app.get("/api/callback", (req, res, next) => {
-    passport.authenticate(`replitauth:${req.hostname}`, {
-      successReturnToOrRedirect: "/",
-      failureRedirect: "/api/login",
-    })(req, res, next);
-  });
 
   // Local login route
   app.post("/api/auth/login", (req, res, next) => {
@@ -285,27 +99,7 @@ export async function setupAuth(app: Express) {
     })(req, res, next);
   });
 
-  // Google OAuth routes
-  app.get("/api/auth/google", passport.authenticate("google", {
-    scope: ["profile", "email"]
-  }));
 
-  app.get("/api/auth/google/callback", 
-    passport.authenticate("google", { failureRedirect: "/login" }),
-    (req, res) => {
-      res.redirect("/");
-    }
-  );
-
-  // Kakao OAuth routes
-  app.get("/api/auth/kakao", passport.authenticate("kakao"));
-
-  app.get("/api/auth/kakao/callback",
-    passport.authenticate("kakao", { failureRedirect: "/login" }),
-    (req, res) => {
-      res.redirect("/");
-    }
-  );
 
   // Local signup route
   app.post("/api/auth/signup", async (req, res) => {
@@ -358,21 +152,8 @@ export async function setupAuth(app: Express) {
   });
 
   app.get("/api/logout", (req, res) => {
-    const user = req.user as any;
-    
     req.logout(() => {
-      // For local users, just redirect to home without external OIDC logout
-      if (!user?.access_token) {
-        return res.redirect("/");
-      }
-      
-      // For Replit OAuth users, redirect to OIDC logout
-      res.redirect(
-        client.buildEndSessionUrl(config, {
-          client_id: process.env.REPL_ID!,
-          post_logout_redirect_uri: `${req.protocol}://${req.hostname}`,
-        }).href
-      );
+      res.redirect("/");
     });
   });
 
@@ -385,36 +166,8 @@ export async function setupAuth(app: Express) {
 }
 
 export const isAuthenticated: RequestHandler = async (req, res, next) => {
-  const user = req.user as any;
-
   if (!req.isAuthenticated()) {
     return res.status(401).json({ message: "Unauthorized" });
   }
-
-  // For local authentication users (no expires_at), just proceed
-  if (!user.expires_at) {
-    return next();
-  }
-
-  // For Replit OAuth users, check token expiration
-  const now = Math.floor(Date.now() / 1000);
-  if (now <= user.expires_at) {
-    return next();
-  }
-
-  const refreshToken = user.refresh_token;
-  if (!refreshToken) {
-    res.status(401).json({ message: "Unauthorized" });
-    return;
-  }
-
-  try {
-    const config = await getOidcConfig();
-    const tokenResponse = await client.refreshTokenGrant(config, refreshToken);
-    updateUserSession(user, tokenResponse);
-    return next();
-  } catch (error) {
-    res.status(401).json({ message: "Unauthorized" });
-    return;
-  }
+  return next();
 };
