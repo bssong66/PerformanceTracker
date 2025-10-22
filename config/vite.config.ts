@@ -9,6 +9,7 @@ export default defineConfig({
   plugins: [
     react(),
   ],
+  base: '/PerformanceTracker/',
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "..", "client", "src"),
