@@ -1,4 +1,4 @@
-name: Simple Static Deploy
+name: Static Site Deploy
 
 on:
   push:
@@ -11,7 +11,7 @@ permissions:
   id-token: write
 
 jobs:
-  build-and-deploy:
+  deploy:
     runs-on: ubuntu-latest
     environment:
       name: github-pages
@@ -29,14 +29,14 @@ jobs:
       - name: Install dependencies
         run: npm install
         
-      - name: Build client only
+      - name: Build client
         run: |
           cd client
           npm install
           npm run build
         env:
-          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL || 'https://demo.supabase.co' }}
-          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRlbW8iLCJyb2xlIjoiYW5vbiIsImlhdCI6MTY0NTQwNzI0MCwiZXhwIjoxOTYwOTgzMjQwfQ.demo' }}
+          VITE_SUPABASE_URL: https://demo.supabase.co
+          VITE_SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRlbW8iLCJyb2xlIjoiYW5vbiIsImlhdCI6MTY0NTQwNzI0MCwiZXhwIjoxOTYwOTgzMjQwfQ.demo
           
       - name: Setup Pages
         uses: actions/configure-pages@v4
