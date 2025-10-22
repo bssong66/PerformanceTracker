@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { apiRequest } from "@/lib/queryClient";
+import { useAuth } from "@/hooks/useAuth";
 import { Eye, EyeOff, User, Lock, Mail } from "lucide-react";
 
 export default function Login() {
@@ -18,6 +18,7 @@ export default function Login() {
     lastName: ""
   });
   const { toast } = useToast();
+  const { signIn, signUp } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -25,19 +26,12 @@ export default function Login() {
 
     try {
       if (isLogin) {
-        const response = await fetch('/api/auth/login', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            email: formData.email,
-            password: formData.password
-          })
-        });
+        const { error } = await signIn(formData.email, formData.password);
         
-        if (!response.ok) {
-          const error = await response.json();
+        if (error) {
           throw new Error(error.message);
         }
+        
         toast({
           title: "로그인 성공",
           description: "환영합니다!",
@@ -52,16 +46,18 @@ export default function Login() {
           });
           return;
         }
-        const response = await fetch('/api/auth/signup', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(formData)
-        });
         
-        if (!response.ok) {
-          const error = await response.json();
+        const { error } = await signUp(
+          formData.email, 
+          formData.password, 
+          formData.firstName, 
+          formData.lastName
+        );
+        
+        if (error) {
           throw new Error(error.message);
         }
+        
         toast({
           title: "회원가입 성공",
           description: "환영합니다!",

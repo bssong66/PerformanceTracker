@@ -17,7 +17,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { CalendarIcon, Clock, Repeat, Save, X, Check, MousePointer2, AlertTriangle, Circle, ChevronDown } from "lucide-react";
@@ -27,6 +27,7 @@ import { format, startOfWeek, endOfWeek } from "date-fns";
 import { ko } from "date-fns/locale";
 import { UnifiedAttachmentManager } from "@/components/UnifiedAttachmentManager";
 import { useAuth } from "@/hooks/useAuth";
+import { fetchWithAuth } from "@/lib/authFetch";
 
 // Setup moment localizer and DragAndDrop Calendar
 moment.locale("ko");
@@ -62,7 +63,8 @@ const getPriorityIndicator = (priority: string, type: 'event' | 'task') => {
 
 export default function Calendar() {
   const { toast } = useToast();
-  const { user } = useAuth();
+  const { user, session } = useAuth();
+  const accessToken = session?.access_token;
   const [, setLocation] = useLocation();
   const [view, setView] = useState<View>(Views.MONTH);
   const [date, setDate] = useState(new Date());
@@ -70,7 +72,7 @@ export default function Calendar() {
   const [isEditing, setIsEditing] = useState(false);
   const [selectedSlot, setSelectedSlot] = useState<{ start: Date; end: Date } | null>(null);
   const [selectedEvent, setSelectedEvent] = useState<any>(null);
-  
+
   // Context menu state
   const [contextMenu, setContextMenu] = useState<{
     x: number;
@@ -105,46 +107,74 @@ export default function Calendar() {
   // Fetch events
   const { data: events = [], isLoading: eventsLoading, error: eventsError } = useQuery({
     queryKey: ['/api/events', (user as any)?.id || '1'],
-    queryFn: () => {
+    queryFn: async () => {
       const currentYear = new Date().getFullYear();
-      return fetch(`/api/events/${(user as any)?.id}?startDate=${currentYear}-01-01&endDate=${currentYear}-12-31`).then(res => res.json());
+      const res = await fetchWithAuth(`/api/events/${(user as any)?.id}?startDate=${currentYear}-01-01&endDate=${currentYear}-12-31`);
+      if (!res.ok) return [];
+      const data = await res.json();
+      return Array.isArray(data) ? data : [];
     },
-    enabled: !!(user as any)?.id,
+    enabled: !!(user as any)?.id && !!session?.access_token,
     retry: false,
   });
 
   // Fetch all tasks to display on calendar
   const { data: allTasks = [], isLoading: tasksLoading, error: tasksError } = useQuery({
     queryKey: ['/api/tasks', (user as any)?.id || '1'],
-    enabled: !!(user as any)?.id,
+    queryFn: async () => {
+      const res = await fetchWithAuth(`/api/tasks/${(user as any)?.id}`);
+      if (!res.ok) return [];
+      const data = await res.json();
+      return Array.isArray(data) ? data : [];
+    },
+    enabled: !!(user as any)?.id && !!session?.access_token,
     retry: false,
   });
 
   // Fetch projects for task context
   const { data: projects = [], isLoading: projectsLoading, error: projectsError } = useQuery({
     queryKey: ['/api/projects', (user as any)?.id || '1'],
-    enabled: !!(user as any)?.id,
+    queryFn: async () => {
+      const res = await fetchWithAuth(`/api/projects/${(user as any)?.id}`);
+      if (!res.ok) return [];
+      const data = await res.json();
+      return Array.isArray(data) ? data : [];
+    },
+    enabled: !!(user as any)?.id && !!session?.access_token,
     retry: false,
   });
 
   // Fetch foundation (core values) for dropdown
   const { data: foundation = null, isLoading: foundationLoading, error: foundationError } = useQuery({
     queryKey: ['/api/foundation', (user as any)?.id || '1'],
-    enabled: !!(user as any)?.id,
+    queryFn: async () => {
+      const currentYear = new Date().getFullYear();
+      const res = await fetchWithAuth(`/api/foundation/${(user as any)?.id}?year=${currentYear}`);
+      if (!res.ok) return null;
+      return await res.json();
+    },
+    enabled: !!(user as any)?.id && !!session?.access_token,
     retry: false,
   });
 
   // Fetch annual goals for dropdown
   const { data: annualGoals = [], isLoading: goalsLoading, error: goalsError } = useQuery({
     queryKey: ['/api/goals', (user as any)?.id || '1'],
-    enabled: !!(user as any)?.id,
+    queryFn: async () => {
+      const currentYear = new Date().getFullYear();
+      const res = await fetchWithAuth(`/api/goals/${(user as any)?.id}?year=${currentYear}`);
+      if (!res.ok) return [];
+      const data = await res.json();
+      return Array.isArray(data) ? data : [];
+    },
+    enabled: !!(user as any)?.id && !!accessToken,
     retry: false,
   });
 
   // Create event mutation
   const createEventMutation = useMutation({
     mutationFn: async (eventData: any) => {
-      const response = await fetch('/api/events', {
+      const response = await fetchWithAuth('/api/events', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(eventData)
@@ -175,7 +205,7 @@ export default function Calendar() {
   // Update event mutation
   const updateEventMutation = useMutation({
     mutationFn: async (eventData: any) => {
-      const response = await fetch(`/api/events/${eventData.id}`, {
+      const response = await fetchWithAuth(`/api/events/${eventData.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(eventData)
@@ -206,7 +236,7 @@ export default function Calendar() {
   // Delete event mutation
   const deleteEventMutation = useMutation({
     mutationFn: async (eventId: number) => {
-      const response = await fetch(`/api/events/${eventId}`, {
+      const response = await fetchWithAuth(`/api/events/${eventId}`, {
         method: 'DELETE'
       });
       return response.json();
@@ -222,7 +252,7 @@ export default function Calendar() {
   // Complete event mutation (for context menu)
   const completeEventMutation = useMutation({
     mutationFn: async ({ id, completed }: { id: number; completed: boolean }) => {
-      const response = await fetch(`/api/events/${id}/complete`, {
+      const response = await fetchWithAuth(`/api/events/${id}/complete`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ completed })
@@ -232,6 +262,7 @@ export default function Calendar() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/events'] });
+      queryClient.invalidateQueries({ queryKey: ['events'] }); // Foundation 페이지의 events 쿼리도 무효화
       setContextMenu(null);
       toast({ title: "일정 완료 상태가 변경되었습니다" });
     }
@@ -240,7 +271,7 @@ export default function Calendar() {
   // Complete task mutation (for context menu)  
   const completeTaskMutation = useMutation({
     mutationFn: async ({ id, completed }: { id: number; completed: boolean }) => {
-      const response = await fetch(`/api/tasks/${id}/complete`, {
+      const response = await fetchWithAuth(`/api/tasks/${id}/complete`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ completed })
@@ -250,6 +281,7 @@ export default function Calendar() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/tasks'] });
+      queryClient.invalidateQueries({ queryKey: ['tasks'] }); // Foundation 페이지의 tasks 쿼리도 무효화
       setContextMenu(null);
       toast({ title: "할일 완료 상태가 변경되었습니다" });
     }
@@ -415,9 +447,10 @@ export default function Calendar() {
       return {
         id: `task-${task.id}`,
         title: task.title,
-        start: new Date(`${task.startDate || task.endDate}T00:00`),
+        // Render tasks late in the day so calendar lists events before tasks
+        start: new Date(`${task.startDate || task.endDate}T23:50`),
         end: new Date(`${task.endDate || task.startDate}T23:59`),
-        allDay: true,
+        allDay: false,
         resizable: false,
         draggable: false,
         resource: {
@@ -430,7 +463,12 @@ export default function Calendar() {
       };
     });
 
-    const finalItems = [...eventItems, ...taskItems];
+    // Ensure events (일정) are always rendered before tasks (할일)
+    const finalItems = [...eventItems, ...taskItems].sort((a: any, b: any) => {
+      const aIsEvent = (a.resource?.type || 'event') === 'event' ? 0 : 1;
+      const bIsEvent = (b.resource?.type || 'event') === 'event' ? 0 : 1;
+      return aIsEvent - bIsEvent;
+    });
     console.log('Final calendar items:', finalItems.length, finalItems.slice(0, 3));
     return finalItems;
   }, [events, allTasks, projects, date, view]);
@@ -925,20 +963,23 @@ export default function Calendar() {
           setShowEventDialog(open);
           if (!open) resetEventForm();
         }}>
-          <DialogContent className="max-w-3xl max-h-[95vh] sm:max-h-[80vh] p-0 flex flex-col" aria-describedby="event-dialog-description">
-            <DialogHeader className="pb-3 px-4 sm:px-6 pt-4 sm:pt-6 bg-white z-10 border-b flex-shrink-0">
-              <DialogTitle className="text-lg sm:text-xl">
+          <DialogContent className="max-w-3xl max-h-[95vh] sm:max-h-[80vh] p-0 flex flex-col overflow-hidden rounded-2xl border border-slate-200/70 shadow-[0_40px_80px_-24px_rgba(15,23,42,0.35)] bg-gradient-to-br from-white via-slate-50 to-slate-100 backdrop-blur-sm" aria-describedby="event-dialog-description">
+            <DialogHeader className="pb-4 px-6 sm:px-8 pt-5 bg-white/85 backdrop-blur-sm border-b border-slate-200 flex-shrink-0">
+              <DialogTitle className="text-lg sm:text-xl font-semibold text-slate-900 tracking-tight">
                 {isEditing ? '일정 상세' : '새 일정 생성'}
               </DialogTitle>
-              <div id="event-dialog-description" className="sr-only">
-                일정의 제목, 날짜, 시간, 우선순위 등을 설정할 수 있습니다.
-              </div>
+              <DialogDescription id="event-dialog-description">
+                {isEditing ? '일정 정보를 확인하고 수정할 수 있습니다.' : '새로운 일정을 생성하세요.'}
+              </DialogDescription>
             </DialogHeader>
             
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 overflow-y-auto px-4 sm:px-6 pb-4 sm:pb-6 flex-1">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 overflow-y-auto px-6 sm:px-8 py-6 sm:py-8 flex-1">
               {/* 왼쪽: 일정 내용 */}
-              <div className="space-y-3 pr-2">
-                <h3 className="text-base font-semibold border-b pb-1">일정 내용</h3>
+              <div className="space-y-4 rounded-xl border border-slate-200/70 bg-white/85 p-5 shadow-sm">
+                <h3 className="text-sm font-semibold text-slate-700 tracking-tight flex items-center gap-2">
+                  <span className="inline-block h-2 w-2 rounded-full bg-blue-500" />
+                  일정 내용
+                </h3>
                 {/* 제목 */}
                 <div>
                   <Label htmlFor="event-title">일정 제목</Label>
@@ -1089,11 +1130,14 @@ export default function Calendar() {
               </div>
 
               {/* 오른쪽: 일정 결과 및 설정 */}
-              <div className="space-y-3 pr-2">
-                <h3 className="text-base font-semibold border-b pb-1">일정 결과 및 설정</h3>
+              <div className="space-y-4 rounded-xl border border-slate-200/70 bg-white/85 p-5 shadow-sm">
+                <h3 className="text-sm font-semibold text-slate-700 tracking-tight flex items-center gap-2">
+                  <span className="inline-block h-2 w-2 rounded-full bg-purple-500" />
+                  일정 결과 및 설정
+                </h3>
                 
                 {/* 완료 상태 및 결과 */}
-                <div className="bg-gray-50 p-4 rounded-lg">
+                <div className="bg-slate-50/80 border border-slate-200/70 p-4 rounded-xl">
                   <div className="flex items-center space-x-2 mb-3">
                     <Checkbox
                       id="completed"
@@ -1229,11 +1273,11 @@ export default function Calendar() {
             </div>
 
             {/* 하단 버튼들 */}
-            <div className="flex justify-center items-center space-x-2 pt-2 border-t mt-2">
+            <div className="flex justify-end items-center gap-2 px-6 sm:px-8 py-4 bg-white/85 backdrop-blur-sm border-t border-slate-200">
               <Button
                 onClick={handleSaveEvent}
                 disabled={createEventMutation.isPending || updateEventMutation.isPending}
-                className="px-4 h-8 text-sm bg-gray-700 hover:bg-gray-800 text-white"
+                className="px-5 h-10 text-sm font-semibold bg-gradient-to-r from-indigo-500 via-blue-500 to-sky-500 hover:from-indigo-600 hover:via-blue-600 hover:to-sky-600 text-white shadow-sm"
               >
                 <Save className="h-3 w-3 mr-1" />
                 {isEditing ? '저장' : '생성'}
@@ -1241,7 +1285,7 @@ export default function Calendar() {
               <Button
                 variant="outline"
                 onClick={() => setShowEventDialog(false)}
-                className="px-4 h-8 text-sm"
+                className="px-5 h-10 text-sm font-medium border-slate-300 text-slate-600 hover:bg-slate-100"
               >
                 <X className="h-3 w-3 mr-1" />
                 취소
@@ -1251,7 +1295,7 @@ export default function Calendar() {
                   variant="destructive"
                   onClick={handleDeleteEvent}
                   disabled={deleteEventMutation.isPending}
-                  className="px-4 h-8 text-sm bg-red-200 hover:bg-red-300 text-red-800"
+                  className="px-5 h-10 text-sm font-medium bg-red-100 hover:bg-red-200 text-red-700 border border-red-200"
                 >
                   삭제
                 </Button>

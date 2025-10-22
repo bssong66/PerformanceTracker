@@ -23,38 +23,67 @@ export default function Dashboard() {
   // 모든 데이터 쿼리
   const { data: tasks = [], isLoading: tasksLoading } = useQuery({
     queryKey: ['dashboard-tasks', user?.id],
-    queryFn: () => fetch(api.tasks.list(user?.id)).then(res => res.json()),
+    queryFn: async () => {
+      const res = await fetch(api.tasks.list(user?.id));
+      if (!res.ok) return [];
+      const data = await res.json();
+      return Array.isArray(data) ? data : [];
+    },
     enabled: !!user?.id
   });
 
   const { data: projects = [], isLoading: projectsLoading } = useQuery({
     queryKey: ['dashboard-projects', user?.id],
-    queryFn: () => fetch(`/api/projects/${user?.id}`).then(res => res.json()),
+    queryFn: async () => {
+      const res = await fetch(`/api/projects/${user?.id}`);
+      if (!res.ok) return [];
+      const data = await res.json();
+      return Array.isArray(data) ? data : [];
+    },
     enabled: !!user?.id
   });
 
   const { data: habits = [], isLoading: habitsLoading } = useQuery({
     queryKey: ['dashboard-habits', user?.id],
-    queryFn: () => fetch(api.habits.list(user?.id)).then(res => res.json()),
+    queryFn: async () => {
+      const res = await fetch(api.habits.list(user?.id));
+      if (!res.ok) return [];
+      const data = await res.json();
+      return Array.isArray(data) ? data : [];
+    },
     enabled: !!user?.id
   });
 
   const { data: foundation } = useQuery({
     queryKey: ['dashboard-foundation', user?.id, currentYear],
-    queryFn: () => fetch(api.foundation.get(user?.id, currentYear)).then(res => res.json()),
+    queryFn: async () => {
+      const res = await fetch(api.foundation.get(user?.id, currentYear));
+      if (!res.ok) return null;
+      return await res.json();
+    },
     meta: { errorMessage: "Foundation not found" },
     enabled: !!user?.id
   });
 
   const { data: goals = [] } = useQuery({
     queryKey: ['dashboard-goals', user?.id, currentYear],
-    queryFn: () => fetch(api.goals.list(user?.id, currentYear)).then(res => res.json()),
+    queryFn: async () => {
+      const res = await fetch(api.goals.list(user?.id, currentYear));
+      if (!res.ok) return [];
+      const data = await res.json();
+      return Array.isArray(data) ? data : [];
+    },
     enabled: !!user?.id
   });
 
   const { data: events = [] } = useQuery({
     queryKey: ['dashboard-events', user?.id],
-    queryFn: () => fetch(`/api/events/${user?.id}?startDate=${currentYear}-01-01&endDate=${currentYear}-12-31`).then(res => res.json()),
+    queryFn: async () => {
+      const res = await fetch(`/api/events/${user?.id}?startDate=${currentYear}-01-01&endDate=${currentYear}-12-31`);
+      if (!res.ok) return [];
+      const data = await res.json();
+      return Array.isArray(data) ? data : [];
+    },
     enabled: !!user?.id
   });
 
@@ -62,9 +91,12 @@ export default function Dashboard() {
   const { data: weeklyHabitLogs = [] } = useQuery({
     queryKey: ['dashboard-weekly-habits', user?.id, format(weekStart, 'yyyy-MM-dd')],
     queryFn: async () => {
-      const promises = weekDays.map(day => 
-        fetch(api.habitLogs.list(user?.id, format(day, 'yyyy-MM-dd'))).then(res => res.json())
-      );
+      const promises = weekDays.map(async day => {
+        const res = await fetch(api.habitLogs.list(user?.id, format(day, 'yyyy-MM-dd')));
+        if (!res.ok) return [];
+        const data = await res.json();
+        return Array.isArray(data) ? data : [];
+      });
       const results = await Promise.all(promises);
       return results.flat();
     },

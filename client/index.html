@@ -3,11 +3,26 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="referrer" content="no-referrer-when-downgrade" />
+    <title>Performance Tracker</title>
+    <script>
+      // Browser compatibility check and polyfills
+      if (!window.Promise) {
+        console.warn('Promise not supported, loading polyfill');
+      }
+      
+      // Ensure proper URL handling for SPA routing
+      if (window.history && window.history.pushState) {
+        // Modern browser - SPA routing should work
+        console.log('SPA routing supported');
+      } else {
+        console.warn('SPA routing may not be fully supported');
+      }
+    </script>
   </head>
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
-    <!-- This is a replit script which adds a banner on the top of the page when opened in development mode outside the replit environment -->
-    <script type="text/javascript" src="https://replit.com/public/js/replit-dev-banner.js"></script>
   </body>
 </html>

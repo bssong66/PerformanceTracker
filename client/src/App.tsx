@@ -1,6 +1,6 @@
 
 
-import { Switch, Route } from "wouter";
+import { Switch, Route, useLocation } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -22,6 +22,14 @@ import NotFound from "@/pages/not-found";
 
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
+  const [location] = useLocation();
+
+  // Debug logging for routing
+  console.log('Current location:', location);
+  console.log('Is authenticated:', isAuthenticated);
+  console.log('Is loading:', isLoading);
+  console.log('Window location:', window.location.pathname);
+  console.log('Window location href:', window.location.href);
 
   if (isLoading) {
     return (
@@ -34,29 +42,54 @@ function Router() {
     );
   }
 
+  // Get the actual path from window.location as fallback
+  const actualPath = window.location.pathname;
+  const currentPath = location || actualPath;
+
+  console.log('Using path:', currentPath);
+
+  // Handle specific routes with explicit matching
+  if (currentPath === '/login') {
+    return <Login />;
+  }
+
+  if (!isAuthenticated) {
+    if (currentPath === '/') {
+      return <Landing />;
+    }
+    return <NotFound />;
+  }
+
+  // Authenticated routes
+  const renderAuthenticatedRoute = () => {
+    switch (currentPath) {
+      case '/':
+        return <Home />;
+      case '/dashboard':
+        return <Dashboard />;
+      case '/foundation':
+        return <Foundation />;
+      case '/calendar':
+        return <Calendar />;
+      case '/planning':
+        return <Planning />;
+      case '/projects':
+        return <ProjectManagement />;
+      case '/daily-planning':
+      case '/daily':
+        return <DailyPlanning />;
+      case '/review':
+        return <Review />;
+      default:
+        console.log('Route not found, showing NotFound for path:', currentPath);
+        return <NotFound />;
+    }
+  };
+
   return (
-    <Switch>
-      <Route path="/login" component={Login} />
-      {!isAuthenticated ? (
-        <Route path="/" component={Landing} />
-      ) : (
-        <Layout>
-          <Switch>
-            <Route path="/" component={Home} />
-            <Route path="/dashboard" component={Dashboard} />
-            <Route path="/foundation" component={Foundation} />
-            <Route path="/calendar" component={Calendar} />
-            <Route path="/planning" component={Planning} />
-            <Route path="/projects" component={ProjectManagement} />
-            <Route path="/daily-planning" component={DailyPlanning} />
-            <Route path="/daily" component={DailyPlanning} />
-            <Route path="/review" component={Review} />
-            <Route component={NotFound} />
-          </Switch>
-        </Layout>
-      )}
-      <Route component={NotFound} />
-    </Switch>
+    <Layout>
+      {renderAuthenticatedRoute()}
+    </Layout>
   );
 }
 

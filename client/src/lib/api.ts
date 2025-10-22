@@ -3,15 +3,15 @@ import { apiRequest } from "./queryClient";
 export const api = {
   // Foundation
   foundation: {
-    get: (userId: number, year?: number) => 
+    get: (userId: string, year?: number) => 
       `/api/foundation/${userId}${year ? `?year=${year}` : ''}`,
-    getAll: (userId: number) => `/api/foundations/${userId}`,
+    getAll: (userId: string) => `/api/foundations/${userId}`,
     create: () => `/api/foundation`,
   },
 
   // Goals
   goals: {
-    list: (userId: number, year?: number) => 
+    list: (userId: string, year?: number) => 
       `/api/goals/${userId}${year ? `?year=${year}` : ''}`,
     create: () => `/api/goals`,
     update: (id: number) => `/api/goals/${id}`,
@@ -34,7 +34,7 @@ export const api = {
 
   // Habits
   habits: {
-    list: (userId: number) => `/api/habits/${userId}`,
+    list: (userId: string) => `/api/habits/${userId}`,
     create: () => `/api/habits`,
     update: (id: number) => `/api/habits/${id}`,
     delete: (id: number) => `/api/habits/${id}`,
@@ -42,28 +42,28 @@ export const api = {
 
   // Habit Logs
   habitLogs: {
-    list: (userId: number, date: string) => `/api/habit-logs/${userId}/${date}`,
+    list: (userId: string, date: string) => `/api/habit-logs/${userId}/${date}`,
     create: () => `/api/habit-logs`,
     update: (id: number) => `/api/habit-logs/${id}`,
   },
 
   // Weekly Review
   weeklyReview: {
-    get: (userId: number, weekStartDate: string) => 
+    get: (userId: string, weekStartDate: string) => 
       `/api/weekly-review/${userId}/${weekStartDate}`,
     create: () => `/api/weekly-review`,
   },
 
   // Monthly Review
   monthlyReview: {
-    get: (userId: number, year: number, month: number) => 
+    get: (userId: string, year: number, month: number) => 
       `/api/monthly-review/${userId}/${year}/${month}`,
     create: () => `/api/monthly-review`,
   },
 
   // Daily Reflection
   dailyReflection: {
-    get: (userId: number, date: string) => `/api/daily-reflection/${userId}/${date}`,
+    get: (userId: string, date: string) => `/api/daily-reflection/${userId}/${date}`,
     create: () => `/api/daily-reflection`,
   },
 
@@ -77,14 +77,14 @@ export const api = {
 
   // User Settings
   userSettings: {
-    get: (userId: number) => `/api/user-settings/${userId}`,
+    get: (userId: string) => `/api/user-settings/${userId}`,
     update: () => `/api/user-settings`,
   },
 
   // Task Carryover
   taskCarryover: {
     carryOver: () => `/api/tasks/carryover`,
-    getCarriedOver: (userId: number, date: string) => `/api/tasks/carried-over/${userId}/${date}`,
+    getCarriedOver: (userId: string, date: string) => `/api/tasks/carried-over/${userId}/${date}`,
   },
 };
 

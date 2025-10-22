@@ -1,0 +1,27 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__serena__check_onboarding_performed",
+      "Bash(cat:*)",
+      "Bash(node:*)",
+      "Bash(export DATABASE_URL=\"postgresql://neondb_owner:npg_4xdm3cNzuFkX@ep-nameless-dust-ad7ieutu.c-2.us-east-1.aws.neon.tech/neondb?sslmode=require\")",
+      "Bash(npx tsc:*)",
+      "Bash(grep:*)",
+      "Bash(git restore:*)",
+      "Bash(cd:*)",
+      "Bash(npm run dev:*)",
+      "Bash(npx drizzle-kit studio:*)",
+      "Bash(npm run:*)",
+      "Bash(taskkill:*)",
+      "Bash(npx kill-port:*)",
+      "Bash(npm install:*)",
+      "Bash(dir .env)",
+      "Bash(more:*)",
+      "Bash(del .env)",
+      "Bash(timeout:*)",
+      "Read(//c/Users/bsson/**)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

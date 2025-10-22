@@ -1,10 +1,35 @@
 import { QueryClient, QueryFunction } from "@tanstack/react-query";
+import { supabase } from "./supabase";
 
-async function throwIfResNotOk(res: Response) {
+async function throwIfResNotOk(res: Response, method?: string, url?: string) {
+  // For DELETE requests with 404, treat as success (goal already deleted)
+  if (res.status === 404 && method === 'DELETE' && url?.includes('/api/goals/')) {
+    console.log('DELETE goal request returned 404, treating as success (goal already deleted)');
+    return; // Don't throw error, treat as success
+  }
+  
   if (!res.ok) {
     const text = (await res.text()) || res.statusText;
+    console.error(`API Error [${res.status}]:`, text);
+    try {
+      const json = JSON.parse(text);
+      console.error("Error details:", json);
+    } catch (e) {
+      // Not JSON, already logged as text
+    }
     throw new Error(`${res.status}: ${text}`);
   }
+}
+
+async function getAuthHeaders() {
+  const { data: { session } } = await supabase.auth.getSession();
+  const headers: Record<string, string> = {};
+  
+  if (session?.access_token) {
+    headers.Authorization = `Bearer ${session.access_token}`;
+  }
+  
+  return headers;
 }
 
 export async function apiRequest(
@@ -12,14 +37,17 @@ export async function apiRequest(
   url: string,
   data?: unknown | undefined,
 ): Promise<Response> {
+  const authHeaders = await getAuthHeaders();
   const res = await fetch(url, {
     method,
-    headers: data ? { "Content-Type": "application/json" } : {},
+    headers: {
+      ...authHeaders,
+      ...(data ? { "Content-Type": "application/json" } : {}),
+    },
     body: data ? JSON.stringify(data) : undefined,
-    credentials: "include",
   });
 
-  await throwIfResNotOk(res);
+  await throwIfResNotOk(res, method, url);
   return res;
 }
 
@@ -29,15 +57,16 @@ export const getQueryFn: <T>(options: {
 }) => QueryFunction<T> =
   ({ on401: unauthorizedBehavior }) =>
   async ({ queryKey }) => {
+    const authHeaders = await getAuthHeaders();
     const res = await fetch(queryKey.join("/") as string, {
-      credentials: "include",
+      headers: authHeaders,
     });
 
     if (unauthorizedBehavior === "returnNull" && res.status === 401) {
       return null;
     }
 
-    await throwIfResNotOk(res);
+    await throwIfResNotOk(res, 'GET', queryKey.join("/") as string);
     return await res.json();
   };
 

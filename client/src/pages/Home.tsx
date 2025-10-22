@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -7,6 +8,43 @@ import { Link } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+
+const DAILY_QUOTES = [
+  {
+    text: "\uC131\uACF5\uC740 \uB9E4\uC77C \uBC18\uBCF5\uD55C \uC791\uC740 \uB178\uB825\uC758 \uD569\uC774\uB2E4.",
+    author: "\uB85C\uBC84\uD2B8 \uCF5C\uB9AC\uC5B4",
+  },
+  {
+    text: "\uC704\uB300\uD55C \uC77C\uC744 \uD558\uB824\uBA74 \uC790\uC2E0\uC774 \uD558\uB294 \uC77C\uC744 \uC0AC\uB791\uD574\uC57C \uD55C\uB2E4.",
+    author: "\uC2A4\uD2F0\uBE0C \uC7A1\uC2A4",
+  },
+  {
+    text: "\uC2E4\uD328\uB294 \uB354 \uB5BC\uB4DD\uD558\uAC8C \uB2E4\uC2DC \uC2DC\uC791\uD558\uB294 \uAE30\uD68C\uB2E4.",
+    author: "\uD5EC\uB9AC \uD3EC\uB4DC",
+  },
+  {
+    text: "\uC624\uB298 \uD560 \uC218 \uC788\uB294 \uC77C\uC744 \uB0B4\uC77C\uB85C \uBBF8\uB8E8\uC9C0 \uB9D0\uB77C.",
+    author: "\uBCA0\uC794\uBBFC \uD504\uB79C\uD074\uB9B0",
+  },
+  {
+    text: "\uB3C4\uC804 \uC5C6\uB294 \uC131\uACF5\uC740 \uC5C6\uB2E4.",
+    author: "\uC564\uB4DC\uB958 \uCE74\uB124\uAE30",
+  },
+  {
+    text: "\uC791\uC740 \uC9C4\uC804\uB3C4 \uC9C4\uC804\uC774\uB2E4.",
+    author: "\uC775\uBA85",
+  },
+  {
+    text: "\uBA85\uD655\uD55C \uBAA9\uD45C\uB294 \uC131\uCD2C\uC758 \uCD9C\uBC1C\uC810\uC774\uB2E4.",
+    author: "W. \uD074\uB808\uBA58\uD2B8 \uC2A4\uD1A4",
+  },
+] as const;
+
+function getQuoteOfTheDay(date: Date = new Date()) {
+  const startOfDay = Date.UTC(date.getFullYear(), date.getMonth(), date.getDate());
+  const dayIndex = Math.floor(startOfDay / (1000 * 60 * 60 * 24));
+  return DAILY_QUOTES[dayIndex % DAILY_QUOTES.length];
+}
 
 export default function Home() {
   const { user, isLoading } = useAuth();
@@ -72,7 +110,7 @@ export default function Home() {
             환영합니다, {(user as any)?.firstName || (user as any)?.email || '사용자'}님!
           </h1>
           <p className="text-gray-600">
-            오늘도 목표 달성을 위해 함께 해보아요.
+            목표 달성을 위한 한걸음
           </p>
           
           {/* Development: User Switch Dropdown - Mobile optimized */}

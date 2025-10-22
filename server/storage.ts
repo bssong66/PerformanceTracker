@@ -34,6 +34,7 @@ export interface IStorage {
   
   // Annual goals methods
   getAnnualGoals(userId: string, year?: number): Promise<AnnualGoal[]>;
+  getAnnualGoal(id: number): Promise<AnnualGoal | undefined>;
   createAnnualGoal(goal: InsertAnnualGoal): Promise<AnnualGoal>;
   updateAnnualGoal(id: number, updates: Partial<AnnualGoal>): Promise<AnnualGoal | undefined>;
   deleteAnnualGoal(id: number): Promise<boolean>;
@@ -122,14 +123,14 @@ export class DatabaseStorage implements IStorage {
       .values({
         ...userData,
         password: userData.password || null,
-        authType: userData.authType || 'replit'
+        authType: userData.authType || 'local'
       })
       .onConflictDoUpdate({
         target: users.id,
         set: {
           ...userData,
           password: userData.password || null,
-          authType: userData.authType || 'replit',
+          authType: userData.authType || 'local',
           updatedAt: new Date(),
         },
       })
@@ -168,12 +169,16 @@ export class DatabaseStorage implements IStorage {
   // Foundation methods
   async getFoundation(userId: string, year?: number): Promise<Foundation | undefined> {
     const currentYear = year || new Date().getFullYear();
+    console.log(`[Storage] getFoundation called with userId: ${userId}, year: ${currentYear}`);
+    
     const result = await db
       .select()
       .from(foundations)
       .where(and(eq(foundations.userId, userId), eq(foundations.year, currentYear)))
       .orderBy(desc(foundations.updatedAt))
       .limit(1);
+    
+    console.log(`[Storage] getFoundation query result:`, result);
     return result[0];
   }
 
@@ -200,10 +205,33 @@ export class DatabaseStorage implements IStorage {
   // Annual goals methods
   async getAnnualGoals(userId: string, year?: number): Promise<AnnualGoal[]> {
     const currentYear = year || new Date().getFullYear();
-    return await db
+    console.log(`[Storage] getAnnualGoals called with userId: ${userId}, year: ${currentYear}`);
+    
+    const result = await db
       .select()
       .from(annualGoals)
       .where(and(eq(annualGoals.userId, userId), eq(annualGoals.year, currentYear)));
+    
+    console.log(`[Storage] getAnnualGoals query result:`, result);
+    return result;
+  }
+
+  async getAnnualGoal(id: number): Promise<AnnualGoal | undefined> {
+    console.log(`[Storage] getAnnualGoal called with id: ${id} (type: ${typeof id})`);
+    
+    // First, let's see all goals in the database
+    const allGoals = await db.select().from(annualGoals);
+    console.log(`[Storage] All goals in database:`, allGoals);
+    
+    const result = await db
+      .select()
+      .from(annualGoals)
+      .where(eq(annualGoals.id, id))
+      .limit(1);
+    
+    console.log(`[Storage] getAnnualGoal query result for id ${id}:`, result);
+    console.log(`[Storage] Found goal:`, result[0]);
+    return result[0];
   }
 
   async createAnnualGoal(goal: InsertAnnualGoal): Promise<AnnualGoal> {

@@ -1,28 +1,27 @@
-import { Pool, neonConfig } from '@neondatabase/serverless';
-import { drizzle } from 'drizzle-orm/neon-serverless';
-import ws from "ws";
+﻿import dotenv from "dotenv";
+dotenv.config();
+
+import postgres from "postgres";
+import { drizzle } from "drizzle-orm/postgres-js";
 import * as schema from "@shared/schema";
 
-// Configure WebSocket for Neon
-neonConfig.webSocketConstructor = ws;
+const connectionString = process.env.DATABASE_URL;
 
-if (!process.env.DATABASE_URL) {
+if (!connectionString) {
   throw new Error(
     "DATABASE_URL must be set. Did you forget to provision a database?",
   );
 }
 
-// Create pool with better error handling and connection limits
-export const pool = new Pool({ 
-  connectionString: process.env.DATABASE_URL,
+// Supabase always requires SSL
+const client = postgres(connectionString, {
+  ssl: {
+    rejectUnauthorized: false,
+  },
+  // Supabase connection pooling settings
   max: 10,
-  idleTimeoutMillis: 30000,
-  connectionTimeoutMillis: 10000,
+  idle_timeout: 20,
+  connect_timeout: 10,
 });
 
-// Add error handling for the pool
-pool.on('error', (err) => {
-  console.error('Database pool error:', err);
-});
-
-export const db = drizzle({ client: pool, schema });
+export const db = drizzle(client, { schema });

@@ -1,20 +1,19 @@
 import { useState, useRef, useEffect } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
-import { queryClient, apiRequest } from '@/lib/queryClient';
+import { queryClient } from '@/lib/queryClient';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
-import { Plus, ListTodo, Calendar, Clock, Eye, Trash2, Edit, CheckCircle, Circle, Camera, Image, ArrowLeft, ArrowRight, RefreshCw, FileText, Download } from 'lucide-react';
-import { FileUploader } from '@/components/FileUploader';
+import { Plus, ListTodo, Calendar, Clock, Trash2, CheckCircle, Circle, Image, ArrowLeft, ArrowRight, FileText, Download } from 'lucide-react';
 import { UnifiedAttachmentManager } from '@/components/UnifiedAttachmentManager';
 import { format } from 'date-fns';
 import { ko } from 'date-fns/locale';
@@ -84,7 +83,12 @@ function TaskManagement({ highlightTaskId }: TaskManagementProps) {
   // Fetch tasks
   const { data: tasks = [] } = useQuery({
     queryKey: ['tasks', user?.id],
-    queryFn: () => fetch(`/api/tasks/${user?.id}`).then(res => res.json()),
+    queryFn: async () => {
+      const res = await fetch(`/api/tasks/${user?.id}`);
+      if (!res.ok) return [];
+      const data = await res.json();
+      return Array.isArray(data) ? data : [];
+    },
     enabled: !!user?.id
   });
 
@@ -462,7 +466,6 @@ function TaskManagement({ highlightTaskId }: TaskManagementProps) {
     <div className="p-6 space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">할일 관리</h1>
           <p className="text-gray-600">A-B-C 우선순위로 할일을 관리하세요</p>
         </div>
 
@@ -818,14 +821,14 @@ function TaskManagement({ highlightTaskId }: TaskManagementProps) {
               ))}
 
               {tasksByPriority[priority].length === 0 && (
-                <div className="text-center py-8 text-gray-500">
-                  <ListTodo className="h-8 w-8 mx-auto mb-2" />
-                  <p className="text-sm mb-3">{priority}급 할일이 없습니다</p>
+                <div className="text-center py-3 text-gray-500">
+                  <ListTodo className="h-6 w-6 mx-auto mb-1" />
+                  <p className="text-xs mb-2">{priority}급 할일이 없습니다</p>
                   <Button
                     size="sm"
                     variant="outline"
                     onClick={() => openCreateDialog(priority)}
-                    className="text-gray-600 hover:text-gray-800"
+                    className="text-gray-600 hover:text-gray-800 h-7 px-2 text-xs"
                   >
                     <Plus className="h-3 w-3 mr-1" />
                     {priority}급 할일 추가

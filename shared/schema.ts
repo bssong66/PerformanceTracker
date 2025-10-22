@@ -14,8 +14,7 @@ import {
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
-// Session storage table.
-// (IMPORTANT) This table is mandatory for Replit Auth, don't drop it.
+// Session storage table for authentication
 export const sessions = pgTable(
   "sessions",
   {
@@ -26,8 +25,7 @@ export const sessions = pgTable(
   (table) => [index("IDX_session_expire").on(table.expire)],
 );
 
-// User storage table.
-// (IMPORTANT) This table is mandatory for Replit Auth, don't drop it.
+// User storage table
 export const users = pgTable("users", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   email: varchar("email").unique(),
@@ -35,7 +33,7 @@ export const users = pgTable("users", {
   lastName: varchar("last_name"),
   profileImageUrl: varchar("profile_image_url"),
   password: varchar("password"), // For local authentication
-  authType: varchar("auth_type").default("replit"), // 'replit' or 'local'
+  authType: varchar("auth_type").default("local"), // Authentication type
   role: varchar("role").default("user"), // "user" | "admin"
   isActive: boolean("is_active").default(true),
   createdAt: timestamp("created_at").defaultNow(),
@@ -260,7 +258,9 @@ export const insertFoundationSchema = createInsertSchema(foundations).omit({
   updatedAt: true,
 });
 
-export const insertAnnualGoalSchema = createInsertSchema(annualGoals).omit({
+export const insertAnnualGoalSchema = createInsertSchema(annualGoals, {
+  completed: z.boolean().optional().default(false),
+}).omit({
   id: true,
   createdAt: true,
 });

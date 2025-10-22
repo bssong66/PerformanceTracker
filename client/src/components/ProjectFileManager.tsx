@@ -8,7 +8,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { useToast } from '@/hooks/use-toast';
 import { FileUp, Download, Trash2, File, FileText, Image, Eye } from 'lucide-react';
-import { ObjectUploader } from '@/components/ObjectUploader';
 import { format } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import type { UploadResult } from '@uppy/core';
@@ -41,31 +40,23 @@ export function ProjectFileManager({ projectId, projectTitle }: ProjectFileManag
     queryFn: () => fetch(`/api/projects/${projectId}/files`).then(res => res.json())
   });
 
-  // Upload mutation
+  // Upload via Supabase
   const uploadMutation = useMutation({
-    mutationFn: async (fileData: {
-      fileName: string;
-      originalFileName: string;
-      fileSize: number;
-      mimeType: string;
-      objectPath: string;
-    }) => {
-      return apiRequest('POST', `/api/projects/${projectId}/files`, fileData);
+    mutationFn: async (formData: FormData) => {
+      const res = await fetch(`/api/projects/${projectId}/files/upload-direct`, {
+        method: 'POST',
+        body: formData,
+      });
+      if (!res.ok) throw new Error('Upload failed');
+      return res.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['project-files', projectId] });
-      toast({
-        title: "파일 업로드 완료",
-        description: "파일이 성공적으로 업로드되었습니다.",
-      });
+      toast({ title: '파일 업로드 완료', description: '파일이 성공적으로 업로드되었습니다.' });
     },
     onError: (error) => {
       console.error('File upload error:', error);
-      toast({
-        title: "업로드 실패",
-        description: "파일 업로드 중 오류가 발생했습니다.",
-        variant: "destructive",
-      });
+      toast({ title: '업로드 실패', description: '파일 업로드 중 오류가 발생했습니다.', variant: 'destructive' });
     },
   });
 
@@ -93,29 +84,13 @@ export function ProjectFileManager({ projectId, projectTitle }: ProjectFileManag
     },
   });
 
-  const handleGetUploadParameters = async () => {
-    const response = await fetch(`/api/projects/${projectId}/files/upload`, {
-      method: 'POST',
-    });
-    const data = await response.json();
-    return {
-      method: 'PUT' as const,
-      url: data.uploadURL,
-    };
-  };
-
-  const handleUploadComplete = (result: UploadResult<Record<string, unknown>, Record<string, unknown>>) => {
-    if (result.successful && result.successful.length > 0) {
-      const uploadedFile = result.successful[0];
-      const fileData = {
-        fileName: uploadedFile.name || 'untitled',
-        originalFileName: uploadedFile.name || 'untitled',
-        fileSize: uploadedFile.size || 0,
-        mimeType: uploadedFile.type || 'application/octet-stream',
-        objectPath: uploadedFile.uploadURL || '',
-      };
-      uploadMutation.mutate(fileData);
-    }
+  const onPickFiles = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+    const form = new FormData();
+    Array.from(files).forEach((f) => form.append('files', f));
+    uploadMutation.mutate(form);
+    e.currentTarget.value = '';
   };
 
   const handleDownload = (file: ProjectFile) => {
@@ -171,16 +146,21 @@ export function ProjectFileManager({ projectId, projectTitle }: ProjectFileManag
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-semibold">프로젝트 파일</h3>
-        <ObjectUploader
-          maxNumberOfFiles={5}
-          maxFileSize={50 * 1024 * 1024} // 50MB
-          onGetUploadParameters={handleGetUploadParameters}
-          onComplete={handleUploadComplete}
-          buttonClassName="flex items-center gap-2"
-        >
-          <FileUp className="h-4 w-4" />
-          파일 업로드
-        </ObjectUploader>
+        <div>
+          <input
+            id="file-input"
+            type="file"
+            multiple
+            className="hidden"
+            onChange={onPickFiles}
+          />
+          <Button asChild className="flex items-center gap-2">
+            <label htmlFor="file-input" className="cursor-pointer">
+              <FileUp className="h-4 w-4" />
+              파일 업로드
+            </label>
+          </Button>
+        </div>
       </div>
 
       {isLoading ? (

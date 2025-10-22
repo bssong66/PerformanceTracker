@@ -8,12 +8,9 @@ import {
   Sprout, 
   Calendar, 
   CalendarDays, 
-  Repeat, 
-  Target,
   Menu,
   FolderOpen,
   BarChart3,
-  Focus,
   LogOut,
   User
 } from "lucide-react";
@@ -27,7 +24,7 @@ const navigation = [
   { name: '대시보드', href: '/dashboard', icon: Home },
   { name: '가치중심계획', href: '/foundation', icon: Sprout },
   { name: '일정관리', href: '/calendar', icon: CalendarDays },
-  { name: '계획관리', href: '/planning', icon: FolderOpen },
+  { name: '할일관리', href: '/planning', icon: FolderOpen },
   { name: '일일관리', href: '/daily', icon: Calendar },
   { name: '리뷰', href: '/review', icon: BarChart3 },
 ];
@@ -35,15 +32,15 @@ const navigation = [
 export function Layout({ children }: LayoutProps) {
   const [location] = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
 
   const handleLogout = async () => {
     try {
-      await fetch('/api/auth/logout', { method: 'POST' });
+      await signOut();
       window.location.href = '/';
     } catch (error) {
-      // Fallback to redirect logout
-      window.location.href = '/api/logout';
+      console.error('Logout error:', error);
+      window.location.href = '/';
     }
   };
 

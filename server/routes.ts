@@ -5,17 +5,14 @@ import multer from "multer";
 import path from "path";
 import fs from "fs";
 import { storage } from "./storage";
-import { 
+import {
   insertFoundationSchema, insertAnnualGoalSchema, insertProjectSchema,
-  insertTaskSchema, insertEventSchema, insertHabitSchema, insertHabitLogSchema, 
+  insertTaskSchema, insertEventSchema, insertHabitSchema, insertHabitLogSchema,
   insertWeeklyReviewSchema, insertMonthlyReviewSchema, insertDailyReflectionSchema, insertTimeBlockSchema,
   insertUserSettingsSchema, insertProjectFileSchema
 } from "@shared/schema";
-import {
-  ObjectStorageService,
-  ObjectNotFoundError,
-} from "./objectStorage";
-import { setupAuth, isAuthenticated } from "./replitAuth";
+import { supabaseAdmin } from "./supabase";
+import { uploadFileToSupabase } from "./supabaseStorage";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Create uploads directory if it doesn't exist
@@ -23,6 +20,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   if (!fs.existsSync(uploadsDir)) {
     fs.mkdirSync(uploadsDir, { recursive: true });
   }
+
+  // Serve uploaded files as static
+  app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
 
   // Multer configuration for file uploads
   const storage_multer = multer.diskStorage({
@@ -35,7 +35,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  const upload = multer({ 
+  const upload = multer({
     storage: storage_multer,
     limits: {
       fileSize: 50 * 1024 * 1024, // 50MB
@@ -46,7 +46,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const allowedTypes = /jpeg|jpg|png|gif|pdf|doc|docx|txt/;
       const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
       const mimetype = allowedTypes.test(file.mimetype);
-      
+
       if (mimetype && extname) {
         return cb(null, true);
       } else {
@@ -55,11 +55,164 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Memory storage for Supabase uploads
+  const uploadMem = multer({
+    storage: multer.memoryStorage(),
+    limits: {
+      fileSize: 50 * 1024 * 1024, // 50MB
+      files: 15 // Maximum 15 files
+    }
+  });
+
   // Serve uploaded files statically
   app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
 
-  // Auth middleware
-  await setupAuth(app);
+  // Supabase auth middleware
+  const isAuthenticated = async (req: any, res: any, next: any) => {
+    try {
+      const authHeader = req.headers.authorization;
+      if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return res.status(401).json({ message: '인증 토큰이 필요합니다.' });
+      }
+
+      const token = authHeader.substring(7);
+      const { data: { user }, error } = await supabaseAdmin.auth.getUser(token);
+      
+      if (error || !user) {
+        return res.status(401).json({ message: '유효하지 않은 토큰입니다.' });
+      }
+
+      req.user = { claims: { sub: user.id, email: user.email } };
+      next();
+    } catch (error) {
+      console.error('Auth error:', error);
+      res.status(500).json({ message: '인증 처리 중 오류가 발생했습니다.' });
+    }
+  };
+
+  // Supabase auth routes
+  app.post('/api/auth/signup', async (req, res) => {
+    try {
+      const { email, password, firstName, lastName } = req.body;
+      
+      if (!email || !password || !firstName) {
+        return res.status(400).json({ message: '필수 정보를 입력해주세요.' });
+      }
+
+      const { data, error } = await supabaseAdmin.auth.admin.createUser({
+        email,
+        password,
+        user_metadata: {
+          first_name: firstName,
+          last_name: lastName || '',
+        },
+        email_confirm: true
+      });
+
+      if (error) {
+        return res.status(400).json({ message: error.message });
+      }
+
+      res.json({ message: '회원가입이 완료되었습니다.', user: data.user });
+    } catch (error) {
+      console.error('Signup error:', error);
+      res.status(500).json({ message: '회원가입 중 오류가 발생했습니다.' });
+    }
+  });
+
+  app.post('/api/auth/login', async (req, res) => {
+    try {
+      const { email, password } = req.body;
+      
+      if (!email || !password) {
+        return res.status(400).json({ message: '이메일과 비밀번호를 입력해주세요.' });
+      }
+
+      // 임시 로컬 인증 (개발용)
+      if (email === 'test@example.com' && password === 'password123') {
+        const mockUserId = 'dev-user-' + Date.now();
+
+        // 개발용 사용자 생성 또는 업데이트
+        await storage.upsertUser({
+          id: mockUserId,
+          email: 'test@example.com',
+          firstName: 'Test',
+          lastName: 'User',
+          authType: 'local',
+          password: null
+        });
+
+        // 세션에 사용자 정보 저장
+        (req.session as any).user = {
+          claims: {
+            sub: mockUserId,
+            email: 'test@example.com',
+            first_name: 'Test',
+            last_name: 'User'
+          }
+        };
+
+        await new Promise((resolve, reject) => {
+          req.session.save((err: any) => {
+            if (err) reject(err);
+            else resolve(true);
+          });
+        });
+
+        res.json({
+          message: '로그인이 완료되었습니다.',
+          user: {
+            id: mockUserId,
+            email: 'test@example.com',
+            user_metadata: {
+              first_name: 'Test',
+              last_name: 'User'
+            }
+          },
+          session: { access_token: 'mock_token_' + Date.now() }
+        });
+        return;
+      }
+
+      // Supabase 인증 (실제 키가 있을 때)
+      try {
+        const { data, error } = await supabaseAdmin.auth.signInWithPassword({
+          email,
+          password
+        });
+
+        if (error) {
+          return res.status(401).json({ message: '이메일 또는 비밀번호가 잘못되었습니다.' });
+        }
+
+        res.json({ 
+          message: '로그인이 완료되었습니다.', 
+          user: data.user,
+          session: data.session 
+        });
+      } catch (supabaseError) {
+        console.error('Supabase auth error:', supabaseError);
+        return res.status(401).json({ message: '인증 서비스에 연결할 수 없습니다.' });
+      }
+    } catch (error) {
+      console.error('Login error:', error);
+      res.status(500).json({ message: '로그인 중 오류가 발생했습니다.' });
+    }
+  });
+
+  app.post('/api/auth/logout', async (req, res) => {
+    try {
+      const authHeader = req.headers.authorization;
+      if (authHeader && authHeader.startsWith('Bearer ')) {
+        const token = authHeader.substring(7);
+        await supabaseAdmin.auth.admin.signOut(token);
+      }
+      res.json({ message: '로그아웃되었습니다.' });
+    } catch (error) {
+      console.error('Logout error:', error);
+      res.status(500).json({ message: '로그아웃 중 오류가 발생했습니다.' });
+    }
+  });
 
   // Auth routes
   app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {
@@ -127,13 +280,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user.claims.sub;
       const year = req.query.year ? parseInt(req.query.year as string) : undefined;
       const foundation = await storage.getFoundation(userId, year);
-      
-      if (!foundation) {
-        return res.status(404).json({ message: "Foundation not found" });
-      }
-      
-      res.json(foundation);
+
+      // Return null instead of 404 when foundation doesn't exist (normal for new users)
+      res.json(foundation || null);
     } catch (error) {
+      console.error("Error fetching foundation:", error);
       res.status(500).json({ message: "Internal server error" });
     }
   });
@@ -142,14 +293,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.user.claims.sub; // Use authenticated user ID
       const year = req.query.year ? parseInt(req.query.year as string) : undefined;
+      console.log(`[API] Foundation request - userId: ${userId}, year: ${year}`);
+      
+      // Debug: Check all foundations for this user
+      const allFoundations = await storage.getAllFoundations(userId);
+      console.log(`[API] All foundations for user ${userId}:`, allFoundations);
+      
       const foundation = await storage.getFoundation(userId, year);
-      
-      if (!foundation) {
-        return res.status(404).json({ message: "Foundation not found" });
-      }
-      
-      res.json(foundation);
+      console.log(`[API] Foundation response for year ${year}:`, foundation);
+
+      // Return null instead of 404 when foundation doesn't exist (normal for new users)
+      res.json(foundation || null);
     } catch (error) {
+      console.error("Error fetching foundation:", error);
       res.status(500).json({ message: "Internal server error" });
     }
   });
@@ -164,16 +320,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+
   app.post("/api/foundation", isAuthenticated, async (req: any, res) => {
     try {
+      console.log("Foundation request body:", req.body);
+      console.log("User ID:", req.user.claims.sub);
+
+      // Ensure user exists in database before creating foundation
+      const userId = req.user.claims.sub;
+      let user = await storage.getUser(userId);
+
+      if (!user) {
+        // User authenticated but not in database - upsert user record
+        console.log("User not found in database, upserting user record...");
+        user = await storage.upsertUser({
+          id: userId,
+          email: req.user.claims.email || '',
+          firstName: req.user.claims.first_name || '',
+          lastName: req.user.claims.last_name || '',
+          profileImageUrl: req.user.claims.profile_image_url || null,
+          authType: 'local',
+          password: null // No password for session-based auth
+        });
+        console.log("User upserted:", user.id);
+      }
+
       const foundationData = insertFoundationSchema.parse({
         ...req.body,
-        userId: req.user.claims.sub
+        userId: userId
       });
+      console.log("Parsed foundation data:", foundationData);
       const foundation = await storage.upsertFoundation(foundationData);
       res.json(foundation);
     } catch (error) {
-      res.status(400).json({ message: "Invalid foundation data" });
+      console.error("Foundation validation error:", error);
+      if (error instanceof z.ZodError) {
+        console.error("Zod validation errors:", error.errors);
+      }
+      res.status(400).json({
+        message: "Invalid foundation data",
+        error: error instanceof Error ? error.message : String(error),
+        details: error instanceof z.ZodError ? error.errors : undefined
+      });
     }
   });
 
@@ -182,23 +370,62 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.user.claims.sub;
       const year = req.query.year ? parseInt(req.query.year as string) : undefined;
+      console.log(`[API] Goals request - userId: ${userId}, year: ${year}`);
+      
+      // Debug: Check all goals for this user
+      const allGoals = await storage.getAllFoundations(userId); // This will show all foundations, not goals
+      console.log(`[API] All foundations for user ${userId}:`, allGoals);
+      
       const goals = await storage.getAnnualGoals(userId, year);
+      console.log(`[API] Goals response for year ${year}:`, goals);
       res.json(goals);
     } catch (error) {
+      console.error("Error fetching goals:", error);
       res.status(500).json({ message: "Internal server error" });
     }
   });
 
   app.post("/api/goals", isAuthenticated, async (req: any, res) => {
     try {
+      console.log("Goal request body:", req.body);
+      console.log("User ID:", req.user.claims.sub);
+
+      // Ensure user exists in database before creating goal
+      const userId = req.user.claims.sub;
+      let user = await storage.getUser(userId);
+
+      if (!user) {
+        // User authenticated but not in database - upsert user record
+        console.log("User not found in database, upserting user record...");
+        user = await storage.upsertUser({
+          id: userId,
+          email: req.user.claims.email || '',
+          firstName: req.user.claims.first_name || '',
+          lastName: req.user.claims.last_name || '',
+          profileImageUrl: req.user.claims.profile_image_url || null,
+          authType: 'local',
+          password: null // No password for session-based auth
+        });
+        console.log("User upserted:", user.id);
+      }
+
       const goalData = insertAnnualGoalSchema.parse({
         ...req.body,
-        userId: req.user.claims.sub
+        userId: userId
       });
+      console.log("Parsed goal data:", goalData);
       const goal = await storage.createAnnualGoal(goalData);
       res.json(goal);
     } catch (error) {
-      res.status(400).json({ message: "Invalid goal data" });
+      console.error("Goal validation error:", error);
+      if (error instanceof z.ZodError) {
+        console.error("Zod validation errors:", error.errors);
+      }
+      res.status(400).json({
+        message: "Invalid goal data",
+        error: error instanceof Error ? error.message : String(error),
+        details: error instanceof z.ZodError ? error.errors : undefined
+      });
     }
   });
 
@@ -218,17 +445,49 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/goals/:id", async (req, res) => {
+  app.delete("/api/goals/:id", isAuthenticated, async (req: any, res) => {
     try {
       const id = parseInt(req.params.id);
+      const userId = req.user.claims.sub;
+      
+      console.log(`[API] Deleting goal ${id} for user ${userId}`);
+      console.log(`[API] User object:`, req.user);
+      
+      // First, let's check all goals for this user to see what exists
+      const allUserGoals = await storage.getAnnualGoals(userId, new Date().getFullYear());
+      console.log(`[API] All goals for user ${userId}:`, allUserGoals);
+      
+      // First check if the goal exists and belongs to the user
+      const goal = await storage.getAnnualGoal(id);
+      if (!goal) {
+        console.log(`[API] Goal ${id} not found in database`);
+        console.log(`[API] Available goal IDs:`, allUserGoals.map(g => g.id));
+        // If goal doesn't exist, it might have been already deleted
+        // Return success since the end result is the same
+        console.log(`[API] Goal ${id} already deleted or doesn't exist - returning success`);
+        return res.json({ success: true, message: "Goal already deleted" });
+      }
+      
+      console.log(`[API] Goal found:`, goal);
+      console.log(`[API] Goal userId: ${goal.userId}, Request userId: ${userId}`);
+      console.log(`[API] UserId match: ${goal.userId === userId}`);
+      
+      if (goal.userId !== userId) {
+        console.log(`[API] Goal ${id} does not belong to user ${userId}`);
+        return res.status(403).json({ message: "Unauthorized" });
+      }
+      
       const deleted = await storage.deleteAnnualGoal(id);
       
       if (!deleted) {
+        console.log(`[API] Failed to delete goal ${id}`);
         return res.status(404).json({ message: "Goal not found" });
       }
       
+      console.log(`[API] Successfully deleted goal ${id}`);
       res.json({ success: true });
     } catch (error) {
+      console.error("Error deleting goal:", error);
       res.status(500).json({ message: "Internal server error" });
     }
   });
@@ -387,17 +646,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/projects/:projectId/files/upload", isAuthenticated, async (req: any, res) => {
-    try {
-      const objectStorageService = new ObjectStorageService();
-      const uploadURL = await objectStorageService.getObjectEntityUploadURL();
-      res.json({ uploadURL });
-    } catch (error) {
-      console.error('Get upload URL error:', error);
-      res.status(500).json({ message: "Failed to get upload URL" });
-    }
-  });
-
   app.post("/api/projects/:projectId/files", isAuthenticated, async (req: any, res) => {
     try {
       const projectId = parseInt(req.params.projectId);
@@ -409,19 +657,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         userId,
       });
       
-      const objectStorageService = new ObjectStorageService();
-      const normalizedPath = objectStorageService.normalizeObjectEntityPath(req.body.objectPath);
-      
-      // Set ACL policy for private file access
-      await objectStorageService.trySetObjectEntityAclPolicy(req.body.objectPath, {
-        owner: userId,
-        visibility: "private",
-      });
-      
-      const projectFile = await storage.createProjectFile({
-        ...fileData,
-        objectPath: normalizedPath,
-      });
+      const projectFile = await storage.createProjectFile(fileData);
       
       res.json(projectFile);
     } catch (error) {
@@ -430,27 +666,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Legacy object access route - redirect to Supabase
   app.get("/objects/:objectPath(*)", isAuthenticated, async (req: any, res) => {
-    const userId = req.user?.claims?.sub;
-    const objectStorageService = new ObjectStorageService();
-    try {
-      const objectFile = await objectStorageService.getObjectEntityFile(req.path);
-      const canAccess = await objectStorageService.canAccessObjectEntity({
-        objectFile,
-        userId: userId,
-        requestedPermission: "read" as any,
-      });
-      if (!canAccess) {
-        return res.sendStatus(401);
-      }
-      objectStorageService.downloadObject(objectFile, res);
-    } catch (error) {
-      console.error("Error checking object access:", error);
-      if (error instanceof ObjectNotFoundError) {
-        return res.sendStatus(404);
-      }
-      return res.sendStatus(500);
-    }
+    res.status(410).json({ message: "Legacy object access deprecated. Use Supabase Storage directly." });
   });
 
   // File download endpoint
@@ -1299,98 +1517,74 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // File upload routes
-  app.post("/api/files/upload", isAuthenticated, async (req: any, res) => {
+  // Task file upload route - Supabase direct upload
+  app.post("/api/files/upload", isAuthenticated, uploadMem.array("files", 15), async (req: any, res) => {
     try {
-      const objectStorageService = new ObjectStorageService();
-      const uploadURL = await objectStorageService.getObjectEntityUploadURL();
-      res.json({ uploadURL });
-    } catch (error) {
-      console.error("Error getting upload URL:", error);
-      res.status(500).json({ error: "Internal server error" });
-    }
-  });
-
-  // File serving route for private objects
-  app.get("/objects/:objectPath(*)", isAuthenticated, async (req: any, res) => {
-    const userId = req.user?.claims?.sub;
-    const objectStorageService = new ObjectStorageService();
-    
-    console.log('Accessing object path:', req.path, 'for user:', userId);
-    
-    try {
-      const objectFile = await objectStorageService.getObjectEntityFile(
-        req.path,
-      );
-      const canAccess = await objectStorageService.canAccessObjectEntity({
-        objectFile,
-        userId: userId,
-        requestedPermission: "read" as any,
-      });
-      if (!canAccess) {
-        console.log('Access denied for user:', userId, 'to object:', req.path);
-        return res.sendStatus(401);
-      }
-      
-      console.log('Serving object file:', objectFile.name);
-      objectStorageService.downloadObject(objectFile, res);
-    } catch (error) {
-      console.error("Error checking object access:", error);
-      if (error instanceof ObjectNotFoundError) {
-        console.log('Object not found:', req.path);
-        return res.sendStatus(404);
-      }
-      return res.sendStatus(500);
-    }
-  });
-
-  // Public file serving route
-  app.get("/public-objects/:filePath(*)", async (req, res) => {
-    const filePath = req.params.filePath;
-    const objectStorageService = new ObjectStorageService();
-    try {
-      const file = await objectStorageService.searchPublicObject(filePath);
-      if (!file) {
-        return res.status(404).json({ error: "File not found" });
-      }
-      objectStorageService.downloadObject(file, res);
-    } catch (error) {
-      console.error("Error searching for public object:", error);
-      return res.status(500).json({ error: "Internal server error" });
-    }
-  });
-
-  // File ACL setting endpoint
-  app.put("/api/files/set-acl", isAuthenticated, async (req: any, res) => {
-    try {
-      const { fileUrl } = req.body;
+      const files = (req.files as Express.Multer.File[]) || [];
       const userId = req.user.claims.sub;
-      
-      if (!fileUrl) {
-        return res.status(400).json({ error: "fileUrl is required" });
+
+      if (files.length === 0) {
+        return res.status(400).json({ message: "No files uploaded" });
       }
-      
-      const objectStorageService = new ObjectStorageService();
-      
-      console.log('Setting ACL for file:', fileUrl, 'user:', userId);
-      
-      const objectPath = await objectStorageService.trySetObjectEntityAclPolicy(
-        fileUrl,
-        {
-          owner: userId,
-          visibility: "private",
-        },
-      );
 
-      console.log('ACL set successfully, object path:', objectPath);
+      const uploadedFiles: string[] = [];
+      
+      for (const file of files) {
+        const storagePath = `tasks/${userId}/${Date.now()}-${file.originalname}`;
+        
+        const result = await uploadFileToSupabase({
+          filePath: storagePath,
+          contentType: file.mimetype || "application/octet-stream",
+          data: file.buffer,
+        });
 
-      res.status(200).json({
-        objectPath: objectPath,
-      });
+        uploadedFiles.push(`supabase://${result.bucket}/${result.path}`);
+      }
+
+      res.json({ uploadedFiles });
     } catch (error) {
-      console.error("Error setting file ACL:", error);
-      res.status(500).json({ error: "Internal server error" });
+      console.error("Task file upload error:", error);
+      res.status(500).json({ message: "Failed to upload files to Supabase" });
     }
+  });
+
+  // Generate signed URL for Supabase files
+  app.post("/api/files/signed-url", isAuthenticated, async (req: any, res) => {
+    try {
+      const { bucket, objectPath } = req.body;
+      
+      if (!bucket || !objectPath) {
+        return res.status(400).json({ message: "Bucket and objectPath are required" });
+      }
+
+      const { data, error } = await supabaseAdmin.storage
+        .from(bucket)
+        .createSignedUrl(objectPath, 60); // 1분 유효
+
+      if (error || !data?.signedUrl) {
+        throw error || new Error("Failed to create signed URL");
+      }
+
+      res.json({ signedUrl: data.signedUrl });
+    } catch (error) {
+      console.error("Signed URL generation error:", error);
+      res.status(500).json({ message: "Failed to generate signed URL" });
+    }
+  });
+
+  // Legacy object access route - deprecated
+  app.get("/objects/:objectPath(*)", isAuthenticated, async (req: any, res) => {
+    res.status(410).json({ message: "Legacy object access deprecated. Use Supabase Storage directly." });
+  });
+
+  // Legacy public file serving route - deprecated
+  app.get("/public-objects/:filePath(*)", async (req, res) => {
+    res.status(410).json({ message: "Legacy public object access deprecated. Use Supabase Storage directly." });
+  });
+
+  // Legacy ACL setting endpoint - deprecated
+  app.put("/api/files/set-acl", isAuthenticated, async (req: any, res) => {
+    res.status(410).json({ message: "Legacy ACL endpoint deprecated. Supabase Storage uses bucket policies." });
   });
 
   const httpServer = createServer(app);

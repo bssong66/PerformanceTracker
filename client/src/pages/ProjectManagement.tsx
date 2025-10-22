@@ -33,7 +33,7 @@ interface FileUrl {
 
 export default function ProjectManagement() {
   const { toast } = useToast();
-  const { user } = useAuth() as { user: User | null };
+  const { user, session } = useAuth() as { user: User | null; session: any };
 
   // Task form state
   const [taskForm, setTaskForm] = useState({
@@ -100,8 +100,17 @@ export default function ProjectManagement() {
   // Fetch projects
   const { data: projects = [] } = useQuery({
     queryKey: ['projects', user?.id],
-    queryFn: () => fetch(`/api/projects/${user?.id}`).then(res => res.json()),
-    enabled: !!user?.id
+    queryFn: async () => {
+      const res = await fetch(`/api/projects/${user?.id}`, {
+        headers: {
+          'Authorization': `Bearer ${session?.access_token}`,
+        }
+      });
+      if (!res.ok) return [];
+      const data = await res.json();
+      return Array.isArray(data) ? data : [];
+    },
+    enabled: !!user?.id && !!session?.access_token
   });
 
   // Fetch foundations for core values
@@ -109,7 +118,11 @@ export default function ProjectManagement() {
     queryKey: ['foundation', user?.id, new Date().getFullYear()],
     queryFn: async () => {
       const currentYear = new Date().getFullYear();
-      const response = await fetch(`/api/foundation/${user?.id}?year=${currentYear}`);
+      const response = await fetch(`/api/foundation/${user?.id}?year=${currentYear}`, {
+        headers: {
+          'Authorization': `Bearer ${session?.access_token}`,
+        }
+      });
       if (!response.ok && response.status !== 404) {
         throw new Error('Failed to fetch foundation');
       }
@@ -121,7 +134,7 @@ export default function ProjectManagement() {
     retry: 1,
     refetchOnWindowFocus: false,
     staleTime: 30000,
-    enabled: !!user?.id
+    enabled: !!user?.id && !!session?.access_token
   });
 
   // Fetch annual goals
@@ -129,7 +142,11 @@ export default function ProjectManagement() {
     queryKey: ['goals', user?.id, new Date().getFullYear()],
     queryFn: async () => {
       const currentYear = new Date().getFullYear();
-      const response = await fetch(`/api/goals/${user?.id}?year=${currentYear}`);
+      const response = await fetch(`/api/goals/${user?.id}?year=${currentYear}`, {
+        headers: {
+          'Authorization': `Bearer ${session?.access_token}`,
+        }
+      });
       if (!response.ok && response.status !== 404) {
         throw new Error('Failed to fetch goals');
       }
@@ -141,14 +158,23 @@ export default function ProjectManagement() {
     retry: 1,
     refetchOnWindowFocus: false,
     staleTime: 30000,
-    enabled: !!user?.id
+    enabled: !!user?.id && !!session?.access_token
   });
 
   // Fetch tasks for all projects
   const { data: allTasks = [] } = useQuery<Task[]>({
     queryKey: ['tasks', user?.id],
-    queryFn: () => fetch(`/api/tasks/${user?.id}`).then(res => res.json()),
-    enabled: !!user?.id
+    queryFn: async () => {
+      const res = await fetch(`/api/tasks/${user?.id}`, {
+        headers: {
+          'Authorization': `Bearer ${session?.access_token}`,
+        }
+      });
+      if (!res.ok) return [];
+      const data = await res.json();
+      return Array.isArray(data) ? data : [];
+    },
+    enabled: !!user?.id && !!session?.access_token
   });
 
   // Create project mutation
@@ -156,7 +182,10 @@ export default function ProjectManagement() {
     mutationFn: async (newProject: any) => {
       const response = await fetch('/api/projects', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session?.access_token}`,
+        },
         body: JSON.stringify(newProject)
       });
 
@@ -189,7 +218,10 @@ export default function ProjectManagement() {
     mutationFn: async ({ projectId, updates }: { projectId: number, updates: any }) => {
       const response = await fetch(`/api/projects/${projectId}`, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session?.access_token}`,
+        },
         body: JSON.stringify(updates)
       });
 
@@ -226,7 +258,10 @@ export default function ProjectManagement() {
   const deleteProjectMutation = useMutation({
     mutationFn: async (projectId: number) => {
       const response = await fetch(`/api/projects/${projectId}`, {
-        method: 'DELETE'
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${session?.access_token}`,
+        }
       });
       return response.json();
     },
@@ -273,7 +308,10 @@ export default function ProjectManagement() {
       // Then make the actual API call in background
       const response = await fetch(`/api/projects/${originalProjectId}/clone`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session?.access_token}`,
+        },
         body: JSON.stringify({
           title: `${originalProject.title} (복사본)`
         })
@@ -327,7 +365,10 @@ export default function ProjectManagement() {
     mutationFn: async (taskData: any) => {
       const response = await fetch('/api/tasks', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session?.access_token}`,
+        },
         body: JSON.stringify(taskData)
       });
       if (!response.ok) throw new Error('할일 생성에 실패했습니다.');
@@ -363,7 +404,10 @@ export default function ProjectManagement() {
     mutationFn: async ({ taskId, completed }: { taskId: number, completed: boolean }) => {
       const response = await fetch(`/api/tasks/${taskId}`, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session?.access_token}`,
+        },
         body: JSON.stringify({ completed })
       });
       if (!response.ok) throw new Error('Failed to update task');
@@ -430,7 +474,10 @@ export default function ProjectManagement() {
     mutationFn: async ({ taskId, updates }: { taskId: number, updates: any }) => {
       const response = await fetch(`/api/tasks/${taskId}`, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session?.access_token}`,
+        },
         body: JSON.stringify(updates)
       });
 
@@ -638,7 +685,11 @@ export default function ProjectManagement() {
       resultFileUrls: project.resultFileUrls || []
     });
     try {
-      const filesResponse = await fetch(`/api/projects/${project.id}/files`);
+      const filesResponse = await fetch(`/api/projects/${project.id}/files`, {
+        headers: {
+          'Authorization': `Bearer ${session?.access_token}`,
+        }
+      });
       if (filesResponse.ok) {
         const projectFiles = await filesResponse.json();
         console.log('Fetched project files:', projectFiles);
@@ -711,7 +762,11 @@ export default function ProjectManagement() {
 
     // Fetch project files from the dedicated API
     try {
-      const filesResponse = await fetch(`/api/projects/${selectedProject.id}/files`);
+      const filesResponse = await fetch(`/api/projects/${selectedProject.id}/files`, {
+        headers: {
+          'Authorization': `Bearer ${session?.access_token}`,
+        }
+      });
       if (filesResponse.ok) {
         const projectFiles = await filesResponse.json();
         console.log('Fetched project files:', projectFiles);
@@ -998,7 +1053,10 @@ export default function ProjectManagement() {
   const handleTaskDelete = async (taskId: number) => {
     try {
       const response = await fetch(`/api/tasks/${taskId}`, {
-        method: 'DELETE'
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${session?.access_token}`,
+        }
       });
 
       if (!response.ok) {

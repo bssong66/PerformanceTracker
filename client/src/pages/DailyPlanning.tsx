@@ -228,34 +228,64 @@ export default function DailyPlanning() {
   // 오늘 날짜의 모든 할일 가져오기 (날짜 필터 제거)
   const { data: allTasks = [], isLoading: tasksLoading } = useQuery({
     queryKey: ['tasks', user?.id],
-    queryFn: () => user?.id ? fetch(`/api/tasks/${user.id}`).then(res => res.json()) : Promise.resolve([]),
+    queryFn: async () => {
+      if (!user?.id) return [];
+      const res = await fetch(`/api/tasks/${user.id}`);
+      if (!res.ok) return [];
+      const data = await res.json();
+      return Array.isArray(data) ? data : [];
+    },
     enabled: !!user?.id,
   });
 
   // 습관 데이터 가져오기
   const { data: habits = [] } = useQuery({
     queryKey: ['habits', user?.id],
-    queryFn: () => user?.id ? fetch(`/api/habits/${user.id}`).then(res => res.json()) : Promise.resolve([]),
+    queryFn: async () => {
+      if (!user?.id) return [];
+      const res = await fetch(`/api/habits/${user.id}`);
+      if (!res.ok) return [];
+      const data = await res.json();
+      return Array.isArray(data) ? data : [];
+    },
     enabled: !!user?.id,
   });
 
   // 오늘의 습관 로그 가져오기
   const { data: habitLogs = [] } = useQuery({
     queryKey: ['habit-logs', user?.id, today],
-    queryFn: () => user?.id ? fetch(`/api/habit-logs/${user.id}/${today}`).then(res => res.json()) : Promise.resolve([]),
+    queryFn: async () => {
+      if (!user?.id) return [];
+      const res = await fetch(`/api/habit-logs/${user.id}/${today}`);
+      if (!res.ok) return [];
+      const data = await res.json();
+      return Array.isArray(data) ? data : [];
+    },
     enabled: !!user?.id,
   });
 
   // 오늘 날짜의 일정 가져오기
   const { data: todayEvents = [] } = useQuery({
     queryKey: ['events', user?.id, today],
-    queryFn: () => user?.id ? fetch(`/api/events/${user.id}?startDate=${today}&endDate=${today}`).then(res => res.json()) : Promise.resolve([]),
+    queryFn: async () => {
+      if (!user?.id) return [];
+      const res = await fetch(`/api/events/${user.id}?startDate=${today}&endDate=${today}`);
+      if (!res.ok) return [];
+      const data = await res.json();
+      return Array.isArray(data) ? data : [];
+    },
     enabled: !!user?.id,
   });
 
   const { data: projects = [] } = useQuery({
     queryKey: ['projects', user?.id],
-    queryFn: () => user?.id ? fetch(`/api/projects/${user.id}`).then(res => res.json()) : Promise.resolve([]),
+    queryFn: async () => {
+      if (!user?.id) return [];
+      const res = await fetch(`/api/projects/${user.id}`);
+      if (!res.ok) return [];
+      const data = await res.json();
+      return Array.isArray(data) ? data : [];
+    },
     enabled: !!user?.id,
   });
 
@@ -263,19 +293,36 @@ export default function DailyPlanning() {
 
   const { data: foundation } = useQuery({
     queryKey: ['foundation', user?.id, currentYear],
-    queryFn: () => user?.id ? fetch(`/api/foundation/${user.id}?year=${currentYear}`).then(res => res.json()) : Promise.resolve(null),
+    queryFn: async () => {
+      if (!user?.id) return null;
+      const res = await fetch(`/api/foundation/${user.id}?year=${currentYear}`);
+      if (!res.ok) return null;
+      return await res.json();
+    },
     enabled: !!user?.id,
   });
 
   const { data: annualGoals = [] } = useQuery({
     queryKey: ['goals', user?.id, currentYear],
-    queryFn: () => user?.id ? fetch(`/api/goals/${user.id}?year=${currentYear}`).then(res => res.json()) : Promise.resolve([]),
+    queryFn: async () => {
+      if (!user?.id) return [];
+      const res = await fetch(`/api/goals/${user.id}?year=${currentYear}`);
+      if (!res.ok) return [];
+      const data = await res.json();
+      return Array.isArray(data) ? data : [];
+    },
     enabled: !!user?.id,
   });
 
   const { data: timeBlocks, refetch: refetchTimeBlocks } = useQuery({
     queryKey: ['timeBlocks', user?.id, today],
-    queryFn: () => user?.id ? fetch(api.timeBlocks.list(user.id, today)).then(res => res.json()) : Promise.resolve([]),
+    queryFn: async () => {
+      if (!user?.id) return [];
+      const res = await fetch(api.timeBlocks.list(user.id, today));
+      if (!res.ok) return [];
+      const data = await res.json();
+      return Array.isArray(data) ? data : [];
+    },
     enabled: !!user?.id,
   });
 
@@ -284,7 +331,13 @@ export default function DailyPlanning() {
 
   const { data: yesterdayTimeBlocks = [] } = useQuery({
     queryKey: ['timeBlocks', user?.id, yesterday],
-    queryFn: () => user?.id ? fetch(api.timeBlocks.list(user.id, yesterday)).then(res => res.json()) : Promise.resolve([]),
+    queryFn: async () => {
+      if (!user?.id) return [];
+      const res = await fetch(api.timeBlocks.list(user.id, yesterday));
+      if (!res.ok) return [];
+      const data = await res.json();
+      return Array.isArray(data) ? data : [];
+    },
     enabled: !!user?.id,
   });
 
@@ -292,7 +345,16 @@ export default function DailyPlanning() {
 
   const { data: dailyReflection } = useQuery({
     queryKey: ['dailyReflection', user?.id, today],
-    queryFn: () => user?.id ? fetch(`/api/daily-reflection/${user.id}/${today}`).then(res => res.json()).catch(() => null) : Promise.resolve(null),
+    queryFn: async () => {
+      if (!user?.id) return null;
+      try {
+        const res = await fetch(`/api/daily-reflection/${user.id}/${today}`);
+        if (!res.ok) return null;
+        return await res.json();
+      } catch {
+        return null;
+      }
+    },
     enabled: !!user?.id,
   });
 

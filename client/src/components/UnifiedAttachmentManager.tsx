@@ -1,8 +1,8 @@
-import { useState, useRef, ReactNode } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
+import { fetchWithAuth } from '@/lib/authFetch';
 import { 
   Camera, 
   Image as ImageIcon, 
@@ -15,8 +15,7 @@ import {
   Video,
   Music,
   Archive,
-  FileCode,
-  Plus
+  FileCode
 } from 'lucide-react';
 
 interface FileItem {
@@ -31,6 +30,7 @@ interface Attachment {
   type: 'image' | 'file';
   size?: number;
   mimeType?: string;
+  resolvedUrl?: string; // 실제 다운로드 URL
 }
 
 interface PreviewFile {
@@ -88,6 +88,50 @@ const extractFileName = (url: string): string => {
   }
 };
 
+const getSignedUrl = async (bucket: string, objectPath: string): Promise<string> => {
+  try {
+    const response = await fetchWithAuth('/api/files/signed-url', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ bucket, objectPath }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to get signed URL: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return data.signedUrl;
+  } catch (error) {
+    console.error('Error getting signed URL:', error);
+    throw error;
+  }
+};
+
+const resolveAttachmentUrl = async (attachment: Attachment): Promise<string> => {
+  if (attachment.resolvedUrl) {
+    return attachment.resolvedUrl;
+  }
+
+  if (attachment.url.startsWith('supabase://')) {
+    try {
+      const pathStr = attachment.url.replace('supabase://', '');
+      const [bucket, ...rest] = pathStr.split('/');
+      const objectPath = rest.join('/');
+      
+      const signedUrl = await getSignedUrl(bucket, objectPath);
+      return signedUrl;
+    } catch (error) {
+      console.error('Error resolving Supabase URL:', error);
+      return attachment.url; // fallback to original URL
+    }
+  }
+
+  return attachment.url;
+};
+
 const formatFileSize = (bytes?: number): string => {
   if (!bytes || bytes === 0) return '';
   const k = 1024;
@@ -113,6 +157,7 @@ export function UnifiedAttachmentManager({
 }: UnifiedAttachmentManagerProps) {
   const [isUploading, setIsUploading] = useState(false);
   const [previewFile, setPreviewFile] = useState<PreviewFile | null>(null);
+  const [resolvedUrls, setResolvedUrls] = useState<Record<string, string>>({});
   const fileInputRef = useRef<HTMLInputElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
@@ -130,6 +175,31 @@ export function UnifiedAttachmentManager({
       type: 'file' as const
     })) || [])
   ];
+
+  // Supabase URL을 실제 URL로 해결
+  useEffect(() => {
+    const resolveUrls = async () => {
+      const newResolvedUrls: Record<string, string> = {};
+      
+      for (const attachment of allAttachments) {
+        if (attachment.url.startsWith('supabase://') && !resolvedUrls[attachment.url]) {
+          try {
+            const resolvedUrl = await resolveAttachmentUrl(attachment);
+            newResolvedUrls[attachment.url] = resolvedUrl;
+          } catch (error) {
+            console.error('Failed to resolve URL for', attachment.url, error);
+            newResolvedUrls[attachment.url] = attachment.url; // fallback
+          }
+        }
+      }
+      
+      if (Object.keys(newResolvedUrls).length > 0) {
+        setResolvedUrls(prev => ({ ...prev, ...newResolvedUrls }));
+      }
+    };
+
+    resolveUrls();
+  }, [allAttachments, resolvedUrls]);
 
   const handleFileUpload = async (files: File[], uploadType: 'auto' | 'image' | 'file' = 'auto') => {
     if (files.length === 0) return;
@@ -180,112 +250,67 @@ export function UnifiedAttachmentManager({
 
       // 이미지 업로드
       if (images.length > 0) {
-        const uploadPromises = images.map(async (file) => {
-          // Get upload URL from backend
-          const uploadResponse = await fetch(uploadEndpoint, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-          });
-
-          if (!uploadResponse.ok) {
-            throw new Error('업로드 URL 요청에 실패했습니다.');
-          }
-
-          const { uploadURL } = await uploadResponse.json();
-
-          // Upload file to object storage
-          const uploadFileResponse = await fetch(uploadURL, {
-            method: 'PUT',
-            body: file,
-            headers: {
-              'Content-Type': file.type || 'application/octet-stream',
-            },
-          });
-
-          if (!uploadFileResponse.ok) {
-            throw new Error('이미지 업로드 실패');
-          }
-
-          // Set ACL policy for uploaded file
-          const aclResponse = await fetch('/api/files/set-acl', {
-            method: 'PUT',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              fileUrl: uploadURL
-            }),
-          });
-
-          if (!aclResponse.ok) {
-            throw new Error('ACL 설정 실패');
-          }
-
-          const aclResult = await aclResponse.json();
-          return aclResult.objectPath;
+        const formData = new FormData();
+        images.forEach(file => {
+          formData.append('files', file);
         });
 
-        const uploadedImageUrls = await Promise.all(uploadPromises);
-        onImagesChange([...imageUrls, ...uploadedImageUrls]);
+        const uploadResponse = await fetchWithAuth(uploadEndpoint, {
+          method: 'POST',
+          body: formData,
+        });
+
+        if (!uploadResponse.ok) {
+          let message = '이미지 업로드 실패';
+          try {
+            const errorData = await uploadResponse.json();
+            message = errorData?.message || message;
+          } catch {
+            try {
+              const text = await uploadResponse.text();
+              message = text || message;
+            } catch {}
+          }
+          throw new Error(message);
+        }
+
+        const { uploadedFiles } = await uploadResponse.json();
+        onImagesChange([...imageUrls, ...uploadedFiles]);
       }
 
       // 파일 업로드
       if (documents.length > 0) {
-        const uploadPromises = documents.map(async (file) => {
-          // Get upload URL from backend
-          const uploadResponse = await fetch(uploadEndpoint, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-          });
-
-          if (!uploadResponse.ok) {
-            throw new Error('업로드 URL 요청에 실패했습니다.');
-          }
-
-          const { uploadURL } = await uploadResponse.json();
-
-          // Upload file to object storage
-          const uploadFileResponse = await fetch(uploadURL, {
-            method: 'PUT',
-            body: file,
-            headers: {
-              'Content-Type': file.type || 'application/octet-stream',
-            },
-          });
-
-          if (!uploadFileResponse.ok) {
-            throw new Error('파일 업로드 실패');
-          }
-
-          // Set ACL policy for uploaded file
-          const aclResponse = await fetch('/api/files/set-acl', {
-            method: 'PUT',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              fileUrl: uploadURL
-            }),
-          });
-
-          if (!aclResponse.ok) {
-            throw new Error('ACL 설정 실패');
-          }
-
-          const aclResult = await aclResponse.json();
-          return {
-            url: aclResult.objectPath,
-            name: file.name,
-            size: file.size
-          };
+        const formData = new FormData();
+        documents.forEach(file => {
+          formData.append('files', file);
         });
 
-        const uploadedFiles = await Promise.all(uploadPromises);
-        onFilesChange([...fileUrls, ...uploadedFiles]);
+        const uploadResponse = await fetchWithAuth(uploadEndpoint, {
+          method: 'POST',
+          body: formData,
+        });
+
+        if (!uploadResponse.ok) {
+          let message = '파일 업로드 실패';
+          try {
+            const errorData = await uploadResponse.json();
+            message = errorData?.message || message;
+          } catch {
+            try {
+              const text = await uploadResponse.text();
+              message = text || message;
+            } catch {}
+          }
+          throw new Error(message);
+        }
+
+        const { uploadedFiles } = await uploadResponse.json();
+        const fileItems = documents.map((file, index) => ({
+          url: uploadedFiles[index],
+          name: file.name,
+          size: file.size
+        }));
+        onFilesChange([...fileUrls, ...fileItems]);
       }
 
       toast({
@@ -293,11 +318,13 @@ export function UnifiedAttachmentManager({
         description: `${files.length}개 파일이 성공적으로 업로드되었습니다.`
       });
 
-    } catch (error) {
+    } catch (error: any) {
       console.error('Upload error:', error);
       toast({
         title: "업로드 실패",
-        description: "파일 업로드 중 오류가 발생했습니다.",
+        description: error?.message === 'Authentication token missing'
+          ? "로그인이 만료되었습니다. 다시 로그인 후 시도해주세요."
+          : "파일 업로드 중 오류가 발생했습니다.",
         variant: "destructive"
       });
     } finally {
@@ -331,31 +358,137 @@ export function UnifiedAttachmentManager({
 
   const handleDownload = async (attachment: Attachment) => {
     try {
-      const response = await fetch(attachment.url);
-      if (!response.ok) throw new Error('파일 다운로드에 실패했습니다.');
-      
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = attachment.name;
-      document.body.appendChild(link);
-      link.click();
-      
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
-    } catch (error) {
+      // Supabase URL인 경우 서명 URL 생성
+      if (attachment.url.startsWith('supabase://')) {
+        const pathStr = attachment.url.replace('supabase://', '');
+        const [bucket, ...rest] = pathStr.split('/');
+        const objectPath = rest.join('/');
+        
+        // 서버에서 서명 URL 생성 요청
+        const response = await fetchWithAuth(`/api/files/signed-url`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ bucket, objectPath })
+        });
+
+        if (!response.ok) throw new Error('서명 URL 생성 실패');
+        const { signedUrl } = await response.json();
+        
+        // 서명 URL로 다운로드
+        const downloadResponse = await fetch(signedUrl);
+        if (!downloadResponse.ok) throw new Error('파일 다운로드에 실패했습니다.');
+        
+        const blob = await downloadResponse.blob();
+        const url = window.URL.createObjectURL(blob);
+        
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = attachment.name;
+        document.body.appendChild(link);
+        link.click();
+        
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+      } else {
+        // 일반 URL인 경우 기존 방식
+        const response = await fetch(attachment.url);
+        if (!response.ok) throw new Error('파일 다운로드에 실패했습니다.');
+        
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = attachment.name;
+        document.body.appendChild(link);
+        link.click();
+        
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+      }
+    } catch (error: any) {
       console.error('Download error:', error);
+      toast({
+        title: '다운로드 실패',
+        description: error?.message === 'Authentication token missing'
+          ? '로그인이 만료되었습니다. 다시 로그인 후 시도해주세요.'
+          : '파일을 다운로드하지 못했습니다.',
+        variant: 'destructive'
+      });
       window.open(attachment.url, '_blank');
     }
   };
 
-  const handlePreview = (attachment: Attachment) => {
+  const handlePreview = async (attachment: Attachment) => {
     if (attachment.type === 'image') {
-      setPreviewFile({ url: attachment.url, name: attachment.name, type: 'image' });
+      let previewUrl = attachment.url;
+      
+      // Supabase URL인 경우 서명 URL 생성
+      if (attachment.url.startsWith('supabase://')) {
+        try {
+          const pathStr = attachment.url.replace('supabase://', '');
+          const [bucket, ...rest] = pathStr.split('/');
+          const objectPath = rest.join('/');
+
+          const response = await fetchWithAuth(`/api/files/signed-url`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ bucket, objectPath })
+          });
+
+          if (response.ok) {
+            const { signedUrl } = await response.json();
+            previewUrl = signedUrl;
+          }
+        } catch (error: any) {
+          console.error('Preview URL generation error:', error);
+          toast({
+            title: '미리보기 실패',
+            description: error?.message === 'Authentication token missing'
+              ? '로그인이 만료되었습니다. 다시 로그인 후 시도해주세요.'
+              : '미리보기 링크를 생성하지 못했습니다.',
+            variant: 'destructive'
+          });
+        }
+      }
+      
+      setPreviewFile({ url: previewUrl, name: attachment.name, type: 'image' });
     } else if (attachment.name.toLowerCase().endsWith('.pdf')) {
-      setPreviewFile({ url: attachment.url, name: attachment.name, type: 'pdf' });
+      let previewUrl = attachment.url;
+      
+      // Supabase URL인 경우 서명 URL 생성
+      if (attachment.url.startsWith('supabase://')) {
+        try {
+          const pathStr = attachment.url.replace('supabase://', '');
+          const [bucket, ...rest] = pathStr.split('/');
+          const objectPath = rest.join('/');
+
+          const response = await fetchWithAuth(`/api/files/signed-url`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ bucket, objectPath })
+          });
+
+          if (response.ok) {
+            const { signedUrl } = await response.json();
+            previewUrl = signedUrl;
+          }
+        } catch (error: any) {
+          console.error('Preview URL generation error:', error);
+          toast({
+            title: '미리보기 실패',
+            description: error?.message === 'Authentication token missing'
+              ? '로그인이 만료되었습니다. 다시 로그인 후 시도해주세요.'
+              : '미리보기 링크를 생성하지 못했습니다.',
+            variant: 'destructive'
+          });
+        }
+      }
+      
+      setPreviewFile({ url: previewUrl, name: attachment.name, type: 'pdf' });
+    } else {
+      // 기타 파일은 다운로드
+      handleDownload(attachment);
     }
   };
 
@@ -518,9 +651,15 @@ export function UnifiedAttachmentManager({
                   <div className="flex-shrink-0">
                     {attachment.type === 'image' ? (
                       <img
-                        src={attachment.url}
+                        src={resolvedUrls[attachment.url] || attachment.url}
                         alt={attachment.name}
                         className="w-10 h-10 rounded object-cover"
+                        onError={(e) => {
+                          // 이미지 로드 실패 시 원본 URL로 fallback
+                          if (e.currentTarget.src !== attachment.url) {
+                            e.currentTarget.src = attachment.url;
+                          }
+                        }}
                       />
                     ) : (
                       getFileIcon(attachment.name, attachment.mimeType)
